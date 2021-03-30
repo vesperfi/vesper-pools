@@ -20,7 +20,7 @@
   },
   "dependencies": {},
   "devDependencies": {
-    "@openzeppelin/contracts": "^3.0.0",
+    "@openzeppelin/contracts": "^4.0.0",
     "@openzeppelin/test-helpers": "^0.5.9",
     "@truffle/hdwallet-provider": "^1.0.36",
     "@types/mocha": "^8.0.3",
@@ -56,7 +56,7 @@
     "solhint": "^3.3.2",
     "solhint-plugin-prettier": "0.0.4",
     "solidity-coverage": "^0.7.12",
-    "truffle": "5.1.42",
+    "truffle": "5.2.6",
     "truffle-contract-size": "^2.0.0",
     "truffle-hdwallet-provider": "^1.0.17",
     "truffle-ledger-provider": "^1.0.3",

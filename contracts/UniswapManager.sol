@@ -1,16 +1,14 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.6.12;
+pragma solidity 0.8.3;
 
 import "./interfaces/uniswap/IUniswapV2Router02.sol";
 import "./interfaces/uniswap/IUniswapV2Factory.sol";
 
 contract UniswapManager {
     address public constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
-    IUniswapV2Factory public constant FACTORY =
-        IUniswapV2Factory(0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f);
-    IUniswapV2Router02 public constant ROUTER =
-        IUniswapV2Router02(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D);
+    IUniswapV2Factory public constant FACTORY = IUniswapV2Factory(0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f);
+    IUniswapV2Router02 public constant ROUTER = IUniswapV2Router02(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D);
 
     function bestPathFixedInput(
         address _from,
@@ -76,11 +74,7 @@ contract UniswapManager {
     // Rather than let the getAmountsOut call fail due to low liquidity, we
     // catch the error and return 0 in place of the reversion
     // this is useful when we want to proceed with logic
-    function safeGetAmountsOut(uint256 _amountIn, address[] memory path)
-        public
-        view
-        returns (uint256[] memory result)
-    {
+    function safeGetAmountsOut(uint256 _amountIn, address[] memory path) public view returns (uint256[] memory result) {
         try ROUTER.getAmountsOut(_amountIn, path) returns (uint256[] memory amounts) {
             result = amounts;
         } catch {
@@ -105,11 +99,7 @@ contract UniswapManager {
     // catch the error and return 0 in place of the reversion
     // this is useful when we want to proceed with logic (occurs when amountOut is
     // greater than avaiable reserve (ds-math-sub-underflow)
-    function safeGetAmountsIn(uint256 _amountOut, address[] memory path)
-        public
-        view
-        returns (uint256[] memory result)
-    {
+    function safeGetAmountsIn(uint256 _amountOut, address[] memory path) public view returns (uint256[] memory result) {
         try ROUTER.getAmountsIn(_amountOut, path) returns (uint256[] memory amounts) {
             result = amounts;
         } catch {
