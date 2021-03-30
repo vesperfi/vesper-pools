@@ -13,8 +13,8 @@
     "truffle": "truffle",
     "fork": "scripts/fork-chain",
     "ganache-cli": "ganache-cli",
-    "lint": "eslint ./test/*",
-    "lint:fix": "eslint --fix ./test --ext .js",
+    "lint": "eslint --cache ./test/*",
+    "lint:fix": "eslint --cache --fix ./test --ext .js",
     "test": "scripts/test-runner",
     "coverage": "truffle run coverage"
   },
@@ -48,6 +48,7 @@
     "hdkey": "^2.0.1",
     "husky": "4.1.0",
     "ledger-provider": "github:bloq/ledger-provider",
+    "lint-staged": "^10.5.4",
     "p-series": "^2.1.0",
     "prettier-plugin-solidity": "^1.0.0-alpha.54",
     "regenerator-runtime": "^0.13.7",

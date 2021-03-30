@@ -1,0 +1,4 @@
+{
+  "*.sol": ["solhint"],
+  "*.js": ["eslint"]
+}

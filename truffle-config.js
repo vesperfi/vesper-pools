@@ -11,6 +11,7 @@ if (process.env.MNEMONIC) {
 if (process.env.ledger) {
   const options = {
     networkId: 1,
+    // eslint-disable-next-line quotes
     paths: ["44'/60'/0'/0/0"],
     accountsLength: 1,
     askConfirm: false,
