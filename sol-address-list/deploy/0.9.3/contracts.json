@@ -1,0 +1,20 @@
+{
+   "version" : "0.9.3",
+   "networks" : {
+      "mainnet" : {
+         "AddressListFactory" : "0x8252B79D85A8F75Ae7e439f71F078AB15a1d2929"
+      },
+      "ropsten" : {
+         "AddressListFactory" : "0x8252B79D85A8F75Ae7e439f71F078AB15a1d2929"
+      },
+      "kovan" : {
+         "AddressListFactory" : "0x8252B79D85A8F75Ae7e439f71F078AB15a1d2929"
+      },
+      "etc" : {
+         "AddressListFactory" : "0x8252B79D85A8F75Ae7e439f71F078AB15a1d2929"
+      },
+      "xdai" : {
+         "AddressListFactory" : "0x073d71DCb967B247D883EBc533D1f9F68C5D3182"
+      }
+   }
+}

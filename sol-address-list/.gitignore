@@ -1,0 +1,9 @@
+node_modules
+build
+.env
+.secret_info
+
+# Solidity coverage
+coverage
+coverage.json
+.coverage*
