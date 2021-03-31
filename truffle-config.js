@@ -15,7 +15,7 @@ if (process.env.ledger) {
     paths: ["44'/60'/0'/0/0"],
     accountsLength: 1,
     askConfirm: false,
-    accountsOffset: 0
+    accountsOffset: 0,
   }
   provider = new LedgerWalletProvider(process.env.NODE_URL, options)
 }
@@ -27,13 +27,13 @@ module.exports = {
       port: 8545,
       network_id: '*',
       skipDryRun: true,
-      gasPrice
+      gasPrice,
     },
     mainnet: {
       provider,
       network_id: 1,
       gas: 6700000,
-      gasPrice
+      gasPrice,
     },
   },
   compilers: {
@@ -42,10 +42,10 @@ module.exports = {
       settings: {
         optimizer: {
           enabled: true,
-          runs: 200  // Optimize for how many times you intend to run the code
-        }
-      }
-    }
+          runs: 200, // Optimize for how many times you intend to run the code
+        },
+      },
+    },
   },
-  plugins: ['solidity-coverage', 'truffle-contract-size']
+  plugins: ['solidity-coverage', 'truffle-contract-size'],
 }
