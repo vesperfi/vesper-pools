@@ -1,5 +1,5 @@
-"use strict"
-require("dotenv").config()
+'use strict'
+require('dotenv').config()
 
 const {MNEMONIC} = require('./test/utils/testkey')
 
@@ -8,6 +8,6 @@ module.exports = {
     fork: process.env.NODE_URL,
     default_balance_ether: 50000,
     network_id: 1,
-    mnemonic: MNEMONIC
-  }
+    mnemonic: MNEMONIC,
+  },
 }

@@ -16,7 +16,7 @@ const DELEGATION_TYPEHASH = keccak256(
 async function getAccountData(mnemonic) {
   const seed = await bip39.mnemonicToSeed(mnemonic)
   const hdk = hdkey.fromMasterSeed(seed)
-  const addrNode = hdk.derivePath("m/44'/60'/0'/0/0")
+  const addrNode = hdk.derivePath('m/44\'/60\'/0\'/0/0')
   const owner = addrNode.getWallet().getAddressString()
   const privateKey = addrNode.getWallet().getPrivateKey()
   return {

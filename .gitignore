@@ -4,6 +4,7 @@ build
 .env
 .secret_info
 config/local.json
+.eslintcache
 
 # Solidity coverage
 coverage
