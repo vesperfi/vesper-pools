@@ -9,7 +9,7 @@ import "../interfaces/vesper/IStrategy.sol";
 
 // TODO integrate with sol-address-list for multiple items i.e. list of guardians, etc
 // TODO redesign hooks to support ETH as well, we can live without this though
-contract VTokenBase2 is PoolShareToken {
+contract VTokenBase is PoolShareToken {
     using SafeERC20 for IERC20;
     struct StrategyParam {
         uint256 activation; // activation block
@@ -23,7 +23,6 @@ contract VTokenBase2 is PoolShareToken {
     mapping(address => StrategyParam) public strategy;
 
     address[] public strategies;
-    address[] public depositQueue;
     address[] public withdrawQueue;
     IAddressList public immutable guardians;
     address internal constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
@@ -48,6 +47,12 @@ contract VTokenBase2 is PoolShareToken {
 
     modifier onlyGuardian() {
         //TODO check caller is in guardian list
+        // require(address(controller) == _msgSender(), "Caller is not the controller");
+        _;
+    }
+
+    modifier onlyStrategy() {
+        //TODO check caller is active strategy
         // require(address(controller) == _msgSender(), "Caller is not the controller");
         _;
     }
@@ -97,6 +102,13 @@ contract VTokenBase2 is PoolShareToken {
     // TODO complete implementations
     function addGuardin(address _guardian) external onlyGuardian {}
 
+    function reportEarning(uint256 profit, uint256 loss, uint256 assetValue) external onlyStrategy {
+        // TODO: update pool asset value
+        // TODO: update debt limit of strategy
+        // TODO: give or take collateral to strategy
+        // TODO: handle fee
+    }
+
     function updateInterestFee(address _strategy, uint256 _interestFee) external onlyGuardian {}
 
     /// @dev Update strategy param
@@ -106,16 +118,7 @@ contract VTokenBase2 is PoolShareToken {
         strategy[_strategy].debtLimit = _debtLimit;
     }
 
-    // TODO I do not think we need it
-    /// @dev update deposit queue
-    function updateDepositQueue(address[] memory _depositQueue) public onlyGuardian {
-        require(_depositQueue.length > 0, "withdrawal-queue-blank");
-        for (uint256 i = 0; i < _depositQueue.length; i++) {
-            require(strategy[_depositQueue[i]].activation != 0, "invalid-strategy");
-        }
-        depositQueue = _depositQueue;
-    }
-
+ 
     /// @dev update withdrawl queue
     // TODO: make sure all strategy are in withdraw queue
     // TODO: what happen if a strategy has fund but it is removed from withdraw queue?
@@ -127,24 +130,6 @@ contract VTokenBase2 is PoolShareToken {
         withdrawQueue = _withdrawQueue;
     }
 
-    function earn() external virtual {
-        for (uint256 i; i < depositQueue.length; i++) {
-            uint256 locked = IStrategy(depositQueue[i]).totalLocked();
-            uint256 amountForDeposit = token.balanceOf(address(this));
-            if (
-                amountForDeposit > 0 &&
-                strategy[depositQueue[i]].activation <= block.number &&
-                locked < strategy[depositQueue[i]].debtLimit
-            ) {
-                uint256 availableLimit = strategy[depositQueue[i]].debtLimit - locked;
-                if (amountForDeposit > availableLimit) {
-                    amountForDeposit = availableLimit;
-                }
-                token.transfer(depositQueue[i], amountForDeposit);
-                IStrategy(depositQueue[i]).earn();
-            }
-        }
-    }
 
     /**
      * @dev Convert given ERC20 token into collateral token via Uniswap
