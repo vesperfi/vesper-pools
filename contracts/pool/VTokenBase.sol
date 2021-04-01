@@ -59,6 +59,7 @@ contract VTokenBase is PoolShareToken, Governed {
         _;
     }
 
+    ///////////////////////////// Only Guradian ///////////////////////////////
     function pause() external onlyGuardian {
         _pause();
     }
@@ -75,6 +76,9 @@ contract VTokenBase is PoolShareToken, Governed {
         _open();
     }
 
+    ///////////////////////////////////////////////////////////////////////////
+
+    ////////////////////////////// Only Governor //////////////////////////////
     function addGuardian(address _guardian) external onlyGovernor {
         require(!guardians.contains(_guardian), "already-a-guardian");
         guardians.add(_guardian);
@@ -113,17 +117,6 @@ contract VTokenBase is PoolShareToken, Governed {
         emit StrategyAdded(_strategy, _interestFee, _debtLimit);
     }
 
-    function reportEarning(
-        uint256 profit,
-        uint256 loss,
-        uint256 assetValue
-    ) external onlyStrategy {
-        // TODO: update pool asset value
-        // TODO: update debt limit of strategy
-        // TODO: give or take collateral to strategy
-        // TODO: handle fee
-    }
-
     function updateInterestFee(address _strategy, uint256 _interestFee) external onlyGovernor {
         require(_strategy != address(0), "strategy-address-is-zero");
         require(strategy[_strategy].activation != 0, "strategy-not-active");
@@ -150,6 +143,21 @@ contract VTokenBase is PoolShareToken, Governed {
         withdrawQueue = _withdrawQueue;
     }
 
+    ///////////////////////////////////////////////////////////////////////////
+
+    function reportEarning(
+        uint256 profit,
+        uint256 loss,
+        uint256 assetValue
+    ) external onlyStrategy {
+        // TODO: update pool asset value
+        // TODO: update debt limit of strategy
+        // TODO: give or take collateral to strategy
+        // TODO: handle fee
+    }
+
+    // TODO do we want to keep this as onlyGuardian
+    // TODO DO we want to sweep tokens to revenue splitter or just use uniswap
     /**
      * @dev Convert given ERC20 token into collateral token via Uniswap
      * @param _erc20 Token address
@@ -222,7 +230,6 @@ contract VTokenBase is PoolShareToken, Governed {
         }
     }
 
-    // TODO DO we want to sweep tokens to revenue splitter or just use uniswap
     function _sweepErc20(address _from) internal {
         require(_from != address(token) && _from != address(this), "Not allowed to sweep");
         IUniswapV2Router02 uniswapRouter = IUniswapV2Router02(controller.uniswapRouter());
