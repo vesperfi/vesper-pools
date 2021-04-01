@@ -16,7 +16,8 @@
     "lint": "eslint --cache ./test/*",
     "lint:fix": "eslint --cache --fix ./test --ext .js",
     "test": "scripts/test-runner",
-    "coverage": "truffle run coverage"
+    "coverage": "truffle run coverage",
+    "prepare": "husky install"
   },
   "dependencies": {},
   "devDependencies": {
@@ -45,7 +46,7 @@
     "ethers": "^5.1.0",
     "ganache-cli": "6.12.2",
     "hdkey": "^2.0.1",
-    "husky": "6.0.0",
+    "husky": "^6.0.0",
     "ledger-provider": "github:bloq/ledger-provider",
     "lint-staged": "^10.5.4",
     "p-series": "^2.1.0",
