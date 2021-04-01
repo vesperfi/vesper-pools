@@ -2,6 +2,7 @@
 
 pragma solidity 0.8.3;
 
+// TODO revisit this, just ported over from v2 to v3
 interface IStrategy {
     function rebalance() external;
 
@@ -22,6 +23,8 @@ interface IStrategy {
     function pool() external view returns (address);
 
     function totalLocked() external view returns (uint256);
+
+    function earn() external;
 
     //Lifecycle functions
     function pause() external;
