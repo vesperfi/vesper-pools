@@ -4,12 +4,12 @@ pragma solidity 0.8.3;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./PoolShareToken.sol";
+import "../Governed.sol";
 import "../interfaces/uniswap/IUniswapV2Router02.sol";
 import "../interfaces/vesper/IStrategy.sol";
 
-// TODO integrate with sol-address-list for multiple items i.e. list of guardians, etc
 // TODO redesign hooks to support ETH as well, we can live without this though
-contract VTokenBase is PoolShareToken {
+contract VTokenBase is PoolShareToken, Governed {
     using SafeERC20 for IERC20;
     struct StrategyParam {
         uint256 activation; // activation block
@@ -24,12 +24,17 @@ contract VTokenBase is PoolShareToken {
 
     address[] public strategies;
     address[] public withdrawQueue;
+
     IAddressList public immutable guardians;
     address internal constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
 
     uint256 public constant MAX_STRATEGIES = 5;
 
-    event AddStrategy(address indexed strategy, uint256 interestFee, uint256 debtLimit);
+    event StrategyAdded(address indexed strategy, uint256 interestFee, uint256 debtLimit);
+    event UpdatedInterestFee(address indexed strategy, uint256 interestFee);
+    event UpdatedDebtLimit(address indexed strategy, uint256 debtLimit);
+    event AddedGuardian(address indexed guardian);
+    event RemovedGuardian(address indexed guardian);
 
     constructor(
         string memory name,
@@ -37,23 +42,20 @@ contract VTokenBase is PoolShareToken {
         address _token,
         address _controller
     ) PoolShareToken(name, symbol, _token, _controller) {
-        require(_controller != address(0), "Controller address is zero");
-        IAddressListFactory factory = IAddressListFactory(0xD57b41649f822C51a73C44Ba0B3da4A880aF0029);
-        IAddressList _guardians = IAddressList(factory.createList());
-        //TODO only msg.sender will be able to add more guardians after deploying pool, is it okay?
+        governor = msg.sender;
+        IAddressListFactory _factory = IAddressListFactory(0xD57b41649f822C51a73C44Ba0B3da4A880aF0029);
+        IAddressList _guardians = IAddressList(_factory.createList());
         _guardians.add(msg.sender);
         guardians = _guardians;
     }
 
     modifier onlyGuardian() {
-        //TODO check caller is in guardian list
-        // require(address(controller) == _msgSender(), "Caller is not the controller");
+        require(guardians.contains(_msgSender()), "caller-is-not-a-guardian");
         _;
     }
 
     modifier onlyStrategy() {
-        //TODO check caller is active strategy
-        // require(address(controller) == _msgSender(), "Caller is not the controller");
+        require(strategy[msg.sender].activation != 0, "caller-is-not-active-strategy");
         _;
     }
 
@@ -73,17 +75,29 @@ contract VTokenBase is PoolShareToken {
         _open();
     }
 
+    function addGuardian(address _guardian) external onlyGovernor {
+        require(!guardians.contains(_guardian), "already-a-guardian");
+        guardians.add(_guardian);
+        emit AddedGuardian(_guardian);
+    }
+
+    function removeGuardian(address _guardian) external onlyGovernor {
+        require(guardians.contains(_guardian), "not-a-guardian");
+        guardians.remove(_guardian);
+        emit RemovedGuardian(_guardian);
+    }
+
     /// @dev Add strategy
     function addStrategy(
         address _strategy,
         uint256 _activation,
         uint256 _interestFee,
         uint256 _debtLimit
-    ) public onlyGuardian {
-        require(_strategy != address(0), "address-zero");
+    ) public onlyGovernor {
+        require(_strategy != address(0), "strategy-address-is-zero");
         require(strategy[_strategy].activation == 0, "strategy-already-added");
         require(_activation >= block.number, "activation-block-is-past");
-        require(_debtLimit > 0, "limit-is-zero");
+        require(_debtLimit > 0, "debt-limit-is-zero");
         require(strategies.length < MAX_STRATEGIES, "too-many-strategies");
         strategies.push(_strategy);
         StrategyParam memory newStrategy =
@@ -96,40 +110,45 @@ contract VTokenBase is PoolShareToken {
                 totalLoss: 0
             });
         strategy[_strategy] = newStrategy;
-        emit AddStrategy(_strategy, _interestFee, _debtLimit);
+        emit StrategyAdded(_strategy, _interestFee, _debtLimit);
     }
 
-    // TODO complete implementations
-    function addGuardin(address _guardian) external onlyGuardian {}
-
-    function reportEarning(uint256 profit, uint256 loss, uint256 assetValue) external onlyStrategy {
+    function reportEarning(
+        uint256 profit,
+        uint256 loss,
+        uint256 assetValue
+    ) external onlyStrategy {
         // TODO: update pool asset value
         // TODO: update debt limit of strategy
         // TODO: give or take collateral to strategy
         // TODO: handle fee
     }
 
-    function updateInterestFee(address _strategy, uint256 _interestFee) external onlyGuardian {}
-
-    /// @dev Update strategy param
-    function updateDebtLimit(address _strategy, uint256 _debtLimit) public onlyGuardian {
-        require(_strategy != address(0), "address-zero");
+    function updateInterestFee(address _strategy, uint256 _interestFee) external onlyGovernor {
+        require(_strategy != address(0), "strategy-address-is-zero");
         require(strategy[_strategy].activation != 0, "strategy-not-active");
-        strategy[_strategy].debtLimit = _debtLimit;
+        strategy[_strategy].interestFee = _interestFee;
+        emit UpdatedInterestFee(_strategy, _interestFee);
     }
 
- 
+    /// @dev Update strategy param
+    function updateDebtLimit(address _strategy, uint256 _debtLimit) public onlyGovernor {
+        require(_strategy != address(0), "strategy-address-is-zero");
+        require(strategy[_strategy].activation != 0, "strategy-not-active");
+        strategy[_strategy].debtLimit = _debtLimit;
+        emit UpdatedDebtLimit(_strategy, _debtLimit);
+    }
+
     /// @dev update withdrawl queue
     // TODO: make sure all strategy are in withdraw queue
     // TODO: what happen if a strategy has fund but it is removed from withdraw queue?
-    function updateWithdrawQueue(address[] memory _withdrawQueue) public onlyGuardian {
+    function updateWithdrawQueue(address[] memory _withdrawQueue) public onlyGovernor {
         require(_withdrawQueue.length > 0, "withdrawal-queue-blank");
         for (uint256 i = 0; i < _withdrawQueue.length; i++) {
             require(strategy[_withdrawQueue[i]].activation != 0, "invalid-strategy");
         }
         withdrawQueue = _withdrawQueue;
     }
-
 
     /**
      * @dev Convert given ERC20 token into collateral token via Uniswap

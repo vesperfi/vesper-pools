@@ -2,12 +2,12 @@
 
 pragma solidity 0.8.3;
 
-import "./VTokenBase2.sol";
+import "./VTokenBase.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 // TODO If we ever want to use it, it will need testing for decimals
 //solhint-disable no-empty-blocks
-contract VToken is VTokenBase2 {
+contract VToken is VTokenBase {
     uint256 internal immutable conversationFactor;
 
     constructor(
@@ -15,7 +15,7 @@ contract VToken is VTokenBase2 {
         string memory _symbol,
         address _token,
         address _controller
-    ) VTokenBase2(_name, _symbol, _token, _controller) {
+    ) VTokenBase(_name, _symbol, _token, _controller) {
         conversationFactor = 10**(18 - ERC20(_token).decimals());
     }
 
