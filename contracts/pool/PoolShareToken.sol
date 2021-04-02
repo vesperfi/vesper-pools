@@ -5,8 +5,8 @@ pragma solidity 0.8.3;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "../Governed.sol";
 import "../Pausable.sol";
-import "../interfaces/vesper/IController.sol";
 import "../interfaces/vesper/IVesperPool.sol";
 import "../interfaces/vesper/IPoolRewards.sol";
 import "../interfaces/bloq/IAddressList.sol";
@@ -14,11 +14,13 @@ import "../interfaces/bloq/IAddressListFactory.sol";
 
 /// @title Holding pool share token
 // solhint-disable no-empty-blocks
-abstract contract PoolShareToken is ERC20, Pausable, ReentrancyGuard {
+abstract contract PoolShareToken is ERC20, Pausable, ReentrancyGuard, Governed {
     using SafeERC20 for IERC20;
     IERC20 public immutable token;
     IAddressList public immutable feeWhiteList;
-    IController public immutable controller;
+    address public poolRewards;
+    address public feeCollector; // fee collector address
+    uint256 public withdrawFee; // withdraw fee for this pool
 
     /// @dev The EIP-712 typehash for the contract's domain
     bytes32 public constant DOMAIN_TYPEHASH =
@@ -30,30 +32,63 @@ abstract contract PoolShareToken is ERC20, Pausable, ReentrancyGuard {
 
     bytes32 public immutable domainSeparator;
 
-    uint256 internal constant MAX_UINT_VALUE = type(uint256).max;
     mapping(address => uint256) public nonces;
     event Deposit(address indexed owner, uint256 shares, uint256 amount);
     event Withdraw(address indexed owner, uint256 shares, uint256 amount);
+    event UpdatedFeeCollector(address indexed previousFeeCollector, address indexed newFeeCollector);
+    event UpdatedPoolRewards(address indexed previousPoolRewards, address indexed newPoolRewards);
+    event UpdatedWithdrawFee(uint256 previousWithdrawFee, uint256 newWithdrawFee);
 
     constructor(
         string memory _name,
         string memory _symbol,
-        address _token,
-        address _controller
+        address _token
     ) ERC20(_name, _symbol) {
         uint256 chainId;
         assembly {
             chainId := chainid()
         }
         token = IERC20(_token);
-        controller = IController(_controller);
         IAddressListFactory factory = IAddressListFactory(0xD57b41649f822C51a73C44Ba0B3da4A880aF0029);
         IAddressList _feeWhiteList = IAddressList(factory.createList());
-        _feeWhiteList.grantRole(keccak256("LIST_ADMIN"), _controller);
         feeWhiteList = _feeWhiteList;
         domainSeparator = keccak256(
             abi.encode(DOMAIN_TYPEHASH, keccak256(bytes(_name)), keccak256(bytes("1")), chainId, address(this))
         );
+    }
+
+    /**
+     * @notice Update fee collector address for this pool
+     * @param _newFeeCollector new fee collector address
+     */
+    function updateFeeCollector(address _newFeeCollector) external onlyGovernor {
+        require(_newFeeCollector != address(0), "fee-collector-is-zero-address");
+        require(feeCollector != _newFeeCollector, "same-fee-collector");
+        emit UpdatedFeeCollector(feeCollector, _newFeeCollector);
+        feeCollector = _newFeeCollector;
+    }
+
+    /**
+     * @notice Update pool rewards contract address for this pool
+     * @param _newPoolRewards new pool rewards contract address
+     */
+    function updatePoolRewards(address _newPoolRewards) external onlyGovernor {
+        require(IPoolRewards(_newPoolRewards).pool() == address(this), "wrong-pool-in-pool-rewards");
+        emit UpdatedPoolRewards(poolRewards, _newPoolRewards);
+        poolRewards = _newPoolRewards;
+    }
+
+    /**
+     * @notice Update withdraw fee for this pool
+     * @dev Format: 1e16 = 1% fee
+     * @param _newWithdrawFee new withdraw fee
+     */
+    function updateWithdrawFee(uint256 _newWithdrawFee) external onlyGovernor {
+        require(feeCollector != address(0), "fee-collector-not-set");
+        require(_newWithdrawFee <= 1e18, "withdraw-fee-limit-reached");
+        require(withdrawFee != _newWithdrawFee, "same-withdraw-fee");
+        emit UpdatedWithdrawFee(withdrawFee, _newWithdrawFee);
+        withdrawFee = _newWithdrawFee;
     }
 
     /**
@@ -174,11 +209,6 @@ abstract contract PoolShareToken is ERC20, Pausable, ReentrancyGuard {
         return amount;
     }
 
-    /// @dev Get fee collector address
-    function feeCollector() public view virtual returns (address) {
-        return controller.feeCollector(address(this));
-    }
-
     /// @dev Returns the token stored in the pool. It will be in token defined decimals.
     function tokensHere() public view virtual returns (uint256) {
         return token.balanceOf(address(this));
@@ -190,14 +220,6 @@ abstract contract PoolShareToken is ERC20, Pausable, ReentrancyGuard {
      */
     function totalValue() public view virtual returns (uint256) {
         return tokensHere();
-    }
-
-    /**
-     * @notice Get withdraw fee for this pool
-     * @dev Format: 1e16 = 1% fee
-     */
-    function withdrawFee() public view virtual returns (uint256) {
-        return controller.withdrawFee(address(this));
     }
 
     /**
@@ -252,10 +274,10 @@ abstract contract PoolShareToken is ERC20, Pausable, ReentrancyGuard {
 
     /// @dev Handle withdraw fee calculation and fee transfer to fee collector.
     function _handleFee(uint256 shares) internal returns (uint256 _sharesAfterFee) {
-        if (withdrawFee() != 0) {
-            uint256 _fee = (shares * withdrawFee()) / 1e18;
+        if (withdrawFee != 0) {
+            uint256 _fee = (shares * withdrawFee) / 1e18;
             _sharesAfterFee = shares - _fee;
-            _transfer(_msgSender(), feeCollector(), _fee);
+            _transfer(_msgSender(), feeCollector, _fee);
         } else {
             _sharesAfterFee = shares;
         }
@@ -267,7 +289,6 @@ abstract contract PoolShareToken is ERC20, Pausable, ReentrancyGuard {
         address to,
         uint256 /* amount */
     ) internal virtual override {
-        address poolRewards = controller.poolRewards(address(this));
         if (poolRewards != address(0)) {
             if (from != address(0)) {
                 IPoolRewards(poolRewards).updateReward(from);

@@ -4,12 +4,11 @@ pragma solidity 0.8.3;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./PoolShareToken.sol";
-import "../Governed.sol";
 import "../interfaces/uniswap/IUniswapV2Router02.sol";
 import "../interfaces/vesper/IStrategy.sol";
 
 // TODO redesign hooks to support ETH as well, we can live without this though
-contract VTokenBase is PoolShareToken, Governed {
+contract VTokenBase is PoolShareToken {
     using SafeERC20 for IERC20;
 
     struct StrategyConfig {
@@ -21,20 +20,19 @@ contract VTokenBase is PoolShareToken, Governed {
         uint256 totalGain; // Total gain that strategy has realized
         uint256 debtRatio; // % of asset allocation
         uint256 debtRatePerBlock; // Limit strategy to not borrow maxAllocPerRebalance immediately in next block. This control the speed of debt wheel.
-        uint256 maxDebtPerRebalance; // motivate strategy to call and borrow/payback asset from pool in reasonable interval. 
+        uint256 maxDebtPerRebalance; // motivate strategy to call and borrow/payback asset from pool in reasonable interval.
         // Example- comments for dev. can remove later
-        // available debt limit of strategy = creditLine =  (debtRatio * totalasset)/MAX_BPS 
+        // available debt limit of strategy = creditLine =  (debtRatio * totalasset)/MAX_BPS
         // debtRate = 1M per block,  available debt limit of strategy = 100M, maxDebtPerRebalance = 20M
-        // scenario 1: strategy waited  5000 block to call next rebalance. 
+        // scenario 1: strategy waited  5000 block to call next rebalance.
         //  available to borrow in this rebalance = min(debtRate*blockCount, maxDebtPerRebalance, creditLine) = 20M
-        // scenario 2: strategy waited  5 block to call next rebalance. 
+        // scenario 2: strategy waited  5 block to call next rebalance.
         //  available to borrow in this rebalance = min(debtRate*blockCount, maxDebtPerRebalance, creditLine) = 5M
-        // scenario 3: strategy waited  25 block to call next rebalance. 
+        // scenario 3: strategy waited  25 block to call next rebalance.
         //  available to borrow in this rebalance = min(debtRate*blockCount, maxDebtPerRebalance, creditLine) = 20M
-        // if only single strategy is integrated with pool. 
+        // if only single strategy is integrated with pool.
         // set maxDebtPerRebalance = uint56(-1),  debtRate = uint56(-1), debtRatio  = MAX_BPS - bufferRatio
         // will discuss it if we we want to use debtRatePerBlock or not.
-        
     }
 
     mapping(address => StrategyConfig) public strategy;
@@ -45,9 +43,21 @@ contract VTokenBase is PoolShareToken, Governed {
 
     IAddressList public immutable guardians;
     address internal constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
-    event StrategyAdded(address indexed strategy, uint256 activation, uint256 interestFee, uint256 debtRatio, uint256 debtRatePerBlock, uint256 maxDebtPerRebalance);
+    event StrategyAdded(
+        address indexed strategy,
+        uint256 activation,
+        uint256 interestFee,
+        uint256 debtRatio,
+        uint256 debtRatePerBlock,
+        uint256 maxDebtPerRebalance
+    );
     event UpdatedInterestFee(address indexed strategy, uint256 interestFee);
-    event UpdatedStrategyDebtParams(address indexed strategy, uint256 debtRatio, uint256 debtRatePerBlock, uint256 maxDebtPerRebalance);
+    event UpdatedStrategyDebtParams(
+        address indexed strategy,
+        uint256 debtRatio,
+        uint256 debtRatePerBlock,
+        uint256 maxDebtPerRebalance
+    );
     event AddedGuardian(address indexed guardian);
     event RemovedGuardian(address indexed guardian);
     uint256 public constant MAX_BPS = 1000;
@@ -55,9 +65,8 @@ contract VTokenBase is PoolShareToken, Governed {
     constructor(
         string memory name,
         string memory symbol,
-        address _token,
-        address _controller
-    ) PoolShareToken(name, symbol, _token, _controller) {
+        address _token
+    ) PoolShareToken(name, symbol, _token) {
         governor = msg.sender;
         IAddressListFactory _factory = IAddressListFactory(0xD57b41649f822C51a73C44Ba0B3da4A880aF0029);
         IAddressList _guardians = IAddressList(_factory.createList());
@@ -146,12 +155,16 @@ contract VTokenBase is PoolShareToken, Governed {
         emit UpdatedInterestFee(_strategy, _interestFee);
     }
 
-
     /**
      * @dev Update debt params.  A strategy is automatically retired when debtRatio or debtRatePerBlock or maxDebtPerRebalance is 0
-     * It is preferred to set debtRatio 0 so that it can create 
+     * It is preferred to set debtRatio 0 so that it can create
      */
-    function updateDebtParams(address _strategy, uint256 _debtRatio, uint256 _debtRatePerBlock, uint256 _maxDebtPerRebalance) external onlyGovernor {
+    function updateDebtParams(
+        address _strategy,
+        uint256 _debtRatio,
+        uint256 _debtRatePerBlock,
+        uint256 _maxDebtPerRebalance
+    ) external onlyGovernor {
         require(_strategy != address(0), "strategy-address-is-zero");
         require(strategy[_strategy].activation != 0, "strategy-not-active");
         totalDebtRatio = totalDebtRatio - strategy[_strategy].debtRatio + _debtRatio;
@@ -172,7 +185,12 @@ contract VTokenBase is PoolShareToken, Governed {
         totalDebtRatio = totalDebtRatio - strategy[_strategy].debtRatio + _debtRatio;
         require(totalDebtRatio <= MAX_BPS, "totalDebtRatio-above-max_bps");
         strategy[_strategy].debtRatio = _debtRatio;
-        emit UpdatedStrategyDebtParams(_strategy, _debtRatio, strategy[_strategy].debtRatePerBlock, strategy[_strategy].maxDebtPerRebalance);
+        emit UpdatedStrategyDebtParams(
+            _strategy,
+            _debtRatio,
+            strategy[_strategy].debtRatePerBlock,
+            strategy[_strategy].maxDebtPerRebalance
+        );
     }
 
     /// @dev update withdrawl queue
@@ -188,8 +206,8 @@ contract VTokenBase is PoolShareToken, Governed {
 
     ///////////////////////////////////////////////////////////////////////////
     // each strategy will call this function in regular interval.
-    // This will trigger 
-    // 1) pay interest fee 2) borrow more asset from pool if creditLine available 3) payback to pool if debt limit decreased. 
+    // This will trigger
+    // 1) pay interest fee 2) borrow more asset from pool if creditLine available 3) payback to pool if debt limit decreased.
     // pool share price updated based on reported earning by each strategy. ideally after each rebalance of strategy, reportEarning will be called.
     function reportEarning(
         uint256 profit,
@@ -209,7 +227,7 @@ contract VTokenBase is PoolShareToken, Governed {
      * @param _erc20 Token address
      */
     function sweepErc20(address _erc20) external virtual onlyGuardian {
-        _sweepErc20(_erc20);
+        _sweep(_erc20);
     }
 
     /// @dev Returns collateral token locked in strategy
@@ -276,9 +294,10 @@ contract VTokenBase is PoolShareToken, Governed {
         }
     }
 
-    function _sweepErc20(address _from) internal {
-        require(_from != address(token) && _from != address(this), "Not allowed to sweep");
-        IUniswapV2Router02 uniswapRouter = IUniswapV2Router02(controller.uniswapRouter());
+    // TODO we might endup removing uniswap logic from this function
+    function _sweep(address _from) internal {
+        require(_from != address(token), "not-allowed-to-sweep");
+        IUniswapV2Router02 uniswapRouter = IUniswapV2Router02(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D);
         uint256 amt = IERC20(_from).balanceOf(address(this));
         IERC20(_from).safeApprove(address(uniswapRouter), 0);
         IERC20(_from).safeApprove(address(uniswapRouter), amt);
