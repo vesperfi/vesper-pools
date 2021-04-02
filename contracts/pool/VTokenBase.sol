@@ -11,30 +11,46 @@ import "../interfaces/vesper/IStrategy.sol";
 // TODO redesign hooks to support ETH as well, we can live without this though
 contract VTokenBase is PoolShareToken, Governed {
     using SafeERC20 for IERC20;
-    struct StrategyParam {
+
+    struct StrategyConfig {
         uint256 activation; // activation block
         uint256 interestFee; // Strategy fee
-        uint256 debtLimit; // Absolute limit
+        uint256 lastRebalanceTimestamp;
         uint256 totalDebt; // Total outstanding debt stratgy has
-        uint256 totalGain; // Total gain that strategy has realized
         uint256 totalLoss; // Total loss that strategy has realized
+        uint256 totalGain; // Total gain that strategy has realized
+        uint256 debtRatio; // % of asset allocation
+        uint256 debtRatePerBlock; // Limit strategy to not borrow maxAllocPerRebalance immediately in next block. This control the speed of debt wheel.
+        uint256 maxDebtPerRebalance; // motivate strategy to call and borrow/payback asset from pool in reasonable interval. 
+        // Example- comments for dev. can remove later
+        // available debt limit of strategy = creditLine =  (debtRatio * totalasset)/MAX_BPS 
+        // debtRate = 1M per block,  available debt limit of strategy = 100M, maxDebtPerRebalance = 20M
+        // scenario 1: strategy waited  5000 block to call next rebalance. 
+        //  available to borrow in this rebalance = min(debtRate*blockCount, maxDebtPerRebalance, creditLine) = 20M
+        // scenario 2: strategy waited  5 block to call next rebalance. 
+        //  available to borrow in this rebalance = min(debtRate*blockCount, maxDebtPerRebalance, creditLine) = 5M
+        // scenario 3: strategy waited  25 block to call next rebalance. 
+        //  available to borrow in this rebalance = min(debtRate*blockCount, maxDebtPerRebalance, creditLine) = 20M
+        // if only single strategy is integrated with pool. 
+        // set maxDebtPerRebalance = uint56(-1),  debtRate = uint56(-1), debtRatio  = MAX_BPS - bufferRatio
+        // will discuss it if we we want to use debtRatePerBlock or not.
+        
     }
 
-    mapping(address => StrategyParam) public strategy;
+    mapping(address => StrategyConfig) public strategy;
+    uint256 public totalDebtRatio; // this will keep some buffer amount in pool
 
     address[] public strategies;
     address[] public withdrawQueue;
 
     IAddressList public immutable guardians;
     address internal constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
-
-    uint256 public constant MAX_STRATEGIES = 5;
-
-    event StrategyAdded(address indexed strategy, uint256 interestFee, uint256 debtLimit);
+    event StrategyAdded(address indexed strategy, uint256 activation, uint256 interestFee, uint256 debtRatio, uint256 debtRatePerBlock, uint256 maxDebtPerRebalance);
     event UpdatedInterestFee(address indexed strategy, uint256 interestFee);
-    event UpdatedDebtLimit(address indexed strategy, uint256 debtLimit);
+    event UpdatedStrategyDebtParams(address indexed strategy, uint256 debtRatio, uint256 debtRatePerBlock, uint256 maxDebtPerRebalance);
     event AddedGuardian(address indexed guardian);
     event RemovedGuardian(address indexed guardian);
+    uint256 public constant MAX_BPS = 1000;
 
     constructor(
         string memory name,
@@ -96,40 +112,67 @@ contract VTokenBase is PoolShareToken, Governed {
         address _strategy,
         uint256 _activation,
         uint256 _interestFee,
-        uint256 _debtLimit
+        uint256 _debtRatio,
+        uint256 _debtRatePerBlock,
+        uint256 _maxDebtPerRebalance
     ) public onlyGovernor {
         require(_strategy != address(0), "strategy-address-is-zero");
         require(strategy[_strategy].activation == 0, "strategy-already-added");
         require(_activation >= block.number, "activation-block-is-past");
-        require(_debtLimit > 0, "debt-limit-is-zero");
-        require(strategies.length < MAX_STRATEGIES, "too-many-strategies");
-        strategies.push(_strategy);
-        StrategyParam memory newStrategy =
-            StrategyParam({
+        totalDebtRatio = totalDebtRatio + _debtRatio;
+        require(totalDebtRatio <= MAX_BPS, "totalDebtRatio-above-max_bps");
+        StrategyConfig memory newStrategy =
+            StrategyConfig({
                 activation: _activation,
                 interestFee: _interestFee,
-                debtLimit: _debtLimit,
+                debtRatio: _debtRatio,
+                lastRebalanceTimestamp: 0,
                 totalDebt: 0,
                 totalGain: 0,
-                totalLoss: 0
+                totalLoss: 0,
+                debtRatePerBlock: _debtRatePerBlock,
+                maxDebtPerRebalance: _maxDebtPerRebalance
             });
         strategy[_strategy] = newStrategy;
-        emit StrategyAdded(_strategy, _interestFee, _debtLimit);
+        strategies.push(_strategy);
+        emit StrategyAdded(_strategy, _activation, _interestFee, _debtRatio, _debtRatePerBlock, _maxDebtPerRebalance);
     }
 
     function updateInterestFee(address _strategy, uint256 _interestFee) external onlyGovernor {
         require(_strategy != address(0), "strategy-address-is-zero");
         require(strategy[_strategy].activation != 0, "strategy-not-active");
+        require(_interestFee <= MAX_BPS, "interest-fee-above-max_bps");
         strategy[_strategy].interestFee = _interestFee;
         emit UpdatedInterestFee(_strategy, _interestFee);
     }
 
-    /// @dev Update strategy param
-    function updateDebtLimit(address _strategy, uint256 _debtLimit) public onlyGovernor {
+
+    /**
+     * @dev Update debt params.  A strategy is automatically retired when debtRatio or debtRatePerBlock or maxDebtPerRebalance is 0
+     * It is preferred to set debtRatio 0 so that it can create 
+     */
+    function updateDebtParams(address _strategy, uint256 _debtRatio, uint256 _debtRatePerBlock, uint256 _maxDebtPerRebalance) external onlyGovernor {
         require(_strategy != address(0), "strategy-address-is-zero");
         require(strategy[_strategy].activation != 0, "strategy-not-active");
-        strategy[_strategy].debtLimit = _debtLimit;
-        emit UpdatedDebtLimit(_strategy, _debtLimit);
+        totalDebtRatio = totalDebtRatio - strategy[_strategy].debtRatio + _debtRatio;
+        require(totalDebtRatio <= MAX_BPS, "totalDebtRatio-above-max_bps");
+        strategy[_strategy].debtRatio = _debtRatio;
+        // TODO: how does it impact if below two params set 0
+        strategy[_strategy].debtRatePerBlock = _debtRatePerBlock;
+        strategy[_strategy].maxDebtPerRebalance = _maxDebtPerRebalance;
+        emit UpdatedStrategyDebtParams(_strategy, _debtRatio, _debtRatePerBlock, _maxDebtPerRebalance);
+    }
+
+    /**
+     * @dev Update debt ratio.  A strategy is retired when debtRatio is 0
+     */
+    function updateDebtRatio(address _strategy, uint256 _debtRatio) external onlyGovernor {
+        require(_strategy != address(0), "strategy-address-is-zero");
+        require(strategy[_strategy].activation != 0, "strategy-not-active");
+        totalDebtRatio = totalDebtRatio - strategy[_strategy].debtRatio + _debtRatio;
+        require(totalDebtRatio <= MAX_BPS, "totalDebtRatio-above-max_bps");
+        strategy[_strategy].debtRatio = _debtRatio;
+        emit UpdatedStrategyDebtParams(_strategy, _debtRatio, strategy[_strategy].debtRatePerBlock, strategy[_strategy].maxDebtPerRebalance);
     }
 
     /// @dev update withdrawl queue
@@ -144,7 +187,10 @@ contract VTokenBase is PoolShareToken, Governed {
     }
 
     ///////////////////////////////////////////////////////////////////////////
-
+    // each strategy will call this function in regular interval.
+    // This will trigger 
+    // 1) pay interest fee 2) borrow more asset from pool if creditLine available 3) payback to pool if debt limit decreased. 
+    // pool share price updated based on reported earning by each strategy. ideally after each rebalance of strategy, reportEarning will be called.
     function reportEarning(
         uint256 profit,
         uint256 loss,
