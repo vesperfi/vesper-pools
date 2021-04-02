@@ -2,6 +2,7 @@
 
 pragma solidity 0.8.3;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "../bloq/IAddressList.sol";
 
 interface IVesperPool is IERC20 {
     function approveToken() external;
@@ -9,6 +10,10 @@ interface IVesperPool is IERC20 {
     function deposit() external payable;
 
     function deposit(uint256) external;
+
+    function governor() external returns (address);
+
+    function guardians() external returns (IAddressList);
 
     function multiTransfer(uint256[] memory) external returns (bool);
 
