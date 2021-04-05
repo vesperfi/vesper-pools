@@ -4,7 +4,6 @@ pragma solidity 0.8.3;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./PoolShareToken.sol";
-import "../interfaces/uniswap/IUniswapV2Router02.sol";
 import "../interfaces/vesper/IStrategy.sol";
 
 // TODO redesign hooks to support ETH as well, we can live without this though
@@ -17,7 +16,7 @@ contract VTokenBase is PoolShareToken {
         uint256 lastRebalanceTimestamp;
         uint256 totalDebt; // Total outstanding debt stratgy has
         uint256 totalLoss; // Total loss that strategy has realized
-        uint256 totalGain; // Total gain that strategy has realized
+        uint256 totalProfit; // Total gain that strategy has realized
         uint256 debtRatio; // % of asset allocation
         uint256 debtRatePerBlock; // Limit strategy to not borrow maxAllocPerRebalance immediately in next block. This control the speed of debt wheel.
         uint256 maxDebtPerRebalance; // motivate strategy to call and borrow/payback asset from pool in reasonable interval.
@@ -37,7 +36,7 @@ contract VTokenBase is PoolShareToken {
 
     mapping(address => StrategyConfig) public strategy;
     uint256 public totalDebtRatio; // this will keep some buffer amount in pool
-
+    uint256 public totalDebt;
     address[] public strategies;
     address[] public withdrawQueue;
 
@@ -60,7 +59,7 @@ contract VTokenBase is PoolShareToken {
     );
     event AddedGuardian(address indexed guardian);
     event RemovedGuardian(address indexed guardian);
-    uint256 public constant MAX_BPS = 1000;
+    uint256 public constant MAX_BPS = 10000;
 
     constructor(
         string memory name,
@@ -130,6 +129,7 @@ contract VTokenBase is PoolShareToken {
         require(_activation >= block.number, "activation-block-is-past");
         totalDebtRatio = totalDebtRatio + _debtRatio;
         require(totalDebtRatio <= MAX_BPS, "totalDebtRatio-above-max_bps");
+        require(_interestFee <= MAX_BPS, "interest-fee-above-max_bps");
         StrategyConfig memory newStrategy =
             StrategyConfig({
                 activation: _activation,
@@ -137,7 +137,7 @@ contract VTokenBase is PoolShareToken {
                 debtRatio: _debtRatio,
                 lastRebalanceTimestamp: 0,
                 totalDebt: 0,
-                totalGain: 0,
+                totalProfit: 0,
                 totalLoss: 0,
                 debtRatePerBlock: _debtRatePerBlock,
                 maxDebtPerRebalance: _maxDebtPerRebalance
@@ -156,31 +156,9 @@ contract VTokenBase is PoolShareToken {
     }
 
     /**
-     * @dev Update debt params.  A strategy is automatically retired when debtRatio or debtRatePerBlock or maxDebtPerRebalance is 0
-     * It is preferred to set debtRatio 0 so that it can create
-     */
-    function updateDebtParams(
-        address _strategy,
-        uint256 _debtRatio,
-        uint256 _debtRatePerBlock,
-        uint256 _maxDebtPerRebalance
-    ) external onlyGovernor {
-        require(_strategy != address(0), "strategy-address-is-zero");
-        require(strategy[_strategy].activation != 0, "strategy-not-active");
-        totalDebtRatio = totalDebtRatio - strategy[_strategy].debtRatio + _debtRatio;
-        require(totalDebtRatio <= MAX_BPS, "totalDebtRatio-above-max_bps");
-        strategy[_strategy].debtRatio = _debtRatio;
-        // TODO: how does it impact if below two params set 0
-        strategy[_strategy].debtRatePerBlock = _debtRatePerBlock;
-        strategy[_strategy].maxDebtPerRebalance = _maxDebtPerRebalance;
-        emit UpdatedStrategyDebtParams(_strategy, _debtRatio, _debtRatePerBlock, _maxDebtPerRebalance);
-    }
-
-    /**
      * @dev Update debt ratio.  A strategy is retired when debtRatio is 0
      */
     function updateDebtRatio(address _strategy, uint256 _debtRatio) external onlyGovernor {
-        require(_strategy != address(0), "strategy-address-is-zero");
         require(strategy[_strategy].activation != 0, "strategy-not-active");
         totalDebtRatio = totalDebtRatio - strategy[_strategy].debtRatio + _debtRatio;
         require(totalDebtRatio <= MAX_BPS, "totalDebtRatio-above-max_bps");
@@ -189,6 +167,34 @@ contract VTokenBase is PoolShareToken {
             _strategy,
             _debtRatio,
             strategy[_strategy].debtRatePerBlock,
+            strategy[_strategy].maxDebtPerRebalance
+        );
+    }
+
+    /**
+     * @dev Update maxDebtPerRebalance.  A strategy is retired when maxDebtPerRebalance is 0
+     */
+    function updateDebtPerRebalance(address _strategy, uint256 _maxDebtPerRebalance) external onlyGovernor {
+        require(strategy[_strategy].activation != 0, "strategy-not-active");
+        strategy[_strategy].maxDebtPerRebalance = _maxDebtPerRebalance;
+        emit UpdatedStrategyDebtParams(
+            _strategy,
+            strategy[_strategy].debtRatio,
+            strategy[_strategy].debtRatePerBlock,
+            _maxDebtPerRebalance
+        );
+    }
+
+    /**
+     * @dev Update debtRatePerBlock.  A strategy is retired when debtRatePerBlock is 0
+     */
+    function updateDebtRate(address _strategy, uint256 _debtRatePerBlock) external onlyGovernor {
+        require(strategy[_strategy].activation != 0, "strategy-not-active");
+        strategy[_strategy].debtRatePerBlock = _debtRatePerBlock;
+        emit UpdatedStrategyDebtParams(
+            _strategy,
+            strategy[_strategy].debtRatio,
+            _debtRatePerBlock,
             strategy[_strategy].maxDebtPerRebalance
         );
     }
@@ -204,45 +210,95 @@ contract VTokenBase is PoolShareToken {
         withdrawQueue = _withdrawQueue;
     }
 
-    ///////////////////////////////////////////////////////////////////////////
-    // each strategy will call this function in regular interval.
-    // This will trigger
-    // 1) pay interest fee 2) borrow more asset from pool if creditLine available 3) payback to pool if debt limit decreased.
-    // pool share price updated based on reported earning by each strategy. ideally after each rebalance of strategy, reportEarning will be called.
-    function reportEarning(
-        uint256 profit,
-        uint256 loss,
-        uint256 assetValue
-    ) external onlyStrategy {
-        // TODO: update pool asset value
-        // TODO: update debt limit of strategy
-        // TODO: give or take collateral to strategy
-        // TODO: handle fee
-    }
-
-    // TODO do we want to keep this as onlyGuardian
-    // TODO DO we want to sweep tokens to revenue splitter or just use uniswap
     /**
-     * @dev Convert given ERC20 token into collateral token via Uniswap
-     * @param _erc20 Token address
+     @dev Strategy call this in regular interval.
+     @param _profit yield generated by strategy. Strategy get performance fee on this amount
+     @param _loss  Reduce debt ,also reduce debtRatio, increase loss in record.
+     @param _payback strategy willing to payback oustantanding above debtLimit. no performance fee on this amount. 
+      when governance has reduced debtRatio of strategy, strategy will report profit and payback amount separately. 
      */
-    function sweepErc20(address _erc20) external virtual onlyGuardian {
-        _sweep(_erc20);
+    function reportEarning(
+        uint256 _profit,
+        uint256 _loss,
+        uint256 _payback
+    ) external onlyStrategy {
+        require(strategy[_msgSender()].activation != 0, "strategy-not-active");
+        require(token.balanceOf(_msgSender()) >= (_profit + _payback), "insufficient-balance-in-strategy");
+        if (_loss != 0) {
+            // reduce strategy total debt
+            // reduce debtRatio as penalty
+            // update total_loss of strategy for later performance review
+        }
+        uint256 _overLimitDebt = _excessDebt(_msgSender());
+        uint256 _actualPayback = _min(_overLimitDebt, _payback);
+        if (_actualPayback != 0) {
+            strategy[_msgSender()].totalDebt -= _actualPayback;
+            totalDebt -= _actualPayback;
+        }
+        uint256 _creditLine = _availableCreditLimit(_msgSender());
+        if (_creditLine != 0) {
+            strategy[_msgSender()].totalDebt += _creditLine;
+            totalDebt += _creditLine;
+        }
+        uint256 _totalPayback = _profit + _actualPayback;
+        if (_profit != 0) {
+            // TODO: handleFee()
+        }
+        if (_totalPayback < _creditLine) {
+            token.transfer(_msgSender(), _creditLine - _totalPayback);
+        } else if (_totalPayback > _creditLine) {
+            token.transferFrom(_msgSender(), address(this), _totalPayback - _creditLine);
+        }
+        if (strategy[_msgSender()].debtRatio == 0 || stopEverything) {
+            // strategy.withdrawAll()
+        }
     }
 
-    /// @dev Returns collateral token locked in strategy
-    function tokenLocked() public view virtual returns (uint256) {
-        uint256 _totalLocked;
-        for (uint256 i; i < strategies.length; i++) {
-            IStrategy _strategy = IStrategy(strategies[i]);
-            _totalLocked = _totalLocked + _strategy.totalLocked();
+    function withdrawAllFromStrategy(address _strategy) external onlyGovernor {}
+
+    function excessDebt(address _strategy) external view returns (uint256) {
+        return _excessDebt(_strategy);
+    }
+
+    function _excessDebt(address _strategy) internal view returns (uint256) {
+        uint256 _maxDebt = (strategy[_strategy].debtRatio * totalValue()) / MAX_BPS;
+        uint256 _currentDebt = strategy[_strategy].totalDebt;
+        return _currentDebt > _maxDebt ? (_currentDebt - _maxDebt) : 0;
+    }
+
+    function _availableCreditLimit(address _strategy) internal view returns (uint256) {
+        if (stopEverything) {
+            return 0;
         }
-        return _totalLocked;
+        uint256 _totalValue = totalValue();
+        uint256 _maxDebt = (strategy[_strategy].debtRatio * _totalValue) / MAX_BPS;
+        uint256 _currentDebt = strategy[_strategy].totalDebt;
+        if (_currentDebt >= _maxDebt) {
+            return 0;
+        }
+        uint256 _poolDebtLimit = (totalDebtRatio * _totalValue) / MAX_BPS;
+        if (totalDebt >= _poolDebtLimit) {
+            return 0;
+        }
+        uint256 _available = _maxDebt - _currentDebt;
+        _available = _min(_min(tokensHere(), _available), _poolDebtLimit - totalDebt);
+        _available = _min(strategy[_strategy].maxDebtPerRebalance, _available);
+        // TODO: strategy max debt per block * total block since last rebalance).
+        return _available;
+    }
+
+    /**
+     * @dev Convert given ERC20 token to fee collector
+     * @param _token Token address
+     */
+    function sweepERC20(address _token) external virtual onlyGuardian {
+        require(_token != address(token), "not-allowed-to-sweep");
+        IERC20(_token).transfer(feeCollector, IERC20(_token).balanceOf(address(this)));
     }
 
     /// @dev Returns total value of vesper pool, in terms of collateral token
     function totalValue() public view override returns (uint256) {
-        return tokenLocked() + tokensHere();
+        return totalDebt + tokensHere();
     }
 
     /**
@@ -278,40 +334,11 @@ contract VTokenBase is PoolShareToken {
     function _withdrawCollateral(uint256 _amount) internal virtual {
         uint256 poolBalance = tokensHere();
         if (_amount > poolBalance) {
-            for (uint256 i; i < withdrawQueue.length; i++) {
-                uint256 amountNeeded = _amount - poolBalance;
-                IStrategy _strategy = IStrategy(withdrawQueue[i]);
-                amountNeeded = _strategy.totalLocked() < amountNeeded ? _strategy.totalLocked() : amountNeeded;
-                if (amountNeeded == 0) {
-                    continue;
-                }
-                _strategy.withdraw(amountNeeded);
-                poolBalance = tokensHere();
-                if (_amount <= poolBalance) {
-                    break;
-                }
-            }
+           // TODO: withdraw from queue
         }
     }
 
-    // TODO we might endup removing uniswap logic from this function
-    function _sweep(address _from) internal {
-        require(_from != address(token), "not-allowed-to-sweep");
-        IUniswapV2Router02 uniswapRouter = IUniswapV2Router02(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D);
-        uint256 amt = IERC20(_from).balanceOf(address(this));
-        IERC20(_from).safeApprove(address(uniswapRouter), 0);
-        IERC20(_from).safeApprove(address(uniswapRouter), amt);
-        address[] memory path;
-        if (address(token) == WETH) {
-            path = new address[](2);
-            path[0] = _from;
-            path[1] = address(token);
-        } else {
-            path = new address[](3);
-            path[0] = _from;
-            path[1] = WETH;
-            path[2] = address(token);
-        }
-        uniswapRouter.swapExactTokensForTokens(amt, 1, path, address(this), block.timestamp + 30);
+    function _min(uint256 a, uint256 b) internal pure returns (uint256) {
+        return a < b ? a : b;
     }
 }
