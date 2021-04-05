@@ -76,6 +76,7 @@ abstract contract Strategy is IStrategy, Pausable {
         _unpause();
     }
 
+    // TODO we may not need these 2 functions, these were part of update strategy via controller
     /// @dev Approve all required tokens
     function approveToken() external onlyGuardians {
         _approveToken(0);
