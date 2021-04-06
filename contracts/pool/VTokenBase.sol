@@ -20,18 +20,6 @@ contract VTokenBase is PoolShareToken {
         uint256 debtRatio; // % of asset allocation
         uint256 debtRatePerBlock; // Limit strategy to not borrow maxAllocPerRebalance immediately in next block. This control the speed of debt wheel.
         uint256 maxDebtPerRebalance; // motivate strategy to call and borrow/payback asset from pool in reasonable interval.
-        // Example- comments for dev. can remove later
-        // available debt limit of strategy = creditLine =  (debtRatio * totalasset)/MAX_BPS
-        // debtRate = 1M per block,  available debt limit of strategy = 100M, maxDebtPerRebalance = 20M
-        // scenario 1: strategy waited  5000 block to call next rebalance.
-        //  available to borrow in this rebalance = min(debtRate*blockCount, maxDebtPerRebalance, creditLine) = 20M
-        // scenario 2: strategy waited  5 block to call next rebalance.
-        //  available to borrow in this rebalance = min(debtRate*blockCount, maxDebtPerRebalance, creditLine) = 5M
-        // scenario 3: strategy waited  25 block to call next rebalance.
-        //  available to borrow in this rebalance = min(debtRate*blockCount, maxDebtPerRebalance, creditLine) = 20M
-        // if only single strategy is integrated with pool.
-        // set maxDebtPerRebalance = uint56(-1),  debtRate = uint56(-1), debtRatio  = MAX_BPS - bufferRatio
-        // will discuss it if we we want to use debtRatePerBlock or not.
     }
 
     mapping(address => StrategyConfig) public strategy;
@@ -225,10 +213,9 @@ contract VTokenBase is PoolShareToken {
         require(strategy[_msgSender()].activation != 0, "strategy-not-active");
         require(token.balanceOf(_msgSender()) >= (_profit + _payback), "insufficient-balance-in-strategy");
         if (_loss != 0) {
-            // reduce strategy total debt
-            // reduce debtRatio as penalty
-            // update total_loss of strategy for later performance review
+            _reportLoss(_msgSender(), _loss);
         }
+
         uint256 _overLimitDebt = _excessDebt(_msgSender());
         uint256 _actualPayback = _min(_overLimitDebt, _payback);
         if (_actualPayback != 0) {
@@ -241,51 +228,29 @@ contract VTokenBase is PoolShareToken {
             totalDebt += _creditLine;
         }
         uint256 _totalPayback = _profit + _actualPayback;
-        if (_profit != 0) {
-            // TODO: handleFee()
-        }
         if (_totalPayback < _creditLine) {
             token.transfer(_msgSender(), _creditLine - _totalPayback);
         } else if (_totalPayback > _creditLine) {
             token.transferFrom(_msgSender(), address(this), _totalPayback - _creditLine);
         }
+
         if (strategy[_msgSender()].debtRatio == 0 || stopEverything) {
-            // strategy.withdrawAll()
+            //TODO: strategy.withdrawAll()
         }
+        if (_profit != 0) {
+            _transferInterestFee(_profit);
+        }
+        // TODO: return debt amount or strategy.totalAssert ( if emergency) so that strategy can use this value.
     }
 
-    function withdrawAllFromStrategy(address _strategy) external onlyGovernor {}
-
+    /**
+    @dev debt above current debt limit
+    */
     function excessDebt(address _strategy) external view returns (uint256) {
         return _excessDebt(_strategy);
     }
 
-    function _excessDebt(address _strategy) internal view returns (uint256) {
-        uint256 _maxDebt = (strategy[_strategy].debtRatio * totalValue()) / MAX_BPS;
-        uint256 _currentDebt = strategy[_strategy].totalDebt;
-        return _currentDebt > _maxDebt ? (_currentDebt - _maxDebt) : 0;
-    }
-
-    function _availableCreditLimit(address _strategy) internal view returns (uint256) {
-        if (stopEverything) {
-            return 0;
-        }
-        uint256 _totalValue = totalValue();
-        uint256 _maxDebt = (strategy[_strategy].debtRatio * _totalValue) / MAX_BPS;
-        uint256 _currentDebt = strategy[_strategy].totalDebt;
-        if (_currentDebt >= _maxDebt) {
-            return 0;
-        }
-        uint256 _poolDebtLimit = (totalDebtRatio * _totalValue) / MAX_BPS;
-        if (totalDebt >= _poolDebtLimit) {
-            return 0;
-        }
-        uint256 _available = _maxDebt - _currentDebt;
-        _available = _min(_min(tokensHere(), _available), _poolDebtLimit - totalDebt);
-        _available = _min(strategy[_strategy].maxDebtPerRebalance, _available);
-        // TODO: strategy max debt per block * total block since last rebalance).
-        return _available;
-    }
+    function withdrawAllFromStrategy(address _strategy) external onlyGovernor {}
 
     /**
      * @dev Convert given ERC20 token to fee collector
@@ -331,10 +296,71 @@ contract VTokenBase is PoolShareToken {
         token.safeTransferFrom(_msgSender(), address(this), amount);
     }
 
+    /**
+    @dev when a strategy report loss, its debtRatio decrease to get fund back quickly.
+    */
+    function _reportLoss(address _strategy, uint256 _loss) internal {
+        uint256 _currentDebt = strategy[_strategy].totalDebt;
+        require(_currentDebt >= _loss, "loss-too-high");
+        strategy[_strategy].totalLoss += _loss;
+        strategy[_strategy].totalDebt -= _loss;
+        totalDebt -= _loss;
+        uint256 deltaDebtRatio = _min((_loss * MAX_BPS) / totalValue(), strategy[_strategy].debtRatio);
+        strategy[_strategy].debtRatio -= deltaDebtRatio;
+        totalDebtRatio -= deltaDebtRatio;
+    }
+
+    function _excessDebt(address _strategy) internal view returns (uint256) {
+        uint256 _currentDebt = strategy[_strategy].totalDebt;
+        if (stopEverything) {
+            return _currentDebt;
+        }
+        uint256 _maxDebt = (strategy[_strategy].debtRatio * totalValue()) / MAX_BPS;
+        return _currentDebt > _maxDebt ? (_currentDebt - _maxDebt) : 0;
+    }
+
+    /**
+    @dev available credit limit is calculated based on current debt of pool and strategy, current debt limit of pool and strategy. 
+    // credit available = min(pool's debt limit, strategy's debt limit, max debt per rebalance)
+    // when some strategy do not pay back outstanding debt, this impact creditline of other strategy if totalDebt of pool >= debtLimit of pool
+    */
+    function _availableCreditLimit(address _strategy) internal view returns (uint256) {
+        if (stopEverything) {
+            return 0;
+        }
+        uint256 _totalValue = totalValue();
+        uint256 _maxDebt = (strategy[_strategy].debtRatio * _totalValue) / MAX_BPS;
+        uint256 _currentDebt = strategy[_strategy].totalDebt;
+        if (_currentDebt >= _maxDebt) {
+            return 0;
+        }
+        uint256 _poolDebtLimit = (totalDebtRatio * _totalValue) / MAX_BPS;
+        if (totalDebt >= _poolDebtLimit) {
+            return 0;
+        }
+        uint256 _available = _maxDebt - _currentDebt;
+        _available = _min(_min(tokensHere(), _available), _poolDebtLimit - totalDebt);
+        _available = _min(strategy[_strategy].maxDebtPerRebalance, _available);
+        // TODO: strategy max debt per block * total block since last rebalance).
+        return _available;
+    }
+
+    /**
+    @dev strategy get interest fee in pool share token
+    */
+    function _transferInterestFee(uint256 _profit) internal {
+        //TODO: get pool token share price after removing the fee amount from totalValue()
+        uint256 fee = (_profit * strategy[_msgSender()].interestFee) / MAX_BPS;
+        fee = _calculateShares(convertTo18(fee));
+        if (fee != 0) {
+            _mint(_msgSender(), fee);
+        }
+    }
+
     function _withdrawCollateral(uint256 _amount) internal virtual {
         uint256 poolBalance = tokensHere();
         if (_amount > poolBalance) {
-           // TODO: withdraw from queue
+            // TODO: withdraw from queue
         }
     }
 
