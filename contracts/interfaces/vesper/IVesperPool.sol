@@ -17,6 +17,8 @@ interface IVesperPool is IERC20 {
 
     function multiTransfer(uint256[] memory) external returns (bool);
 
+    function excessDebt(address _strategy) external view returns (uint256);
+
     function permit(
         address,
         address,
@@ -28,6 +30,12 @@ interface IVesperPool is IERC20 {
     ) external;
 
     function rebalance() external;
+
+    function reportEarning(
+        uint256 _profit,
+        uint256 _loss,
+        uint256 _payback
+    ) external;
 
     function resetApproval() external;
 

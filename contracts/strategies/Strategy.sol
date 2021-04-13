@@ -22,6 +22,7 @@ abstract contract Strategy is IStrategy, Pausable {
     uint256 internal constant MAX_UINT_VALUE = type(uint256).max;
 
     constructor(address _pool, address _receiptToken) {
+        require(_pool != address(0), "pool-is-zero-address");
         UniMgr = new UniswapManager();
         pool = _pool;
         collateralToken = IERC20(IVesperPool(_pool).token());
@@ -92,8 +93,7 @@ abstract contract Strategy is IStrategy, Pausable {
      * @dev Deposit collateral token into lending pool.
      * @param _amount Amount of collateral token
      */
-    function deposit(uint256 _amount) public override live {
-        _updatePendingFee();
+    function deposit(uint256 _amount) external override onlyGuardians {
         _deposit(_amount);
     }
 
@@ -101,8 +101,8 @@ abstract contract Strategy is IStrategy, Pausable {
      * @notice Deposit all collateral token from pool to other lending pool.
      * Anyone can call it except when paused.
      */
-    function depositAll() external virtual live {
-        deposit(collateralToken.balanceOf(pool));
+    function depositAll() external override onlyGuardians {
+        _deposit(collateralToken.balanceOf(address(this)));
     }
 
     /**
@@ -110,7 +110,6 @@ abstract contract Strategy is IStrategy, Pausable {
      * @param _amount Amount of collateral token
      */
     function withdraw(uint256 _amount) external override onlyAuthorized {
-        _updatePendingFee();
         _withdraw(_amount);
     }
 
@@ -118,8 +117,18 @@ abstract contract Strategy is IStrategy, Pausable {
      * @dev Withdraw all collateral. No rebalance earning.
      * Governor only function, called when migrating strategy.
      */
+    //TODO: do we need this function or we want to achieve it via rebalance
     function withdrawAll() external override onlyGovernor {
         _withdrawAll();
+    }
+
+    /**
+     * @dev Rebalance profit, loss and investment of this strategy
+     */
+    function rebalance() external override onlyGuardians {
+        (uint256 _profit, uint256 _loss, uint256 _payback) = _generateReport();
+        IVesperPool(pool).reportEarning(_profit, _loss, _payback);
+        _reinvest();
     }
 
     /**
@@ -139,12 +148,6 @@ abstract contract Strategy is IStrategy, Pausable {
         }
     }
 
-    /// @dev Returns true if strategy can be upgraded.
-    // TODO get new logic in here
-    function isUpgradable() external view override returns (bool) {
-        return totalLocked() == 0;
-    }
-
     /// @dev Returns address of token correspond to collateral token
     //TODO Review this we may not need it
     function token() external view override returns (address) {
@@ -154,24 +157,26 @@ abstract contract Strategy is IStrategy, Pausable {
     /// @dev Check whether given token is reserved or not. Reserved tokens are not allowed to sweep.
     function isReservedToken(address _token) public view virtual override returns (bool);
 
-    /// @dev Returns total collateral locked here
-    // TODO I think this can be removed when we start writing logic for strategy
-    function totalLocked() public view virtual override returns (uint256);
-
     /**
-     * @notice Handle earned interest fee
-     * @dev Earned interest fee will go to the fee collector. We want fee to be in form of Vepseer
-     * pool tokens not in collateral tokens so we will deposit fee in Vesper pool and send vTokens
-     * to fee collactor.
-     * @param _fee Earned interest fee in collateral token.
+     *  @notice Generate report for current profit and loss. Also liquidate asset to payback
+     * excess debt, if any.
+     * @return _profit Calculate any realized profit and convert it to collateral, if not already.
+     * @return _loss Calculate any loss that strategy has made on investment. Convert into collateral token.
+     * @return _payback If strategy has any excess debt, we have to liquidate asset to payback excess debt.
      */
-    //TODO we will not be handling any type of fee in strategy
-    function _handleFee(uint256 _fee) internal virtual {
-        if (_fee != 0) {
-            IVesperPool(pool).deposit(_fee);
-            uint256 _feeInVTokens = IERC20(pool).balanceOf(address(this));
-            IERC20(pool).safeTransfer(IVesperPool(pool).feeCollector(), _feeInVTokens);
-        }
+    function _generateReport()
+        internal
+        virtual
+        returns (
+            uint256 _profit,
+            uint256 _loss,
+            uint256 _payback
+        )
+    {
+        uint256 _excessDebt = IVesperPool(pool).excessDebt(address(this));
+        _profit = _realizeProfit();
+        _loss = _realizeLoss();
+        _payback = _liquidate(_excessDebt);
     }
 
     /**
@@ -197,11 +202,35 @@ abstract contract Strategy is IStrategy, Pausable {
 
     function _withdraw(uint256 _amount) internal virtual;
 
-    function _approveToken(uint256 _amount) internal virtual;
-
-    function _updatePendingFee() internal virtual;
-
     function _withdrawAll() internal virtual;
 
-    function _claimReward() internal virtual;
+    function _approveToken(uint256 _amount) internal virtual;
+
+    // Some streateies may not have rewards hence they do not need this function.
+    //solhint-disable-next-line no-empty-blocks
+    function _claimReward() internal virtual {}
+
+    /**
+     * @notice Withdraw collateral to payback excess debt in pool.
+     * @param _excessDebt Excess debt of strategy in collateral token
+     * @return _payback amount in collateral token. Usually it is equal to excess debt.
+     */
+    function _liquidate(uint256 _excessDebt) internal virtual returns (uint256 _payback);
+
+    /**
+     * @notice Calculate earning and withdraw/convert it into collateral token.
+     * @return _profit in collateral token
+     */
+    function _realizeProfit() internal virtual returns (uint256 _profit);
+
+    // Some strategies may not need loss calculation, so making it optional
+    // solhint-disable-next-line no-empty-blocks
+    function _realizeLoss() internal virtual returns (uint256 _loss) {}
+
+    /**
+     * @notice Reinvest collateral.
+     * @dev Once we file report back in pool, we might have some collateral in hand
+     * which we want to reinvest aka deposit in lender/provider.
+     */
+    function _reinvest() internal virtual;
 }
