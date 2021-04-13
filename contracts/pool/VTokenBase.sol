@@ -45,8 +45,7 @@ contract VTokenBase is PoolShareToken {
         uint256 debtRatePerBlock,
         uint256 maxDebtPerRebalance
     );
-    event AddedGuardian(address indexed guardian);
-    event RemovedGuardian(address indexed guardian);
+
     uint256 public constant MAX_BPS = 10000;
 
     constructor(
@@ -91,16 +90,26 @@ contract VTokenBase is PoolShareToken {
     ///////////////////////////////////////////////////////////////////////////
 
     ////////////////////////////// Only Governor //////////////////////////////
-    function addGuardian(address _guardian) external onlyGovernor {
-        require(!guardians.contains(_guardian), "already-a-guardian");
-        guardians.add(_guardian);
-        emit AddedGuardian(_guardian);
+    /**
+     * @notice Add given address in provided address list.
+     * @dev Use it to add guardian in guardians list and to add address in feeWhiteList
+     * @param _listToUpdate address of AddressList contract.
+     * @param _addressToAdd address which we want to add in AddressList.
+     */
+    function addInList(address _listToUpdate, address _addressToAdd) external onlyGovernor {
+        require(!IAddressList(_listToUpdate).contains(_addressToAdd), "address-already-in-list");
+        require(IAddressList(_listToUpdate).add(_addressToAdd), "add-in-list-failed");
     }
 
-    function removeGuardian(address _guardian) external onlyGovernor {
-        require(guardians.contains(_guardian), "not-a-guardian");
-        guardians.remove(_guardian);
-        emit RemovedGuardian(_guardian);
+    /**
+     * @notice Remove given address in provided address list.
+     * @dev Use it to remove guardian from guardians list and to remove address from feeWhiteList
+     * @param _listToUpdate address of AddressList contract.
+     * @param _addressToRemove address which we want to remove from AddressList.
+     */
+    function removeFromList(address _listToUpdate, address _addressToRemove) external onlyGovernor {
+        require(IAddressList(_listToUpdate).contains(_addressToRemove), "address-not-in-list");
+        require(IAddressList(_listToUpdate).remove(_addressToRemove), "remove-from-list-failed");
     }
 
     /// @dev Add strategy
