@@ -1,5 +1,5 @@
 'use strict'
-const IVesperPool = artifacts.require('IVesperPool')
+const IVesperPool = artifacts.require('IVesperPoolTest')
 const CToken = artifacts.require('CToken')
 const TokenLike = artifacts.require('TokenLikeTest')
 
@@ -7,26 +7,6 @@ const mcdEthJoin = '0x2F0b23f53734252Bda2277357e97e1517d6B042A'
 const mcdWbtcJoin = '0xBF72Da2Bd84c5170618Fbe5914B0ECA9638d5eb5'
 const mcdLinkJoin = '0xdFccAf8fDbD2F4805C174f856a317765B49E4a50'
 const gemJoins = [mcdEthJoin, mcdWbtcJoin, mcdLinkJoin]
-
-/**
- *  Add gem join in Collateral Manager via Controller's executeTransaction
- *
- * @param {object} controller Controller contract instance
- * @param {string} target Collateral Manager contract address
- * @param {string[]} gemJoinArray Array of gem join address
- */
-async function addGemJoin(controller, target, gemJoinArray) {
-  const value = 0
-  const methodSignature = 'addGemJoin(address[])'
-  const data = web3.eth.abi.encodeParameter('address[]', gemJoinArray)
-  await controller.executeTransaction(target, value, methodSignature, data)
-}
-
-async function addFeeWhiteList(controller, target, address) {
-  const methodSignature = 'add(address)'
-  const data = web3.eth.abi.encodeParameter('address', address)
-  await controller.executeTransaction(target, 0, methodSignature, data)
-}
 
 /**
  *  Approve token in strategy via Controller's executeTransaction
@@ -41,16 +21,15 @@ async function approveToken(controller, target) {
 }
 
 /**
- *  Add balancing factors in Aave-Maker Strategy via Controller's executeTransaction
+ * Create strategy instance and set it in test class object
  *
- * @param {object} controller Controller contract instance
- * @param {string} target Aave-Maker Strategy contract address
- * @param {string[]} factors balancing factors in array [highWater, lowWater]
+ * @param {*} obj Updated test class object
  */
-async function updateBalancingFactor(controller, target, factors) {
-  const methodSignature = 'updateBalancingFactor(uint256,uint256)'
-  const data = web3.eth.abi.encodeParameters(['uint256', 'uint256'], factors)
-  await controller.executeTransaction(target, 0, methodSignature, data)
+async function addStrategiesInPool(obj) {
+  for (const strategy of obj.strategies) {
+    const blockNumber = (await web3.eth.getBlock('latest')).number
+    await obj.pool.addStrategy(strategy.instance.address, blockNumber + 1, ...Object.values(strategy.config))
+  }
 }
 
 /**
@@ -62,13 +41,10 @@ async function updateBalancingFactor(controller, target, factors) {
  */
 async function createMakerStrategy(obj, collateralManager, strategy) {
   obj.collateralManager = await collateralManager.new(obj.controller.address)
-  obj.strategy = await strategy.new(obj.controller.address, obj.pool.address, obj.collateralManager.address)
-  obj.vaultNum = await obj.strategy.vaultNum()
-  await Promise.all([
-    updateBalancingFactor(obj.controller, obj.strategy.address, [300, 250]),
-    addGemJoin(obj.controller, obj.collateralManager.address, gemJoins),
-    approveToken(obj.controller, obj.strategy.address),
-  ])
+  const strategyInstance = await strategy.new(obj.controller.address, obj.pool.address, obj.collateralManager.address)
+  obj.vaultNum = await strategyInstance.vaultNum()
+  await Promise.all([strategyInstance.updateBalancingFactor(300, 250), obj.collateralManager.addGemJoin(gemJoins)])
+  return strategyInstance
 }
 
 /**
@@ -80,36 +56,43 @@ async function createMakerStrategy(obj, collateralManager, strategy) {
  * @param {object} vPool Vesper pool instance
  */
 async function createVesperMakerStrategy(obj, collateralManager, strategy, vPool) {
-  obj.collateralManager = await collateralManager.new(obj.controller.address)
-  obj.strategy = await strategy.new(
-    obj.controller.address,
-    obj.pool.address,
-    obj.collateralManager.address,
-    vPool.address
-  )
-  obj.vaultNum = await obj.strategy.vaultNum()
-  await Promise.all([
-    updateBalancingFactor(obj.controller, obj.strategy.address, [300, 250]),
-    addGemJoin(obj.controller, obj.collateralManager.address, gemJoins),
-    approveToken(obj.controller, obj.strategy.address),
-  ])
-  const target = await vPool.feeWhiteList()
-  await addFeeWhiteList(obj.controller, target, obj.strategy.address)
+  obj.collateralManager = await collateralManager.new()
+  const strategyInstance = await strategy.new(obj.pool.address, obj.collateralManager.address, vPool.address)
+  obj.vaultNum = await strategyInstance.vaultNum()
+  await Promise.all([strategyInstance.updateBalancingFactor(300, 250), obj.collateralManager.addGemJoin(gemJoins)])
+  const feeList = await vPool.feeWhiteList()
+  await vPool.addInList(feeList, strategyInstance.address)
+  return strategyInstance
 }
 
 /**
  * Create strategy instance and set it in test class object
  *
  * @param {*} obj Test class object
- * @param {*} strategy Strategy artifact
+ * @param {*} [collateralManager] CollateralManager artifact
+ 
+ * @param {*} [vPool] Vesper pool object
  */
-async function createStrategy(obj, strategy) {
-  obj.strategy = await strategy.new(obj.controller.address, obj.pool.address)
+async function createStrategies(obj, collateralManager, vPool) {
+  for (const strategy of obj.strategies) {
+    const strategyType = strategy.type
+    if (strategyType === 'maker' || strategyType === 'compoundMaker') {
+      strategy.instance = await createMakerStrategy(obj, collateralManager, strategy.artifact)
+    } else if (strategyType === 'vesperMaker') {
+      strategy.instance = await createVesperMakerStrategy(obj, collateralManager, strategy.artifact, vPool)
+    } else {
+      strategy.instance = await strategy.artifact.new(obj.pool.address)
+    }
+    await strategy.instance.approveToken()
+    const strategyTokenAddress = await strategy.instance.token()
+    const strategyToken =
+      strategyType === 'vesperMaker' ? IVesperPool : strategyType.includes('compound') ? CToken : TokenLike
+    strategy.token = await strategyToken.at(strategyTokenAddress)
+  }
 }
 
 /**
  * @typedef {object} PoolData
- * @property {object} controller - Controller artifact
  * @property {object} pool - Pool artifact
  * @property {object} strategy - Strategy artifact
  * @property {object} [collateralManager] - CollateralManager artifact
@@ -123,41 +106,14 @@ async function createStrategy(obj, strategy) {
  * @param {PoolData} poolData Data for pool setup
  */
 async function setupVPool(obj, poolData) {
-  const {
-    controller,
-    pool,
-    strategy,
-    collateralManager,
-    feeCollector,
-    strategyType,
-    underlayStrategy,
-    vPool,
-    contracts,
-  } = poolData
-  const interestFee = '50000000000000000' // 5%
-  obj.feeCollector = feeCollector
-  obj.strategyType = strategyType
-  obj.underlayStrategy = underlayStrategy
-  obj.controller = contracts && contracts.controller ? contracts.controller : await controller.new()
-  obj.pool = await pool.new(obj.controller.address)
-  await obj.controller.addPool(obj.pool.address)
-  if (strategyType === 'maker' || strategyType === 'compoundMaker') {
-    await createMakerStrategy(obj, collateralManager, strategy)
-  } else if (strategyType === 'vesperMaker') {
-    await createVesperMakerStrategy(obj, collateralManager, strategy, vPool)
-  } else {
-    await createStrategy(obj, strategy)
-  }
-  await Promise.all([
-    obj.controller.updateStrategy(obj.pool.address, obj.strategy.address),
-    obj.controller.updateFeeCollector(obj.pool.address, feeCollector),
-    obj.controller.updateInterestFee(obj.pool.address, interestFee),
-  ])
-  const pTokenAddress = await obj.strategy.token()
-  const pToken = strategyType === 'vesperMaker' ? IVesperPool : strategyType.includes('compound') ? CToken : TokenLike
-  obj.providerToken = await pToken.at(pTokenAddress)
+  const {pool, strategies, collateralManager, vPool} = poolData
+  obj.strategies = strategies
+  obj.pool = await pool.new()
+  await obj.pool.createGuardianList()
+  await createStrategies(obj, collateralManager, vPool)
+  await addStrategiesInPool(obj)
   const collateralTokenAddress = await obj.pool.token()
   obj.collateralToken = await TokenLike.at(collateralTokenAddress)
 }
 
-module.exports = {addGemJoin, updateBalancingFactor, approveToken, setupVPool}
+module.exports = {approveToken, setupVPool}
