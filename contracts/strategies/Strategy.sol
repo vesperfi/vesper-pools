@@ -22,6 +22,7 @@ abstract contract Strategy is IStrategy, Pausable {
     uint256 internal constant MAX_UINT_VALUE = type(uint256).max;
 
     constructor(address _pool, address _receiptToken) {
+        require(_pool != address(0), "pool-is-zero-address");
         UniMgr = new UniswapManager();
         pool = _pool;
         collateralToken = IERC20(IVesperPool(_pool).token());
@@ -125,8 +126,7 @@ abstract contract Strategy is IStrategy, Pausable {
      * @dev Rebalance profit, loss and investment of this strategy
      */
     function rebalance() external override onlyGuardians {
-        uint256 _excessDebt = IVesperPool(pool).excessDebt(address(this));
-        (uint256 _profit, uint256 _loss, uint256 _payback) = _generateReport(_excessDebt);
+        (uint256 _profit, uint256 _loss, uint256 _payback) = _generateReport();
         IVesperPool(pool).reportEarning(_profit, _loss, _payback);
         _reinvest();
     }
@@ -160,12 +160,11 @@ abstract contract Strategy is IStrategy, Pausable {
     /**
      *  @notice Generate report for current profit and loss. Also liquidate asset to payback
      * excess debt, if any.
-     * @param _excessDebt Over limit debt of strategy
      * @return _profit Calculate any realized profit and convert it to collateral, if not already.
      * @return _loss Calculate any loss that strategy has made on investment. Convert into collateral token.
      * @return _payback If strategy has any excess debt, we have to liquidate asset to payback excess debt.
      */
-    function _generateReport(uint256 _excessDebt)
+    function _generateReport()
         internal
         virtual
         returns (
@@ -174,6 +173,7 @@ abstract contract Strategy is IStrategy, Pausable {
             uint256 _payback
         )
     {
+        uint256 _excessDebt = IVesperPool(pool).excessDebt(address(this));
         _profit = _realizeProfit();
         _loss = _realizeLoss();
         _payback = _liquidate(_excessDebt);
@@ -210,13 +210,27 @@ abstract contract Strategy is IStrategy, Pausable {
     //solhint-disable-next-line no-empty-blocks
     function _claimReward() internal virtual {}
 
+    /**
+     * @notice Withdraw collateral to payback excess debt in pool.
+     * @param _excessDebt Excess debt of strategy in collateral token
+     * @return _payback amount in collateral token. Usually it is equal to excess debt.
+     */
     function _liquidate(uint256 _excessDebt) internal virtual returns (uint256 _payback);
 
+    /**
+     * @notice Calculate earning and withdraw/convert it into collateral token.
+     * @return _profit in collateral token
+     */
     function _realizeProfit() internal virtual returns (uint256 _profit);
 
     // Some strategies may not need loss calculation, so making it optional
     // solhint-disable-next-line no-empty-blocks
     function _realizeLoss() internal virtual returns (uint256 _loss) {}
 
+    /**
+     * @notice Reinvest collateral.
+     * @dev Once we file report back in pool, we might have some collateral in hand
+     * which we want to reinvest aka deposit in lender/provider.
+     */
     function _reinvest() internal virtual;
 }

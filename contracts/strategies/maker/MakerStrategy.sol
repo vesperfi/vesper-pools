@@ -63,7 +63,6 @@ abstract contract MakerStrategy is Strategy {
 
     /**
      * @dev Rebalance earning and withdraw all collateral.
-     * Controller only function, called when migrating strategy.
      */
     function withdrawAllWithEarn() external onlyGovernor {
         _realizeProfit();
@@ -156,7 +155,9 @@ abstract contract MakerStrategy is Strategy {
     }
 
     function _deposit(uint256 _amount) internal override {
-        cm.depositCollateral(vaultNum, _amount);
+        if (_amount != 0) {
+            cm.depositCollateral(vaultNum, _amount);
+        }
     }
 
     function _moveDaiToMaker(uint256 _amount) internal {
@@ -242,8 +243,13 @@ abstract contract MakerStrategy is Strategy {
             cm.withdrawCollateral(vaultNum, _collateralNeeded);
             UniMgr.ROUTER().swapExactTokensForTokens(_collateralNeeded, 1, _path, address(this), block.timestamp + 30);
             cm.payback(vaultNum, IERC20(DAI).balanceOf(address(this)));
+            // TODO review this report file. Also need to take decision on realizeLoss function
             // Report loss back to the pool
             IVesperPool(pool).reportEarning(0, _collateralNeeded, 0);
+            // After loss report we might get more asset to invest from pool
+            if (collateralToken.balanceOf(address(this)) != 0) {
+                _reinvest();
+            }
         }
     }
 
