@@ -49,7 +49,7 @@ abstract contract PoolShareToken is ERC20, Pausable, ReentrancyGuard, Governed {
             chainId := chainid()
         }
         token = IERC20(_token);
-        IAddressListFactory factory = IAddressListFactory(0xD57b41649f822C51a73C44Ba0B3da4A880aF0029);
+        IAddressListFactory factory = IAddressListFactory(0xded8217De022706A191eE7Ee0Dc9df1185Fb5dA3);
         IAddressList _feeWhiteList = IAddressList(factory.createList());
         feeWhiteList = _feeWhiteList;
         domainSeparator = keccak256(
@@ -80,12 +80,12 @@ abstract contract PoolShareToken is ERC20, Pausable, ReentrancyGuard, Governed {
 
     /**
      * @notice Update withdraw fee for this pool
-     * @dev Format: 1e16 = 1% fee
+     * @dev Format: 1500 = 15% fee, 100 = 1%
      * @param _newWithdrawFee new withdraw fee
      */
     function updateWithdrawFee(uint256 _newWithdrawFee) external onlyGovernor {
         require(feeCollector != address(0), "fee-collector-not-set");
-        require(_newWithdrawFee <= 1e18, "withdraw-fee-limit-reached");
+        require(_newWithdrawFee <= 10000, "withdraw-fee-limit-reached");
         require(withdrawFee != _newWithdrawFee, "same-withdraw-fee");
         emit UpdatedWithdrawFee(withdrawFee, _newWithdrawFee);
         withdrawFee = _newWithdrawFee;

@@ -28,7 +28,7 @@ contract VTokenBase is PoolShareToken {
     address[] public strategies;
     address[] public withdrawQueue;
 
-    IAddressList public immutable guardians;
+    IAddressList public guardians;
     address internal constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     event StrategyAdded(
         address indexed strategy,
@@ -51,14 +51,8 @@ contract VTokenBase is PoolShareToken {
     constructor(
         string memory name,
         string memory symbol,
-        address _token
-    ) PoolShareToken(name, symbol, _token) {
-        governor = msg.sender;
-        IAddressListFactory _factory = IAddressListFactory(0xD57b41649f822C51a73C44Ba0B3da4A880aF0029);
-        IAddressList _guardians = IAddressList(_factory.createList());
-        _guardians.add(msg.sender);
-        guardians = _guardians;
-    }
+        address _token // solhint-disable-next-line no-empty-blocks
+    ) PoolShareToken(name, symbol, _token) {}
 
     modifier onlyGuardian() {
         require(guardians.contains(_msgSender()), "caller-is-not-a-guardian");
@@ -90,6 +84,20 @@ contract VTokenBase is PoolShareToken {
     ///////////////////////////////////////////////////////////////////////////
 
     ////////////////////////////// Only Governor //////////////////////////////
+
+    /**
+     * @notice Create guardian list
+     * @dev Create list and add governor into the list.
+     * NOTE: Any function with onlyGuardian modifier will not work until this function is called.
+     */
+    function createGuardianList() external onlyGovernor {
+        require(address(guardians) == address(0), "guardian-list-already-created");
+        IAddressListFactory _factory = IAddressListFactory(0xded8217De022706A191eE7Ee0Dc9df1185Fb5dA3);
+        IAddressList _guardians = IAddressList(_factory.createList());
+        _guardians.add(governor);
+        guardians = _guardians;
+    }
+
     /**
      * @notice Add given address in provided address list.
      * @dev Use it to add guardian in guardians list and to add address in feeWhiteList
@@ -267,6 +275,7 @@ contract VTokenBase is PoolShareToken {
      */
     function sweepERC20(address _token) external virtual onlyGuardian {
         require(_token != address(token), "not-allowed-to-sweep");
+        require(feeCollector != address(0), "fee-collector-not-set");
         IERC20(_token).transfer(feeCollector, IERC20(_token).balanceOf(address(this)));
     }
 
