@@ -19,6 +19,7 @@ abstract contract PoolShareToken is ERC20, Pausable, ReentrancyGuard, Governed {
     IERC20 public immutable token;
     IAddressList public immutable feeWhiteList;
     address public poolRewards;
+    uint256 public constant MAX_BPS = 10000;
     address public feeCollector; // fee collector address
     uint256 public withdrawFee; // withdraw fee for this pool
 
@@ -192,16 +193,11 @@ abstract contract PoolShareToken is ERC20, Pausable, ReentrancyGuard, Governed {
      * @notice Get price per share
      * @dev Return value will be in token defined decimals.
      */
-    function getPricePerShare() external view returns (uint256) {
-        if (totalSupply() == 0) {
+    function pricePerShare() public view returns (uint256) {
+        if (totalSupply() == 0 || totalValue() == 0) {
             return convertFrom18(1e18);
         }
         return (totalValue() * 1e18) / totalSupply();
-    }
-
-    /// @dev Convert to 18 decimals from token defined decimals. Default no conversion.
-    function convertTo18(uint256 amount) public view virtual returns (uint256) {
-        return amount;
     }
 
     /// @dev Convert from 18 decimals to token defined decimals. Default no conversion.
@@ -218,23 +214,21 @@ abstract contract PoolShareToken is ERC20, Pausable, ReentrancyGuard, Governed {
      * @dev Returns sum of token locked in other contracts and token stored in the pool.
      * Default tokensHere. It will be in token defined decimals.
      */
-    function totalValue() public view virtual returns (uint256) {
-        return tokensHere();
-    }
+    function totalValue() public view virtual returns (uint256);
 
     /**
      * @dev Hook that is called just before burning tokens. To be used i.e. if
      * collateral is stored in a different contract and needs to be withdrawn.
      * @param share Pool share in 18 decimals
      */
-    function _beforeBurning(uint256 share) internal virtual {}
+    function _beforeBurning(uint256 share) internal virtual returns (uint256) {}
 
     /**
      * @dev Hook that is called just after burning tokens. To be used i.e. if
      * collateral stored in a different/this contract needs to be transferred.
      * @param amount Collateral amount in collateral token defined decimals.
      */
-    function _afterBurning(uint256 amount) internal virtual {}
+    function _afterBurning(uint256 amount) internal virtual returns (uint256) {}
 
     /**
      * @dev Hook that is called just before minting new tokens. To be used i.e.
@@ -253,19 +247,16 @@ abstract contract PoolShareToken is ERC20, Pausable, ReentrancyGuard, Governed {
     /**
      * @dev Calculate shares to mint based on the current share price and given amount.
      * @param amount Collateral amount in collateral token defined decimals.
+     * @return share amount in 18 decimal
      */
     function _calculateShares(uint256 amount) internal view returns (uint256) {
         require(amount != 0, "amount is 0");
-
-        uint256 _totalSupply = totalSupply();
-        uint256 _totalValue = convertTo18(totalValue());
-        uint256 shares = (_totalSupply == 0 || _totalValue == 0) ? amount : (amount * _totalSupply) / _totalValue;
-        return shares;
+        return (amount * 1e18) / pricePerShare();
     }
 
     /// @dev Deposit incoming token and mint pool token i.e. shares.
     function _deposit(uint256 amount) internal whenNotPaused {
-        uint256 shares = _calculateShares(convertTo18(amount));
+        uint256 shares = _calculateShares(amount);
         _beforeMinting(amount);
         _mint(_msgSender(), shares);
         _afterMinting(amount);
@@ -275,7 +266,7 @@ abstract contract PoolShareToken is ERC20, Pausable, ReentrancyGuard, Governed {
     /// @dev Handle withdraw fee calculation and fee transfer to fee collector.
     function _handleFee(uint256 shares) internal returns (uint256 _sharesAfterFee) {
         if (withdrawFee != 0) {
-            uint256 _fee = (shares * withdrawFee) / 1e18;
+            uint256 _fee = (shares * withdrawFee) / MAX_BPS;
             _sharesAfterFee = shares - _fee;
             _transfer(_msgSender(), feeCollector, _fee);
         } else {
@@ -300,24 +291,31 @@ abstract contract PoolShareToken is ERC20, Pausable, ReentrancyGuard, Governed {
     }
 
     /// @dev Burns shares and returns the collateral value, after fee, of those.
-    function _withdraw(uint256 shares) internal whenNotShutdown {
-        require(shares != 0, "share is 0");
-        _beforeBurning(shares);
-        uint256 sharesAfterFee = _handleFee(shares);
-        uint256 amount = convertFrom18((sharesAfterFee * convertTo18(totalValue())) / totalSupply());
-
+    function _withdraw(uint256 _shares) internal whenNotShutdown {
+        require(_shares != 0, "share is 0");
+        // withdraw amount for the shares before fee
+        uint256 _amountWithdrawn = _beforeBurning(_shares);
+        // recalculate proportional share on actual amount withdrawn
+        uint _proportionalShares = _calculateShares(_amountWithdrawn);
+        if (_proportionalShares > _shares) {
+            _proportionalShares = _shares;
+        }
+        uint256 sharesAfterFee = _handleFee(_proportionalShares);
         _burn(_msgSender(), sharesAfterFee);
-        _afterBurning(amount);
-        emit Withdraw(_msgSender(), shares, amount);
+        _afterBurning(_amountWithdrawn);
+        emit Withdraw(_msgSender(), _proportionalShares, _amountWithdrawn);
     }
 
     /// @dev Burns shares and returns the collateral value of those.
-    function _withdrawByStrategy(uint256 shares) internal {
-        require(shares != 0, "Withdraw must be greater than 0");
-        _beforeBurning(shares);
-        uint256 amount = convertFrom18((shares * convertTo18(totalValue())) / totalSupply());
-        _burn(_msgSender(), shares);
-        _afterBurning(amount);
-        emit Withdraw(_msgSender(), shares, amount);
+    function _withdrawByStrategy(uint256 _shares) internal {
+        require(_shares != 0, "Withdraw must be greater than 0");
+        uint256 _amountWithdrawn = _beforeBurning(_shares);
+         uint _proportionalShares = _calculateShares(_amountWithdrawn);
+        if (_proportionalShares > _shares) {
+            _proportionalShares = _shares;
+        }
+        _burn(_msgSender(), _proportionalShares);
+        _afterBurning(_amountWithdrawn);
+        emit Withdraw(_msgSender(), _proportionalShares, _amountWithdrawn);
     }
 }

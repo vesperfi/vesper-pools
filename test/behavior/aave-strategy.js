@@ -67,7 +67,7 @@ function shouldBehaveLikeStrategy(poolName, collateralName, pTokenName, accounts
         fee = await strategy.pendingFee()
         expect(fee).to.be.bignumber.equal('0', 'fee should be zero')
 
-        const sharePrice1 = await pool.getPricePerShare()
+        const sharePrice1 = await pool.pricePerShare()
         // Time travel to trigger some earning
         await time.increase(2 * 60 * 60)
         await deposit(pool, collateralToken, 2, user1)
@@ -75,7 +75,7 @@ function shouldBehaveLikeStrategy(poolName, collateralName, pTokenName, accounts
         fee = await strategy.pendingFee()
         expect(fee).to.be.bignumber.gt('0', 'fee should be > 0')
 
-        let sharePrice2 = await pool.getPricePerShare()
+        let sharePrice2 = await pool.pricePerShare()
         expect(sharePrice2).to.be.bignumber.gt(sharePrice1, 'share price should increase')
         // Time travel to trigger some earning
         await time.increase(60 * 60)
@@ -85,7 +85,7 @@ function shouldBehaveLikeStrategy(poolName, collateralName, pTokenName, accounts
         const updatedFee = await strategy.pendingFee()
         expect(updatedFee).to.be.bignumber.gt(fee, 'updated fee should be greater than previous fee')
         // When all tokens are burnt, price will be back to 1.0
-        sharePrice2 = await pool.getPricePerShare()
+        sharePrice2 = await pool.pricePerShare()
         expect(sharePrice2).to.be.bignumber.equal(convertFrom18(DECIMAL), 'share price should 1.0')
 
         // We still have some pending fee to be converted into collateral, which will increase totalValue
@@ -99,12 +99,12 @@ function shouldBehaveLikeStrategy(poolName, collateralName, pTokenName, accounts
         await deposit(pool, collateralToken, 2, user2)
         await pool.rebalance()
 
-        const pricePerShare = await pool.getPricePerShare()
+        const pricePerShare = await pool.pricePerShare()
         const vPoolBalanceBefore = await pool.balanceOf(feeCollector)
 
         // Time travel 10 hours to earn some aEth
         await time.increase(10 * 60 * 60)
-        const pricePerShare2 = await pool.getPricePerShare()
+        const pricePerShare2 = await pool.pricePerShare()
         expect(pricePerShare2).to.be.bignumber.gt(pricePerShare, 'PricePerShare should be higher after time travel')
 
         await pool.withdraw(await pool.balanceOf(user2), {from: user2})
@@ -136,7 +136,7 @@ function shouldBehaveLikeStrategy(poolName, collateralName, pTokenName, accounts
         const vPoolBalanceBefore = await pool.balanceOf(user4)
 
         const totalSupply = await pool.totalSupply()
-        const price = await pool.getPricePerShare()
+        const price = await pool.pricePerShare()
         const withdrawAmount = totalSupply.mul(price).div(DECIMAL).toString()
 
         const target = strategy.address

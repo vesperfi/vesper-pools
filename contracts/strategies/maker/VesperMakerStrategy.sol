@@ -20,7 +20,7 @@ abstract contract VesperMakerStrategy is MakerStrategy {
 
     function _getDaiBalance() internal view override returns (uint256) {
         return
-            (IVesperPool(receiptToken).getPricePerShare() * IVesperPool(receiptToken).balanceOf(address(this))) / 1e18;
+            (IVesperPool(receiptToken).pricePerShare() * IVesperPool(receiptToken).balanceOf(address(this))) / 1e18;
     }
 
     function _depositDaiToLender(uint256 _amount) internal override {
@@ -28,7 +28,7 @@ abstract contract VesperMakerStrategy is MakerStrategy {
     }
 
     function _withdrawDaiFromLender(uint256 _amount) internal override {
-        uint256 _vAmount = (_amount * 1e18) / IVesperPool(receiptToken).getPricePerShare();
+        uint256 _vAmount = (_amount * 1e18) / IVesperPool(receiptToken).pricePerShare();
         IVesperPool(receiptToken).withdrawByStrategy(_vAmount);
     }
 
