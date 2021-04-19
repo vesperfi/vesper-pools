@@ -49,7 +49,7 @@ interface IVesperPool is IERC20 {
 
     function feeCollector() external view returns (address);
 
-    function getPricePerShare() external view returns (uint256);
+    function pricePerShare() external view returns (uint256);
 
     function token() external view returns (address);
 

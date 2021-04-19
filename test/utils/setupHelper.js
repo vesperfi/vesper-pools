@@ -66,6 +66,20 @@ async function createVesperMakerStrategy(obj, collateralManager, strategy, vPool
 }
 
 /**
+ * Update withdrawqueue of strategy
+ *
+ * @param strategies Test class object
+ * @param pool
+ */
+ async function updateWithdrawQueue(strategies, pool) {
+  const addresses = []
+ for (const strategy of strategies) {
+   addresses.push(strategy.instance.address)
+ }
+ await pool.updateWithdrawQueue(addresses)
+}
+
+/**
  * Create strategy instance and set it in test class object
  *
  * @param {*} obj Test class object
@@ -112,6 +126,7 @@ async function setupVPool(obj, poolData) {
   await obj.pool.createGuardianList()
   await createStrategies(obj, collateralManager, vPool)
   await addStrategiesInPool(obj)
+  await updateWithdrawQueue(obj.strategies, obj.pool)
   const collateralTokenAddress = await obj.pool.token()
   obj.collateralToken = await TokenLike.at(collateralTokenAddress)
 }

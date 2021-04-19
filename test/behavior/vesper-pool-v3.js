@@ -122,7 +122,7 @@ async function shouldBehaveLikePool(poolName, collateralName, accounts) {
     describe(`Withdraw ${collateralName} from ${poolName} pool`, function () {
       let depositAmount
       beforeEach(async function () {
-        depositAmount = await deposit(10, user1)
+        depositAmount = await deposit(20, user1)
       })
       it(`Should withdraw all ${collateralName} before rebalance`, async function () {
         const withdrawAmount = await pool.balanceOf(user1)
@@ -180,29 +180,51 @@ async function shouldBehaveLikePool(poolName, collateralName, accounts) {
         expect(collateralBalance).to.be.bignumber.gt(collateralBalanceBefore, 'Withdraw failed')
       })
 
-      it(`Should withdraw all ${collateralName} after rebalance`, async function () {
-        depositAmount = await deposit(10, user1)
+      it.only(`Should withdraw all ${collateralName} after rebalance`, async function () {
+        depositAmount = await deposit(10, user2)
         const dust = DECIMAL18.div(new BN('100')) // Dust is less than 1e16
         await rebalance(strategies)
-        let withdrawAmount = await pool.balanceOf(user1)
+        console.log('############   after rebalance ############')
+        let o = await pool.tokensHere()
+        console.log('tokensHere after rebalance', o.toString())
+        o = await pool.totalSupply()
+        console.log('totalSupply after rebalance', o.toString())
+        const withdrawAmount = await pool.balanceOf(user2)
+        o = await pool.totalDebt()
+        console.log('total debt', o.toString())
         console.log('withdrawAmount', withdrawAmount.toString())
-        await pool.withdraw(withdrawAmount, {from: user1})
-        withdrawAmount = await pool.balanceOf(user1)
-        console.log('withdrawAmount', withdrawAmount.toString())
-        return Promise.all([
-          pool.totalDebt(),
-          pool.totalSupply(),
-          pool.totalValue(),
-          pool.balanceOf(user1),
-          collateralToken.balanceOf(user1),
-        ]).then(function ([totalDebt, totalSupply, totalValue, vPoolBalance, collateralBalance]) {
-          // Due to rounding some dust, 10000 wei, might left in case of Compound strategy
-          expect(totalDebt).to.be.bignumber.lte(dust, `${collateralName} locked is wrong`)
-          expect(totalSupply).to.be.bignumber.equal('0', `Total supply of ${poolName} is wrong`)
-          expect(totalValue).to.be.bignumber.lte(dust, `Total value of ${poolName} is wrong`)
-          expect(vPoolBalance).to.be.bignumber.equal('0', `${poolName} balance of user is wrong`)
-          expect(collateralBalance).to.be.bignumber.gte(depositAmount, `${collateralName} balance of user is wrong`)
-        })
+        o = await collateralToken.balanceOf(user2)
+        console.log('collateralBalanceBefore', o.toString())
+        o = await collateralToken.balanceOf(strategies[0].instance.address)
+        console.log('collateroal balance of strategy', o.toString())
+        await pool.withdraw(withdrawAmount, {from: user2})
+        console.log('############   after withdraw ############')
+        o = await collateralToken.balanceOf(strategies[0].instance.address)
+        console.log('collateroal balance of strategy', o.toString())
+        o = await collateralToken.balanceOf(user2)
+        console.log('collateralBalanceAfter', o.toString())
+        o = await pool.totalDebt()
+        console.log('total debt', o.toString())
+        o = await pool.totalSupply()
+        console.log('totalSupply', o.toString())
+        o = await pool.tokensHere()
+        console.log('tokensHere', o.toString())
+        o = await pool.balanceOf(user2)
+        console.log('remaining pool share token of user', o.toString())
+      //   return Promise.all([
+      //     pool.totalDebt(),
+      //     pool.totalSupply(),
+      //     pool.totalValue(),
+      //     pool.balanceOf(user1),
+      //     collateralToken.balanceOf(user1),
+      //   ]).then(function ([totalDebt, totalSupply, totalValue, vPoolBalance, collateralBalance]) {
+      //     // Due to rounding some dust, 10000 wei, might left in case of Compound strategy
+      //     expect(totalDebt).to.be.bignumber.lte(dust, `${collateralName} locked is wrong`)
+      //     expect(totalSupply).to.be.bignumber.equal('0', `Total supply of ${poolName} is wrong`)
+      //     expect(totalValue).to.be.bignumber.lte(dust, `Total value of ${poolName} is wrong`)
+      //     expect(vPoolBalance).to.be.bignumber.equal('0', `${poolName} balance of user is wrong`)
+      //     expect(collateralBalance).to.be.bignumber.gte(depositAmount, `${collateralName} balance of user is wrong`)
+      //   })
       })
     })
 
@@ -238,7 +260,7 @@ async function shouldBehaveLikePool(poolName, collateralName, accounts) {
     // describe(`Price per share of ${poolName} pool`, function () {
     //   it.only('Should increase pool share value', async function () {
     //     await deposit(20, user1)
-    //     const price1 = await pool.getPricePerShare()
+    //     const price1 = await pool.pricePerShare()
     //     await rebalance(strategies)
     //     await executeIfExist(providerToken.rebalance)
 
@@ -249,7 +271,7 @@ async function shouldBehaveLikePool(poolName, collateralName, accounts) {
     //     await pool.rebalance()
     //     await executeIfExist(providerToken.rebalance)
 
-    //     const price2 = await pool.getPricePerShare()
+    //     const price2 = await pool.pricePerShare()
     //     expect(price2).to.be.bignumber.gt(price1, `${poolName} share value should increase`)
 
     //     // Time travel to generate earning
@@ -262,7 +284,7 @@ async function shouldBehaveLikePool(poolName, collateralName, accounts) {
     //     await executeIfExist(providerToken.rebalance)
     //     await pool.rebalance()
     //     await executeIfExist(providerToken.rebalance)
-    //     const price3 = await pool.getPricePerShare()
+    //     const price3 = await pool.pricePerShare()
     //     expect(price3).to.be.bignumber.gt(price2, `${poolName} share value should increase`)
     //   })
     // })

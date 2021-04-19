@@ -46,8 +46,6 @@ contract VTokenBase is PoolShareToken {
         uint256 maxDebtPerRebalance
     );
 
-    uint256 public constant MAX_BPS = 10000;
-
     constructor(
         string memory name,
         string memory symbol,
@@ -286,32 +284,61 @@ contract VTokenBase is PoolShareToken {
 
     /**
      * @dev After burning hook, it will be called during withdrawal process.
-     * It will withdraw collateral from strategy and transfer it to user.
      */
-    function _afterBurning(uint256 _amount) internal override {
-        _withdrawCollateral(_amount);
-        uint256 balanceHere = tokensHere();
-        _amount = balanceHere < _amount ? balanceHere : _amount;
-        // TODO: if withdraw < amount , burn share proportionally.
+    function _afterBurning(uint256 _amount) internal override returns (uint256) {
         token.safeTransfer(_msgSender(), _amount);
+        return _amount;
+    }
+
+    function _withdrawCollateral(uint256 _amount) internal virtual {
+        // Withdraw amount from queue
+        uint256 _debt;
+        uint256 _balanceAfter;
+        uint256 _balanceBefore;
+        uint256 _amountWithdrawn;
+        uint256 _amountNeeded = _amount;
+        uint256 _totalAmountWithdrawn;
+        for (uint256 i; i < withdrawQueue.length; i++) {
+            _debt = strategy[withdrawQueue[i]].totalDebt;
+            if (_debt == 0) {
+                continue;
+            }
+            if (_amountNeeded > _debt) {
+                // Should not withraw more than current debt of strategy.
+                _amountNeeded = _debt;
+            }
+            _balanceBefore = tokensHere();
+            IStrategy(withdrawQueue[i]).withdraw(_amountNeeded);
+            _balanceAfter = tokensHere();
+            _amountWithdrawn = _balanceAfter - _balanceBefore;
+            // Adjusting totalDebt. Assuming that during next reportEarning(), strategy will report loss if amountWithdrawn < _amountNeeded
+            strategy[withdrawQueue[i]].totalDebt -= _amountWithdrawn;
+            totalDebt -= _amountWithdrawn;
+            _totalAmountWithdrawn += _amountWithdrawn;
+            if (_totalAmountWithdrawn >= _amount) {
+                // withdraw done
+                break;
+            }
+            _amountNeeded = _amount - _totalAmountWithdrawn;
+        }
     }
 
     /**
      * @dev Before burning hook.
-     * Some actions, like resurface(), can impact share price and has to be called before withdraw.
+     * withdraw amount from strategies
      */
-    // TODO Try to remove this hook from strategy
-    function _beforeBurning(
-        uint256 /* shares */
-    ) internal override {
-        for (uint256 i; i < strategies.length; i++) {
-            IStrategy _strategy = IStrategy(strategies[i]);
-            _strategy.beforeWithdraw();
+    function _beforeBurning(uint256 _share) internal override returns (uint256 actualWithdrawn) {
+        uint256 _amount = (_share * pricePerShare()) / 1e18;
+        uint256 _balanceNow = tokensHere();
+        if (_amount > _balanceNow) {
+            _withdrawCollateral(_amount - _balanceNow);
+            _balanceNow = tokensHere();
         }
+        actualWithdrawn = _balanceNow < _amount ? _balanceNow : _amount;
     }
 
-    function _beforeMinting(uint256 amount) internal override {
-        token.safeTransferFrom(_msgSender(), address(this), amount);
+    function _beforeMinting(uint256 _amount) internal override {
+        token.safeTransferFrom(_msgSender(), address(this), _amount);
     }
 
     /**
@@ -323,9 +350,9 @@ contract VTokenBase is PoolShareToken {
         strategy[_strategy].totalLoss += _loss;
         strategy[_strategy].totalDebt -= _loss;
         totalDebt -= _loss;
-        uint256 deltaDebtRatio = _min((_loss * MAX_BPS) / totalValue(), strategy[_strategy].debtRatio);
-        strategy[_strategy].debtRatio -= deltaDebtRatio;
-        totalDebtRatio -= deltaDebtRatio;
+        uint256 _deltaDebtRatio = _min((_loss * MAX_BPS) / totalValue(), strategy[_strategy].debtRatio);
+        strategy[_strategy].debtRatio -= _deltaDebtRatio;
+        totalDebtRatio -= _deltaDebtRatio;
     }
 
     function _excessDebt(address _strategy) internal view returns (uint256) {
@@ -368,17 +395,10 @@ contract VTokenBase is PoolShareToken {
     */
     function _transferInterestFee(uint256 _profit) internal {
         //TODO: get pool token share price after removing the fee amount from totalValue()
-        uint256 fee = (_profit * strategy[_msgSender()].interestFee) / MAX_BPS;
-        fee = _calculateShares(convertTo18(fee));
-        if (fee != 0) {
-            _mint(_msgSender(), fee);
-        }
-    }
-
-    function _withdrawCollateral(uint256 _amount) internal virtual {
-        uint256 poolBalance = tokensHere();
-        if (_amount > poolBalance) {
-            // TODO: withdraw from queue
+        uint256 _fee = (_profit * strategy[_msgSender()].interestFee) / MAX_BPS;
+        _fee = _calculateShares(_fee);
+        if (_fee != 0) {
+            _mint(_msgSender(), _fee);
         }
     }
 

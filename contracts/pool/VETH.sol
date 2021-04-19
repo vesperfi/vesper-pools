@@ -21,26 +21,20 @@ contract VETH is VTokenBase {
     }
 
     /// @dev Burns tokens/shares and returns the ETH value, after fee, of those.
-    function withdrawETH(uint256 shares) external whenNotShutdown nonReentrant {
-        require(shares != 0, "Withdraw must be greater than 0");
-        _beforeBurning(shares);
-        uint256 sharesAfterFee = _handleFee(shares);
-        uint256 amount = (sharesAfterFee * totalValue()) / totalSupply();
-        _burn(_msgSender(), sharesAfterFee);
+    function withdrawETH(uint256 _shares) external whenNotShutdown nonReentrant {
+        _withdraw(_shares);
+    }
 
-        uint256 balanceHere = tokensHere();
-        if (balanceHere < amount) {
-            _withdrawCollateral(amount - balanceHere);
-            balanceHere = tokensHere();
-            amount = balanceHere < amount ? balanceHere : amount;
-        }
-        // Unwrap WETH to ETH
+    /**
+     * @dev After burning hook, it will be called during withdrawal process.
+     * It will withdraw collateral from strategy and transfer it to user.
+     */
+    function _afterBurning(uint256 _amount) internal override returns (uint256) {
         shouldDeposit = false;
-        weth.withdraw(amount);
+        weth.withdraw(_amount);
         shouldDeposit = true;
-        payable(_msgSender()).transfer(amount);
-
-        emit Withdraw(_msgSender(), shares, amount);
+        payable(_msgSender()).transfer(_amount);
+        return _amount;
     }
 
     /**

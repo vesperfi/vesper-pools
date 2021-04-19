@@ -19,6 +19,7 @@ abstract contract PoolShareToken is ERC20, Pausable, ReentrancyGuard, Governed {
     IERC20 public immutable token;
     IAddressList public immutable feeWhiteList;
     address public poolRewards;
+    uint256 public constant MAX_BPS = 10000;
     address public feeCollector; // fee collector address
     uint256 public withdrawFee; // withdraw fee for this pool
 
@@ -93,39 +94,39 @@ abstract contract PoolShareToken is ERC20, Pausable, ReentrancyGuard, Governed {
 
     /**
      * @notice Deposit ERC20 tokens and receive pool shares depending on the current share price.
-     * @param amount ERC20 token amount.
+     * @param _amount ERC20 token amount.
      */
-    function deposit(uint256 amount) external virtual nonReentrant whenNotPaused {
-        _deposit(amount);
+    function deposit(uint256 _amount) external virtual nonReentrant whenNotPaused {
+        _deposit(_amount);
     }
 
     /**
      * @notice Deposit ERC20 tokens with permit aka gasless approval.
-     * @param amount ERC20 token amount.
-     * @param deadline The time at which signature will expire
-     * @param v The recovery byte of the signature
-     * @param r Half of the ECDSA signature pair
-     * @param s Half of the ECDSA signature pair
+     * @param _amount ERC20 token amount.
+     * @param _deadline The time at which signature will expire
+     * @param _v The recovery byte of the signature
+     * @param _r Half of the ECDSA signature pair
+     * @param _s Half of the ECDSA signature pair
      */
     function depositWithPermit(
-        uint256 amount,
-        uint256 deadline,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
+        uint256 _amount,
+        uint256 _deadline,
+        uint8 _v,
+        bytes32 _r,
+        bytes32 _s
     ) external virtual nonReentrant whenNotPaused {
-        IVesperPool(address(token)).permit(_msgSender(), address(this), amount, deadline, v, r, s);
-        _deposit(amount);
+        IVesperPool(address(token)).permit(_msgSender(), address(this), _amount, _deadline, _v, _r, _s);
+        _deposit(_amount);
     }
 
     /**
      * @notice Withdraw collateral based on given shares and the current share price.
      * Transfer earned rewards to caller. Withdraw fee, if any, will be deduced from
      * given shares and transferred to feeCollector. Burn remaining shares and return collateral.
-     * @param shares Pool shares. It will be in 18 decimals.
+     * @param _shares Pool shares. It will be in 18 decimals.
      */
-    function withdraw(uint256 shares) external virtual nonReentrant whenNotShutdown {
-        _withdraw(shares);
+    function withdraw(uint256 _shares) external virtual nonReentrant whenNotShutdown {
+        _withdraw(_shares);
     }
 
     /**
@@ -133,23 +134,23 @@ abstract contract PoolShareToken is ERC20, Pausable, ReentrancyGuard, Governed {
      * Transfer earned rewards to caller. Burn shares and return collateral.
      * @dev No withdraw fee will be assessed when this function is called.
      * Only some white listed address can call this function.
-     * @param shares Pool shares. It will be in 18 decimals.
+     * @param _shares Pool shares. It will be in 18 decimals.
      */
-    function withdrawByStrategy(uint256 shares) external virtual nonReentrant whenNotShutdown {
+    function withdrawByStrategy(uint256 _shares) external virtual nonReentrant whenNotShutdown {
         require(feeWhiteList.get(_msgSender()) != 0, "Not a white listed address");
-        _withdrawByStrategy(shares);
+        _withdrawByStrategy(_shares);
     }
 
     /**
      * @notice Transfer tokens to multiple recipient
      * @dev Left 160 bits are the recipient address and the right 96 bits are the token amount.
-     * @param bits array of uint
+     * @param _bits array of uint
      * @return true/false
      */
-    function multiTransfer(uint256[] memory bits) external returns (bool) {
-        for (uint256 i = 0; i < bits.length; i++) {
-            address a = address(uint160(bits[i] >> 96));
-            uint256 amount = bits[i] & ((1 << 96) - 1);
+    function multiTransfer(uint256[] memory _bits) external returns (bool) {
+        for (uint256 i = 0; i < _bits.length; i++) {
+            address a = address(uint160(_bits[i] >> 96));
+            uint256 amount = _bits[i] & ((1 << 96) - 1);
             require(transfer(a, amount), "Transfer failed");
         }
         return true;
@@ -157,56 +158,51 @@ abstract contract PoolShareToken is ERC20, Pausable, ReentrancyGuard, Governed {
 
     /**
      * @notice Triggers an approval from owner to spends
-     * @param owner The address to approve from
-     * @param spender The address to be approved
-     * @param amount The number of tokens that are approved (2^256-1 means infinite)
-     * @param deadline The time at which to expire the signature
-     * @param v The recovery byte of the signature
-     * @param r Half of the ECDSA signature pair
-     * @param s Half of the ECDSA signature pair
+     * @param _owner The address to approve from
+     * @param _spender The address to be approved
+     * @param _amount The number of tokens that are approved (2^256-1 means infinite)
+     * @param _deadline The time at which to expire the signature
+     * @param _v The recovery byte of the signature
+     * @param _r Half of the ECDSA signature pair
+     * @param _s Half of the ECDSA signature pair
      */
     function permit(
-        address owner,
-        address spender,
-        uint256 amount,
-        uint256 deadline,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
+        address _owner,
+        address _spender,
+        uint256 _amount,
+        uint256 _deadline,
+        uint8 _v,
+        bytes32 _r,
+        bytes32 _s
     ) external {
-        require(deadline >= block.timestamp, "Expired");
+        require(_deadline >= block.timestamp, "Expired");
         bytes32 digest =
             keccak256(
                 abi.encodePacked(
                     "\x19\x01",
                     domainSeparator,
-                    keccak256(abi.encode(PERMIT_TYPEHASH, owner, spender, amount, nonces[owner]++, deadline))
+                    keccak256(abi.encode(PERMIT_TYPEHASH, _owner, _spender, _amount, nonces[_owner]++, _deadline))
                 )
             );
-        address signatory = ecrecover(digest, v, r, s);
-        require(signatory != address(0) && signatory == owner, "Invalid signature");
-        _approve(owner, spender, amount);
+        address signatory = ecrecover(digest, _v, _r, _s);
+        require(signatory != address(0) && signatory == _owner, "Invalid signature");
+        _approve(_owner, _spender, _amount);
     }
 
     /**
      * @notice Get price per share
      * @dev Return value will be in token defined decimals.
      */
-    function getPricePerShare() external view returns (uint256) {
-        if (totalSupply() == 0) {
+    function pricePerShare() public view returns (uint256) {
+        if (totalSupply() == 0 || totalValue() == 0) {
             return convertFrom18(1e18);
         }
         return (totalValue() * 1e18) / totalSupply();
     }
 
-    /// @dev Convert to 18 decimals from token defined decimals. Default no conversion.
-    function convertTo18(uint256 amount) public view virtual returns (uint256) {
-        return amount;
-    }
-
     /// @dev Convert from 18 decimals to token defined decimals. Default no conversion.
-    function convertFrom18(uint256 amount) public view virtual returns (uint256) {
-        return amount;
+    function convertFrom18(uint256 _amount) public view virtual returns (uint256) {
+        return _amount;
     }
 
     /// @dev Returns the token stored in the pool. It will be in token defined decimals.
@@ -218,106 +214,106 @@ abstract contract PoolShareToken is ERC20, Pausable, ReentrancyGuard, Governed {
      * @dev Returns sum of token locked in other contracts and token stored in the pool.
      * Default tokensHere. It will be in token defined decimals.
      */
-    function totalValue() public view virtual returns (uint256) {
-        return tokensHere();
-    }
+    function totalValue() public view virtual returns (uint256);
 
     /**
-     * @dev Hook that is called just before burning tokens. To be used i.e. if
-     * collateral is stored in a different contract and needs to be withdrawn.
-     * @param share Pool share in 18 decimals
+     * @dev Hook that is called just before burning tokens. This withdraw collatoral from withdraw queue
+     * @param _share Pool share in 18 decimals
      */
-    function _beforeBurning(uint256 share) internal virtual {}
+    function _beforeBurning(uint256 _share) internal virtual returns (uint256) {}
 
     /**
-     * @dev Hook that is called just after burning tokens. To be used i.e. if
-     * collateral stored in a different/this contract needs to be transferred.
-     * @param amount Collateral amount in collateral token defined decimals.
+     * @dev Hook that is called just after burning tokens.
+     * @param _amount Collateral amount in collateral token defined decimals.
      */
-    function _afterBurning(uint256 amount) internal virtual {}
+    function _afterBurning(uint256 _amount) internal virtual returns (uint256) {}
 
     /**
      * @dev Hook that is called just before minting new tokens. To be used i.e.
      * if the deposited amount is to be transferred from user to this contract.
-     * @param amount Collateral amount in collateral token defined decimals.
+     * @param _amount Collateral amount in collateral token defined decimals.
      */
-    function _beforeMinting(uint256 amount) internal virtual {}
+    function _beforeMinting(uint256 _amount) internal virtual {}
 
     /**
      * @dev Hook that is called just after minting new tokens. To be used i.e.
      * if the deposited amount is to be transferred to a different contract.
-     * @param amount Collateral amount in collateral token defined decimals.
+     * @param _amount Collateral amount in collateral token defined decimals.
      */
-    function _afterMinting(uint256 amount) internal virtual {}
+    function _afterMinting(uint256 _amount) internal virtual {}
 
     /**
      * @dev Calculate shares to mint based on the current share price and given amount.
      * @param amount Collateral amount in collateral token defined decimals.
+     * @return share amount in 18 decimal
      */
-    function _calculateShares(uint256 amount) internal view returns (uint256) {
-        require(amount != 0, "amount is 0");
-
-        uint256 _totalSupply = totalSupply();
-        uint256 _totalValue = convertTo18(totalValue());
-        uint256 shares = (_totalSupply == 0 || _totalValue == 0) ? amount : (amount * _totalSupply) / _totalValue;
-        return shares;
+    function _calculateShares(uint256 _amount) internal view returns (uint256) {
+        require(_amount != 0, "amount is 0");
+        return (_amount * 1e18) / pricePerShare();
     }
 
     /// @dev Deposit incoming token and mint pool token i.e. shares.
-    function _deposit(uint256 amount) internal whenNotPaused {
-        uint256 shares = _calculateShares(convertTo18(amount));
-        _beforeMinting(amount);
-        _mint(_msgSender(), shares);
-        _afterMinting(amount);
-        emit Deposit(_msgSender(), shares, amount);
+    function _deposit(uint256 _amount) internal whenNotPaused {
+        uint256 _shares = _calculateShares(_amount);
+        _beforeMinting(_amount);
+        _mint(_msgSender(), _shares);
+        _afterMinting(_amount);
+        emit Deposit(_msgSender(), _shares, _amount);
     }
 
     /// @dev Handle withdraw fee calculation and fee transfer to fee collector.
-    function _handleFee(uint256 shares) internal returns (uint256 _sharesAfterFee) {
+    function _handleFee(uint256 _shares) internal returns (uint256 _sharesAfterFee) {
         if (withdrawFee != 0) {
-            uint256 _fee = (shares * withdrawFee) / 1e18;
-            _sharesAfterFee = shares - _fee;
+            uint256 _fee = (_shares * withdrawFee) / MAX_BPS;
+            _sharesAfterFee = _shares - _fee;
             _transfer(_msgSender(), feeCollector, _fee);
         } else {
-            _sharesAfterFee = shares;
+            _sharesAfterFee = _shares;
         }
     }
 
     /// @dev Update pool reward of sender and receiver before transfer.
     function _beforeTokenTransfer(
-        address from,
-        address to,
+        address _from,
+        address _to,
         uint256 /* amount */
     ) internal virtual override {
         if (poolRewards != address(0)) {
-            if (from != address(0)) {
-                IPoolRewards(poolRewards).updateReward(from);
+            if (_from != address(0)) {
+                IPoolRewards(poolRewards).updateReward(_from);
             }
-            if (to != address(0)) {
-                IPoolRewards(poolRewards).updateReward(to);
+            if (_to != address(0)) {
+                IPoolRewards(poolRewards).updateReward(_to);
             }
         }
     }
 
     /// @dev Burns shares and returns the collateral value, after fee, of those.
-    function _withdraw(uint256 shares) internal whenNotShutdown {
-        require(shares != 0, "share is 0");
-        _beforeBurning(shares);
-        uint256 sharesAfterFee = _handleFee(shares);
-        uint256 amount = convertFrom18((sharesAfterFee * convertTo18(totalValue())) / totalSupply());
-
-        _burn(_msgSender(), sharesAfterFee);
-        _afterBurning(amount);
-        emit Withdraw(_msgSender(), shares, amount);
+    function _withdraw(uint256 _shares) internal whenNotShutdown {
+        require(_shares != 0, "share is 0");
+        // withdraw amount for the shares before fee
+        uint256 _amountWithdrawn = _beforeBurning(_shares);
+        // recalculate proportional share on actual amount withdrawn
+        uint256 _proportionalShares = _calculateShares(_amountWithdrawn);
+        if (_proportionalShares > _shares) {
+            _proportionalShares = _shares;
+        }
+        uint256 _sharesAfterFee = _handleFee(_proportionalShares);
+        _burn(_msgSender(), _sharesAfterFee);
+        _afterBurning(_amountWithdrawn);
+        emit Withdraw(_msgSender(), _proportionalShares, _amountWithdrawn);
     }
 
     /// @dev Burns shares and returns the collateral value of those.
-    function _withdrawByStrategy(uint256 shares) internal {
-        require(shares != 0, "Withdraw must be greater than 0");
-        _beforeBurning(shares);
-        uint256 amount = convertFrom18((shares * convertTo18(totalValue())) / totalSupply());
-        _burn(_msgSender(), shares);
-        _afterBurning(amount);
-        emit Withdraw(_msgSender(), shares, amount);
+    function _withdrawByStrategy(uint256 _shares) internal {
+        require(_shares != 0, "share is 0");
+        uint256 _amountWithdrawn = _beforeBurning(_shares);
+        uint256 _proportionalShares = _calculateShares(_amountWithdrawn);
+        if (_proportionalShares > _shares) {
+            _proportionalShares = _shares;
+        }
+        _burn(_msgSender(), _proportionalShares);
+        _afterBurning(_amountWithdrawn);
+        emit Withdraw(_msgSender(), _proportionalShares, _amountWithdrawn);
     }
 }

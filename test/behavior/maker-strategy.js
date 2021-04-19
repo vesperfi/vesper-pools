@@ -264,10 +264,10 @@ function shouldBehaveLikeStrategy(poolName, collateralName, pTokenName, accounts
       it('Should resolve underwater scenario', async function () {
         const vInfo = await cm.getVaultInfo(vaultNum)
         expect(await strategy.isUnderwater(), `${poolName} pool should be underwater`).to.be.true
-        const poolSharePriceBefore = await pool.getPricePerShare()
+        const poolSharePriceBefore = await pool.pricePerShare()
         await strategy.resurface()
         expect(await strategy.isUnderwater(), `${poolName} pool should be above water`).to.be.false
-        const poolSharePriceAfter = await pool.getPricePerShare()
+        const poolSharePriceAfter = await pool.pricePerShare()
         expect(poolSharePriceAfter).to.be.bignumber.lt(
           poolSharePriceBefore,
           'Pool share value should decrease after resurface'
@@ -297,7 +297,7 @@ function shouldBehaveLikeStrategy(poolName, collateralName, pTokenName, accounts
         const vPoolBalanceBefore = await pool.balanceOf(user4)
 
         const totalSupply = await pool.totalSupply()
-        const price = await pool.getPricePerShare()
+        const price = await pool.pricePerShare()
         const withdrawAmount = totalSupply.mul(price).div(DECIMAL).toString()
 
         const target = strategy.address
