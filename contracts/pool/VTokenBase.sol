@@ -285,7 +285,7 @@ contract VTokenBase is PoolShareToken {
     /**
      * @dev After burning hook, it will be called during withdrawal process.
      */
-    function _afterBurning(uint256 _amount) internal override returns (uint256) {
+    function _afterBurning(uint256 _amount) internal virtual override returns (uint256) {
         token.safeTransfer(_msgSender(), _amount);
         return _amount;
     }

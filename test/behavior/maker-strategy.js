@@ -4,15 +4,16 @@ const swapper = require('../utils/tokenSwapper')
 const {deposit} = require('../utils/poolOps')
 const {expect} = require('chai')
 const {BN, time} = require('@openzeppelin/test-helpers')
-const {updateBalancingFactor} = require('../utils/setupHelper')
+
 const DECIMAL = new BN('1000000000000000000')
 const WAT = new BN('10000000000000000')
 const ERC20 = artifacts.require('ERC20')
 const DAI = '0x6b175474e89094c44da98b954eedeac495271d0f'
-function shouldBehaveLikeStrategy(poolName, collateralName, pTokenName, accounts) {
-  let pool, cm, strategy, controller, vaultNum, strategyType
+
+function shouldBehaveLikeStrategy(poolName, collateralName, strategyType) {
+  let pool, cm, strategy, vaultNum
   let collateralToken, collateralDecimal, providerToken, feeCollector
-  const [owner, user1, user2, user3, user4] = accounts
+  let owner, user1, user2, user3, user4
 
   function convertTo18(amount) {
     const multiplier = DECIMAL.div(new BN('10').pow(collateralDecimal))
@@ -37,17 +38,25 @@ function shouldBehaveLikeStrategy(poolName, collateralName, pTokenName, accounts
     return strategyType.includes('compound') ? blockMineFn() : timeTravelFn()
   }
 
+  function getStrategy(strategies, type) {
+    const strtgy = strategies.find(s => s.type.includes(type))
+    if (!strtgy) {
+      throw new Error(`Strategy ${type} doesn't exist`)
+    }
+    feeCollector = strtgy.feeCollector
+    providerToken = strtgy.token
+    return strtgy.instance
+  }
+
   describe(`${poolName}:: MakerStrategy basic tests`, function () {
     beforeEach(async function () {
+      ;[owner, user1, user2, user3, user4] = this.accounts
       pool = this.pool
-      controller = this.controller
-      strategy = this.strategy
+      strategy = getStrategy(this.strategies, strategyType)
       collateralToken = this.collateralToken
-      providerToken = this.providerToken
+
       cm = this.collateralManager
       vaultNum = this.vaultNum
-      feeCollector = this.feeCollector
-      strategyType = this.strategyType
       // Decimal will be used for amount conversion
       collateralDecimal = await this.collateralToken.decimals.call()
     })
@@ -56,28 +65,25 @@ function shouldBehaveLikeStrategy(poolName, collateralName, pTokenName, accounts
       const metAddress = '0xa3d58c4e56fedcae3a7c43a725aee9a71f0ece4e'
       const token = await ERC20.at(metAddress)
       const tokenBalance = await swapper.swapEthForToken(1, metAddress, user4, strategy.address)
-      await strategy.sweepErc20(metAddress)
-
-      const totalSupply = await pool.totalSupply()
-      const metBalanceInPool = await token.balanceOf(pool.address)
-      expect(totalSupply).to.be.bignumber.equal('0', `Total supply of ${poolName} is wrong`)
-      expect(metBalanceInPool).to.be.bignumber.equal(tokenBalance, 'ERC20 token balance is wrong')
+      await strategy.sweepERC20(metAddress)
+      const metBalanceFC = await token.balanceOf(feeCollector)
+      expect(metBalanceFC).to.be.bignumber.equal(tokenBalance, 'ERC20 token balance is wrong')
     })
 
     describe(`${poolName}:: Withdraw scenario`, function () {
       let depositAmount
-      const user = user1
       beforeEach(async function () {
-        depositAmount = await deposit(pool, collateralToken, 20, user)
+        depositAmount = await deposit(pool, collateralToken, 20, user1)
       })
       it('Should payout debt if withdraw leaves dust in vault', async function () {
-        const withdrawAmount = (await pool.balanceOf(user)).sub(new BN(100)).toString()
-        await pool.rebalance()
+        const withdrawAmount = (await pool.balanceOf(user1)).sub(new BN(100)).toString()
+        await strategy.rebalance()
         await executeIfExist(providerToken.exchangeRateCurrent)
+        // TODO fix this, it should be providerToken.strategy.rebalance()
         await executeIfExist(providerToken.rebalance)
-        await pool.withdraw(withdrawAmount, {from: user})
+        await pool.withdraw(withdrawAmount, {from: user1})
         const vaultInfo = await cm.getVaultInfo(vaultNum)
-        const balance = await collateralToken.balanceOf(user)
+        const balance = await collateralToken.balanceOf(user1)
         expect(balance).to.be.bignumber.equal(convertFrom18(withdrawAmount), `${collateralName} balance is wrong`)
         expect(vaultInfo.daiDebt).to.be.bignumber.equal('0', 'Dai debt should be zero')
       })
@@ -90,13 +96,13 @@ function shouldBehaveLikeStrategy(poolName, collateralName, pTokenName, accounts
         // Increase collateral ratio
         const newLowWater = new BN(collateralRatio).div(WAT).add(new BN('500')).toString()
         const newHighWater = new BN(collateralRatio).div(WAT).add(new BN('600')).toString()
-        await updateBalancingFactor(controller, strategy.address, [newHighWater, newLowWater])
+        await strategy.updateBalancingFactor(newHighWater, newLowWater, {from: owner})
 
         await strategy.rebalanceCollateral()
         return Promise.all([
           pool.totalSupply(),
           pool.totalValue(),
-          pool.balanceOf(user),
+          pool.balanceOf(user1),
           cm.getVaultInfo(vaultNum),
           strategy.highWater(),
         ]).then(function ([totalSupply, totalValue, vPoolBalance, vaultInfo, highWater]) {
@@ -117,12 +123,12 @@ function shouldBehaveLikeStrategy(poolName, collateralName, pTokenName, accounts
         // Increase collateral ratio to achieve low water
         const newLowWater = new BN(collateralRatio).div(WAT).add(new BN('500')).toString()
         const newHighWater = new BN(collateralRatio).div(WAT).add(new BN('600')).toString()
-        await updateBalancingFactor(controller, strategy.address, [newHighWater, newLowWater])
-        const collateralBalanceBefore = await collateralToken.balanceOf(user)
+        await strategy.updateBalancingFactor(newHighWater, newLowWater, {from: owner})
+        const collateralBalanceBefore = await collateralToken.balanceOf(user1)
 
-        const withdrawAmount = (await pool.balanceOf(user)).div(new BN(10))
-        await pool.withdraw(withdrawAmount, {from: user})
-        return Promise.all([strategy.highWater(), cm.getVaultInfo(vaultNum), collateralToken.balanceOf(user)]).then(
+        const withdrawAmount = (await pool.balanceOf(user1)).div(new BN(10))
+        await pool.withdraw(withdrawAmount, {from: user1})
+        return Promise.all([strategy.highWater(), cm.getVaultInfo(vaultNum), collateralToken.balanceOf(user1)]).then(
           function ([highWater, vaultInfo, collateralBalance]) {
             expect(vaultInfo.collateralRatio).to.be.bignumber.eq(highWater, 'Collateral ratio is wrong')
             expect(vaultInfo.daiDebt).to.be.bignumber.lt(vaultInfoBefore.daiDebt, 'Dai debt should decrease')
@@ -133,14 +139,14 @@ function shouldBehaveLikeStrategy(poolName, collateralName, pTokenName, accounts
 
       it('Should withdraw when above low water', async function () {
         await strategy.rebalanceCollateral()
-        const collateralBalanceBefore = await collateralToken.balanceOf(user)
-        const withdrawAmount = (await pool.balanceOf(user)).div(new BN(10))
-        await pool.withdraw(withdrawAmount, {from: user})
+        const collateralBalanceBefore = await collateralToken.balanceOf(user1)
+        const withdrawAmount = (await pool.balanceOf(user1)).div(new BN(10))
+        await pool.withdraw(withdrawAmount, {from: user1})
         return Promise.all([
           strategy.lowWater(),
           strategy.highWater(),
           cm.getVaultInfo(vaultNum),
-          collateralToken.balanceOf(user),
+          collateralToken.balanceOf(user1),
         ]).then(function ([lowWater, highWater, vaultInfo, collateralBalance]) {
           expect(vaultInfo.collateralRatio).to.be.bignumber.gt(lowWater, 'Collateral ratio should be > low water')
           expect(vaultInfo.collateralRatio).to.be.bignumber.lt(highWater, 'Collateral ratio should be < high water')
@@ -164,7 +170,7 @@ function shouldBehaveLikeStrategy(poolName, collateralName, pTokenName, accounts
         await deposit(pool, collateralToken, 10, user2)
       })
       it(`Should increase ${collateralName} token in pool and earn fee`, async function () {
-        await pool.rebalance()
+        await strategy.rebalance()
         const tokensHere = await pool.tokensHere()
         const vPoolBalanceFcBefore = await pool.balanceOf(feeCollector)
 
@@ -182,8 +188,8 @@ function shouldBehaveLikeStrategy(poolName, collateralName, pTokenName, accounts
       })
 
       it('Should rebalanceEarned when interest fee is zero', async function () {
-        await controller.updateInterestFee(pool.address, '0')
-        await pool.rebalance()
+        await pool.updateInterestFee(strategy.address, '0', {from: owner})
+        await strategy.rebalance()
         const tokensHere = await pool.tokensHere()
 
         // Time travel trigger some earning
@@ -220,7 +226,7 @@ function shouldBehaveLikeStrategy(poolName, collateralName, pTokenName, accounts
         const withdrawAmount = (await pool.balanceOf(user1)).sub(dust)
         await pool.withdraw(withdrawAmount, {from: user1})
 
-        await pool.rebalance()
+        await strategy.rebalance()
         let vaultInfo = await cm.getVaultInfo(vaultNum)
         expect(vaultInfo.daiDebt).to.be.bignumber.equal('0', 'Dai debt is wrong')
         await pool.withdraw(dust, {from: user1})
@@ -230,9 +236,9 @@ function shouldBehaveLikeStrategy(poolName, collateralName, pTokenName, accounts
       })
 
       it('Should calculate interestEarned correctly', async function () {
-        await controller.updateInterestFee(pool.address, '0')
+        await pool.updateInterestFee(strategy.address, '0', {from: owner})
         await deposit(pool, collateralToken, 10, user2)
-        await pool.rebalance()
+        await strategy.rebalance()
         let interestEarned = await strategy.interestEarned()
         expect(interestEarned).to.be.bignumber.equal('0', 'Interest earned should be zero')
 
@@ -240,7 +246,7 @@ function shouldBehaveLikeStrategy(poolName, collateralName, pTokenName, accounts
         // Time travel
         await time.increase(6 * 60 * 60)
         interestEarned = await strategy.interestEarned()
-        await pool.rebalance()
+        await strategy.rebalance()
         const totalValue2 = await pool.totalValue()
 
         const actualInterestEarned = totalValue2.sub(totalValue1)
@@ -252,12 +258,12 @@ function shouldBehaveLikeStrategy(poolName, collateralName, pTokenName, accounts
       beforeEach(async function () {
         await deposit(pool, collateralToken, 20, user3)
         // 2 rebalance and 12 hours of time should take pool underwater.
-        await pool.rebalance()
+        await strategy.rebalance()
         await time.increase(12 * 60 * 60)
         // If already underwater skip rebalance
         const isUnderwater = await strategy.isUnderwater()
         if (!isUnderwater) {
-          await pool.rebalance()
+          await strategy.rebalance()
         }
       })
 
@@ -288,94 +294,95 @@ function shouldBehaveLikeStrategy(poolName, collateralName, pTokenName, accounts
       })
     })
 
-    describe(`${poolName}:: Updates via Controller`, function () {
-      it('Should call withdraw() in strategy', async function () {
-        await deposit(pool, collateralToken, 10, user4)
-        await pool.rebalance()
-        await executeIfExist(providerToken.exchangeRateCurrent)
-        await executeIfExist(providerToken.rebalance)
-        const vPoolBalanceBefore = await pool.balanceOf(user4)
+    // TODO design decision is pending for privileged withdraw via governor/guardians
+    // describe(`${poolName}:: Updates via Controller`, function () {
+    //   it('Should call withdraw() in strategy', async function () {
+    //     await deposit(pool, collateralToken, 10, user4)
+    //     await pool.rebalance()
+    //     await executeIfExist(providerToken.exchangeRateCurrent)
+    //     await executeIfExist(providerToken.rebalance)
+    //     const vPoolBalanceBefore = await pool.balanceOf(user4)
 
-        const totalSupply = await pool.totalSupply()
-        const price = await pool.pricePerShare()
-        const withdrawAmount = totalSupply.mul(price).div(DECIMAL).toString()
+    //     const totalSupply = await pool.totalSupply()
+    //     const price = await pool.getPricePerShare()
+    //     const withdrawAmount = totalSupply.mul(price).div(DECIMAL).toString()
 
-        const target = strategy.address
-        const methodSignature = 'withdraw(uint256)'
-        const data = web3.eth.abi.encodeParameter('uint256', withdrawAmount)
-        await controller.executeTransaction(target, 0, methodSignature, data, {from: accounts[0]})
+    //     const target = strategy.address
+    //     const methodSignature = 'withdraw(uint256)'
+    //     const data = web3.eth.abi.encodeParameter('uint256', withdrawAmount)
+    //     await controller.executeTransaction(target, 0, methodSignature, data, {from: accounts[0]})
 
-        const vPoolBalance = await pool.balanceOf(user4)
-        const collateralBalance = await collateralToken.balanceOf(pool.address)
+    //     const vPoolBalance = await pool.balanceOf(user4)
+    //     const collateralBalance = await collateralToken.balanceOf(pool.address)
 
-        expect(collateralBalance).to.be.bignumber.eq(withdrawAmount, `${collateralName} balance of pool is wrong`)
-        expect(vPoolBalance).to.be.bignumber.eq(vPoolBalanceBefore, `${poolName} balance of user is wrong`)
-      })
+    //     expect(collateralBalance).to.be.bignumber.eq(withdrawAmount, `${collateralName} balance of pool is wrong`)
+    //     expect(vPoolBalance).to.be.bignumber.eq(vPoolBalanceBefore, `${poolName} balance of user is wrong`)
+    //   })
 
-      it('Should call withdrawAll() in strategy', async function () {
-        await deposit(pool, collateralToken, 10, user3)
-        await pool.rebalance()
+    //   it('Should call withdrawAll() in strategy', async function () {
+    //     await deposit(pool, collateralToken, 10, user3)
+    //     await pool.rebalance()
 
-        const totalLocked = await strategy.totalLocked()
-        const vInfo = await cm.getVaultInfo(vaultNum)
-        expect(vInfo.daiDebt).to.be.bignumber.gte('0', 'Dai debt is wrong')
-        await executeIfExist(providerToken.exchangeRateCurrent)
-        await executeIfExist(providerToken.rebalance)
-        const target = strategy.address
-        const methodSignature = 'withdrawAll()'
-        const data = '0x'
-        await controller.executeTransaction(target, 0, methodSignature, data, {from: owner})
+    //     const totalLocked = await strategy.totalLocked()
+    //     const vInfo = await cm.getVaultInfo(vaultNum)
+    //     expect(vInfo.daiDebt).to.be.bignumber.gte('0', 'Dai debt is wrong')
+    //     await executeIfExist(providerToken.exchangeRateCurrent)
+    //     await executeIfExist(providerToken.rebalance)
+    //     const target = strategy.address
+    //     const methodSignature = 'withdrawAll()'
+    //     const data = '0x'
+    //     await controller.executeTransaction(target, 0, methodSignature, data, {from: owner})
 
-        const vInfo2 = await cm.getVaultInfo(vaultNum)
-        expect(vInfo2.collateralLocked).to.be.bignumber.equal('0', 'Collateral locked is wrong')
-        expect(vInfo2.daiDebt).to.be.bignumber.equal('0', 'Dai debt is wrong')
-        expect(vInfo2.collateralRatio).to.be.bignumber.equal('0', 'Collateral ratio is wrong')
+    //     const vInfo2 = await cm.getVaultInfo(vaultNum)
+    //     expect(vInfo2.collateralLocked).to.be.bignumber.equal('0', 'Collateral locked is wrong')
+    //     expect(vInfo2.daiDebt).to.be.bignumber.equal('0', 'Dai debt is wrong')
+    //     expect(vInfo2.collateralRatio).to.be.bignumber.equal('0', 'Collateral ratio is wrong')
 
-        const tokensInPool = await pool.tokensHere()
-        expect(tokensInPool).to.be.bignumber.equal(totalLocked, 'TokensHere in pool is not correct')
-      })
+    //     const tokensInPool = await pool.tokensHere()
+    //     expect(tokensInPool).to.be.bignumber.equal(totalLocked, 'TokensHere in pool is not correct')
+    //   })
 
-      it('Should call withdrawAllWithRebalance() in strategy', async function () {
-        await deposit(pool, collateralToken, 20, user3)
-        await pool.rebalance()
-        // Time travel 6 hours for some earning
-        await timeTravel()
-        await executeIfExist(providerToken.exchangeRateCurrent)
-        await executeIfExist(providerToken.rebalance)
-        const totalLocked = await strategy.totalLocked()
+    //   it('Should call withdrawAllWithRebalance() in strategy', async function () {
+    //     await deposit(pool, collateralToken, 20, user3)
+    //     await pool.rebalance()
+    //     // Time travel 6 hours for some earning
+    //     await timeTravel()
+    //     await executeIfExist(providerToken.exchangeRateCurrent)
+    //     await executeIfExist(providerToken.rebalance)
+    //     const totalLocked = await strategy.totalLocked()
 
-        const target = strategy.address
-        const methodSignature = 'withdrawAllWithRebalance()'
-        const data = '0x'
-        await controller.executeTransaction(target, 0, methodSignature, data, {from: owner})
+    //     const target = strategy.address
+    //     const methodSignature = 'withdrawAllWithRebalance()'
+    //     const data = '0x'
+    //     await controller.executeTransaction(target, 0, methodSignature, data, {from: owner})
 
-        const tokensInPool = await pool.tokensHere()
-        // Withdraw all will do rebalanceEarned too, which can increase locked
-        expect(tokensInPool).to.be.bignumber.gte(totalLocked, 'TokensHere in pool is not correct')
-      })
+    //     const tokensInPool = await pool.tokensHere()
+    //     // Withdraw all will do rebalanceEarned too, which can increase locked
+    //     expect(tokensInPool).to.be.bignumber.gte(totalLocked, 'TokensHere in pool is not correct')
+    //   })
 
-      it('Should rebalance after withdrawAll() and adding AaveStrategy', async function () {
-        await deposit(pool, collateralToken, 10, user3)
-        await pool.rebalance()
-        // Time travel 12 hours
-        await timeTravel()
-        await executeIfExist(providerToken.exchangeRateCurrent)
-        await executeIfExist(providerToken.rebalance)
-        const lockedWithMaker = await strategy.totalLocked()
+    //   it('Should rebalance after withdrawAll() and adding AaveStrategy', async function () {
+    //     await deposit(pool, collateralToken, 10, user3)
+    //     await pool.rebalance()
+    //     // Time travel 12 hours
+    //     await timeTravel()
+    //     await executeIfExist(providerToken.exchangeRateCurrent)
+    //     await executeIfExist(providerToken.rebalance)
+    //     const lockedWithMaker = await strategy.totalLocked()
 
-        const target = strategy.address
-        const methodSignature = 'withdrawAll()'
-        const data = '0x'
-        await controller.executeTransaction(target, 0, methodSignature, data, {from: owner})
+    //     const target = strategy.address
+    //     const methodSignature = 'withdrawAll()'
+    //     const data = '0x'
+    //     await controller.executeTransaction(target, 0, methodSignature, data, {from: owner})
 
-        strategy = await this.newStrategy.new(controller.address, pool.address)
-        await controller.updateStrategy(pool.address, strategy.address)
-        await pool.rebalance()
+    //     strategy = await this.newStrategy.new(controller.address, pool.address)
+    //     await controller.updateStrategy(pool.address, strategy.address)
+    //     await pool.rebalance()
 
-        const lockedWithAave = await strategy.totalLocked()
-        expect(lockedWithAave).to.be.bignumber.equal(lockedWithMaker, 'Total locked with direct Aave is wrong')
-      })
-    })
+    //     const lockedWithAave = await strategy.totalLocked()
+    //     expect(lockedWithAave).to.be.bignumber.equal(lockedWithMaker, 'Total locked with direct Aave is wrong')
+    //   })
+    // })
   })
 }
 

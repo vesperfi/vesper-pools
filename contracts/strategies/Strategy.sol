@@ -17,9 +17,12 @@ abstract contract Strategy is IStrategy, Pausable {
     IERC20 public immutable collateralToken;
     address public immutable receiptToken;
     address public immutable override pool;
+    address public feeCollector;
     address internal constant ETH = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
     address internal constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     uint256 internal constant MAX_UINT_VALUE = type(uint256).max;
+
+    event UpdatedFeeCollector(address indexed previousFeeCollector, address indexed newFeeCollector);
 
     constructor(address _pool, address _receiptToken) {
         require(_pool != address(0), "pool-is-zero-address");
@@ -77,6 +80,13 @@ abstract contract Strategy is IStrategy, Pausable {
         _unpause();
     }
 
+    function updateFeeCollector(address _feeCollector) external onlyGovernor {
+        require(_feeCollector != address(0), "fee-collector-is-zero-address");
+        require(_feeCollector != feeCollector, "fee-collector-is-same");
+        emit UpdatedFeeCollector(feeCollector, _feeCollector);
+        feeCollector = _feeCollector;
+    }
+
     // TODO we may not need these 2 functions, these were part of update strategy via controller
     /// @dev Approve all required tokens
     function approveToken() external onlyGuardians {
@@ -132,19 +142,17 @@ abstract contract Strategy is IStrategy, Pausable {
     }
 
     /**
-     * @dev sweep given token to vesper pool
+     * @dev sweep given token to feeCollector of strategy
      * @param _fromToken token address to sweep
      */
-    // TODO how does this swap works, say we swap anything from pool to pool's feeCollector,
-    // which can be different than strategy's feeCollector. For a given strategist, he/she may
-    // not want to swap to pool
-    function sweepErc20(address _fromToken) external {
+    function sweepERC20(address _fromToken) external override {
+        require(feeCollector != address(0), "fee-collector-not-set");
         require(!isReservedToken(_fromToken), "not-allowed-to-sweep");
         if (_fromToken == ETH) {
-            payable(pool).transfer(address(this).balance);
+            payable(feeCollector).transfer(address(this).balance);
         } else {
             uint256 _amount = IERC20(_fromToken).balanceOf(address(this));
-            IERC20(_fromToken).safeTransfer(pool, _amount);
+            IERC20(_fromToken).safeTransfer(feeCollector, _amount);
         }
     }
 

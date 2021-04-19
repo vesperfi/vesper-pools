@@ -1,22 +1,21 @@
 'use strict'
 
-const swapper = require('../utils/tokenSwapper')
+// const swapper = require('../utils/tokenSwapper')
 const poolOps = require('../utils/poolOps')
 const {getPermitData} = require('../utils/signHelper')
 const {MNEMONIC} = require('../utils/testkey')
 
 const {expect} = require('chai')
-const {expectRevert, BN, time, constants} = require('@openzeppelin/test-helpers')
-const ERC20 = artifacts.require('ERC20')
-const AddressList = artifacts.require('IAddressList')
+const {BN, time } = require('@openzeppelin/test-helpers')
+// const ERC20 = artifacts.require('ERC20')
+// const AddressList = artifacts.require('IAddressList')
 const IStrategy = artifacts.require('IStrategy')
 const DECIMAL18 = new BN('1000000000000000000')
 const MAX_BPS = new BN('10000')
 
-async function shouldBehaveLikePool(poolName, collateralName, accounts) {
+async function shouldBehaveLikePool(poolName, collateralName) {
   let pool, strategies, collateralToken, collateralDecimal
-
-  const [, user1, user2, user3] = accounts
+  let user1, user2, user3
 
   async function deposit(amount, depositor) {
     return poolOps.deposit(pool, collateralToken, amount, depositor)
@@ -60,6 +59,7 @@ async function shouldBehaveLikePool(poolName, collateralName, accounts) {
 
   describe(`${poolName} basic operation tests`, function () {
     beforeEach(async function () {
+      [, user1, user2, user3] = this.accounts
       // This setup helps in not typing 'this' all the time
       pool = this.pool
       strategies = this.strategies
@@ -182,7 +182,7 @@ async function shouldBehaveLikePool(poolName, collateralName, accounts) {
 
       it.only(`Should withdraw all ${collateralName} after rebalance`, async function () {
         depositAmount = await deposit(10, user2)
-        const dust = DECIMAL18.div(new BN('100')) // Dust is less than 1e16
+        // const dust = DECIMAL18.div(new BN('100')) // Dust is less than 1e16
         await rebalance(strategies)
         console.log('############   after rebalance ############')
         let o = await pool.tokensHere()
@@ -230,7 +230,7 @@ async function shouldBehaveLikePool(poolName, collateralName, accounts) {
 
     describe(`Rebalance ${poolName} pool`, function () {
       it('Should rebalance multiple times.', async function () {
-        const depositAmount = (await deposit(10, user1)).toString()
+        const depositAmount = (await deposit(10, user3)).toString()
         const totalDebtRatio = await pool.totalDebtRatio()
         const totalValue = await pool.totalValue()
         const maxDebt = totalValue.mul(totalDebtRatio).div(MAX_BPS)
@@ -243,7 +243,7 @@ async function shouldBehaveLikePool(poolName, collateralName, accounts) {
         await rebalance(strategies)
         await timeTravel()
         await rebalance(strategies)
-        return Promise.all([pool.totalDebt(), pool.totalSupply(), pool.balanceOf(user1)]).then(function ([
+        return Promise.all([pool.totalDebt(), pool.totalSupply(), pool.balanceOf(user3)]).then(function ([
           totalDebt,
           totalSupply,
           vPoolBalance,

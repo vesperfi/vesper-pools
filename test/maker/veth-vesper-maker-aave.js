@@ -1,9 +1,10 @@
 'use strict'
 
 const {shouldBehaveLikePool} = require('../behavior/vesper-pool-v3')
-// const {shouldBehaveLikeStrategy} = require('./behavior/maker-strategy')
+const {shouldBehaveLikeStrategy} = require('../behavior/maker-strategy')
 const {deposit} = require('../utils/poolOps')
 const {setupVPool} = require('../utils/setupHelper')
+const StrategyType = require('../utils/strategyTypes')
 const VDAI = artifacts.require('VDAI')
 const {BN} = require('@openzeppelin/test-helpers')
 const DECIMAL18 = new BN('1000000000000000000')
@@ -19,24 +20,25 @@ contract('VETH Pool', function (accounts) {
   const vDaiPoolObj = {}
   const interestFee = '1500' // 15%
   const [, user1] = accounts
+  const feeCollector = accounts[9]
 
   const strategyConfig = {interestFee, debtRatio: 9000, debtRatePerBlock: INFINITE, maxDebtPerRebalance: INFINITE}
 
   beforeEach(async function () {
+    this.accounts = accounts
     await setupVPool(vDaiPoolObj, {
       pool: VDAI,
-      strategies: [{artifact: AaveStrategy, type: 'aave', config: strategyConfig}],
+      strategies: [{artifact: AaveStrategy, type: StrategyType.AAAVE, config: strategyConfig, feeCollector}],
       feeCollector: accounts[9],
     })
     vDai = vDaiPoolObj.pool
     dai = await vDaiPoolObj.collateralToken
     await deposit(vDai, dai, 2, user1)
-    // await vDai.rebalance()
+    await vDaiPoolObj.strategies[0].instance.rebalance()
     await setupVPool(this, {
       pool: VETH,
-      strategies: [{artifact: VesperStrategy, type: 'vesperMaker', config: strategyConfig}],
+      strategies: [{artifact: VesperStrategy, type: StrategyType.VESPER_MAKER, config: strategyConfig, feeCollector}],
       collateralManager: CollateralManager,
-      feeCollector: accounts[9],
       vPool: vDai,
     })
     // this.newStrategy = AaveStrategyETH
@@ -45,16 +47,16 @@ contract('VETH Pool', function (accounts) {
     // weth = this.collateralToken
   })
 
-  shouldBehaveLikePool('vETH', 'WETH', accounts)
+  shouldBehaveLikePool('vETH', 'WETH')
 
-  // shouldBehaveLikeStrategy('vETH', 'WETH', 'vDai', accounts)
+  shouldBehaveLikeStrategy('vETH', 'WETH', StrategyType.VESPER_MAKER)
 
   // it('Should not allow to sweep vToken from pool and strategy', async function () {
-    // await deposit(vEth, weth, 10, user1)
-    // await vEth.rebalance()
-    // let tx = strategy.sweepErc20(vDai.address)
-    // await expectRevert(tx, 'not-allowed-to-sweep')
-    // tx = vEth.sweepErc20(vDai.address)
-    // await expectRevert(tx, 'Not allowed to sweep')
+  // await deposit(vEth, weth, 10, user1)
+  // await vEth.rebalance()
+  // let tx = strategy.sweepErc20(vDai.address)
+  // await expectRevert(tx, 'not-allowed-to-sweep')
+  // tx = vEth.sweepErc20(vDai.address)
+  // await expectRevert(tx, 'Not allowed to sweep')
   // })
 })
