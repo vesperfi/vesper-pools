@@ -284,9 +284,8 @@ contract VTokenBase is PoolShareToken {
 
     /**
      * @dev After burning hook, it will be called during withdrawal process.
-     * It will withdraw collateral from strategy and transfer it to user.
      */
-    function _afterBurning(uint256 _amount) internal override returns (uint256) {     
+    function _afterBurning(uint256 _amount) internal override returns (uint256) {
         token.safeTransfer(_msgSender(), _amount);
         return _amount;
     }
@@ -297,7 +296,7 @@ contract VTokenBase is PoolShareToken {
         uint256 _balanceAfter;
         uint256 _balanceBefore;
         uint256 _amountWithdrawn;
-        uint256 _amountNeeded= _amount;
+        uint256 _amountNeeded = _amount;
         uint256 _totalAmountWithdrawn;
         for (uint256 i; i < withdrawQueue.length; i++) {
             _debt = strategy[withdrawQueue[i]].totalDebt;
@@ -329,17 +328,17 @@ contract VTokenBase is PoolShareToken {
      * withdraw amount from strategies
      */
     function _beforeBurning(uint256 _share) internal override returns (uint256 actualWithdrawn) {
-        uint256 _amount = (_share * pricePerShare()) / (1e18);
-        uint256 balanceNow = tokensHere();
-        if (_amount > balanceNow) {
-            _withdrawCollateral(_amount - balanceNow);
-            balanceNow = tokensHere();
+        uint256 _amount = (_share * pricePerShare()) / 1e18;
+        uint256 _balanceNow = tokensHere();
+        if (_amount > _balanceNow) {
+            _withdrawCollateral(_amount - _balanceNow);
+            _balanceNow = tokensHere();
         }
-        actualWithdrawn = balanceNow < _amount ? balanceNow : _amount;
+        actualWithdrawn = _balanceNow < _amount ? _balanceNow : _amount;
     }
 
-    function _beforeMinting(uint256 amount) internal override {
-        token.safeTransferFrom(_msgSender(), address(this), amount);
+    function _beforeMinting(uint256 _amount) internal override {
+        token.safeTransferFrom(_msgSender(), address(this), _amount);
     }
 
     /**
@@ -351,9 +350,9 @@ contract VTokenBase is PoolShareToken {
         strategy[_strategy].totalLoss += _loss;
         strategy[_strategy].totalDebt -= _loss;
         totalDebt -= _loss;
-        uint256 deltaDebtRatio = _min((_loss * MAX_BPS) / totalValue(), strategy[_strategy].debtRatio);
-        strategy[_strategy].debtRatio -= deltaDebtRatio;
-        totalDebtRatio -= deltaDebtRatio;
+        uint256 _deltaDebtRatio = _min((_loss * MAX_BPS) / totalValue(), strategy[_strategy].debtRatio);
+        strategy[_strategy].debtRatio -= _deltaDebtRatio;
+        totalDebtRatio -= _deltaDebtRatio;
     }
 
     function _excessDebt(address _strategy) internal view returns (uint256) {
@@ -396,10 +395,10 @@ contract VTokenBase is PoolShareToken {
     */
     function _transferInterestFee(uint256 _profit) internal {
         //TODO: get pool token share price after removing the fee amount from totalValue()
-        uint256 fee = (_profit * strategy[_msgSender()].interestFee) / MAX_BPS;
-        fee = _calculateShares(fee);
-        if (fee != 0) {
-            _mint(_msgSender(), fee);
+        uint256 _fee = (_profit * strategy[_msgSender()].interestFee) / MAX_BPS;
+        _fee = _calculateShares(_fee);
+        if (_fee != 0) {
+            _mint(_msgSender(), _fee);
         }
     }
 
