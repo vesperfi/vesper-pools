@@ -2,6 +2,7 @@
 const IVesperPool = artifacts.require('IVesperPoolTest')
 const CToken = artifacts.require('CToken')
 const TokenLike = artifacts.require('TokenLikeTest')
+const StrategyType = require('../utils/strategyTypes')
 
 const mcdEthJoin = '0x2F0b23f53734252Bda2277357e97e1517d6B042A'
 const mcdWbtcJoin = '0xBF72Da2Bd84c5170618Fbe5914B0ECA9638d5eb5'
@@ -84,23 +85,23 @@ async function createVesperMakerStrategy(obj, collateralManager, strategy, vPool
  *
  * @param {*} obj Test class object
  * @param {*} [collateralManager] CollateralManager artifact
- 
  * @param {*} [vPool] Vesper pool object
  */
 async function createStrategies(obj, collateralManager, vPool) {
   for (const strategy of obj.strategies) {
     const strategyType = strategy.type
-    if (strategyType === 'maker' || strategyType === 'compoundMaker') {
+    if (strategyType === StrategyType.AAVE_MAKER || strategyType === StrategyType.COMPOUND_MAKER) {
       strategy.instance = await createMakerStrategy(obj, collateralManager, strategy.artifact)
-    } else if (strategyType === 'vesperMaker') {
+    } else if (strategyType === StrategyType.VESPER_MAKER) {
       strategy.instance = await createVesperMakerStrategy(obj, collateralManager, strategy.artifact, vPool)
     } else {
       strategy.instance = await strategy.artifact.new(obj.pool.address)
     }
     await strategy.instance.approveToken()
+    await strategy.instance.updateFeeCollector(strategy.feeCollector)
     const strategyTokenAddress = await strategy.instance.token()
     const strategyToken =
-      strategyType === 'vesperMaker' ? IVesperPool : strategyType.includes('compound') ? CToken : TokenLike
+      strategyType === StrategyType.VESPER_MAKER ? IVesperPool : strategyType.includes('compound') ? CToken : TokenLike
     strategy.token = await strategyToken.at(strategyTokenAddress)
   }
 }

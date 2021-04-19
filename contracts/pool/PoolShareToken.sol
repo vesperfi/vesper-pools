@@ -244,7 +244,7 @@ abstract contract PoolShareToken is ERC20, Pausable, ReentrancyGuard, Governed {
 
     /**
      * @dev Calculate shares to mint based on the current share price and given amount.
-     * @param amount Collateral amount in collateral token defined decimals.
+     * @param _amount Collateral amount in collateral token defined decimals.
      * @return share amount in 18 decimal
      */
     function _calculateShares(uint256 _amount) internal view returns (uint256) {

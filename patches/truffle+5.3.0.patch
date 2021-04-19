@@ -1,0 +1,13 @@
+diff --git a/node_modules/truffle/build/459.bundled.js b/node_modules/truffle/build/459.bundled.js
+index 7c0c70d..01ff24f 100644
+--- a/node_modules/truffle/build/459.bundled.js
++++ b/node_modules/truffle/build/459.bundled.js
+@@ -3756,7 +3756,7 @@ class TestRunner {
+ 
+   async endTest(mocha) {
+     // Skip logging if test passes and `show-events` option is not true
+-    if (mocha.currentTest.state !== "failed" && !this.config["show-events"]) {
++    if (!this.config["show-events"]) {
+       return;
+     }
+ 

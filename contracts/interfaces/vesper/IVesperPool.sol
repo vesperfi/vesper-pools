@@ -29,8 +29,6 @@ interface IVesperPool is IERC20 {
         bytes32
     ) external;
 
-    function rebalance() external;
-
     function reportEarning(
         uint256 _profit,
         uint256 _loss,
