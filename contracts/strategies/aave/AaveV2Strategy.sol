@@ -16,20 +16,19 @@ abstract contract AaveV2Strategy is Strategy {
     AaveLendingPoolAddressesProvider public aaveAddressesProvider =
         AaveLendingPoolAddressesProvider(0xB53C1a33016B2DC2fF3653530bfF1848a515c8c5);
     AaveLendingPool public aaveLendingPool;
+    AaveProtocolDataProvider public aaveProtocolDataProvider;
 
     IERC20 internal immutable aToken;
     uint256 internal collateralInvested;
-
+    bytes32 private constant AAVE_PROVIDER_ID = 0x0100000000000000000000000000000000000000000000000000000000000000;
     event UpdatedAddressesProvider(address _previousProvider, address _newProvider);
 
     constructor(address _pool, address _receiptToken) Strategy(_pool, _receiptToken) {
         require(_receiptToken != address(0), "aToken-is-zero-address");
         aToken = IERC20(_receiptToken);
         aaveLendingPool = AaveLendingPool(aaveAddressesProvider.getLendingPool());
+        aaveProtocolDataProvider = AaveProtocolDataProvider(aaveAddressesProvider.getAddress(AAVE_PROVIDER_ID));
     }
-
-    //solhint-disable no-empty-blocks
-    function beforeWithdraw() external override onlyPool {}
 
     /**
      * @notice Update address of Aave LendingPoolAddressesProvider
@@ -41,6 +40,7 @@ abstract contract AaveV2Strategy is Strategy {
         emit UpdatedAddressesProvider(address(aaveAddressesProvider), _newAddressesProvider);
         aaveAddressesProvider = AaveLendingPoolAddressesProvider(_newAddressesProvider);
         aaveLendingPool = AaveLendingPool(aaveAddressesProvider.getLendingPool());
+        aaveProtocolDataProvider = AaveProtocolDataProvider(aaveAddressesProvider.getAddress(AAVE_PROVIDER_ID));
     }
 
     function isReservedToken(address _token) public view override returns (bool) {
@@ -65,10 +65,7 @@ abstract contract AaveV2Strategy is Strategy {
     }
 
     function _liquidate(uint256 _excessDebt) internal override returns (uint256 _payback) {
-        uint256 _aTokenBalance = aToken.balanceOf(address(this));
-        // Get minimum of two
-        _payback = _excessDebt < _aTokenBalance ? _excessDebt : _aTokenBalance;
-        _withdrawHere(_payback);
+        _payback = _safeWithdraw(address(this), _excessDebt);
     }
 
     /**
@@ -81,7 +78,7 @@ abstract contract AaveV2Strategy is Strategy {
     function _realizeProfit() internal override returns (uint256) {
         uint256 _aTokenBalance = aToken.balanceOf(address(this));
         if (_aTokenBalance > collateralInvested) {
-            _withdrawHere(_aTokenBalance - collateralInvested);
+            _withdraw(address(this), _aTokenBalance - collateralInvested);
             // At this point, current balance of aToken is collateralInvested
             collateralInvested = aToken.balanceOf(address(this));
         }
@@ -108,40 +105,62 @@ abstract contract AaveV2Strategy is Strategy {
 
     /**
      * @notice Withdraw given amount of collateral from Aave to pool
-     * @dev Make sure to update collateralInvested
-     * @param _amount Amount of aToken to withdraw
+     * @param _amount Amount of collateral to withdraw.
      */
     function _withdraw(uint256 _amount) internal override {
-        if (_amount != 0) {
-            collateralInvested -= _amount;
-            require(
-                aaveLendingPool.withdraw(address(collateralToken), _amount, pool) == _amount,
-                "withdrawn-amount-is-not-correct"
-            );
-        }
+        _safeWithdraw(pool, _amount);
     }
 
     /**
-     * @notice Withdraw given amount of collateral from Aave to this address
+     * @notice Safe withdraw will make sure to check asking amount against available amount.
+     * @dev Check we have enough aToken and liquidity to support this withdraw
+     * @param _to Address that will receive collateral token.
+     * @param _amount Amount of collateral to withdraw.
+     * @return Actual collateral withdrawn
+     */
+    function _safeWithdraw(address _to, uint256 _amount) internal returns (uint256) {
+        uint256 _aTokenBalance = aToken.balanceOf(address(this));
+        // If Vesper becomes large liquidity provider in Aave(This happended in past in vUSDC 1.0)
+        // In this case we might have more aToken compare to available liquidity in Aave and any
+        // withdraw asking more than available liquidity will fail. To do safe withdraw, check
+        // _amount against availble liquidity.
+        (uint256 _availableLiquidity, , , , , , , , , ) =
+            aaveProtocolDataProvider.getReserveData(address(collateralToken));
+        // Get minimum of _amount, _aTokenBalance and _availableLiquidity
+        return _withdraw(_to, _min(_amount, _min(_aTokenBalance, _availableLiquidity)));
+    }
+
+    /**
+     * @notice Withdraw given amount of collateral from Aave to given address
      * @dev Make sure to update collateralInvested
-     * @param _amount Amount of aToken to withdraw
+     * @param _to Address that will receive collateral token.
+     * @param _amount Amount of collateral to withdraw.
+     * @return Actual collateral withdrawn
      */
-    function _withdrawHere(uint256 _amount) internal {
+    function _withdraw(address _to, uint256 _amount) internal returns (uint256) {
         if (_amount != 0) {
             collateralInvested -= _amount;
             require(
-                aaveLendingPool.withdraw(address(collateralToken), _amount, address(this)) == _amount,
+                aaveLendingPool.withdraw(address(collateralToken), _amount, _to) == _amount,
                 "withdrawn-amount-is-not-correct"
             );
         }
+        return _amount;
     }
 
     /**
-     * @dev Withdraw all collateral from Aave.
+     * @notice Withdraw all collateral from Aave.
+     * @dev File report to pool with proper loss and payback.
+     *      Also update collateralInvested to 0.
      */
-    // TODO Pool might require to file a report, do update as needed.
     function _withdrawAll() internal override {
-        _withdraw(aToken.balanceOf(address(this)));
+        _withdraw(address(this), aToken.balanceOf(address(this)));
+        IVesperPool(pool).reportEarning(0, collateralInvested, collateralToken.balanceOf(address(this)));
         collateralInvested = 0;
+    }
+
+    /// @notice Returns minumum of 2 given numbers
+    function _min(uint256 a, uint256 b) internal pure returns (uint256) {
+        return a < b ? a : b;
     }
 }

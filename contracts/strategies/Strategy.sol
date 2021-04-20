@@ -4,12 +4,14 @@ pragma solidity 0.8.3;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "../Pausable.sol";
+import "@openzeppelin/contracts/utils/Context.sol";
 import "../UniswapManager.sol";
+import "../interfaces/bloq/IAddressList.sol";
+import "../interfaces/bloq/IAddressListFactory.sol";
 import "../interfaces/vesper/IStrategy.sol";
 import "../interfaces/vesper/IVesperPool.sol";
 
-abstract contract Strategy is IStrategy, Pausable {
+abstract contract Strategy is IStrategy, Context {
     using SafeERC20 for IERC20;
 
     // solhint-disable-next-line var-name-mixedcase
@@ -17,6 +19,7 @@ abstract contract Strategy is IStrategy, Pausable {
     IERC20 public immutable collateralToken;
     address public immutable receiptToken;
     address public immutable override pool;
+    IAddressList public immutable guardians;
     address public feeCollector;
     address internal constant ETH = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
     address internal constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
@@ -30,56 +33,55 @@ abstract contract Strategy is IStrategy, Pausable {
         pool = _pool;
         collateralToken = IERC20(IVesperPool(_pool).token());
         receiptToken = _receiptToken;
+
+        // Prepare guardian list
+        IAddressListFactory _factory = IAddressListFactory(0xded8217De022706A191eE7Ee0Dc9df1185Fb5dA3);
+        IAddressList _guardians = IAddressList(_factory.createList());
+        address _governor = IVesperPool(_pool).governor();
+        require(_guardians.add(_governor), "add-guardian-failed");
+        if (_msgSender() != _governor) {
+            require(_guardians.add(_msgSender()), "add-guardian-failed");
+        }
+        guardians = _guardians;
     }
 
-    /**
-     * @dev Throws if contract is paused and called by any account other than guardians.
-     */
-    modifier live() {
-        require(!paused || IVesperPool(pool).guardians().contains(_msgSender()), "contract-has-been-paused");
-        _;
-    }
-
-    /**
-     * @dev Throws if called by any account other than pool or governor.
-     */
-    modifier onlyAuthorized() {
-        require(_msgSender() == IVesperPool(pool).governor() || _msgSender() == pool, "caller-is-not-authorized");
-        _;
-    }
-
-    /**
-     * @dev Throws if called by any account other than pool's governor.
-     */
     modifier onlyGovernor {
         require(_msgSender() == IVesperPool(pool).governor(), "caller-is-not-the-governor");
         _;
     }
 
-    /**
-     * @dev Throws if called by any account other than guardians.
-     */
     modifier onlyGuardians() {
-        require(IVesperPool(pool).guardians().contains(_msgSender()), "caller-is-not-a-guardian");
+        require(guardians.contains(_msgSender()), "caller-is-not-a-guardian");
+        _;
+    }
+
+    modifier onlyPool() {
+        require(_msgSender() == pool, "caller-is-not-vesper-pool");
         _;
     }
 
     /**
-     * @dev Throws if called by any account other than pool.
+     * @notice Add given address in guardians list.
+     * @param _guardianAddress guardian address to add.
      */
-    modifier onlyPool() {
-        require(_msgSender() == pool, "caller-is-not-the-pool");
-        _;
+    function addGuardian(address _guardianAddress) external onlyGovernor {
+        require(!guardians.contains(_guardianAddress), "guardian-already-in-list");
+        require(guardians.add(_guardianAddress), "add-guardian-failed");
     }
 
-    function pause() external override onlyGuardians {
-        _pause();
+    /**
+     * @notice Remove given address from guardians list.
+     * @param _guardianAddress guardian address to remove.
+     */
+    function removeGuardian(address _guardianAddress) external onlyGovernor {
+        require(guardians.contains(_guardianAddress), "guardian-not-in-list");
+        require(guardians.remove(_guardianAddress), "remove-guardian-failed");
     }
 
-    function unpause() external override onlyGuardians {
-        _unpause();
-    }
-
+    /**
+     * @notice Update fee collector
+     * @param _feeCollector fee collector address
+     */
     function updateFeeCollector(address _feeCollector) external onlyGovernor {
         require(_feeCollector != address(0), "fee-collector-is-zero-address");
         require(_feeCollector != feeCollector, "fee-collector-is-same");
@@ -87,7 +89,6 @@ abstract contract Strategy is IStrategy, Pausable {
         feeCollector = _feeCollector;
     }
 
-    // TODO we may not need these 2 functions, these were part of update strategy via controller
     /// @dev Approve all required tokens
     function approveToken() external onlyGuardians {
         _approveToken(0);
@@ -100,26 +101,10 @@ abstract contract Strategy is IStrategy, Pausable {
     }
 
     /**
-     * @dev Deposit collateral token into lending pool.
-     * @param _amount Amount of collateral token
-     */
-    function deposit(uint256 _amount) external override onlyGuardians {
-        _deposit(_amount);
-    }
-
-    /**
-     * @notice Deposit all collateral token from pool to other lending pool.
-     * Anyone can call it except when paused.
-     */
-    function depositAll() external override onlyGuardians {
-        _deposit(collateralToken.balanceOf(address(this)));
-    }
-
-    /**
      * @dev Withdraw collateral token from lending pool.
      * @param _amount Amount of collateral token
      */
-    function withdraw(uint256 _amount) external override onlyAuthorized {
+    function withdraw(uint256 _amount) external override onlyPool {
         _withdraw(_amount);
     }
 
@@ -127,7 +112,6 @@ abstract contract Strategy is IStrategy, Pausable {
      * @dev Withdraw all collateral. No rebalance earning.
      * Governor only function, called when migrating strategy.
      */
-    //TODO: do we need this function or we want to achieve it via rebalance
     function withdrawAll() external override onlyGovernor {
         _withdrawAll();
     }
@@ -145,8 +129,9 @@ abstract contract Strategy is IStrategy, Pausable {
      * @dev sweep given token to feeCollector of strategy
      * @param _fromToken token address to sweep
      */
-    function sweepERC20(address _fromToken) external override {
+    function sweepERC20(address _fromToken) external override onlyGuardians {
         require(feeCollector != address(0), "fee-collector-not-set");
+        require(_fromToken != address(collateralToken), "not-allowed-to-sweep-collateral");
         require(!isReservedToken(_fromToken), "not-allowed-to-sweep");
         if (_fromToken == ETH) {
             payable(feeCollector).transfer(address(this).balance);
@@ -154,12 +139,6 @@ abstract contract Strategy is IStrategy, Pausable {
             uint256 _amount = IERC20(_fromToken).balanceOf(address(this));
             IERC20(_fromToken).safeTransfer(feeCollector, _amount);
         }
-    }
-
-    /// @dev Returns address of token correspond to collateral token
-    //TODO Review this we may not need it
-    function token() external view override returns (address) {
-        return receiptToken;
     }
 
     /// @dev Check whether given token is reserved or not. Reserved tokens are not allowed to sweep.

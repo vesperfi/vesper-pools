@@ -50,18 +50,6 @@ abstract contract MakerStrategy is Strategy {
     }
 
     /**
-     * @dev Called during withdrawal process.
-     * Withdraw is not allowed if pool in underwater.
-     * If pool is underwater, calling resurface() will bring pool above water.
-     * It will impact share price in pool and that's why it has to be called before withdraw.
-     */
-    function beforeWithdraw() external override onlyPool {
-        if (isUnderwater()) {
-            _resurface();
-        }
-    }
-
-    /**
      * @dev Rebalance earning and withdraw all collateral.
      */
     function withdrawAllWithEarn() external onlyGovernor {
@@ -151,7 +139,6 @@ abstract contract MakerStrategy is Strategy {
         collateralToken.safeApprove(address(cm), _amount);
         collateralToken.safeApprove(pool, _amount);
         collateralToken.safeApprove(address(UniMgr.ROUTER()), _amount);
-        _afterApproveToken(_amount);
     }
 
     function _deposit(uint256 _amount) internal override {
@@ -286,10 +273,6 @@ abstract contract MakerStrategy is Strategy {
         cm.withdrawCollateral(vaultNum, _collateralLocked);
         collateralToken.safeTransfer(pool, collateralToken.balanceOf(address(this)));
     }
-
-    /// @dev Not all child contract will need this. So initialized as empty
-    //solhint-disable-next-line no-empty-blocks
-    function _afterApproveToken(uint256 _amount) internal virtual {}
 
     function _depositDaiToLender(uint256 _amount) internal virtual;
 
