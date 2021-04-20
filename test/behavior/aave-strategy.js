@@ -8,9 +8,9 @@ const DECIMAL = new BN('1000000000000000000')
 const ERC20 = artifacts.require('ERC20')
 
 // Aave and AaveV2 strategy behavior test suite
-function shouldBehaveLikeStrategy(poolName, collateralName, pTokenName, accounts) {
+function shouldBehaveLikeStrategy(poolName, collateralName, strategyType) {
   let pool, strategy, controller, collateralToken, collateralDecimal, feeCollector
-  const [owner, user1, user2, user3, user4] = accounts
+  let owner, user1, user2, user3, user4
 
   function convertTo18(amount) {
     const multiplier = DECIMAL.div(new BN('10').pow(collateralDecimal))
@@ -22,13 +22,21 @@ function shouldBehaveLikeStrategy(poolName, collateralName, pTokenName, accounts
     return new BN(amount).div(divisor).toString()
   }
 
+  function getStrategy(strategies, type) {
+    const strtgy = strategies.find(s => s.type.includes(type))
+    if (!strtgy) {
+      throw new Error(`Strategy ${type} doesn't exist`)
+    }
+    feeCollector = strtgy.feeCollector
+    return strtgy.instance
+  }
+
   describe(`${poolName}:: AaveStrategy basic tests`, function () {
     beforeEach(async function () {
+      ;[owner, user1, user2, user3, user4] = this.accounts
       pool = this.pool
-      controller = this.controller
-      strategy = this.strategy
+      strategy = getStrategy(this.strategies, strategyType)
       collateralToken = this.collateralToken
-      feeCollector = this.feeCollector
       // Decimal will be used for amount conversion
       collateralDecimal = await this.collateralToken.decimals.call()
     })
@@ -142,7 +150,7 @@ function shouldBehaveLikeStrategy(poolName, collateralName, pTokenName, accounts
         const target = strategy.address
         const methodSignature = 'withdraw(uint256)'
         const data = web3.eth.abi.encodeParameter('uint256', withdrawAmount)
-        await controller.executeTransaction(target, 0, methodSignature, data, {from: accounts[0]})
+        await controller.executeTransaction(target, 0, methodSignature, data, {from: owner})
 
         const vPoolBalance = await pool.balanceOf(user4)
         const collateralBalance = await collateralToken.balanceOf(pool.address)

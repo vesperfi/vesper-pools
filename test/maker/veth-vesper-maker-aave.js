@@ -1,6 +1,6 @@
 'use strict'
 
-const {shouldBehaveLikePool} = require('../behavior/vesper-pool-v3')
+const {shouldBehaveLikePool} = require('../behavior/vesper-pool')
 const {shouldBehaveLikeStrategy} = require('../behavior/maker-strategy')
 const {deposit} = require('../utils/poolOps')
 const {setupVPool} = require('../utils/setupHelper')
@@ -28,8 +28,7 @@ contract('VETH Pool', function (accounts) {
     this.accounts = accounts
     await setupVPool(vDaiPoolObj, {
       pool: VDAI,
-      strategies: [{artifact: AaveStrategy, type: StrategyType.AAAVE, config: strategyConfig, feeCollector}],
-      feeCollector: accounts[9],
+      strategies: [{artifact: AaveStrategy, type: StrategyType.AAAVE, config: strategyConfig, feeCollector}]
     })
     vDai = vDaiPoolObj.pool
     dai = await vDaiPoolObj.collateralToken
