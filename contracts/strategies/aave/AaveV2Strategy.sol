@@ -68,7 +68,7 @@ abstract contract AaveV2Strategy is Strategy {
         uint256 _aTokenBalance = aToken.balanceOf(address(this));
         // Get minimum of two
         _payback = _excessDebt < _aTokenBalance ? _excessDebt : _aTokenBalance;
-        _withdraw(_payback);
+        _withdrawHere(_payback);
     }
 
     /**
@@ -81,7 +81,7 @@ abstract contract AaveV2Strategy is Strategy {
     function _realizeProfit() internal override returns (uint256) {
         uint256 _aTokenBalance = aToken.balanceOf(address(this));
         if (_aTokenBalance > collateralInvested) {
-            _withdraw(_aTokenBalance - collateralInvested);
+            _withdrawHere(_aTokenBalance - collateralInvested);
             // At this point, current balance of aToken is collateralInvested
             collateralInvested = aToken.balanceOf(address(this));
         }
@@ -107,11 +107,26 @@ abstract contract AaveV2Strategy is Strategy {
     }
 
     /**
-     * @notice Withdraw given amount of collateral from Aave to this address
+     * @notice Withdraw given amount of collateral from Aave to pool
      * @dev Make sure to update collateralInvested
      * @param _amount Amount of aToken to withdraw
      */
     function _withdraw(uint256 _amount) internal override {
+        if (_amount != 0) {
+            collateralInvested -= _amount;
+            require(
+                aaveLendingPool.withdraw(address(collateralToken), _amount, pool) == _amount,
+                "withdrawn-amount-is-not-correct"
+            );
+        }
+    }
+
+    /**
+     * @notice Withdraw given amount of collateral from Aave to this address
+     * @dev Make sure to update collateralInvested
+     * @param _amount Amount of aToken to withdraw
+     */
+    function _withdrawHere(uint256 _amount) internal {
         if (_amount != 0) {
             collateralInvested -= _amount;
             require(

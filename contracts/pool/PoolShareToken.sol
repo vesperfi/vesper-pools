@@ -138,7 +138,7 @@ abstract contract PoolShareToken is ERC20, Pausable, ReentrancyGuard, Governed {
      */
     function withdrawByStrategy(uint256 _shares) external virtual nonReentrant whenNotShutdown {
         require(feeWhiteList.get(_msgSender()) != 0, "Not a white listed address");
-        _withdrawByStrategy(_shares);
+        _withdrawWithoutFee(_shares);
     }
 
     /**
@@ -247,6 +247,7 @@ abstract contract PoolShareToken is ERC20, Pausable, ReentrancyGuard, Governed {
      * @param _amount Collateral amount in collateral token defined decimals.
      * @return share amount in 18 decimal
      */
+    // TODO: handle rounding effect
     function _calculateShares(uint256 _amount) internal view returns (uint256) {
         require(_amount != 0, "amount is 0");
         return (_amount * 1e18) / pricePerShare();
@@ -259,17 +260,6 @@ abstract contract PoolShareToken is ERC20, Pausable, ReentrancyGuard, Governed {
         _mint(_msgSender(), _shares);
         _afterMinting(_amount);
         emit Deposit(_msgSender(), _shares, _amount);
-    }
-
-    /// @dev Handle withdraw fee calculation and fee transfer to fee collector.
-    function _handleFee(uint256 _shares) internal returns (uint256 _sharesAfterFee) {
-        if (withdrawFee != 0) {
-            uint256 _fee = (_shares * withdrawFee) / MAX_BPS;
-            _sharesAfterFee = _shares - _fee;
-            _transfer(_msgSender(), feeCollector, _fee);
-        } else {
-            _sharesAfterFee = _shares;
-        }
     }
 
     /// @dev Update pool reward of sender and receiver before transfer.
@@ -290,30 +280,38 @@ abstract contract PoolShareToken is ERC20, Pausable, ReentrancyGuard, Governed {
 
     /// @dev Burns shares and returns the collateral value, after fee, of those.
     function _withdraw(uint256 _shares) internal whenNotShutdown {
-        require(_shares != 0, "share is 0");
-        // withdraw amount for the shares before fee
-        uint256 _amountWithdrawn = _beforeBurning(_shares);
-        // recalculate proportional share on actual amount withdrawn
-        uint256 _proportionalShares = _calculateShares(_amountWithdrawn);
-        if (_proportionalShares > _shares) {
-            _proportionalShares = _shares;
+        if (withdrawFee == 0) {
+            _withdrawWithoutFee(_shares);
+        } else {
+            require(_shares != 0, "share is 0");
+            uint256 _fee = (_shares * withdrawFee) / MAX_BPS;
+            uint256 _sharesAfterFee = _shares - _fee;
+            uint256 _amountWithdrawn = _beforeBurning(_sharesAfterFee);
+            // Recalculate proportional share on actual amount withdrawn
+            uint256 _proportionalShares = _calculateShares(_amountWithdrawn);
+            if (_proportionalShares < _sharesAfterFee) {
+                // Recalculate shares to withdraw, fee and shareAfterFee
+                _shares = (_proportionalShares * MAX_BPS) / (MAX_BPS - withdrawFee);
+                _fee = _shares - _proportionalShares;
+                _sharesAfterFee = _proportionalShares;
+            }
+            _burn(_msgSender(), _sharesAfterFee);
+            _transfer(_msgSender(), feeCollector, _fee);
+            _afterBurning(_amountWithdrawn);
+            emit Withdraw(_msgSender(), _shares, _amountWithdrawn);
         }
-        uint256 _sharesAfterFee = _handleFee(_proportionalShares);
-        _burn(_msgSender(), _sharesAfterFee);
-        _afterBurning(_amountWithdrawn);
-        emit Withdraw(_msgSender(), _proportionalShares, _amountWithdrawn);
     }
 
     /// @dev Burns shares and returns the collateral value of those.
-    function _withdrawByStrategy(uint256 _shares) internal {
+    function _withdrawWithoutFee(uint256 _shares) internal {
         require(_shares != 0, "share is 0");
         uint256 _amountWithdrawn = _beforeBurning(_shares);
         uint256 _proportionalShares = _calculateShares(_amountWithdrawn);
-        if (_proportionalShares > _shares) {
-            _proportionalShares = _shares;
+        if (_proportionalShares < _shares) {
+            _shares = _proportionalShares;
         }
-        _burn(_msgSender(), _proportionalShares);
+        _burn(_msgSender(), _shares);
         _afterBurning(_amountWithdrawn);
-        emit Withdraw(_msgSender(), _proportionalShares, _amountWithdrawn);
+        emit Withdraw(_msgSender(), _shares, _amountWithdrawn);
     }
 }

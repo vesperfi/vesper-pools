@@ -121,13 +121,15 @@ async function createStrategies(obj, collateralManager, vPool) {
  * @param {PoolData} poolData Data for pool setup
  */
 async function setupVPool(obj, poolData) {
-  const {pool, strategies, collateralManager, vPool} = poolData
+  const {pool, strategies, collateralManager, vPool, feeCollector} = poolData
   obj.strategies = strategies
+  obj.feeCollector = feeCollector
   obj.pool = await pool.new()
   await obj.pool.createGuardianList()
   await createStrategies(obj, collateralManager, vPool)
   await addStrategiesInPool(obj)
   await updateWithdrawQueue(obj.strategies, obj.pool)
+  await obj.pool.updateFeeCollector(feeCollector)
   const collateralTokenAddress = await obj.pool.token()
   obj.collateralToken = await TokenLike.at(collateralTokenAddress)
 }
