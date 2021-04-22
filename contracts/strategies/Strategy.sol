@@ -20,7 +20,7 @@ abstract contract Strategy is IStrategy, Context {
     address public immutable receiptToken;
     address public immutable override pool;
     IAddressList public immutable guardians;
-    address public feeCollector;
+    address public override feeCollector;
     address internal constant ETH = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
     address internal constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     uint256 internal constant MAX_UINT_VALUE = type(uint256).max;
@@ -76,6 +76,11 @@ abstract contract Strategy is IStrategy, Context {
     function removeGuardian(address _guardianAddress) external onlyGovernor {
         require(guardians.contains(_guardianAddress), "guardian-not-in-list");
         require(guardians.remove(_guardianAddress), "remove-guardian-failed");
+    }
+
+    /// @dev Returns address of token correspond to collateral token
+    function token() external view override returns (address) {
+        return receiptToken;
     }
 
     /**

@@ -13,5 +13,9 @@ interface IStrategy {
 
     function isReservedToken(address _token) external view returns (bool);
 
+    function token() external view returns (address);
+
+    function feeCollector() external view returns (address);
+
     function pool() external view returns (address);
 }

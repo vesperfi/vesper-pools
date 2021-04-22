@@ -247,14 +247,10 @@ contract VTokenBase is PoolShareToken {
         } else if (_totalPayback > _creditLine) {
             token.transferFrom(_msgSender(), address(this), _totalPayback - _creditLine);
         }
-
-        if (strategy[_msgSender()].debtRatio == 0 || stopEverything) {
-            //TODO: strategy.withdrawAll()
-        }
         if (_profit != 0) {
+            strategy[_msgSender()].totalProfit += _profit;
             _transferInterestFee(_profit);
         }
-        // TODO: return debt amount or strategy.totalAssert ( if emergency) so that strategy can use this value.
     }
 
     /**
@@ -263,8 +259,6 @@ contract VTokenBase is PoolShareToken {
     function excessDebt(address _strategy) external view returns (uint256) {
         return _excessDebt(_strategy);
     }
-
-    function withdrawAllFromStrategy(address _strategy) external onlyGovernor {}
 
     /**
      * @dev Transfer given ERC20 token to feeCollector
@@ -393,11 +387,10 @@ contract VTokenBase is PoolShareToken {
     @dev strategy get interest fee in pool share token
     */
     function _transferInterestFee(uint256 _profit) internal {
-        //TODO: get pool token share price after removing the fee amount from totalValue()
         uint256 _fee = (_profit * strategy[_msgSender()].interestFee) / MAX_BPS;
-        _fee = _calculateShares(_fee);
         if (_fee != 0) {
-            _mint(_msgSender(), _fee);
+            _fee = _calculateShares(_fee);
+            _mint(IStrategy(_msgSender()).feeCollector(), _fee);
         }
     }
 
