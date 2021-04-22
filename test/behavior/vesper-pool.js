@@ -1,6 +1,6 @@
 'use strict'
 
-// const swapper = require('../utils/tokenSwapper')
+const swapper = require('../utils/tokenSwapper')
 const poolOps = require('../utils/poolOps')
 const {getPermitData} = require('../utils/signHelper')
 const {MNEMONIC} = require('../utils/testkey')
@@ -9,6 +9,7 @@ const {expect} = require('chai')
 const {BN, time, expectRevert} = require('@openzeppelin/test-helpers')
 // const ERC20 = artifacts.require('ERC20')
 const IStrategy = artifacts.require('IStrategy')
+const ERC20 = artifacts.require('ERC20')
 const DECIMAL18 = new BN('1000000000000000000')
 const MAX_BPS = new BN('10000')
 
@@ -328,86 +329,76 @@ async function shouldBehaveLikePool(poolName, collateralName) {
       })
     })
 
-    // describe(`Interest fee in ${poolName} pool`, function () {
-    //   beforeEach(async function () {
-    //     await deposit(20, user1)
-    //   })
-    //   it('Should handle interest fee on rebalance', async function () {
-    //     await pool.rebalance()
-    //     await executeIfExist(providerToken.rebalance)
+    describe(`Interest fee in ${poolName} pool`, function () {
+      beforeEach(async function () {
+        await deposit(20, user1)
+      })
+      it('Should earn interest fee on rebalance', async function () {
+        await rebalance()
+        const fc = await strategies[0].feeCollector
+        await timeTravel()
+        // Another deposit
+        await deposit(200, user2)
+        await rebalance()
+        const strategyParams = await pool.strategy(strategies[0].instance.address)
+        const totalProfit = strategyParams.totalProfit
+        const fee = strategyParams.interestFee
+        const expectedFee = totalProfit.mul(fee).div(MAX_BPS)
+        console.log('expectedFee', expectedFee.toString())
+        const feeEarned1 = await pool.balanceOf(fc)
+        expect(feeEarned1).to.be.bignumber.gt(new BN('0'), 'Fee collected is not correct')
+        await timeTravel()
+        await rebalance()
+        const feeEarned2 = await pool.balanceOf(fc)
+        expect(feeEarned2).to.be.bignumber.gt(feeEarned1, 'Fee collected is not correct')
+      })
 
-    //     const vPoolBalanceFC = await pool.balanceOf(feeCollector)
-    //     // Time travel to generate earning
-    //     await timeTravel()
-    //     await executeIfExist(providerToken.exchangeRateCurrent)
+      it.only('Should rebalance when interest fee is zero', async function () {
+        await pool.updateInterestFee(strategies[0].instance.address, '0')
+        await rebalance()
+        // Time travel to generate earning
+        await timeTravel()
+        await deposit(200, user2)
+        await rebalance()
+        const fc = await strategies[0].feeCollector
+        let vPoolBalanceFC = await pool.balanceOf(fc)
+        expect(vPoolBalanceFC.toString()).to.eq('0', 'Collected fee should be zero')
+        // Another time travel and rebalance to run scenario again
+        await timeTravel()
+        await rebalance()
+        vPoolBalanceFC = await pool.balanceOf(fc)
+        expect(vPoolBalanceFC.toString()).to.eq('0', 'Collected fee should be zero')
+      })
+    })
 
-    //     // Another deposit
-    //     await deposit(200, user2)
-    //     await pool.rebalance()
-    //     await executeIfExist(providerToken.rebalance)
-    //     const vPoolBalanceFC2 = await pool.balanceOf(feeCollector)
-    //     expect(vPoolBalanceFC2).to.be.bignumber.gt(vPoolBalanceFC, 'Fee collected is not correct')
+    describe(`Sweep ERC20 token in ${poolName} pool`, function () {
+      it.only(`Should sweep ERC20 for ${collateralName}`, async function () {
+        const metAddress = '0xa3d58c4e56fedcae3a7c43a725aee9a71f0ece4e'
+        const MET = await ERC20.at(metAddress)
+        await deposit(200, user2)
+        await swapper.swapEthForToken(2, metAddress, user1, pool.address)
+        await pool.sweepERC20(metAddress)
+        const fc = await pool.feeCollector()
+        return Promise.all([
+          pool.totalSupply(),
+          pool.totalValue(),
+          MET.balanceOf(pool.address),
+          MET.balanceOf(fc),
+        ]).then(function ([totalSupply, totalValue, metBalance, metBalanceFC]) {
+          expect(totalSupply).to.be.bignumber.gt(new BN('0'), `Total supply of ${poolName} is wrong`)
+          expect(totalValue).to.be.bignumber.gt(new BN('0'), `Total value of ${poolName} is wrong`)
+          expect(metBalance).to.be.bignumber.eq(new BN('0'), 'ERC20 token balance of pool is wrong')
+          expect(metBalanceFC).to.be.bignumber.gt(new BN('0'), 'ERC20 token balance of pool is wrong')
+        })
+      })
 
-    //     // Time travel to generate earning
-    //     await timeTravel()
-    //     await executeIfExist(providerToken.exchangeRateCurrent)
-    //     await pool.rebalance()
-
-    //     const vPoolBalanceFC3 = await pool.balanceOf(feeCollector)
-    //     expect(vPoolBalanceFC3).to.be.bignumber.gt(vPoolBalanceFC2, 'Fee collected is not correct')
-    //   })
-
-    //   it('Should rebalance when interest fee is zero', async function () {
-    //     await controller.updateInterestFee(pool.address, '0')
-    //     await pool.rebalance()
-    //     // Time travel to generate earning
-    //     await timeTravel()
-    //     await executeIfExist(providerToken.exchangeRateCurrent)
-    //     await executeIfExist(providerToken.rebalance)
-    //     // Another deposit
-    //     await deposit(200, user2)
-    //     await pool.rebalance()
-    //     let vPoolBalanceFC = await pool.balanceOf(feeCollector)
-    //     expect(vPoolBalanceFC.toString()).to.eq('0', 'Collected fee should be zero')
-
-    //     // Another time travel and rebalance to run scenario again
-    //     await timeTravel()
-    //     await pool.rebalance()
-    //     vPoolBalanceFC = await pool.balanceOf(feeCollector)
-    //     expect(vPoolBalanceFC.toString()).to.eq('0', 'Collected fee should be zero')
-    //   })
-    // })
-
-    // describe(`Sweep ERC20 token in ${poolName} pool`, function () {
-    //   it(`Should sweep ERC20 for ${collateralName}`, async function () {
-    //     const metAddress = '0xa3d58c4e56fedcae3a7c43a725aee9a71f0ece4e'
-    //     const MET = await ERC20.at(metAddress)
-    //     await swapper.swapEthForToken(2, metAddress, accounts[0], pool.address)
-
-    //     await pool.sweepErc20(metAddress)
-
-    //     return Promise.all([pool.totalSupply(), pool.totalValue(), MET.balanceOf(pool.address)]).then(function ([
-    //       totalSupply,
-    //       totalValue,
-    //       metBalance,
-    //     ]) {
-    //       expect(totalSupply).to.be.bignumber.eq('0', `Total supply of ${poolName} is wrong`)
-    //       expect(totalValue).to.be.bignumber.gt('0', `Total value of ${poolName} is wrong`)
-    //       expect(metBalance.toString()).to.eq('0', 'ERC20 token balance of pool is wrong')
-    //     })
-    //   })
-
-    //   it(`Should not be able sweep ${poolName}, ${collateralName} and ${pTokenName}`, async function () {
-    //     let tx = pool.sweepErc20(pool.address)
-    //     await expectRevert(tx, 'Not allowed to sweep')
-
-    //     tx = pool.sweepErc20(collateralToken.address)
-    //     await expectRevert(tx, 'Not allowed to sweep')
-
-    //     tx = pool.sweepErc20(providerToken.address)
-    //     await expectRevert(tx, 'Not allowed to sweep')
-    //   })
-    // })
+      it('Should not be able sweep reserved token', async function () {
+        let tx = pool.sweepERC20(pool.address)
+        await expectRevert(tx, 'Not allowed to sweep')
+        tx = pool.sweepERC20(collateralToken.address)
+        await expectRevert(tx, 'Not allowed to sweep')
+      })
+    })
   })
 }
 
