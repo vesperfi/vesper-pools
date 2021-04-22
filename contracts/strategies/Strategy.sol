@@ -78,11 +78,6 @@ abstract contract Strategy is IStrategy, Context {
         require(guardians.remove(_guardianAddress), "remove-guardian-failed");
     }
 
-    /// @dev Returns address of token correspond to collateral token
-    function token() external view override returns (address) {
-        return receiptToken;
-    }
-
     /**
      * @notice Update fee collector
      * @param _feeCollector fee collector address
@@ -100,11 +95,6 @@ abstract contract Strategy is IStrategy, Context {
         _approveToken(MAX_UINT_VALUE);
     }
 
-    /// @dev Reset approval of all required tokens
-    function resetApproval() external onlyGuardians {
-        _approveToken(0);
-    }
-
     /**
      * @dev Withdraw collateral token from lending pool.
      * @param _amount Amount of collateral token
@@ -114,11 +104,27 @@ abstract contract Strategy is IStrategy, Context {
     }
 
     /**
-     * @dev Withdraw all collateral. No rebalance earning.
-     * Governor only function, called when migrating strategy.
+     * @notice Withdraw all collateral.
+     * @notice Governor only function, called when migrating strategy.
+     * @dev File report to pool with proper profit, loss and payback.
+     * @dev To make withdrawAll fail safe, we bypass generateReport
+     * function and prepared report here.
      */
     function withdrawAll() external override onlyGovernor {
+        // Make sure to wtihdraw all collateral here
         _withdrawAll();
+
+        uint256 _totalDebt = IVesperPool(pool).totalDebtOf(address(this));
+        uint256 _collateralHere = collateralToken.balanceOf(address(this));
+        uint256 _profit;
+        uint256 _loss;
+        if (_collateralHere > _totalDebt) {
+            _profit = _collateralHere - _totalDebt;
+        } else {
+            _loss = _totalDebt - _collateralHere;
+        }
+        // Pool has a require check on (payback + profit = collateral in strategy)
+        IVesperPool(pool).reportEarning(_profit, _loss, _collateralHere - _profit);
     }
 
     /**
@@ -146,7 +152,18 @@ abstract contract Strategy is IStrategy, Context {
         }
     }
 
-    /// @dev Check whether given token is reserved or not. Reserved tokens are not allowed to sweep.
+    /// @notice Returns address of token correspond to collateral token
+    function token() external view override returns (address) {
+        return receiptToken;
+    }
+
+    /**
+     * @notice Calculate total value of asset under management
+     * @dev Report total value in collateral token
+     */
+    function totalValue() external view virtual override returns (uint256 _value);
+
+    /// @notice Check whether given token is reserved or not. Reserved tokens are not allowed to sweep.
     function isReservedToken(address _token) public view virtual override returns (bool);
 
     /**
@@ -166,8 +183,9 @@ abstract contract Strategy is IStrategy, Context {
         )
     {
         uint256 _excessDebt = IVesperPool(pool).excessDebt(address(this));
-        _profit = _realizeProfit();
-        _loss = _realizeLoss();
+        uint256 _totalDebt = IVesperPool(pool).totalDebtOf(address(this));
+        _profit = _realizeProfit(_totalDebt);
+        _loss = _realizeLoss(_totalDebt);
         _payback = _liquidate(_excessDebt);
     }
 
@@ -200,7 +218,7 @@ abstract contract Strategy is IStrategy, Context {
 
     // Some streateies may not have rewards hence they do not need this function.
     //solhint-disable-next-line no-empty-blocks
-    function _claimReward() internal virtual {}
+    function _claimRewardsAndConvertTo(address _toToken) internal virtual {}
 
     /**
      * @notice Withdraw collateral to payback excess debt in pool.
@@ -211,13 +229,17 @@ abstract contract Strategy is IStrategy, Context {
 
     /**
      * @notice Calculate earning and withdraw/convert it into collateral token.
-     * @return _profit in collateral token
+     * @param _totalDebt Total collateral debt of this strategy
+     * @return _profit Profit in collateral token
      */
-    function _realizeProfit() internal virtual returns (uint256 _profit);
+    function _realizeProfit(uint256 _totalDebt) internal virtual returns (uint256 _profit);
 
-    // Some strategies may not need loss calculation, so making it optional
-    // solhint-disable-next-line no-empty-blocks
-    function _realizeLoss() internal virtual returns (uint256 _loss) {}
+    /**
+     * @notice Calculate loss
+     * @param _totalDebt Total collateral debt of this strategy
+     * @return _loss Realized loss in collateral token
+     */
+    function _realizeLoss(uint256 _totalDebt) internal virtual returns (uint256 _loss);
 
     /**
      * @notice Reinvest collateral.

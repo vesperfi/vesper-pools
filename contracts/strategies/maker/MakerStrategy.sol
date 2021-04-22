@@ -53,7 +53,7 @@ abstract contract MakerStrategy is Strategy {
      * @dev Rebalance earning and withdraw all collateral.
      */
     function withdrawAllWithEarn() external onlyGovernor {
-        _realizeProfit();
+        _realizeProfit(IVesperPool(pool).totalDebtOf(address(this)));
         _withdrawAll();
     }
 
@@ -85,17 +85,18 @@ abstract contract MakerStrategy is Strategy {
     }
 
     /**
-     * @notice Returns interest earned since last rebalance.
+     * @notice Report total value of this strategy
      * @dev Make sure to return value in collateral token and in order to do that
      * we are using Uniswap to get collateral amount for earned DAI.
      */
-    function interestEarned() external view virtual returns (uint256 amountOut) {
+    function totalValue() external view virtual override returns (uint256 _value) {
         uint256 daiBalance = _getDaiBalance();
         uint256 debt = cm.getVaultDebt(vaultNum);
         if (daiBalance > debt) {
             uint256 daiEarned = daiBalance - debt;
-            (, amountOut) = UniMgr.bestPathFixedInput(DAI, address(collateralToken), daiEarned);
+            (, _value) = UniMgr.bestPathFixedInput(DAI, address(collateralToken), daiEarned);
         }
+        _value += convertFrom18(cm.getVaultBalance(vaultNum));
     }
 
     /// @dev Check whether given token is reserved or not. Reserved tokens are not allowed to sweep.
@@ -177,14 +178,27 @@ abstract contract MakerStrategy is Strategy {
      *      Swap net earned DAI to collateral token
      * @return profit in collateral token
      */
-    function _realizeProfit() internal virtual override returns (uint256) {
-        _claimReward();
+    function _realizeProfit(
+        uint256 /*_totalDebt*/
+    ) internal virtual override returns (uint256) {
+        _claimRewardsAndConvertTo(DAI);
         _rebalanceDaiInLender();
         uint256 _daiBalance = IERC20(DAI).balanceOf(address(this));
         if (_daiBalance != 0) {
             _safeSwap(DAI, address(collateralToken), _daiBalance);
         }
         return collateralToken.balanceOf(address(this));
+    }
+
+    /**
+     * @notice Calculate collateral loss from resurface, if any
+     * @dev Difference of total debt of strategy in pool and collateral locked
+     *      in Maker vault is the loss.
+     * @return loss in collateral token
+     */
+    function _realizeLoss(uint256 _totalDebt) internal virtual override returns (uint256) {
+        uint256 _collateralLocked = convertFrom18(cm.getVaultBalance(vaultNum));
+        return _totalDebt > _collateralLocked ? _totalDebt - _collateralLocked : 0;
     }
 
     /**
@@ -230,13 +244,6 @@ abstract contract MakerStrategy is Strategy {
             cm.withdrawCollateral(vaultNum, _collateralNeeded);
             UniMgr.ROUTER().swapExactTokensForTokens(_collateralNeeded, 1, _path, address(this), block.timestamp + 30);
             cm.payback(vaultNum, IERC20(DAI).balanceOf(address(this)));
-            // TODO review this report file. Also need to take decision on realizeLoss function
-            // Report loss back to the pool
-            IVesperPool(pool).reportEarning(0, _collateralNeeded, 0);
-            // After loss report we might get more asset to invest from pool
-            if (collateralToken.balanceOf(address(this)) != 0) {
-                _reinvest();
-            }
         }
     }
 
@@ -245,6 +252,7 @@ abstract contract MakerStrategy is Strategy {
         collateralToken.safeTransfer(pool, collateralToken.balanceOf(address(this)));
     }
 
+    // TODO do we need a safe withdraw
     function _withdrawHere(uint256 _amount) internal {
         (
             uint256 collateralLocked,
@@ -267,11 +275,11 @@ abstract contract MakerStrategy is Strategy {
     }
 
     function _withdrawAll() internal override {
+        _claimRewardsAndConvertTo(address(collateralToken));
         _moveDaiToMaker(cm.getVaultDebt(vaultNum));
         require(cm.getVaultDebt(vaultNum) == 0, "debt-should-be-0");
         uint256 _collateralLocked = convertFrom18(cm.getVaultBalance(vaultNum));
         cm.withdrawCollateral(vaultNum, _collateralLocked);
-        collateralToken.safeTransfer(pool, collateralToken.balanceOf(address(this)));
     }
 
     function _depositDaiToLender(uint256 _amount) internal virtual;
