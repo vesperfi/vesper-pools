@@ -6,7 +6,6 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./PoolShareToken.sol";
 import "../interfaces/vesper/IStrategy.sol";
 
-// TODO redesign hooks to support ETH as well, we can live without this though
 contract VTokenBase is PoolShareToken {
     using SafeERC20 for IERC20;
 
@@ -87,13 +86,13 @@ contract VTokenBase is PoolShareToken {
      * @notice Create guardian list
      * @dev Create list and add governor into the list.
      * NOTE: Any function with onlyGuardian modifier will not work until this function is called.
+     * NOTE: Due to gas constraint this function cannot be called in constructor.
      */
     function createGuardianList() external onlyGovernor {
         require(address(guardians) == address(0), "guardian-list-already-created");
         IAddressListFactory _factory = IAddressListFactory(0xded8217De022706A191eE7Ee0Dc9df1185Fb5dA3);
-        IAddressList _guardians = IAddressList(_factory.createList());
-        _guardians.add(governor);
-        guardians = _guardians;
+        guardians = IAddressList(_factory.createList());
+        guardians.add(governor);
     }
 
     /**
@@ -108,7 +107,7 @@ contract VTokenBase is PoolShareToken {
     }
 
     /**
-     * @notice Remove given address in provided address list.
+     * @notice Remove given address from provided address list.
      * @dev Use it to remove guardian from guardians list and to remove address from feeWhiteList
      * @param _listToUpdate address of AddressList contract.
      * @param _addressToRemove address which we want to remove from AddressList.
@@ -268,13 +267,13 @@ contract VTokenBase is PoolShareToken {
     function withdrawAllFromStrategy(address _strategy) external onlyGovernor {}
 
     /**
-     * @dev Convert given ERC20 token to fee collector
-     * @param _token Token address
+     * @dev Transfer given ERC20 token to feeCollector
+     * @param _fromToken Token address to sweep
      */
-    function sweepERC20(address _token) external virtual onlyGuardian {
-        require(_token != address(token), "not-allowed-to-sweep");
+    function sweepERC20(address _fromToken) external virtual onlyGuardian {
+        require(_fromToken != address(token), "not-allowed-to-sweep");
         require(feeCollector != address(0), "fee-collector-not-set");
-        IERC20(_token).transfer(feeCollector, IERC20(_token).balanceOf(address(this)));
+        IERC20(_fromToken).transfer(feeCollector, IERC20(_fromToken).balanceOf(address(this)));
     }
 
     /// @dev Returns total value of vesper pool, in terms of collateral token
