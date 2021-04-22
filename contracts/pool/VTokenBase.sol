@@ -390,7 +390,7 @@ contract VTokenBase is PoolShareToken {
         uint256 _fee = (_profit * strategy[_msgSender()].interestFee) / MAX_BPS;
         if (_fee != 0) {
             _fee = _calculateShares(_fee);
-            _mint(IStrategy(_msgSender()).feeCollector(), _fee);
+            _mint(_msgSender(), _fee);
         }
     }
 

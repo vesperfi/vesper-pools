@@ -4,7 +4,6 @@ const swapper = require('../utils/tokenSwapper')
 const poolOps = require('../utils/poolOps')
 const {getPermitData} = require('../utils/signHelper')
 const {MNEMONIC} = require('../utils/testkey')
-
 const {expect} = require('chai')
 const {BN, time, expectRevert} = require('@openzeppelin/test-helpers')
 // const ERC20 = artifacts.require('ERC20')
@@ -153,7 +152,7 @@ async function shouldBehaveLikePool(poolName, collateralName) {
             totalDebt,
             `${collateralName} totalDebt of strategies is wrong`
           )
-          expect(totalDebt).to.be.bignumber.equal('0', `${collateralName} locked is wrong`)
+          expect(totalDebt).to.be.bignumber.equal('0', `${collateralName} total debt of pool is wrong`)
           expect(totalSupply).to.be.bignumber.equal('0', `Total supply of ${poolName} is wrong`)
           expect(totalValue).to.be.bignumber.equal('0', `Total value of ${poolName} is wrong`)
           expect(vPoolBalance).to.be.bignumber.equal('0', `${poolName} balance of user is wrong`)
@@ -223,7 +222,7 @@ async function shouldBehaveLikePool(poolName, collateralName) {
           collateralToken.balanceOf(user1),
         ]).then(function ([totalDebt, totalSupply, totalValue, vPoolBalance, collateralBalance]) {
           // Due to rounding some dust, 10000 wei, might left in case of Compound strategy
-          expect(totalDebt).to.be.bignumber.lte(dust, `${collateralName} locked is wrong`)
+          expect(totalDebt).to.be.bignumber.lte(dust, `${collateralName} total debt is wrong`)
           expect(totalSupply).to.be.bignumber.equal('0', `Total supply of ${poolName} is wrong`)
           expect(totalValue).to.be.bignumber.lte(dust, `Total value of ${poolName} is wrong`)
           expect(vPoolBalance).to.be.bignumber.equal('0', `${poolName} balance of user is wrong`)
@@ -235,26 +234,28 @@ async function shouldBehaveLikePool(poolName, collateralName) {
     describe(`Rebalance ${poolName} pool`, function () {
       it('Should rebalance multiple times.', async function () {
         const depositAmount = (await deposit(10, user3)).toString()
-        const totalDebtRatio = await pool.totalDebtRatio()
+        let totalDebtRatio = await pool.totalDebtRatio()
         let totalValue = await pool.totalValue()
         let maxDebt = totalValue.mul(totalDebtRatio).div(MAX_BPS)
         const buffer = totalValue.sub(maxDebt)
-        await rebalance()
         const tokensHere = await pool.tokensHere()
         expect(tokensHere).to.be.bignumber.equal(buffer, 'Tokens here is not correct')
         // Time travel 6 hours
         await timeTravel()
         await rebalance()
+
         await timeTravel()
         await rebalance()
         totalValue = await pool.totalValue()
+        totalDebtRatio = await pool.totalDebtRatio()
         maxDebt = totalValue.mul(totalDebtRatio).div(MAX_BPS)
+        await rebalance()
         return Promise.all([pool.totalDebt(), pool.totalSupply(), pool.balanceOf(user3)]).then(function ([
           totalDebt,
           totalSupply,
           vPoolBalance,
         ]) {
-          expect(totalDebt).to.be.bignumber.eq(maxDebt, `${collateralName} locked is wrong`)
+          expect(totalDebt).to.be.bignumber.eq(maxDebt, `${collateralName} total debt of pool is wrong`)
           expect(totalSupply).to.be.bignumber.gte(depositAmount, `Total supply of ${poolName} is wrong`)
           expect(vPoolBalance).to.be.bignumber.eq(convertTo18(depositAmount), `${poolName} balance of user is wrong`)
         })
@@ -340,39 +341,37 @@ async function shouldBehaveLikePool(poolName, collateralName) {
         // Another deposit
         await deposit(200, user2)
         await rebalance()
-        const strategyParams = await pool.strategy(strategies[0].instance.address)
-        const totalProfit = strategyParams.totalProfit
-        const fee = strategyParams.interestFee
-        const expectedFee = totalProfit.mul(fee).div(MAX_BPS)
-        console.log('expectedFee', expectedFee.toString())
+        await strategies[0].instance.sweepERC20(pool.address)
         const feeEarned1 = await pool.balanceOf(fc)
         expect(feeEarned1).to.be.bignumber.gt(new BN('0'), 'Fee collected is not correct')
         await timeTravel()
         await rebalance()
+        await strategies[0].instance.sweepERC20(pool.address)
         const feeEarned2 = await pool.balanceOf(fc)
         expect(feeEarned2).to.be.bignumber.gt(feeEarned1, 'Fee collected is not correct')
       })
 
-      it.only('Should rebalance when interest fee is zero', async function () {
+      it('Should rebalance when interest fee is zero', async function () {
         await pool.updateInterestFee(strategies[0].instance.address, '0')
         await rebalance()
         // Time travel to generate earning
         await timeTravel()
         await deposit(200, user2)
         await rebalance()
-        const fc = await strategies[0].feeCollector
+        const fc = strategies[0].instance.address
         let vPoolBalanceFC = await pool.balanceOf(fc)
         expect(vPoolBalanceFC.toString()).to.eq('0', 'Collected fee should be zero')
         // Another time travel and rebalance to run scenario again
         await timeTravel()
         await rebalance()
+        await strategies[0].instance.sweepERC20(pool.address)
         vPoolBalanceFC = await pool.balanceOf(fc)
         expect(vPoolBalanceFC.toString()).to.eq('0', 'Collected fee should be zero')
       })
     })
 
     describe(`Sweep ERC20 token in ${poolName} pool`, function () {
-      it.only(`Should sweep ERC20 for ${collateralName}`, async function () {
+      it(`Should sweep ERC20 for ${collateralName}`, async function () {
         const metAddress = '0xa3d58c4e56fedcae3a7c43a725aee9a71f0ece4e'
         const MET = await ERC20.at(metAddress)
         await deposit(200, user2)
