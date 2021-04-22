@@ -5,11 +5,9 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../bloq/IAddressList.sol";
 
 interface IVesperPool is IERC20 {
-    function approveToken() external;
-
     function deposit() external payable;
 
-    function deposit(uint256) external;
+    function deposit(uint256 _share) external;
 
     function governor() external returns (address);
 
@@ -37,13 +35,13 @@ interface IVesperPool is IERC20 {
 
     function resetApproval() external;
 
-    function sweepErc20(address) external;
+    function sweepERC20(address _fromToken) external;
 
-    function withdraw(uint256) external;
+    function withdraw(uint256 _amount) external;
 
-    function withdrawETH(uint256) external;
+    function withdrawETH(uint256 _amount) external;
 
-    function withdrawByStrategy(uint256) external;
+    function withdrawByStrategy(uint256 _amount) external;
 
     function feeCollector() external view returns (address);
 
@@ -52,6 +50,8 @@ interface IVesperPool is IERC20 {
     function token() external view returns (address);
 
     function tokensHere() external view returns (uint256);
+
+    function totalDebtOf(address _strategy) external view returns (uint256);
 
     function totalValue() external view returns (uint256);
 

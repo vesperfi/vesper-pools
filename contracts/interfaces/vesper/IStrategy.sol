@@ -11,11 +11,13 @@ interface IStrategy {
 
     function withdrawAll() external;
 
+    function feeCollector() external view returns (address);
+
     function isReservedToken(address _token) external view returns (bool);
 
     function token() external view returns (address);
 
-    function feeCollector() external view returns (address);
+    function totalValue() external view returns (uint256);
 
     function pool() external view returns (address);
 }

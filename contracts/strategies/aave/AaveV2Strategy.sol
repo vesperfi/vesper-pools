@@ -19,7 +19,6 @@ abstract contract AaveV2Strategy is Strategy {
     AaveProtocolDataProvider public aaveProtocolDataProvider;
 
     IERC20 internal immutable aToken;
-    uint256 internal collateralInvested;
     bytes32 private constant AAVE_PROVIDER_ID = 0x0100000000000000000000000000000000000000000000000000000000000000;
     event UpdatedAddressesProvider(address _previousProvider, address _newProvider);
 
@@ -43,6 +42,14 @@ abstract contract AaveV2Strategy is Strategy {
         aaveProtocolDataProvider = AaveProtocolDataProvider(aaveAddressesProvider.getAddress(AAVE_PROVIDER_ID));
     }
 
+    /**
+     * @notice Report total value
+     * @dev aToken and collateral are 1:1 so total aTokens are totalValue
+     */
+    function totalValue() external view virtual override returns (uint256) {
+        return aToken.balanceOf(address(this));
+    }
+
     function isReservedToken(address _token) public view override returns (bool) {
         return _token == receiptToken;
     }
@@ -53,52 +60,47 @@ abstract contract AaveV2Strategy is Strategy {
         collateralToken.safeApprove(address(aaveLendingPool), _amount);
     }
 
-    /**
-     * @notice Deposit collateral amount in Aave
-     * @dev Make sure to update collateralInvested
-     */
+    /// @notice Deposit collateral amount in Aave
     function _deposit(uint256 _amount) internal override {
         if (_amount != 0) {
-            collateralInvested += _amount;
             aaveLendingPool.deposit(address(collateralToken), _amount, address(this), 0);
         }
     }
 
+    /// @notice Withdraw collateral to payback excess debt
     function _liquidate(uint256 _excessDebt) internal override returns (uint256 _payback) {
-        _payback = _safeWithdraw(address(this), _excessDebt);
+        if (_excessDebt != 0) {
+            _payback = _safeWithdraw(address(this), _excessDebt);
+        }
     }
 
     /**
      * @notice Calculate earning and withdraw it from Aave.
-     * @dev Make sure to reset collateralInvested
      * @dev If somehow we got some collateral token in strategy then we want to
      *  include those in profit. That's why we used 'return' outside 'if' condition.
+     * @param _totalDebt Total collateral debt of this strategy
      * @return profit in collateral token
      */
-    function _realizeProfit() internal override returns (uint256) {
+    function _realizeProfit(uint256 _totalDebt) internal override returns (uint256) {
         uint256 _aTokenBalance = aToken.balanceOf(address(this));
-        if (_aTokenBalance > collateralInvested) {
-            _withdraw(address(this), _aTokenBalance - collateralInvested);
-            // At this point, current balance of aToken is collateralInvested
-            collateralInvested = aToken.balanceOf(address(this));
+        if (_aTokenBalance > _totalDebt) {
+            _withdraw(address(this), _aTokenBalance - _totalDebt);
         }
         return collateralToken.balanceOf(address(this));
     }
 
     /**
      * @notice Calculate realized loss.
-     * @dev Make sure to reset collateralInvested
      * @return _loss Realized loss in collateral token
      */
-    function _realizeLoss() internal override returns (uint256 _loss) {
+    function _realizeLoss(uint256 _totalDebt) internal view override returns (uint256 _loss) {
         uint256 _aTokenBalance = aToken.balanceOf(address(this));
-        if (_aTokenBalance < collateralInvested) {
-            _loss = collateralInvested - _aTokenBalance;
-            // At this point, current balance of aToken is collateralInvested
-            collateralInvested = _aTokenBalance;
+        if (_aTokenBalance < _totalDebt) {
+            _loss = _totalDebt - _aTokenBalance;
         }
     }
 
+    /// @notice Deposit collateral in Aave
     function _reinvest() internal override {
         _deposit(collateralToken.balanceOf(address(this)));
     }
@@ -132,14 +134,12 @@ abstract contract AaveV2Strategy is Strategy {
 
     /**
      * @notice Withdraw given amount of collateral from Aave to given address
-     * @dev Make sure to update collateralInvested
      * @param _to Address that will receive collateral token.
      * @param _amount Amount of collateral to withdraw.
      * @return Actual collateral withdrawn
      */
     function _withdraw(address _to, uint256 _amount) internal returns (uint256) {
         if (_amount != 0) {
-            collateralInvested -= _amount;
             require(
                 aaveLendingPool.withdraw(address(collateralToken), _amount, _to) == _amount,
                 "withdrawn-amount-is-not-correct"
@@ -148,15 +148,8 @@ abstract contract AaveV2Strategy is Strategy {
         return _amount;
     }
 
-    /**
-     * @notice Withdraw all collateral from Aave.
-     * @dev File report to pool with proper loss and payback.
-     *      Also update collateralInvested to 0.
-     */
     function _withdrawAll() internal override {
         _withdraw(address(this), aToken.balanceOf(address(this)));
-        IVesperPool(pool).reportEarning(0, collateralInvested, collateralToken.balanceOf(address(this)));
-        collateralInvested = 0;
     }
 
     /// @notice Returns minumum of 2 given numbers
