@@ -60,6 +60,13 @@ abstract contract AaveV2Strategy is Strategy {
         collateralToken.safeApprove(address(aaveLendingPool), _amount);
     }
 
+    /**
+     * @notice some strategy may want to prpeare before doing migration. 
+        Example In Maker old strategy want to give vault ownership to new strategy
+     * @param _newStrategy .
+     */
+    function _beforeMigration(address _newStrategy) internal override {}
+
     /// @notice Deposit collateral amount in Aave
     function _deposit(uint256 _amount) internal override {
         if (_amount != 0) {

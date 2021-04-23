@@ -70,6 +70,19 @@ abstract contract Strategy is IStrategy, Context {
     }
 
     /**
+     * @notice some strategy may want to prpeare before doing migration. 
+        Example In Maker old strategy want to give vault ownership to new strategy
+     * @param _newStrategy .
+     */
+    function migrate(address _newStrategy) external virtual override onlyPool {
+        require(_newStrategy != address(0), "new-address-is-zero");
+        require(IStrategy(_newStrategy).pool() == pool, "not-valid-new-strategy");
+        _beforeMigration(_newStrategy);
+        IERC20(receiptToken).safeTransfer(_newStrategy, IERC20(receiptToken).balanceOf(address(this)));
+        collateralToken.safeTransfer(_newStrategy, collateralToken.balanceOf(address(this)));
+    }
+
+    /**
      * @notice Remove given address from guardians list.
      * @param _guardianAddress guardian address to remove.
      */
@@ -165,6 +178,13 @@ abstract contract Strategy is IStrategy, Context {
 
     /// @notice Check whether given token is reserved or not. Reserved tokens are not allowed to sweep.
     function isReservedToken(address _token) public view virtual override returns (bool);
+
+    /**
+     * @notice some strategy may want to prpeare before doing migration. 
+        Example In Maker old strategy want to give vault ownership to new strategy
+     * @param _newStrategy .
+     */
+    function _beforeMigration(address _newStrategy) internal virtual;
 
     /**
      *  @notice Generate report for current profit and loss. Also liquidate asset to payback

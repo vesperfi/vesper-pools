@@ -10,14 +10,12 @@ contract VTokenBase is PoolShareToken {
     using SafeERC20 for IERC20;
 
     struct StrategyConfig {
-        uint256 activation; // activation block
+        uint256 active; // active if != 0
         uint256 interestFee; // Strategy fee
-        uint256 lastRebalanceTimestamp;
         uint256 totalDebt; // Total outstanding debt stratgy has
         uint256 totalLoss; // Total loss that strategy has realized
         uint256 totalProfit; // Total gain that strategy has realized
         uint256 debtRatio; // % of asset allocation
-        uint256 debtRatePerBlock; // Limit strategy to not borrow maxAllocPerRebalance immediately in next block. This control the speed of debt wheel.
         uint256 maxDebtPerRebalance; // motivate strategy to call and borrow/payback asset from pool in reasonable interval.
     }
 
@@ -31,19 +29,13 @@ contract VTokenBase is PoolShareToken {
     address internal constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     event StrategyAdded(
         address indexed strategy,
-        uint256 activation,
+        uint256 active,
         uint256 interestFee,
         uint256 debtRatio,
-        uint256 debtRatePerBlock,
         uint256 maxDebtPerRebalance
     );
     event UpdatedInterestFee(address indexed strategy, uint256 interestFee);
-    event UpdatedStrategyDebtParams(
-        address indexed strategy,
-        uint256 debtRatio,
-        uint256 debtRatePerBlock,
-        uint256 maxDebtPerRebalance
-    );
+    event UpdatedStrategyDebtParams(address indexed strategy, uint256 debtRatio, uint256 maxDebtPerRebalance);
 
     constructor(
         string memory name,
@@ -57,7 +49,7 @@ contract VTokenBase is PoolShareToken {
     }
 
     modifier onlyStrategy() {
-        require(strategy[msg.sender].activation != 0, "caller-is-not-active-strategy");
+        require(strategy[msg.sender].active != 0, "caller-is-not-active-strategy");
         _;
     }
 
@@ -120,38 +112,66 @@ contract VTokenBase is PoolShareToken {
     /// @dev Add strategy
     function addStrategy(
         address _strategy,
-        uint256 _activation,
+        uint256 _active,
         uint256 _interestFee,
         uint256 _debtRatio,
-        uint256 _debtRatePerBlock,
         uint256 _maxDebtPerRebalance
     ) public onlyGovernor {
         require(_strategy != address(0), "strategy-address-is-zero");
-        require(strategy[_strategy].activation == 0, "strategy-already-added");
-        require(_activation >= block.number, "activation-block-is-past");
+        require(strategy[_strategy].active == 0, "strategy-already-added");
         totalDebtRatio = totalDebtRatio + _debtRatio;
         require(totalDebtRatio <= MAX_BPS, "totalDebtRatio-above-max_bps");
         require(_interestFee <= MAX_BPS, "interest-fee-above-max_bps");
         StrategyConfig memory newStrategy =
             StrategyConfig({
-                activation: _activation,
+                active: _active,
                 interestFee: _interestFee,
                 debtRatio: _debtRatio,
-                lastRebalanceTimestamp: 0,
                 totalDebt: 0,
                 totalProfit: 0,
                 totalLoss: 0,
-                debtRatePerBlock: _debtRatePerBlock,
                 maxDebtPerRebalance: _maxDebtPerRebalance
             });
         strategy[_strategy] = newStrategy;
         strategies.push(_strategy);
-        emit StrategyAdded(_strategy, _activation, _interestFee, _debtRatio, _debtRatePerBlock, _maxDebtPerRebalance);
+        emit StrategyAdded(_strategy, _active, _interestFee, _debtRatio, _maxDebtPerRebalance);
+    }
+
+    function migrateStrategy(address _old, address _new) external onlyGovernor {
+        require(_new != address(0), "new-address-is-zero");
+        require(_old != address(0), "old-address-is-zero");
+        require(IStrategy(_new).pool() == address(this), "not-valid-new-strategy");
+        require(IStrategy(_old).pool() == address(this), "not-valid-old-strategy");
+        require(strategy[_new].active == 0, "strategy-already-added");
+        StrategyConfig memory _newStrategy =
+            StrategyConfig({
+                active: 1,
+                interestFee: strategy[_old].interestFee,
+                debtRatio: strategy[_old].debtRatio,
+                totalDebt: strategy[_old].totalDebt,
+                totalProfit: 0,
+                totalLoss: 0,
+                maxDebtPerRebalance: strategy[_old].maxDebtPerRebalance
+            });
+        strategy[_old].debtRatio = 0;
+        strategy[_old].totalDebt = 0;
+        strategy[_old].maxDebtPerRebalance = 0;
+        strategy[_old].active = 0;
+        strategy[_new] = _newStrategy;
+        // TODO: old strategy is still in array.
+        strategies.push(_new);
+        IStrategy(_old).migrate(_new);
+        for (uint256 i = 0; i < withdrawQueue.length; i++) {
+            if (withdrawQueue[i] == _old) {
+                withdrawQueue[i] = _new;
+                break;
+            }
+        }
     }
 
     function updateInterestFee(address _strategy, uint256 _interestFee) external onlyGovernor {
         require(_strategy != address(0), "strategy-address-is-zero");
-        require(strategy[_strategy].activation != 0, "strategy-not-active");
+        require(strategy[_strategy].active != 0, "strategy-not-active");
         require(_interestFee <= MAX_BPS, "interest-fee-above-max_bps");
         strategy[_strategy].interestFee = _interestFee;
         emit UpdatedInterestFee(_strategy, _interestFee);
@@ -161,44 +181,20 @@ contract VTokenBase is PoolShareToken {
      * @dev Update debt ratio.  A strategy is retired when debtRatio is 0
      */
     function updateDebtRatio(address _strategy, uint256 _debtRatio) external onlyGovernor {
-        require(strategy[_strategy].activation != 0, "strategy-not-active");
+        require(strategy[_strategy].active != 0, "strategy-not-active");
         totalDebtRatio = totalDebtRatio - strategy[_strategy].debtRatio + _debtRatio;
         require(totalDebtRatio <= MAX_BPS, "totalDebtRatio-above-max_bps");
         strategy[_strategy].debtRatio = _debtRatio;
-        emit UpdatedStrategyDebtParams(
-            _strategy,
-            _debtRatio,
-            strategy[_strategy].debtRatePerBlock,
-            strategy[_strategy].maxDebtPerRebalance
-        );
+        emit UpdatedStrategyDebtParams(_strategy, _debtRatio, strategy[_strategy].maxDebtPerRebalance);
     }
 
     /**
      * @dev Update maxDebtPerRebalance.  A strategy is retired when maxDebtPerRebalance is 0
      */
     function updateDebtPerRebalance(address _strategy, uint256 _maxDebtPerRebalance) external onlyGovernor {
-        require(strategy[_strategy].activation != 0, "strategy-not-active");
+        require(strategy[_strategy].active != 0, "strategy-not-active");
         strategy[_strategy].maxDebtPerRebalance = _maxDebtPerRebalance;
-        emit UpdatedStrategyDebtParams(
-            _strategy,
-            strategy[_strategy].debtRatio,
-            strategy[_strategy].debtRatePerBlock,
-            _maxDebtPerRebalance
-        );
-    }
-
-    /**
-     * @dev Update debtRatePerBlock.  A strategy is retired when debtRatePerBlock is 0
-     */
-    function updateDebtRate(address _strategy, uint256 _debtRatePerBlock) external onlyGovernor {
-        require(strategy[_strategy].activation != 0, "strategy-not-active");
-        strategy[_strategy].debtRatePerBlock = _debtRatePerBlock;
-        emit UpdatedStrategyDebtParams(
-            _strategy,
-            strategy[_strategy].debtRatio,
-            _debtRatePerBlock,
-            strategy[_strategy].maxDebtPerRebalance
-        );
+        emit UpdatedStrategyDebtParams(_strategy, strategy[_strategy].debtRatio, _maxDebtPerRebalance);
     }
 
     /// @dev update withdrawl queue
@@ -207,7 +203,7 @@ contract VTokenBase is PoolShareToken {
     function updateWithdrawQueue(address[] memory _withdrawQueue) public onlyGovernor {
         require(_withdrawQueue.length > 0, "withdrawal-queue-blank");
         for (uint256 i = 0; i < _withdrawQueue.length; i++) {
-            require(strategy[_withdrawQueue[i]].activation != 0, "invalid-strategy");
+            require(strategy[_withdrawQueue[i]].active != 0, "invalid-strategy");
         }
         withdrawQueue = _withdrawQueue;
     }
@@ -226,7 +222,7 @@ contract VTokenBase is PoolShareToken {
         uint256 _loss,
         uint256 _payback
     ) external onlyStrategy {
-        require(strategy[_msgSender()].activation != 0, "strategy-not-active");
+        require(strategy[_msgSender()].active != 0, "strategy-not-active");
         require(token.balanceOf(_msgSender()) >= (_profit + _payback), "insufficient-balance-in-strategy");
         if (_loss != 0) {
             _reportLoss(_msgSender(), _loss);

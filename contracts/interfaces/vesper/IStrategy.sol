@@ -15,6 +15,8 @@ interface IStrategy {
 
     function isReservedToken(address _token) external view returns (bool);
 
+    function migrate(address _newStrategy) external;
+
     function token() external view returns (address);
 
     function totalValue() external view returns (uint256);
