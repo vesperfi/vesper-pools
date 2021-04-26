@@ -8,7 +8,6 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "../Governed.sol";
 import "../Pausable.sol";
 import "../interfaces/vesper/IVesperPool.sol";
-import "../interfaces/vesper/IPoolRewards.sol";
 import "../interfaces/bloq/IAddressList.sol";
 import "../interfaces/bloq/IAddressListFactory.sol";
 
@@ -18,7 +17,6 @@ abstract contract PoolShareToken is ERC20, Pausable, ReentrancyGuard, Governed {
     using SafeERC20 for IERC20;
     IERC20 public immutable token;
     IAddressList public immutable feeWhiteList;
-    address public poolRewards;
     uint256 public constant MAX_BPS = 10000;
     address public feeCollector; // fee collector address
     uint256 public withdrawFee; // withdraw fee for this pool
@@ -37,7 +35,6 @@ abstract contract PoolShareToken is ERC20, Pausable, ReentrancyGuard, Governed {
     event Deposit(address indexed owner, uint256 shares, uint256 amount);
     event Withdraw(address indexed owner, uint256 shares, uint256 amount);
     event UpdatedFeeCollector(address indexed previousFeeCollector, address indexed newFeeCollector);
-    event UpdatedPoolRewards(address indexed previousPoolRewards, address indexed newPoolRewards);
     event UpdatedWithdrawFee(uint256 previousWithdrawFee, uint256 newWithdrawFee);
 
     constructor(
@@ -67,16 +64,6 @@ abstract contract PoolShareToken is ERC20, Pausable, ReentrancyGuard, Governed {
         require(feeCollector != _newFeeCollector, "same-fee-collector");
         emit UpdatedFeeCollector(feeCollector, _newFeeCollector);
         feeCollector = _newFeeCollector;
-    }
-
-    /**
-     * @notice Update pool rewards contract address for this pool
-     * @param _newPoolRewards new pool rewards contract address
-     */
-    function updatePoolRewards(address _newPoolRewards) external onlyGovernor {
-        require(IPoolRewards(_newPoolRewards).pool() == address(this), "wrong-pool-in-pool-rewards");
-        emit UpdatedPoolRewards(poolRewards, _newPoolRewards);
-        poolRewards = _newPoolRewards;
     }
 
     /**
@@ -121,8 +108,8 @@ abstract contract PoolShareToken is ERC20, Pausable, ReentrancyGuard, Governed {
 
     /**
      * @notice Withdraw collateral based on given shares and the current share price.
-     * Transfer earned rewards to caller. Withdraw fee, if any, will be deduced from
-     * given shares and transferred to feeCollector. Burn remaining shares and return collateral.
+     * Withdraw fee, if any, will be deduced from given shares and transferred to feeCollector.
+     * Burn remaining shares and return collateral.
      * @param _shares Pool shares. It will be in 18 decimals.
      */
     function withdraw(uint256 _shares) external virtual nonReentrant whenNotShutdown {
@@ -131,9 +118,8 @@ abstract contract PoolShareToken is ERC20, Pausable, ReentrancyGuard, Governed {
 
     /**
      * @notice Withdraw collateral based on given shares and the current share price.
-     * Transfer earned rewards to caller. Burn shares and return collateral.
-     * @dev No withdraw fee will be assessed when this function is called.
-     * Only some white listed address can call this function.
+     * @dev Burn shares and return collateral. No withdraw fee will be assessed
+     * when this function is called. Only some white listed address can call this function.
      * @param _shares Pool shares. It will be in 18 decimals.
      */
     function withdrawByStrategy(uint256 _shares) external virtual nonReentrant whenNotShutdown {
@@ -260,22 +246,6 @@ abstract contract PoolShareToken is ERC20, Pausable, ReentrancyGuard, Governed {
         _mint(_msgSender(), _shares);
         _afterMinting(_amount);
         emit Deposit(_msgSender(), _shares, _amount);
-    }
-
-    /// @dev Update pool reward of sender and receiver before transfer.
-    function _beforeTokenTransfer(
-        address _from,
-        address _to,
-        uint256 /* amount */
-    ) internal virtual override {
-        if (poolRewards != address(0)) {
-            if (_from != address(0)) {
-                IPoolRewards(poolRewards).updateReward(_from);
-            }
-            if (_to != address(0)) {
-                IPoolRewards(poolRewards).updateReward(_to);
-            }
-        }
     }
 
     /// @dev Burns shares and returns the collateral value, after fee, of those.

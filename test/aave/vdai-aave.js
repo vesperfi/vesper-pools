@@ -1,6 +1,7 @@
 'use strict'
 
 const {shouldBehaveLikePool} = require('../behavior/vesper-pool')
+const {shouldBehaveLikeMultiPool} = require('../behavior/vesper-multi-pool')
 // const {shouldBehaveLikeStrategy} = require('../behavior/aave-strategy')
 const {setupVPool} = require('../utils/setupHelper')
 const StrategyType = require('../utils/strategyTypes')
@@ -28,5 +29,6 @@ contract('vDAI Pool with AaveStrategy', function (accounts) {
   })
 
   shouldBehaveLikePool('vDai', 'DAI')
+  shouldBehaveLikeMultiPool('vDai')
   // shouldBehaveLikeStrategy('vDai', 'DAI', StrategyType.AAAVE)
 })
