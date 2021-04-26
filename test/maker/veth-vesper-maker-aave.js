@@ -22,7 +22,7 @@ contract('VETH Pool', function (accounts) {
   const [, user1] = accounts
   const feeCollector = accounts[9]
 
-  const strategyConfig = {interestFee, debtRatio: 9000, debtRatePerBlock: INFINITE, maxDebtPerRebalance: INFINITE}
+  const strategyConfig = {interestFee, debtRatio: 9000, maxDebtPerRebalance: INFINITE}
 
   beforeEach(async function () {
     this.accounts = accounts

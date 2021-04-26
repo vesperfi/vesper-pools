@@ -28,8 +28,7 @@ async function approveToken(controller, target) {
  */
 async function addStrategiesInPool(obj) {
   for (const strategy of obj.strategies) {
-    const blockNumber = (await web3.eth.getBlock('latest')).number
-    await obj.pool.addStrategy(strategy.instance.address, blockNumber + 1, ...Object.values(strategy.config))
+    await obj.pool.addStrategy(strategy.instance.address, 1, ...Object.values(strategy.config))
   }
 }
 

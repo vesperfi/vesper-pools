@@ -14,7 +14,7 @@ const INFINITE = DECIMAL18.mul(new BN('10000000000000000000000000'))
 contract('vDAI Pool with AaveStrategy', function (accounts) {
   const interestFee = '1500' // 15%
   const feeCollector = accounts[9]
-  const strategyConfig = {interestFee, debtRatio: 9000, debtRatePerBlock: INFINITE, maxDebtPerRebalance: INFINITE}
+  const strategyConfig = {interestFee, debtRatio: 9000, maxDebtPerRebalance: INFINITE}
 
   beforeEach(async function () {
     this.accounts = accounts
@@ -25,8 +25,6 @@ contract('vDAI Pool with AaveStrategy', function (accounts) {
         {artifact: AaveStrategy, type: StrategyType.AAAVE, config: strategyConfig, feeCollector: accounts[9]},
       ],
     })
-
-    // this.newStrategy = AaveStrategy
   })
 
   shouldBehaveLikePool('vDai', 'DAI')

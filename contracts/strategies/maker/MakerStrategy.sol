@@ -118,6 +118,13 @@ abstract contract MakerStrategy is Strategy {
         return _amount;
     }
 
+    /**
+     * @notice some strategy may want to prpeare before doing migration. 
+        Example In Maker old strategy want to give vault ownership to new strategy
+     * @param _newStrategy .
+     */
+    function _beforeMigration(address _newStrategy) internal override {}
+
     /// @dev Create new Maker vault
     function _createVault(bytes32 _collateralType, address _cm) internal returns (uint256 vaultId) {
         address mcdManager = ICollateralManager(_cm).mcdManager();
