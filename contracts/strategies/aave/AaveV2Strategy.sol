@@ -65,14 +65,10 @@ abstract contract AaveV2Strategy is Strategy {
         Example In Maker old strategy want to give vault ownership to new strategy
      * @param _newStrategy .
      */
+    // TODO withdraw staked aave and transfer those to new strategy. It may or may
+    // not be possible due to cooldown
+    //solhint-disable-next-line
     function _beforeMigration(address _newStrategy) internal override {}
-
-    /// @notice Deposit collateral amount in Aave
-    function _deposit(uint256 _amount) internal override {
-        if (_amount != 0) {
-            aaveLendingPool.deposit(address(collateralToken), _amount, address(this), 0);
-        }
-    }
 
     /// @notice Withdraw collateral to payback excess debt
     function _liquidate(uint256 _excessDebt) internal override returns (uint256 _payback) {
@@ -109,7 +105,10 @@ abstract contract AaveV2Strategy is Strategy {
 
     /// @notice Deposit collateral in Aave
     function _reinvest() internal override {
-        _deposit(collateralToken.balanceOf(address(this)));
+        uint256 _collateralBalance = collateralToken.balanceOf(address(this));
+        if (_collateralBalance != 0) {
+            aaveLendingPool.deposit(address(collateralToken), _collateralBalance, address(this), 0);
+        }
     }
 
     /**

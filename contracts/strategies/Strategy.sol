@@ -228,8 +228,6 @@ abstract contract Strategy is IStrategy, Context {
         }
     }
 
-    function _deposit(uint256 _amount) internal virtual;
-
     function _withdraw(uint256 _amount) internal virtual;
 
     function _withdrawAll() internal virtual;

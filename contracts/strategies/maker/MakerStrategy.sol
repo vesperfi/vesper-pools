@@ -123,6 +123,9 @@ abstract contract MakerStrategy is Strategy {
         Example In Maker old strategy want to give vault ownership to new strategy
      * @param _newStrategy .
      */
+    // TODO Migrate vault ownership to new strategy. This has some complications
+    // new strategy needs to accept ownership and also it should not create new vault
+    //solhint-disable-next-line
     function _beforeMigration(address _newStrategy) internal override {}
 
     /// @dev Create new Maker vault
@@ -147,12 +150,6 @@ abstract contract MakerStrategy is Strategy {
         collateralToken.safeApprove(address(cm), _amount);
         collateralToken.safeApprove(pool, _amount);
         collateralToken.safeApprove(address(UniMgr.ROUTER()), _amount);
-    }
-
-    function _deposit(uint256 _amount) internal override {
-        if (_amount != 0) {
-            cm.depositCollateral(vaultNum, _amount);
-        }
     }
 
     function _moveDaiToMaker(uint256 _amount) internal {
@@ -214,7 +211,11 @@ abstract contract MakerStrategy is Strategy {
      * payback some DAI in Maker. It will try to mitigate risk of liquidation.
      */
     function _reinvest() internal virtual override {
-        _deposit(collateralToken.balanceOf(address(this)));
+        uint256 _collateralBalance = collateralToken.balanceOf(address(this));
+        if (_collateralBalance != 0) {
+            cm.depositCollateral(vaultNum, _collateralBalance);
+        }
+
         (
             uint256 _collateralLocked,
             uint256 _currentDebt,
