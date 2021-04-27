@@ -89,14 +89,14 @@ abstract contract MakerStrategy is Strategy {
      * @dev Make sure to return value in collateral token and in order to do that
      * we are using Uniswap to get collateral amount for earned DAI.
      */
-    function totalValue() external view virtual override returns (uint256 _value) {
-        uint256 daiBalance = _getDaiBalance();
-        uint256 debt = cm.getVaultDebt(vaultNum);
-        if (daiBalance > debt) {
-            uint256 daiEarned = daiBalance - debt;
-            (, _value) = UniMgr.bestPathFixedInput(DAI, address(collateralToken), daiEarned);
+    function totalValue() external view virtual override returns (uint256 _totalValue) {
+        uint256 _daiBalance = _getDaiBalance();
+        uint256 _debt = cm.getVaultDebt(vaultNum);
+        if (_daiBalance > _debt) {
+            uint256 _daiEarned = _daiBalance - _debt;
+            (, _totalValue) = UniMgr.bestPathFixedInput(DAI, address(collateralToken), _daiEarned);
         }
-        _value += convertFrom18(cm.getVaultBalance(vaultNum));
+        _totalValue += convertFrom18(cm.getVaultBalance(vaultNum));
     }
 
     /// @dev Check whether given token is reserved or not. Reserved tokens are not allowed to sweep.
@@ -143,7 +143,7 @@ abstract contract MakerStrategy is Strategy {
         ICollateralManager(_cm).registerVault(vaultId, _collateralType);
     }
 
-    function _approveToken(uint256 _amount) internal override {
+    function _approveToken(uint256 _amount) internal virtual override {
         IERC20(DAI).safeApprove(address(cm), _amount);
         IERC20(DAI).safeApprove(address(receiptToken), _amount);
         IERC20(DAI).safeApprove(address(UniMgr.ROUTER()), _amount);
