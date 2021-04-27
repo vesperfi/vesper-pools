@@ -40,8 +40,8 @@ async function addStrategiesInPool(obj) {
  * @param {object} strategy  Strategy artifact
  */
 async function createMakerStrategy(obj, collateralManager, strategy) {
-  obj.collateralManager = await collateralManager.new(obj.controller.address)
-  const strategyInstance = await strategy.new(obj.controller.address, obj.pool.address, obj.collateralManager.address)
+  obj.collateralManager = await collateralManager.new()
+  const strategyInstance = await strategy.new(obj.pool.address, obj.collateralManager.address)
   obj.vaultNum = await strategyInstance.vaultNum()
   await Promise.all([strategyInstance.updateBalancingFactor(300, 250), obj.collateralManager.addGemJoin(gemJoins)])
   return strategyInstance
@@ -96,6 +96,7 @@ async function createStrategies(obj, collateralManager, vPool) {
     } else {
       strategy.instance = await strategy.artifact.new(obj.pool.address)
     }
+    await strategy.instance.createGaurdianList()
     await strategy.instance.approveToken()
     await strategy.instance.updateFeeCollector(strategy.feeCollector)
     const strategyTokenAddress = await strategy.instance.token()

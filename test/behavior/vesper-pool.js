@@ -75,8 +75,11 @@ async function shouldBehaveLikePool(poolName, collateralName) {
           await executeIfExist(strategy.token.exchangeRateCurrent)
           await strategy.instance.rebalance()
           await executeIfExist(strategy.token.exchangeRateCurrent)
-          const receiptToken = await strategy.token.balanceOf(strategy.instance.address)
-          expect(receiptToken).to.be.bignumber.gt('0', 'receipt token balance of strategy is wrong')
+          const strategyParams = await pool.strategy(strategy.instance.address)
+          if(strategyParams.debtRatio.gt(new BN('0'))) {
+            const receiptToken = await strategy.token.balanceOf(strategy.instance.address)
+            expect(receiptToken).to.be.bignumber.gt(new BN('0'), 'receipt token balance of strategy is wrong')
+          }
         }
         const totalDebtOfStrategies = await totalDebtOfAllStrategy(strategies, pool)
         return Promise.all([pool.totalDebt(), pool.totalSupply(), pool.balanceOf(user2)]).then(function ([
@@ -227,8 +230,6 @@ async function shouldBehaveLikePool(poolName, collateralName) {
       })
     })
 
-    // TODO: Convert below tests to V3
-
     describe(`Price per share of ${poolName} pool`, function () {
       it('Should increase pool share value', async function () {
         await deposit(20, user1)
@@ -362,68 +363,106 @@ async function shouldBehaveLikePool(poolName, collateralName) {
       })
     })
 
-    describe(`Should migrate ${poolName} pool from old strategy to new`, function () {
-      it(`Should be able to migrate strategy successfully in ${poolName}`, async function () {
-        await Promise.all([deposit(200, user2), deposit(200, user1)])
+    describe(`${poolName}: Should report earning correctly`, function () {
+      it('Should not be able to payback more than total debt', async function () {})
+
+      it('Strategy should receive more amount when new deposit happen', async function () {
+        await deposit(200, user2)
         await rebalance(strategies)
-        const receiptToken = strategies[0].token
-        const [
-          totalSupplyBefore,
-          totalValueBefore,
-          totalDebtBefore,
-          totalDebtRatioBefore,
-          receiptTokenBefore,
-        ] = await Promise.all([
-          pool.totalSupply(),
+        let strategyParams = await pool.strategy(strategies[0].instance.address)
+        const totalDebtBefore = strategyParams.totalDebt
+        await deposit(200, user2)
+        await rebalance(strategies)
+        strategyParams = await pool.strategy(strategies[0].instance.address)
+        const totalDebtAfter = strategyParams.totalDebt
+        expect(totalDebtAfter).to.be.bignumber.gt(totalDebtBefore, `Total debt of strategy in ${poolName} is wrong`)
+      })
+
+      it('Strategy should not receive new amount if current debt of pool > max debt', async function () {
+        await Promise.all([deposit(200, user1), deposit(200, user2)])
+        await rebalance(strategies)
+        let [totalDebtRatio, totalValue, totalDebtBefore] = await Promise.all([
+          pool.totalDebtRatio(),
           pool.totalValue(),
           pool.totalDebt(),
-          pool.totalDebtRatio(),
-          receiptToken.balanceOf(strategies[0].instance.address),
         ])
-        // const
-        const newStrategy = await strategies[0].artifact.new(pool.address)
-
-        await pool.migrateStrategy(strategies[0].instance.address, newStrategy.address)
-
-        const [
-          totalSupplyAfter,
-          totalValueAfter,
+        let maxDebt = totalValue.mul(totalDebtRatio).div(MAX_BPS)
+        expect(maxDebt).to.be.bignumber.eq(totalDebtBefore, `Total debt of ${poolName} is wrong after rebalance`)
+        const totalDebtOfStrategies = await totalDebtOfAllStrategy(strategies, pool)
+        expect(maxDebt).to.be.bignumber.eq(
+          totalDebtOfStrategies,
+          'Total debt of all strategies is wrong after rebalance'
+        )
+        const withdrawAmount = await pool.balanceOf(user1)
+        await pool.withdraw(withdrawAmount, {from: user1})
+        let totalDebtAfter = await pool.totalDebt()
+        totalValue = await pool.totalValue()
+        maxDebt = totalValue.mul(totalDebtRatio).div(MAX_BPS)
+        expect(maxDebt).to.be.bignumber.lt(totalDebtAfter, `Total debt of ${poolName} is wrong after withdraw`)
+        expect(totalDebtAfter).to.be.bignumber.lt(totalDebtBefore, `Total debt of ${poolName} is wrong after withdraw`)
+        await rebalance(strategies)
+        totalDebtAfter = await pool.totalDebt()
+        expect(maxDebt).to.be.bignumber.eq(
           totalDebtAfter,
-          totalDebtRatioAfter,
-          receiptTokenAfter,
-          receiptTokenAfter2,
-        ] = await Promise.all([
-          pool.totalSupply(),
-          pool.totalValue(),
-          pool.totalDebt(),
-          pool.totalDebtRatio(),
-          receiptToken.balanceOf(strategies[0].instance.address),
-          receiptToken.balanceOf(newStrategy.address),
-        ])
-        expect(totalSupplyAfter).to.be.bignumber.eq(
-          totalSupplyBefore,
-          `${poolName} total supply after migration is not correct`
+          `Total debt of ${poolName} is wrong after withdraw and rebalance`
         )
-        expect(totalValueAfter).to.be.bignumber.eq(
-          totalValueBefore,
-          `${poolName} total value after migration is not correct`
-        )
-        expect(totalDebtAfter).to.be.bignumber.eq(
-          totalDebtBefore,
-          `${poolName} total debt after migration is not correct`
-        )
-        expect(totalDebtRatioAfter).to.be.bignumber.eq(
-          totalDebtRatioBefore,
-          `${poolName} total debt ratio after migration is not correct`
-        )
-        expect(receiptTokenAfter2).to.be.bignumber.gte(
-          receiptTokenBefore,
-          `${poolName} receipt  token balance of new strategy after migration is not correct`
-        )
-        expect(receiptTokenAfter).to.be.bignumber.eq(
-          new BN('0'),
-          `${poolName} receipt  token balance of new strategy after migration is not correct`
-        )
+      })
+
+      it('Pool decrease total debt when strategy payback', async function () {
+        // TODO:
+      })
+
+      it('Pool record correct value of profit and loss', async function () {
+        await deposit(200, user2)
+        await rebalance(strategies)
+        await timeTravel()
+        await rebalance(strategies)
+        const strategyParams = await pool.strategy(strategies[0].instance.address)
+        const totalProfit = strategyParams.totalProfit
+        expect(totalProfit).to.be.bignumber.gt(new BN('0'), `Total debt of strategy in ${poolName} is wrong`)
+      })
+    })
+
+    describe(`${poolName}: Available credit line`, function () {
+      it('Should return 0 credit line when pool is shutdown', async function () {
+        await deposit(200, user2)
+        await rebalance(strategies)
+        await deposit(200, user1)
+        let creditLimit = await pool.availableCreditLimit(strategies[0].instance.address)
+        expect(creditLimit).to.be.bignumber.gt(new BN('0'), `Credit limit of strategy in ${poolName} is wrong`)
+        await pool.shutdown()
+        creditLimit = await pool.availableCreditLimit(strategies[0].instance.address)
+        expect(creditLimit).to.be.bignumber.eq(new BN('0'), `Credit limit of strategy in ${poolName} is wrong`)
+      })
+
+      it('Should return 0 credit line  when current debt > max debt', async function () {
+        await deposit(200, user2)
+        await rebalance(strategies)
+        await deposit(200, user1)
+        const withdrawAmount = await pool.balanceOf(user2)
+        await pool.withdraw(withdrawAmount, {from: user2})
+        const creditLimit = await pool.availableCreditLimit(strategies[0].instance.address)
+        expect(creditLimit).to.be.bignumber.eq(new BN('0'), `Credit limit of strategy in ${poolName} is wrong`)
+      })
+
+      it('Credit line should be > 0 when new deposit receive', async function () {
+        await deposit(200, user2)
+        await rebalance(strategies)
+        await deposit(200, user1)
+        const creditLimit = await pool.availableCreditLimit(strategies[0].instance.address)
+        expect(creditLimit).to.be.bignumber.gt(new BN('0'), `Credit limit of strategy in ${poolName} is wrong`)
+      })
+
+      it('Credit line should should be min of tokens here, available limit', async function () {
+        // TODO:
+      })
+
+      it('Strategy should not receive more than available limit in one rebalance', async function () {
+        // TODO:
+      })
+
+      it('Pool take profit from strategy if current debt of pool > max debt', async function () {
+        // TODO:
       })
     })
   })

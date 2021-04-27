@@ -40,9 +40,11 @@ async function deposit(pool, token, amount, depositor) {
  * @param {Array} strategies .
  */
 async function rebalance(strategies) {
+  const txs = []
   for (const strategy of strategies) {
     await executeIfExist(strategy.token.exchangeRateCurrent)
-    await strategy.instance.rebalance()
+    const tx = await strategy.instance.rebalance()
+    txs.push(tx)
     await executeIfExist(strategy.token.exchangeRateCurrent)
     if (strategy.type.includes('vesper')) {
       let s = await strategy.token.strategies(0)
@@ -51,6 +53,7 @@ async function rebalance(strategies) {
       await s.rebalance()
     }
   }
+  return txs
 }
 
 

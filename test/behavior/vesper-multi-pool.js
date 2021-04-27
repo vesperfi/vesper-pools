@@ -3,7 +3,6 @@
 const {deposit: _deposit, rebalance} = require('../utils/poolOps')
 const {expect} = require('chai')
 const {BN} = require('@openzeppelin/test-helpers')
-
 async function shouldBehaveLikeMultiPool(poolName) {
   let pool, strategies, collateralToken
   let user1, user2
@@ -12,7 +11,6 @@ async function shouldBehaveLikeMultiPool(poolName) {
     return _deposit(pool, collateralToken, amount, depositor)
   }
 
-
   describe(`${poolName} multi-pool`, function () {
     beforeEach(async function () {
       ;[, user1, user2] = this.accounts
@@ -20,9 +18,11 @@ async function shouldBehaveLikeMultiPool(poolName) {
       pool = this.pool
       strategies = this.strategies
       collateralToken = this.collateralToken
+      await pool.updateDebtRatio(strategies[0].instance.address, 4800)
+      await pool.updateDebtRatio(strategies[1].instance.address, 4500)
     })
 
-    describe(`Should migrate ${poolName} pool from old strategy to new`, function () {
+    describe(`${poolName}: Should migrate from old strategy to new`, function () {
       it(`Should be able to migrate strategy successfully in ${poolName}`, async function () {
         await Promise.all([deposit(200, user2), deposit(200, user1)])
         await rebalance(strategies)
@@ -84,6 +84,60 @@ async function shouldBehaveLikeMultiPool(poolName) {
           new BN('0'),
           `${poolName} receipt  token balance of new strategy after migration is not correct`
         )
+      })
+    })
+
+    describe(`${poolName}: Withdraw queue`, function () {
+      beforeEach(async function () {
+        await deposit(80, user1)
+        await deposit(20, user2)
+      })
+
+      it('Should withdraw everything from 0th strategy.', async function () {
+        await rebalance(strategies)
+        let tokenHere = await pool.tokensHere()
+        let debt0 = (await pool.strategy(strategies[0].instance.address)).totalDebt
+        const debt1Before = (await pool.strategy(strategies[1].instance.address)).totalDebt
+        const withdrawAmount = await pool.balanceOf(user1)
+        const expectedFromS1 = withdrawAmount.sub(tokenHere).sub(debt0)
+        await pool.withdraw(withdrawAmount, {from: user1})
+        const debt1After = (await pool.strategy(strategies[1].instance.address)).totalDebt
+        const actualWithdrawFromS1 = debt1Before.sub(debt1After)
+        debt0 = (await pool.strategy(strategies[0].instance.address)).totalDebt
+        tokenHere = await pool.tokensHere()
+        expect(actualWithdrawFromS1).to.be.bignumber.eq(expectedFromS1, 'Withdraw from Strategy 2 is wrong')
+        expect(debt0).to.be.bignumber.eq(new BN('0'), 'Withdraw from Strategy 2 is wrong')
+      })
+
+      it('Should burn proportional amount if strategy do not return expected amount', async function () {
+        // TODO:
+      })
+
+      it('Should be able to shuffle withdraw queue', async function () {
+        await pool.updateWithdrawQueue([strategies[1].instance.address, strategies[0].instance.address])
+        await rebalance(strategies)
+        let tokenHere = await pool.tokensHere()
+        let debt1 = (await pool.strategy(strategies[1].instance.address)).totalDebt
+        const debt0Before = (await pool.strategy(strategies[0].instance.address)).totalDebt
+        const withdrawAmount = await pool.balanceOf(user1)
+        const expectedFromS0 = withdrawAmount.sub(tokenHere).sub(debt1)
+        await pool.withdraw(withdrawAmount, {from: user1})
+        const debt0After = (await pool.strategy(strategies[0].instance.address)).totalDebt
+        const actualWithdrawFromS0 = debt0Before.sub(debt0After)
+        debt1 = (await pool.strategy(strategies[1].instance.address)).totalDebt
+        tokenHere = await pool.tokensHere()
+        expect(actualWithdrawFromS0).to.be.bignumber.eq(expectedFromS0, 'Withdraw from Strategy 2 is wrong')
+        expect(debt1).to.be.bignumber.eq(new BN('0'), 'Withdraw from Strategy 2 is wrong')
+      })
+    })
+
+    describe(`${poolName}: total debt`, function () {
+      it('Total of debt should not be more than total debt given to all strategy', async function () {
+        // TODO:
+      })
+
+      it('Should decrease total debt of each strategy and withdraw from strategies', async function () {
+        // TODO:
       })
     })
   })

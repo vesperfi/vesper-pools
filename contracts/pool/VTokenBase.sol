@@ -36,6 +36,15 @@ contract VTokenBase is PoolShareToken {
     );
     event UpdatedInterestFee(address indexed strategy, uint256 interestFee);
     event UpdatedStrategyDebtParams(address indexed strategy, uint256 debtRatio, uint256 maxDebtPerRebalance);
+    event earningReported(
+        address indexed strategy,
+        uint256 profit,
+        uint256 loss,
+        uint256 payback,
+        uint256 strategyDebt,
+        uint256 poolDebt,
+        uint256 creditLine
+    );
 
     constructor(
         string memory name,
@@ -249,6 +258,15 @@ contract VTokenBase is PoolShareToken {
             strategy[_msgSender()].totalProfit += _profit;
             _transferInterestFee(_profit);
         }
+        emit earningReported(
+            _msgSender(),
+            _profit,
+            _loss,
+            _actualPayback,
+            strategy[_msgSender()].totalDebt,
+            totalDebt,
+            _creditLine
+        );
     }
 
     /**
@@ -266,6 +284,15 @@ contract VTokenBase is PoolShareToken {
     */
     function excessDebt(address _strategy) external view returns (uint256) {
         return _excessDebt(_strategy);
+    }
+
+    /**
+    @dev available credit limit is calculated based on current debt of pool and strategy, current debt limit of pool and strategy. 
+    // credit available = min(pool's debt limit, strategy's debt limit, max debt per rebalance)
+    // when some strategy do not pay back outstanding debt, this impact creditline of other strategy if totalDebt of pool >= debtLimit of pool
+    */
+    function availableCreditLimit(address _strategy) external view returns (uint256) {
+        return _availableCreditLimit(_strategy);
     }
 
     /**
@@ -362,11 +389,6 @@ contract VTokenBase is PoolShareToken {
         return _currentDebt > _maxDebt ? (_currentDebt - _maxDebt) : 0;
     }
 
-    /**
-    @dev available credit limit is calculated based on current debt of pool and strategy, current debt limit of pool and strategy. 
-    // credit available = min(pool's debt limit, strategy's debt limit, max debt per rebalance)
-    // when some strategy do not pay back outstanding debt, this impact creditline of other strategy if totalDebt of pool >= debtLimit of pool
-    */
     function _availableCreditLimit(address _strategy) internal view returns (uint256) {
         if (stopEverything) {
             return 0;
@@ -384,7 +406,6 @@ contract VTokenBase is PoolShareToken {
         uint256 _available = _maxDebt - _currentDebt;
         _available = _min(_min(tokensHere(), _available), _poolDebtLimit - totalDebt);
         _available = _min(strategy[_strategy].maxDebtPerRebalance, _available);
-        // TODO: strategy max debt per block * total block since last rebalance).
         return _available;
     }
 
