@@ -1,13 +1,12 @@
 'use strict'
 
 const swapper = require('../utils/tokenSwapper')
-const poolOps = require('../utils/poolOps')
+const {deposit: _deposit, rebalance, totalDebtOfAllStrategy, timeTravel, executeIfExist} = require('../utils/poolOps')
 const {getPermitData} = require('../utils/signHelper')
 const {MNEMONIC} = require('../utils/testkey')
 const {expect} = require('chai')
-const {BN, time, expectRevert} = require('@openzeppelin/test-helpers')
+const {BN, expectRevert} = require('@openzeppelin/test-helpers')
 // const ERC20 = artifacts.require('ERC20')
-const IStrategy = artifacts.require('IStrategy')
 const ERC20 = artifacts.require('ERC20')
 const DECIMAL18 = new BN('1000000000000000000')
 const MAX_BPS = new BN('10000')
@@ -17,7 +16,7 @@ async function shouldBehaveLikePool(poolName, collateralName) {
   let user1, user2, user3
 
   async function deposit(amount, depositor) {
-    return poolOps.deposit(pool, collateralToken, amount, depositor)
+    return _deposit(pool, collateralToken, amount, depositor)
   }
 
   function convertTo18(amount) {
@@ -28,41 +27,6 @@ async function shouldBehaveLikePool(poolName, collateralName) {
   function convertFrom18(amount) {
     const divisor = DECIMAL18.div(new BN('10').pow(collateralDecimal))
     return new BN(amount).div(divisor).toString()
-  }
-
-  async function executeIfExist(fn) {
-    if (typeof fn === 'function') {
-      await fn()
-    }
-  }
-
-  async function timeTravel(seconds = 6 * 60 * 60, blocks = 25, strategyType = '', underlayStrategy = '') {
-    const timeTravelFn = () => time.increase(seconds)
-    const blockMineFn = async () => time.advanceBlockTo((await time.latestBlock()).add(new BN(blocks)))
-    return strategyType.includes('compound') || underlayStrategy.includes('compound') ? blockMineFn() : timeTravelFn()
-  }
-
-  async function rebalance() {
-    for (const strategy of strategies) {
-      await executeIfExist(strategy.token.exchangeRateCurrent)
-      await strategy.instance.rebalance()
-      await executeIfExist(strategy.token.exchangeRateCurrent)
-      if (strategy.type.includes('vesper')) {
-        let s = await strategy.token.strategies(0)
-        s = await IStrategy.at(s)
-        // TODO: do it recursive
-        await s.rebalance()
-      }
-    }
-  }
-
-  async function totalDebtOfAllStrategy() {
-    let totalDebt = new BN('0')
-    for (const strategy of strategies) {
-      const strategyParams = await pool.strategy(strategy.instance.address)
-      totalDebt = totalDebt.add(strategyParams.totalDebt)
-    }
-    return totalDebt
   }
 
   describe(`${poolName} basic operation tests`, function () {
@@ -114,7 +78,7 @@ async function shouldBehaveLikePool(poolName, collateralName) {
           const receiptToken = await strategy.token.balanceOf(strategy.instance.address)
           expect(receiptToken).to.be.bignumber.gt('0', 'receipt token balance of strategy is wrong')
         }
-        const totalDebtOfStrategies = await totalDebtOfAllStrategy()
+        const totalDebtOfStrategies = await totalDebtOfAllStrategy(strategies, pool)
         return Promise.all([pool.totalDebt(), pool.totalSupply(), pool.balanceOf(user2)]).then(function ([
           totalDebt,
           totalSupply,
@@ -140,7 +104,7 @@ async function shouldBehaveLikePool(poolName, collateralName) {
       it(`Should withdraw all ${collateralName} before rebalance`, async function () {
         const withdrawAmount = await pool.balanceOf(user1)
         await pool.withdraw(withdrawAmount, {from: user1})
-        const totalDebtOfStrategies = await totalDebtOfAllStrategy()
+        const totalDebtOfStrategies = await totalDebtOfAllStrategy(strategies, pool)
         return Promise.all([
           pool.totalDebt(),
           pool.totalSupply(),
@@ -167,7 +131,7 @@ async function shouldBehaveLikePool(poolName, collateralName) {
         vPoolBalance = (await pool.balanceOf(user1)).toString()
         const collateralBalance = (await collateralToken.balanceOf(user1)).toString()
         const totalDebt = await pool.totalDebt()
-        const totalDebtOfStrategies = await totalDebtOfAllStrategy()
+        const totalDebtOfStrategies = await totalDebtOfAllStrategy(strategies, pool)
         expect(totalDebtOfStrategies).to.be.bignumber.equal(
           totalDebt,
           `${collateralName} totalDebt of strategies is wrong`
@@ -177,13 +141,13 @@ async function shouldBehaveLikePool(poolName, collateralName) {
       })
 
       it(`Should withdraw very small ${collateralName} after rebalance`, async function () {
-        await rebalance()
+        await rebalance(strategies)
         const collateralBalanceBefore = await collateralToken.balanceOf(user1)
         const withdrawAmount = '10000000000000000'
         await pool.withdraw(withdrawAmount, {from: user1})
         const collateralBalance = await collateralToken.balanceOf(user1)
         const totalDebt = await pool.totalDebt()
-        const totalDebtOfStrategies = await totalDebtOfAllStrategy()
+        const totalDebtOfStrategies = await totalDebtOfAllStrategy(strategies, pool)
         expect(totalDebtOfStrategies).to.be.bignumber.equal(
           totalDebt,
           `${collateralName} totalDebt of strategies is wrong`
@@ -192,12 +156,12 @@ async function shouldBehaveLikePool(poolName, collateralName) {
       })
 
       it(`Should withdraw partial ${collateralName} after rebalance`, async function () {
-        await rebalance()
+        await rebalance(strategies)
         const collateralBalanceBefore = await collateralToken.balanceOf(user1)
         const withdrawAmount = (await pool.balanceOf(user1)).div(new BN(2))
         await pool.withdraw(withdrawAmount, {from: user1})
         const totalDebt = await pool.totalDebt()
-        const totalDebtOfStrategies = await totalDebtOfAllStrategy()
+        const totalDebtOfStrategies = await totalDebtOfAllStrategy(strategies, pool)
         expect(totalDebtOfStrategies).to.be.bignumber.equal(
           totalDebt,
           `${collateralName} totalDebt of strategies is wrong`
@@ -209,7 +173,7 @@ async function shouldBehaveLikePool(poolName, collateralName) {
       it(`Should withdraw all ${collateralName} after rebalance`, async function () {
         depositAmount = await deposit(10, user2)
         const dust = DECIMAL18.div(new BN('100')) // Dust is less than 1e16
-        await rebalance()
+        await rebalance(strategies)
         let o = await pool.balanceOf(user2)
         await pool.withdraw(o, {from: user2})
         o = await pool.balanceOf(user1)
@@ -234,7 +198,7 @@ async function shouldBehaveLikePool(poolName, collateralName) {
     describe(`Rebalance ${poolName} pool`, function () {
       it('Should rebalance multiple times.', async function () {
         const depositAmount = (await deposit(10, user3)).toString()
-        await rebalance()
+        await rebalance(strategies)
         let totalDebtRatio = await pool.totalDebtRatio()
         let totalValue = await pool.totalValue()
         let maxDebt = totalValue.mul(totalDebtRatio).div(MAX_BPS)
@@ -243,14 +207,14 @@ async function shouldBehaveLikePool(poolName, collateralName) {
         expect(tokensHere).to.be.bignumber.equal(buffer, 'Tokens here is not correct')
         // Time travel 6 hours
         await timeTravel()
-        await rebalance()
+        await rebalance(strategies)
 
         await timeTravel()
-        await rebalance()
+        await rebalance(strategies)
         totalValue = await pool.totalValue()
         totalDebtRatio = await pool.totalDebtRatio()
         maxDebt = totalValue.mul(totalDebtRatio).div(MAX_BPS)
-        await rebalance()
+        await rebalance(strategies)
         return Promise.all([pool.totalDebt(), pool.totalSupply(), pool.balanceOf(user3)]).then(function ([
           totalDebt,
           totalSupply,
@@ -269,18 +233,18 @@ async function shouldBehaveLikePool(poolName, collateralName) {
       it('Should increase pool share value', async function () {
         await deposit(20, user1)
         const price1 = await pool.pricePerShare()
-        await rebalance()
+        await rebalance(strategies)
         // Time travel to generate earning
         await timeTravel(5 * 60 * 60, 50)
         await deposit(20, user2)
-        await rebalance()
+        await rebalance(strategies)
         const price2 = await pool.pricePerShare()
         expect(price2).to.be.bignumber.gt(price1, `${poolName} share value should increase`)
         // Time travel to generate earning
         await timeTravel()
         await deposit(20, user3)
         await timeTravel()
-        await rebalance()
+        await rebalance(strategies)
         const price3 = await pool.pricePerShare()
         expect(price3).to.be.bignumber.gt(price2, `${poolName} share value should increase`)
       })
@@ -302,21 +266,21 @@ async function shouldBehaveLikePool(poolName, collateralName) {
       })
 
       it('Should collect fee on withdraw after rebalance', async function () {
-        await rebalance()
+        await rebalance(strategies)
         await pool.withdraw(depositAmount, {from: user2})
         const vPoolBalanceFC = await pool.balanceOf(feeCollector)
         expect(vPoolBalanceFC).to.be.bignumber.gt('0', 'Withdraw fee transfer failed')
       })
 
       it('Should not allow user to withdraw without fee', async function () {
-        await rebalance()
+        await rebalance(strategies)
         const withdrawAmount = await pool.balanceOf(user2)
         const tx = pool.withdrawByStrategy(withdrawAmount, {from: user2})
         await expectRevert(tx, 'Not a white listed address')
       })
 
       it('Should allow fee collector to withdraw without fee', async function () {
-        await rebalance()
+        await rebalance(strategies)
         const withdrawAmount = await pool.balanceOf(user2)
         await pool.withdraw(withdrawAmount, {from: user2})
         // Add fee collector to fee white list
@@ -336,17 +300,17 @@ async function shouldBehaveLikePool(poolName, collateralName) {
         await deposit(20, user1)
       })
       it('Should earn interest fee on rebalance', async function () {
-        await rebalance()
+        await rebalance(strategies)
         const fc = await strategies[0].feeCollector
         await timeTravel()
         // Another deposit
         await deposit(200, user2)
-        await rebalance()
+        await rebalance(strategies)
         await strategies[0].instance.sweepERC20(pool.address)
         const feeEarned1 = await pool.balanceOf(fc)
         expect(feeEarned1).to.be.bignumber.gt(new BN('0'), 'Fee collected is not correct')
         await timeTravel()
-        await rebalance()
+        await rebalance(strategies)
         await strategies[0].instance.sweepERC20(pool.address)
         const feeEarned2 = await pool.balanceOf(fc)
         expect(feeEarned2).to.be.bignumber.gt(feeEarned1, 'Fee collected is not correct')
@@ -354,17 +318,17 @@ async function shouldBehaveLikePool(poolName, collateralName) {
 
       it('Should rebalance when interest fee is zero', async function () {
         await pool.updateInterestFee(strategies[0].instance.address, '0')
-        await rebalance()
+        await rebalance(strategies)
         // Time travel to generate earning
         await timeTravel()
         await deposit(200, user2)
-        await rebalance()
+        await rebalance(strategies)
         const fc = strategies[0].instance.address
         let vPoolBalanceFC = await pool.balanceOf(fc)
         expect(vPoolBalanceFC.toString()).to.eq('0', 'Collected fee should be zero')
         // Another time travel and rebalance to run scenario again
         await timeTravel()
-        await rebalance()
+        await rebalance(strategies)
         await strategies[0].instance.sweepERC20(pool.address)
         vPoolBalanceFC = await pool.balanceOf(fc)
         expect(vPoolBalanceFC.toString()).to.eq('0', 'Collected fee should be zero')
@@ -401,7 +365,7 @@ async function shouldBehaveLikePool(poolName, collateralName) {
     describe(`Should migrate ${poolName} pool from old strategy to new`, function () {
       it(`Should be able to migrate strategy successfully in ${poolName}`, async function () {
         await Promise.all([deposit(200, user2), deposit(200, user1)])
-        await rebalance()
+        await rebalance(strategies)
         const receiptToken = strategies[0].token
         const [
           totalSupplyBefore,

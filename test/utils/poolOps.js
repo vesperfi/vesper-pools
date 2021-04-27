@@ -1,9 +1,16 @@
 'use strict'
 const swapper = require('./tokenSwapper')
-const BN = require('bn.js')
+const IStrategy = artifacts.require('IStrategy')
+const {BN, time} = require('@openzeppelin/test-helpers')
 
 const DECIMAL = new BN('1000000000000000000')
 const WETH_ADDRESS = '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2'
+
+async function executeIfExist(fn) {
+  if (typeof fn === 'function') {
+    await fn()
+  }
+}
 
 /**
  *  Swap given ETH for given token type and deposit tokens into Vesper pool
@@ -27,4 +34,45 @@ async function deposit(pool, token, amount, depositor) {
   return depositAmount
 }
 
-module.exports = {deposit}
+/**
+ * rebalance in all strategies.
+ *
+ * @param {Array} strategies .
+ */
+async function rebalance(strategies) {
+  for (const strategy of strategies) {
+    await executeIfExist(strategy.token.exchangeRateCurrent)
+    await strategy.instance.rebalance()
+    await executeIfExist(strategy.token.exchangeRateCurrent)
+    if (strategy.type.includes('vesper')) {
+      let s = await strategy.token.strategies(0)
+      s = await IStrategy.at(s)
+      // TODO: do it recursive
+      await s.rebalance()
+    }
+  }
+}
+
+
+async function timeTravel(seconds = 6 * 60 * 60, blocks = 25, strategyType = '', underlayStrategy = '') {
+  const timeTravelFn = () => time.increase(seconds)
+  const blockMineFn = async () => time.advanceBlockTo((await time.latestBlock()).add(new BN(blocks)))
+  return strategyType.includes('compound') || underlayStrategy.includes('compound') ? blockMineFn() : timeTravelFn()
+}
+
+/**
+ * 
+ * @param {*} strategies .
+ * @param {*} pool .
+ * @returns {*} .
+ */
+async function totalDebtOfAllStrategy(strategies, pool) {
+  let totalDebt = new BN('0')
+  for (const strategy of strategies) {
+    const strategyParams = await pool.strategy(strategy.instance.address)
+    totalDebt = totalDebt.add(strategyParams.totalDebt)
+  }
+  return totalDebt
+}
+
+module.exports = {deposit, rebalance, totalDebtOfAllStrategy, executeIfExist, timeTravel}
