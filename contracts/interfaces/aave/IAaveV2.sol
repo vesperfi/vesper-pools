@@ -2,6 +2,8 @@
 
 pragma solidity 0.8.3;
 
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
 interface AaveLendingPoolAddressesProvider {
     function getLendingPool() external view returns (address);
 
@@ -48,4 +50,21 @@ interface AaveProtocolDataProvider {
             uint256 variableBorrowIndex,
             uint40 lastUpdateTimestamp
         );
+}
+
+//solhint-disable func-name-mixedcase
+interface StakedAave is IERC20 {
+    function claimRewards(address to, uint256 amount) external;
+
+    function cooldown() external;
+
+    function redeem(address to, uint256 amount) external;
+
+    function getTotalRewardsBalance(address staker) external view returns (uint256);
+
+    function stakersCooldowns(address staker) external view returns (uint256);
+
+    function COOLDOWN_SECONDS() external view returns (uint256);
+
+    function UNSTAKE_WINDOW() external view returns (uint256);
 }
