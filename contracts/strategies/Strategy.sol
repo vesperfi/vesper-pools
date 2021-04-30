@@ -19,7 +19,7 @@ abstract contract Strategy is IStrategy, Context {
     IERC20 public immutable collateralToken;
     address public immutable receiptToken;
     address public immutable override pool;
-    IAddressList public immutable guardians;
+    IAddressList public guardians;
     address public override feeCollector;
     address internal constant ETH = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
     address internal constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
@@ -33,16 +33,6 @@ abstract contract Strategy is IStrategy, Context {
         pool = _pool;
         collateralToken = IERC20(IVesperPool(_pool).token());
         receiptToken = _receiptToken;
-
-        // Prepare guardian list
-        IAddressListFactory _factory = IAddressListFactory(0xded8217De022706A191eE7Ee0Dc9df1185Fb5dA3);
-        IAddressList _guardians = IAddressList(_factory.createList());
-        address _governor = IVesperPool(_pool).governor();
-        require(_guardians.add(_governor), "add-guardian-failed");
-        if (_msgSender() != _governor) {
-            require(_guardians.add(_msgSender()), "add-guardian-failed");
-        }
-        guardians = _guardians;
     }
 
     modifier onlyGovernor {
@@ -67,6 +57,25 @@ abstract contract Strategy is IStrategy, Context {
     function addGuardian(address _guardianAddress) external onlyGovernor {
         require(!guardians.contains(_guardianAddress), "guardian-already-in-list");
         require(guardians.add(_guardianAddress), "add-guardian-failed");
+    }
+
+    /**
+     * @notice Create keeper list
+     * @dev Create keeper list
+     * NOTE: Any function with onlyGuardians modifier will not work until this function is called.
+     * NOTE: Due to gas constraint this function cannot be called in constructor.
+     */
+    function createGaurdianList() external onlyGovernor {
+        require(address(guardians) == address(0), "gaurdian-list-already-created");
+        // Prepare guardian list
+        IAddressListFactory _factory = IAddressListFactory(0xded8217De022706A191eE7Ee0Dc9df1185Fb5dA3);
+        IAddressList _guardians = IAddressList(_factory.createList());
+        address _governor = IVesperPool(pool).governor();
+        require(_guardians.add(_governor), "add-guardian-failed");
+        if (_msgSender() != _governor) {
+            require(_guardians.add(_msgSender()), "add-guardian-failed");
+        }
+        guardians = _guardians;
     }
 
     /**
