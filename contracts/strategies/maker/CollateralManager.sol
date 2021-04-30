@@ -56,9 +56,14 @@ contract DSMath {
 
 contract CollateralManager is ICollateralManager, DSMath, ReentrancyGuard, Governed {
     using SafeERC20 for IERC20;
-    mapping(uint256 => address) public override vaultOwner;
+
+    // Vault number to collateral type
+    mapping(uint256 => bytes32) public collateralType;
+    // Vault owner to vault num mapping
+    mapping(address => uint256) public override vaultNum;
+    // Collateral type to Gem join address of that type
     mapping(bytes32 => address) public mcdGemJoin;
-    mapping(uint256 => bytes32) public vaultType;
+
     address public constant DAI = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
     address public override mcdManager = 0x5ef30b9986345249bc32d8928B7ee64DE9435E39;
     address public mcdDaiJoin = 0x9759A6Ac90977b93B58547b4A71c78317f391A28;
@@ -67,12 +72,14 @@ contract CollateralManager is ICollateralManager, DSMath, ReentrancyGuard, Gover
     address public treasury;
     uint256 internal constant MAX_UINT_VALUE = type(uint256).max;
 
-    event AddedGemJoin(address gemJoin, bytes32 ilk);
+    event AddedGemJoin(address indexed gemJoin, bytes32 ilk);
+    event CreatedValut(address indexed owner, uint256 indexed vaultNum, bytes32 indexed collateralType);
+    event TransferredVaultOwnership(uint256 indexed vaultNum, address indexed previousOwner, address indexed newOwner);
     event UpdatedMCDAddresses(address mcdManager, address mcdDaiJoin, address mcdSpot, address mcdJug);
-    event UpdatedTreasury(address previousTreasury, address newTreasury);
+    event UpdatedTreasury(address indexed previousTreasury, address indexed newTreasury);
 
-    modifier onlyVaultOwner(uint256 vaultNum) {
-        require(msg.sender == vaultOwner[vaultNum], "not-the-vault-owner");
+    modifier onlyVaultOwner() {
+        require(vaultNum[msg.sender] != 0, "caller-doesn't-own-any-vault");
         _;
     }
 
@@ -91,14 +98,44 @@ contract CollateralManager is ICollateralManager, DSMath, ReentrancyGuard, Gover
     }
 
     /**
-     * @dev Store vault info.
-     * @param vaultNum Vault number.
-     * @param collateralType Collateral type of vault.
+     * @notice Create new Maker vault
+     * @dev Store caller of this function as vault owner.
+     * @param _collateralType Collateral type for Maker vault
+     * @return _vaultNum Newly created vault number
      */
-    function registerVault(uint256 vaultNum, bytes32 collateralType) external override {
-        require(msg.sender == ManagerLike(mcdManager).owns(vaultNum), "not-the-vault-owner");
-        vaultOwner[vaultNum] = msg.sender;
-        vaultType[vaultNum] = collateralType;
+    function createVault(bytes32 _collateralType) external override returns (uint256 _vaultNum) {
+        require(vaultNum[msg.sender] == 0, "caller-owns-another-vault");
+        ManagerLike manager = ManagerLike(mcdManager);
+        _vaultNum = manager.open(_collateralType, address(this));
+        manager.cdpAllow(_vaultNum, address(this), 1);
+
+        vaultNum[msg.sender] = _vaultNum;
+        collateralType[_vaultNum] = _collateralType;
+        emit CreatedValut(msg.sender, _vaultNum, _collateralType);
+    }
+
+    /**
+     * @notice Transfer vault ownership to another address/strategy
+     * @param _newOwner Address of new owner of vault
+     */
+    function transferVaultOwnership(address _newOwner) external override onlyVaultOwner {
+        _transferVaultOwnership(vaultNum[msg.sender], msg.sender, _newOwner);
+    }
+
+    /**
+     * @notice Transfer vault ownership to another address/strategy
+     * @param _vaultNum Number of vault being transferred
+     * @param _owner Address of owner of vault
+     * @param _newOwner Address of new owner of vault
+     */
+    function transferVaultOwnership(
+        uint256 _vaultNum,
+        address _owner,
+        address _newOwner
+    ) external onlyGovernor {
+        require(_vaultNum != 0, "vault-number-is-zero");
+        require(_owner != address(0), "owner-address-zero");
+        _transferVaultOwnership(_vaultNum, _owner, _newOwner);
     }
 
     /**
@@ -132,24 +169,19 @@ contract CollateralManager is ICollateralManager, DSMath, ReentrancyGuard, Gover
 
     /**
      * @dev Deposit ERC20 collateral.
-     * @param vaultNum Vault number.
      * @param amount ERC20 amount to deposit.
      */
-    function depositCollateral(uint256 vaultNum, uint256 amount)
-        external
-        override
-        nonReentrant
-        onlyVaultOwner(vaultNum)
-    {
+    function depositCollateral(uint256 amount) external override nonReentrant onlyVaultOwner {
+        uint256 _vaultNum = vaultNum[msg.sender];
         // Receives Gem amount, approve and joins it into the vat.
         // Also convert amount to 18 decimal
-        amount = joinGem(mcdGemJoin[vaultType[vaultNum]], amount);
+        amount = joinGem(mcdGemJoin[collateralType[_vaultNum]], amount);
 
         ManagerLike manager = ManagerLike(mcdManager);
         // Locks Gem amount into the CDP
         VatLike(manager.vat()).frob(
-            vaultType[vaultNum],
-            manager.urns(vaultNum),
+            collateralType[_vaultNum],
+            manager.urns(_vaultNum),
             address(this),
             address(this),
             toInt(amount),
@@ -159,43 +191,38 @@ contract CollateralManager is ICollateralManager, DSMath, ReentrancyGuard, Gover
 
     /**
      * @dev Withdraw collateral.
-     * @param vaultNum Vault number.
      * @param amount Collateral amount to withdraw.
      */
-    function withdrawCollateral(uint256 vaultNum, uint256 amount)
-        external
-        override
-        nonReentrant
-        onlyVaultOwner(vaultNum)
-    {
+    function withdrawCollateral(uint256 amount) external override nonReentrant onlyVaultOwner {
+        uint256 _vaultNum = vaultNum[msg.sender];
         ManagerLike manager = ManagerLike(mcdManager);
-        GemJoinLike gemJoin = GemJoinLike(mcdGemJoin[vaultType[vaultNum]]);
+        GemJoinLike gemJoin = GemJoinLike(mcdGemJoin[collateralType[_vaultNum]]);
 
         uint256 amount18 = convertTo18(gemJoin.dec(), amount);
 
         // Unlocks Gem amount18 from the CDP
-        manager.frob(vaultNum, -toInt(amount18), 0);
+        manager.frob(_vaultNum, -toInt(amount18), 0);
 
         // Moves Gem amount18 from the CDP urn to this address
-        manager.flux(vaultNum, address(this), amount18);
+        manager.flux(_vaultNum, address(this), amount18);
 
         // Exits Gem amount to this address as a token
         gemJoin.exit(address(this), amount);
 
         // Send Gem to pool's address
-        IERC20(gemJoin.gem()).safeTransfer(vaultOwner[vaultNum], amount);
+        IERC20(gemJoin.gem()).safeTransfer(msg.sender, amount);
     }
 
     /**
      * @dev Payback borrowed DAI.
-     * @param vaultNum Vault number.
      * @param amount Dai amount to payback.
      */
-    function payback(uint256 vaultNum, uint256 amount) external override onlyVaultOwner(vaultNum) {
+    function payback(uint256 amount) external override onlyVaultOwner {
+        uint256 _vaultNum = vaultNum[msg.sender];
         ManagerLike manager = ManagerLike(mcdManager);
-        address urn = manager.urns(vaultNum);
+        address urn = manager.urns(_vaultNum);
         address vat = manager.vat();
-        bytes32 ilk = vaultType[vaultNum];
+        bytes32 ilk = collateralType[_vaultNum];
 
         // Calculate dai debt
         uint256 _daiDebt = _getVaultDebt(ilk, urn, vat);
@@ -203,29 +230,29 @@ contract CollateralManager is ICollateralManager, DSMath, ReentrancyGuard, Gover
 
         // Approve and join dai in vat
         joinDai(urn, amount);
-        manager.frob(vaultNum, 0, _getWipeAmount(ilk, urn, vat));
+        manager.frob(_vaultNum, 0, _getWipeAmount(ilk, urn, vat));
     }
 
     /**
      * @notice Borrow DAI.
      * @dev In edge case, when we hit DAI mint limit, we might end up borrowing
      * less than what is being asked.
-     * @param vaultNum Vault number.
      * @param amount Dai amount to borrow. Actual borrow amount may be less than "amount"
      */
-    function borrow(uint256 vaultNum, uint256 amount) external override onlyVaultOwner(vaultNum) {
+    function borrow(uint256 amount) external override onlyVaultOwner {
+        uint256 _vaultNum = vaultNum[msg.sender];
         ManagerLike manager = ManagerLike(mcdManager);
         address vat = manager.vat();
         // Safety check in scenario where current debt and request borrow will exceed max dai limit
-        uint256 _maxAmount = maxAvailableDai(vat, vaultNum);
+        uint256 _maxAmount = _maxAvailableDai(vat, collateralType[_vaultNum]);
         if (amount > _maxAmount) {
             amount = _maxAmount;
         }
 
         // Generates debt in the CDP
-        manager.frob(vaultNum, 0, _getBorrowAmount(vat, manager.urns(vaultNum), vaultNum, amount));
+        manager.frob(_vaultNum, 0, _getBorrowAmount(vat, manager.urns(_vaultNum), _vaultNum, amount));
         // Moves the DAI amount (balance in the vat in rad) to pool's address
-        manager.move(vaultNum, address(this), toRad(amount));
+        manager.move(_vaultNum, address(this), toRad(amount));
         // Allows adapter to access to pool's DAI balance in the vat
         if (VatLike(vat).can(address(this), mcdDaiJoin) == 0) {
             VatLike(vat).hope(mcdDaiJoin);
@@ -243,32 +270,35 @@ contract CollateralManager is ICollateralManager, DSMath, ReentrancyGuard, Gover
 
     /**
      * @dev Get current dai debt of vault.
-     * @param vaultNum Vault number.
+     * @param _vaultOwner Address of vault owner
      */
-    function getVaultDebt(uint256 vaultNum) external view override returns (uint256 daiDebt) {
-        address urn = ManagerLike(mcdManager).urns(vaultNum);
+    function getVaultDebt(address _vaultOwner) external view override returns (uint256 daiDebt) {
+        uint256 _vaultNum = vaultNum[_vaultOwner];
+        require(_vaultNum != 0, "invalid-vault-number");
+        address urn = ManagerLike(mcdManager).urns(_vaultNum);
         address vat = ManagerLike(mcdManager).vat();
-        bytes32 ilk = vaultType[vaultNum];
-
+        bytes32 ilk = collateralType[_vaultNum];
         daiDebt = _getVaultDebt(ilk, urn, vat);
     }
 
     /**
      * @dev Get current collateral balance of vault.
-     * @param vaultNum Vault number.
+     * @param _vaultOwner Address of vault owner
      */
-    function getVaultBalance(uint256 vaultNum) external view override returns (uint256 collateralLocked) {
+    function getVaultBalance(address _vaultOwner) external view override returns (uint256 collateralLocked) {
+        uint256 _vaultNum = vaultNum[_vaultOwner];
+        require(_vaultNum != 0, "invalid-vault-number");
         address vat = ManagerLike(mcdManager).vat();
-        address urn = ManagerLike(mcdManager).urns(vaultNum);
-        (collateralLocked, ) = VatLike(vat).urns(vaultType[vaultNum], urn);
+        address urn = ManagerLike(mcdManager).urns(_vaultNum);
+        (collateralLocked, ) = VatLike(vat).urns(collateralType[_vaultNum], urn);
     }
 
     /**
      * @dev Calculate state based on withdraw amount.
-     * @param vaultNum Vault number.
+     * @param _vaultOwner Address of vault owner
      * @param amount Collateral amount to withraw.
      */
-    function whatWouldWithdrawDo(uint256 vaultNum, uint256 amount)
+    function whatWouldWithdrawDo(address _vaultOwner, uint256 amount)
         external
         view
         override
@@ -280,20 +310,22 @@ contract CollateralManager is ICollateralManager, DSMath, ReentrancyGuard, Gover
             uint256 minimumDebt
         )
     {
-        (collateralLocked, daiDebt, collateralUsdRate, collateralRatio, minimumDebt) = getVaultInfo(vaultNum);
+        uint256 _vaultNum = vaultNum[_vaultOwner];
+        require(_vaultNum != 0, "invalid-vault-number");
+        (collateralLocked, daiDebt, collateralUsdRate, collateralRatio, minimumDebt) = getVaultInfo(_vaultOwner);
 
-        GemJoinLike gemJoin = GemJoinLike(mcdGemJoin[vaultType[vaultNum]]);
+        GemJoinLike gemJoin = GemJoinLike(mcdGemJoin[collateralType[_vaultNum]]);
         uint256 amount18 = convertTo18(gemJoin.dec(), amount);
-        require(amount18 <= collateralLocked, "insufficient collateral locked");
+        require(amount18 <= collateralLocked, "insufficient-collateral-locked");
         collateralLocked = sub(collateralLocked, amount18);
-        collateralRatio = getCollateralRatio(collateralLocked, collateralUsdRate, daiDebt);
+        collateralRatio = _getCollateralRatio(collateralLocked, collateralUsdRate, daiDebt);
     }
 
     /**
      * @dev Get vault info
-     * @param vaultNum Vault number.
+     * @param _vaultOwner Address of vault owner
      */
-    function getVaultInfo(uint256 vaultNum)
+    function getVaultInfo(address _vaultOwner)
         public
         view
         override
@@ -305,19 +337,30 @@ contract CollateralManager is ICollateralManager, DSMath, ReentrancyGuard, Gover
             uint256 minimumDebt
         )
     {
-        (collateralLocked, collateralUsdRate, daiDebt, minimumDebt) = _getVaultInfo(vaultNum);
-        collateralRatio = getCollateralRatio(collateralLocked, collateralUsdRate, daiDebt);
+        uint256 _vaultNum = vaultNum[_vaultOwner];
+        require(_vaultNum != 0, "invalid-vault-number");
+        (collateralLocked, collateralUsdRate, daiDebt, minimumDebt) = _getVaultInfo(_vaultNum);
+        collateralRatio = _getCollateralRatio(collateralLocked, collateralUsdRate, daiDebt);
     }
 
     /**
-     * @dev Get available DAI amount based on current DAI debt and limit for given vault type.
-     * @param vat Vat address
-     * @param vaultNum Vault number.
+     * @notice Get max available DAI safe to borrow for given collateral type.
+     * @param _collateralType Collateral type.
      */
-    function maxAvailableDai(address vat, uint256 vaultNum) public view returns (uint256) {
+    function maxAvailableDai(bytes32 _collateralType) public view returns (uint256) {
+        return _maxAvailableDai(ManagerLike(mcdManager).vat(), _collateralType);
+    }
+
+    /**
+     * @notice Get max available DAI safe to borrow
+     * @dev Calcualtion based on current DAI debt and DAI limit for given collateral type.
+     * @param _vat Vat address
+     * @param _collateralType Vault collateral type.
+     */
+    function _maxAvailableDai(address _vat, bytes32 _collateralType) internal view returns (uint256) {
         // Get stable coin Art(debt) [wad], rate [ray], line [rad]
         //solhint-disable-next-line var-name-mixedcase
-        (uint256 Art, uint256 rate, , uint256 line, ) = VatLike(vat).ilks(vaultType[vaultNum]);
+        (uint256 Art, uint256 rate, , uint256 line, ) = VatLike(_vat).ilks(_collateralType);
         // Calculate total issued debt is Art * rate [rad]
         // Calcualte total available dai [wad]
         uint256 _totalAvailableDai = sub(line, mul(Art, rate)) / RAY;
@@ -357,11 +400,11 @@ contract CollateralManager is ICollateralManager, DSMath, ReentrancyGuard, Gover
     function _getBorrowAmount(
         address vat,
         address urn,
-        uint256 vaultNum,
+        uint256 _vaultNum,
         uint256 wad
     ) internal returns (int256 amount) {
         // Updates stability fee rate
-        uint256 rate = JugLike(mcdJug).drip(vaultType[vaultNum]);
+        uint256 rate = JugLike(mcdJug).drip(collateralType[_vaultNum]);
 
         // Gets DAI balance of the urn in the vat
         uint256 dai = VatLike(vat).dai(urn);
@@ -375,10 +418,8 @@ contract CollateralManager is ICollateralManager, DSMath, ReentrancyGuard, Gover
         }
     }
 
-    /**
-     * @dev Get collateral ratio
-     */
-    function getCollateralRatio(
+    /// @notice Get collateral ratio
+    function _getCollateralRatio(
         uint256 collateralLocked,
         uint256 collateralRate,
         uint256 daiDebt
@@ -391,8 +432,28 @@ contract CollateralManager is ICollateralManager, DSMath, ReentrancyGuard, Gover
             return MAX_UINT_VALUE;
         }
 
-        require(collateralRate != 0, "Collateral rate is zero");
+        require(collateralRate != 0, "collateral-rate-is-zero");
         return wdiv(wmul(collateralLocked, collateralRate), daiDebt);
+    }
+
+    /**
+     * @notice Transfer vault ownership to another address/strategy
+     * @param _vaultNum Number of vault being transferred
+     * @param _owner Address of owner of vault
+     * @param _newOwner Address of new owner of vault
+     */
+    function _transferVaultOwnership(
+        uint256 _vaultNum,
+        address _owner,
+        address _newOwner
+    ) internal onlyGovernor {
+        require(_newOwner != address(0), "new-owner-address-is-zero");
+        require(vaultNum[_owner] == _vaultNum, "invalid-vault-num");
+        require(vaultNum[_newOwner] == 0, "new-owner-owns-another-vault");
+
+        vaultNum[_newOwner] = _vaultNum;
+        vaultNum[_owner] = 0;
+        emit TransferredVaultOwnership(_vaultNum, _owner, _newOwner);
     }
 
     /**
@@ -409,25 +470,10 @@ contract CollateralManager is ICollateralManager, DSMath, ReentrancyGuard, Gover
         (, uint256 rate, , , ) = VatLike(vat).ilks(ilk);
         // Get balance from vat [rad]
         uint256 dai = VatLike(vat).dai(urn);
-
         wad = _getVaultDebt(art, rate, dai);
     }
 
-    function _getVaultDebt(
-        uint256 art,
-        uint256 rate,
-        uint256 dai
-    ) internal pure returns (uint256 wad) {
-        if (dai < mul(art, rate)) {
-            uint256 rad = sub(mul(art, rate), dai);
-            wad = rad / RAY;
-            wad = mul(wad, RAY) < rad ? wad + 1 : wad;
-        } else {
-            wad = 0;
-        }
-    }
-
-    function _getVaultInfo(uint256 vaultNum)
+    function _getVaultInfo(uint256 _vaultNum)
         internal
         view
         returns (
@@ -437,18 +483,15 @@ contract CollateralManager is ICollateralManager, DSMath, ReentrancyGuard, Gover
             uint256 minimumDebt
         )
     {
-        address urn = ManagerLike(mcdManager).urns(vaultNum);
+        address urn = ManagerLike(mcdManager).urns(_vaultNum);
         address vat = ManagerLike(mcdManager).vat();
-        bytes32 ilk = vaultType[vaultNum];
-
+        bytes32 ilk = collateralType[_vaultNum];
         // Get minimum liquidation ratio [ray]
         (, uint256 mat) = SpotterLike(mcdSpot).ilks(ilk);
-
         // Get collateral locked and normalised debt [wad] [wad]
         (uint256 ink, uint256 art) = VatLike(vat).urns(ilk, urn);
         // Get stable coin and collateral rate  and min debt [ray] [ray] [rad]
         (, uint256 rate, uint256 spot, , uint256 dust) = VatLike(vat).ilks(ilk);
-        // Get balance from vat [rad]
 
         collateralLocked = ink;
         daiDebt = _getVaultDebt(art, rate, VatLike(vat).dai(urn));
@@ -475,5 +518,20 @@ contract CollateralManager is ICollateralManager, DSMath, ReentrancyGuard, Gover
         amount = toInt(dai / rate);
         // Checks the calculated amt is not higher than urn.art (total debt), otherwise uses its value
         amount = uint256(amount) <= art ? -amount : -toInt(art);
+    }
+
+    /// @notice Get vault debt
+    function _getVaultDebt(
+        uint256 art,
+        uint256 rate,
+        uint256 dai
+    ) internal pure returns (uint256 wad) {
+        if (dai < mul(art, rate)) {
+            uint256 rad = sub(mul(art, rate), dai);
+            wad = rad / RAY;
+            wad = mul(wad, RAY) < rad ? wad + 1 : wad;
+        } else {
+            wad = 0;
+        }
     }
 }

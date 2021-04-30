@@ -9,15 +9,13 @@ const StrategyType = require('../utils/strategyTypes')
 const VDAI = artifacts.require('VDAI')
 const AaveStrategy = artifacts.require('AaveV2StrategyDAI')
 const CompoundStrategy = artifacts.require('CompoundStrategyDAI')
-const {BN} = require('@openzeppelin/test-helpers')
-const DECIMAL18 = new BN('1000000000000000000')
-const INFINITE = DECIMAL18.mul(new BN('10000000000000000000000000'))
+const {constants} = require('@openzeppelin/test-helpers')
 
 contract('vDAI Pool with AaveStrategy', function (accounts) {
   const interestFee = '1500' // 15%
   const feeCollector = accounts[9]
-  const config1 = {interestFee, debtRatio: 9000, maxDebtPerRebalance: INFINITE}
-  const config2 = {interestFee, debtRatio: 0, maxDebtPerRebalance: INFINITE}
+  const config1 = {interestFee, debtRatio: 9000, maxDebtPerRebalance: constants.MAX_UINT256}
+  const config2 = {interestFee, debtRatio: 0, maxDebtPerRebalance: constants.MAX_UINT256}
 
   beforeEach(async function () {
     this.accounts = accounts

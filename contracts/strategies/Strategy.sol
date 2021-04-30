@@ -28,7 +28,7 @@ abstract contract Strategy is IStrategy, Context {
     event UpdatedFeeCollector(address indexed previousFeeCollector, address indexed newFeeCollector);
 
     constructor(address _pool, address _receiptToken) {
-        require(_pool != address(0), "pool-is-zero-address");
+        require(_pool != address(0), "pool-address-is-zero");
         UniMgr = new UniswapManager();
         pool = _pool;
         collateralToken = IERC20(IVesperPool(_pool).token());
@@ -60,31 +60,29 @@ abstract contract Strategy is IStrategy, Context {
     }
 
     /**
-     * @notice Create keeper list
-     * @dev Create keeper list
+     * @notice Create guardian list
      * NOTE: Any function with onlyGuardians modifier will not work until this function is called.
      * NOTE: Due to gas constraint this function cannot be called in constructor.
      */
-    function createGaurdianList() external onlyGovernor {
+    function createGuardianList() external onlyGovernor {
         require(address(guardians) == address(0), "gaurdian-list-already-created");
         // Prepare guardian list
         IAddressListFactory _factory = IAddressListFactory(0xded8217De022706A191eE7Ee0Dc9df1185Fb5dA3);
-        IAddressList _guardians = IAddressList(_factory.createList());
+        guardians = IAddressList(_factory.createList());
         address _governor = IVesperPool(pool).governor();
-        require(_guardians.add(_governor), "add-guardian-failed");
+        require(guardians.add(_governor), "add-guardian-failed");
         if (_msgSender() != _governor) {
-            require(_guardians.add(_msgSender()), "add-guardian-failed");
+            require(guardians.add(_msgSender()), "add-guardian-failed");
         }
-        guardians = _guardians;
     }
 
     /**
-     * @notice some strategy may want to prpeare before doing migration. 
-        Example In Maker old strategy want to give vault ownership to new strategy
-     * @param _newStrategy .
+     * @notice Migrate all asset and vault ownership,if any, to new strategy
+     * @dev _beforeMigration hook can be implemented in child strategy to do extra steps.
+     * @param _newStrategy Address of new strategy
      */
     function migrate(address _newStrategy) external virtual override onlyPool {
-        require(_newStrategy != address(0), "new-address-is-zero");
+        require(_newStrategy != address(0), "new-strategy-address-is-zero");
         require(IStrategy(_newStrategy).pool() == pool, "not-valid-new-strategy");
         _beforeMigration(_newStrategy);
         IERC20(receiptToken).safeTransfer(_newStrategy, IERC20(receiptToken).balanceOf(address(this)));
@@ -105,7 +103,7 @@ abstract contract Strategy is IStrategy, Context {
      * @param _feeCollector fee collector address
      */
     function updateFeeCollector(address _feeCollector) external onlyGovernor {
-        require(_feeCollector != address(0), "fee-collector-is-zero-address");
+        require(_feeCollector != address(0), "fee-collector-address-is-zero");
         require(_feeCollector != feeCollector, "fee-collector-is-same");
         emit UpdatedFeeCollector(feeCollector, _feeCollector);
         feeCollector = _feeCollector;

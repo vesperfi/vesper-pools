@@ -42,6 +42,7 @@ async function addStrategiesInPool(obj) {
 async function createMakerStrategy(obj, collateralManager, strategy) {
   obj.collateralManager = await collateralManager.new()
   const strategyInstance = await strategy.new(obj.pool.address, obj.collateralManager.address)
+  await strategyInstance.createVault()
   obj.vaultNum = await strategyInstance.vaultNum()
   await Promise.all([strategyInstance.updateBalancingFactor(300, 250), obj.collateralManager.addGemJoin(gemJoins)])
   return strategyInstance
@@ -58,6 +59,7 @@ async function createMakerStrategy(obj, collateralManager, strategy) {
 async function createVesperMakerStrategy(obj, collateralManager, strategy, vPool) {
   obj.collateralManager = await collateralManager.new()
   const strategyInstance = await strategy.new(obj.pool.address, obj.collateralManager.address, vPool.address)
+  await strategyInstance.createVault()
   obj.vaultNum = await strategyInstance.vaultNum()
   await Promise.all([strategyInstance.updateBalancingFactor(300, 250), obj.collateralManager.addGemJoin(gemJoins)])
   const feeList = await vPool.feeWhiteList()
@@ -96,7 +98,7 @@ async function createStrategies(obj, collateralManager, vPool) {
     } else {
       strategy.instance = await strategy.artifact.new(obj.pool.address)
     }
-    await strategy.instance.createGaurdianList()
+    await strategy.instance.createGuardianList()
     await strategy.instance.approveToken()
     await strategy.instance.updateFeeCollector(strategy.feeCollector)
     const strategyTokenAddress = await strategy.instance.token()
