@@ -168,7 +168,9 @@ abstract contract PoolShareToken is ERC20Permit, Pausable, ReentrancyGuard, Gove
      * if the deposited amount is to be transferred from user to this contract.
      * @param _amount Collateral amount in collateral token defined decimals.
      */
-    function _beforeMinting(uint256 _amount) internal virtual {}
+    function _beforeMinting(uint256 _amount) internal virtual {
+        token.safeTransferFrom(_msgSender(), address(this), _amount);
+    }
 
     /**
      * @dev Hook that is called just after minting new tokens. To be used i.e.

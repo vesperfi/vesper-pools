@@ -362,10 +362,6 @@ contract VTokenBase is PoolShareToken {
         actualWithdrawn = _balanceNow < _amount ? _balanceNow : _amount;
     }
 
-    function _beforeMinting(uint256 _amount) internal override {
-        token.safeTransferFrom(_msgSender(), address(this), _amount);
-    }
-
     /**
     @dev when a strategy report loss, its debtRatio decrease to get fund back quickly.
     */
