@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.3;
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "../Governed.sol";
@@ -13,7 +13,7 @@ import "../interfaces/bloq/IAddressListFactory.sol";
 
 /// @title Holding pool share token
 // solhint-disable no-empty-blocks
-abstract contract PoolShareToken is ERC20, Pausable, ReentrancyGuard, Governed {
+abstract contract PoolShareToken is ERC20Permit, Pausable, ReentrancyGuard, Governed {
     using SafeERC20 for IERC20;
     IERC20 public immutable token;
     IAddressList public immutable feeWhiteList;
@@ -21,17 +21,6 @@ abstract contract PoolShareToken is ERC20, Pausable, ReentrancyGuard, Governed {
     address public feeCollector; // fee collector address
     uint256 public withdrawFee; // withdraw fee for this pool
 
-    /// @dev The EIP-712 typehash for the contract's domain
-    bytes32 public constant DOMAIN_TYPEHASH =
-        keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
-
-    /// @dev The EIP-712 typehash for the permit struct used by the contract
-    bytes32 public constant PERMIT_TYPEHASH =
-        keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)");
-
-    bytes32 public immutable domainSeparator;
-
-    mapping(address => uint256) public nonces;
     event Deposit(address indexed owner, uint256 shares, uint256 amount);
     event Withdraw(address indexed owner, uint256 shares, uint256 amount);
     event UpdatedFeeCollector(address indexed previousFeeCollector, address indexed newFeeCollector);
@@ -41,18 +30,11 @@ abstract contract PoolShareToken is ERC20, Pausable, ReentrancyGuard, Governed {
         string memory _name,
         string memory _symbol,
         address _token
-    ) ERC20(_name, _symbol) {
-        uint256 chainId;
-        assembly {
-            chainId := chainid()
-        }
+    ) ERC20Permit(_name) ERC20(_name, _symbol) {
         token = IERC20(_token);
         IAddressListFactory factory = IAddressListFactory(0xded8217De022706A191eE7Ee0Dc9df1185Fb5dA3);
         IAddressList _feeWhiteList = IAddressList(factory.createList());
         feeWhiteList = _feeWhiteList;
-        domainSeparator = keccak256(
-            abi.encode(DOMAIN_TYPEHASH, keccak256(bytes(_name)), keccak256(bytes("1")), chainId, address(this))
-        );
     }
 
     /**
@@ -140,39 +122,6 @@ abstract contract PoolShareToken is ERC20, Pausable, ReentrancyGuard, Governed {
             require(transfer(a, amount), "Transfer failed");
         }
         return true;
-    }
-
-    /**
-     * @notice Triggers an approval from owner to spends
-     * @param _owner The address to approve from
-     * @param _spender The address to be approved
-     * @param _amount The number of tokens that are approved (2^256-1 means infinite)
-     * @param _deadline The time at which to expire the signature
-     * @param _v The recovery byte of the signature
-     * @param _r Half of the ECDSA signature pair
-     * @param _s Half of the ECDSA signature pair
-     */
-    function permit(
-        address _owner,
-        address _spender,
-        uint256 _amount,
-        uint256 _deadline,
-        uint8 _v,
-        bytes32 _r,
-        bytes32 _s
-    ) external {
-        require(_deadline >= block.timestamp, "Expired");
-        bytes32 digest =
-            keccak256(
-                abi.encodePacked(
-                    "\x19\x01",
-                    domainSeparator,
-                    keccak256(abi.encode(PERMIT_TYPEHASH, _owner, _spender, _amount, nonces[_owner]++, _deadline))
-                )
-            );
-        address signatory = ecrecover(digest, _v, _r, _s);
-        require(signatory != address(0) && signatory == _owner, "Invalid signature");
-        _approve(_owner, _spender, _amount);
     }
 
     /**
