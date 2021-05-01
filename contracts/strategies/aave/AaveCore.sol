@@ -20,7 +20,7 @@ abstract contract AaveCore {
     event UpdatedAddressesProvider(address _previousProvider, address _newProvider);
 
     constructor(address _receiptToken) {
-        require(_receiptToken != address(0), "aToken-is-zero-address");
+        require(_receiptToken != address(0), "aToken-address-is-zero");
         aToken = IERC20(_receiptToken);
         aaveLendingPool = AaveLendingPool(aaveAddressesProvider.getLendingPool());
         aaveProtocolDataProvider = AaveProtocolDataProvider(aaveAddressesProvider.getAddress(AAVE_PROVIDER_ID));
@@ -58,7 +58,7 @@ abstract contract AaveCore {
      * @dev Child contract should expose this function as external and onlyGovernor
      */
     function _updateAddressesProvider(address _newAddressesProvider) internal {
-        require(_newAddressesProvider != address(0), "input-is-zero-address");
+        require(_newAddressesProvider != address(0), "provider-address-is-zero");
         require(address(aaveAddressesProvider) != _newAddressesProvider, "same-addresses-provider");
         emit UpdatedAddressesProvider(address(aaveAddressesProvider), _newAddressesProvider);
         aaveAddressesProvider = AaveLendingPoolAddressesProvider(_newAddressesProvider);

@@ -6,7 +6,7 @@ import "./AaveMakerStrategy.sol";
 
 //solhint-disable no-empty-blocks
 contract AaveMakerStrategyETH is AaveMakerStrategy {
-    string public constant NAME = "AaveMaker-Strategy-ETH";
+    string public constant NAME = "Aave-Maker-Strategy-ETH";
     string public constant VERSION = "3.0.0";
 
     // aDAI = 0x028171bCA77440897B824Ca71D1c56caC55b68A3

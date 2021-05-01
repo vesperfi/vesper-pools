@@ -44,7 +44,17 @@ abstract contract AaveMakerStrategy is MakerStrategy, AaveCore {
 
     function _approveToken(uint256 _amount) internal override {
         super._approveToken(_amount);
+        IERC20(DAI).safeApprove(address(aaveLendingPool), _amount);
         IERC20(AAVE).safeApprove(address(UniMgr.ROUTER()), _amount);
+    }
+
+    /**
+     * @notice Transfer StakeAave to newStrategy
+     * @param _newStrategy Address of newStrategy
+     */
+    function _beforeMigration(address _newStrategy) internal override {
+        super._beforeMigration(_newStrategy);
+        IERC20(stkAAVE).safeTransfer(_newStrategy, stkAAVE.balanceOf(address(this)));
     }
 
     /// @notice Claim Aave rewards and convert to _toToken.
@@ -60,7 +70,7 @@ abstract contract AaveMakerStrategy is MakerStrategy, AaveCore {
     }
 
     function _rebalanceDaiInLender() internal override {
-        uint256 _daiDebt = cm.getVaultDebt(vaultNum);
+        uint256 _daiDebt = cm.getVaultDebt(address(this));
         uint256 _daiBalance = _getDaiBalance();
         if (_daiBalance > _daiDebt) {
             _withdrawDaiFromLender(_daiBalance - _daiDebt);

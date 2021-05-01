@@ -18,9 +18,13 @@ abstract contract VesperMakerStrategy is MakerStrategy {
         require(IVesperPool(_vPool).token() == DAI, "not-a-valid-dai-pool");
     }
 
+    function _approveToken(uint256 _amount) internal override {
+        super._approveToken(_amount);
+        IERC20(DAI).safeApprove(address(receiptToken), _amount);
+    }
+
     function _getDaiBalance() internal view override returns (uint256) {
-        return
-            (IVesperPool(receiptToken).pricePerShare() * IVesperPool(receiptToken).balanceOf(address(this))) / 1e18;
+        return (IVesperPool(receiptToken).pricePerShare() * IVesperPool(receiptToken).balanceOf(address(this))) / 1e18;
     }
 
     function _depositDaiToLender(uint256 _amount) internal override {
@@ -33,7 +37,7 @@ abstract contract VesperMakerStrategy is MakerStrategy {
     }
 
     function _rebalanceDaiInLender() internal override {
-        uint256 _daiDebt = cm.getVaultDebt(vaultNum);
+        uint256 _daiDebt = cm.getVaultDebt(address(this));
         uint256 _daiBalance = _getDaiBalance();
         if (_daiBalance > _daiDebt) {
             _withdrawDaiFromLender(_daiBalance - _daiDebt);

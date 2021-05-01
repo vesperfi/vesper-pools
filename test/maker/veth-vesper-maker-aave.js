@@ -6,9 +6,7 @@ const {deposit} = require('../utils/poolOps')
 const {setupVPool} = require('../utils/setupHelper')
 const StrategyType = require('../utils/strategyTypes')
 const VDAI = artifacts.require('VDAI')
-const {BN} = require('@openzeppelin/test-helpers')
-const DECIMAL18 = new BN('1000000000000000000')
-const INFINITE = DECIMAL18.mul(new BN('10000000000000000000000000'))
+const {constants} = require('@openzeppelin/test-helpers')
 const CollateralManager = artifacts.require('CollateralManager')
 const AaveStrategy = artifacts.require('AaveV2StrategyDAI')
 // const AaveStrategyETH = artifacts.require('AaveStrategyETH')
@@ -22,13 +20,14 @@ contract('VETH Pool', function (accounts) {
   const [, user1] = accounts
   const feeCollector = accounts[9]
 
-  const strategyConfig = {interestFee, debtRatio: 9000, maxDebtPerRebalance: INFINITE}
+  const strategyConfig = {interestFee, debtRatio: 9000, maxDebtPerRebalance: constants.MAX_UINT256}
 
   beforeEach(async function () {
     this.accounts = accounts
     await setupVPool(vDaiPoolObj, {
       pool: VDAI,
-      strategies: [{artifact: AaveStrategy, type: StrategyType.AAAVE, config: strategyConfig, feeCollector}]
+      strategies: [{artifact: AaveStrategy, type: StrategyType.AAAVE, config: strategyConfig, feeCollector}],
+      feeCollector,
     })
     vDai = vDaiPoolObj.pool
     dai = await vDaiPoolObj.collateralToken
@@ -37,6 +36,7 @@ contract('VETH Pool', function (accounts) {
     await setupVPool(this, {
       pool: VETH,
       strategies: [{artifact: VesperStrategy, type: StrategyType.VESPER_MAKER, config: strategyConfig, feeCollector}],
+      feeCollector,
       collateralManager: CollateralManager,
       vPool: vDai,
     })

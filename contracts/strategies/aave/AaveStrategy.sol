@@ -55,14 +55,10 @@ abstract contract AaveStrategy is Strategy, AaveCore {
     }
 
     /**
-     * @notice Claim and unstake Aave and transfer Aave and StakeAave to newStrategy
+     * @notice Transfer StakeAave to newStrategy
      * @param _newStrategy Address of newStrategy
      */
     function _beforeMigration(address _newStrategy) internal override {
-        uint256 _aaveAmount = _claimAave();
-        if (_aaveAmount > 0) {
-            IERC20(AAVE).safeTransfer(_newStrategy, _aaveAmount);
-        }
         uint256 _stkAaveAmount = stkAAVE.balanceOf(address(this));
         if (_stkAaveAmount != 0) {
             IERC20(stkAAVE).safeTransfer(_newStrategy, _stkAaveAmount);

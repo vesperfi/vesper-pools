@@ -6,24 +6,6 @@ import "../Strategy.sol";
 import "../../interfaces/vesper/ICollateralManager.sol";
 import "../../interfaces/uniswap/IUniswapV2Router02.sol";
 
-interface ManagerInterface {
-    function vat() external view returns (address);
-
-    function open(bytes32, address) external returns (uint256);
-
-    function cdpAllow(
-        uint256,
-        address,
-        uint256
-    ) external;
-}
-
-interface VatInterface {
-    function hope(address) external;
-
-    function nope(address) external;
-}
-
 /// @dev This strategy will deposit collateral token in Maker, borrow Dai and
 /// deposit borrowed DAI in other lending pool to earn interest.
 abstract contract MakerStrategy is Strategy {
@@ -32,7 +14,6 @@ abstract contract MakerStrategy is Strategy {
     address internal constant DAI = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
     ICollateralManager public immutable cm;
     bytes32 public immutable collateralType;
-    uint256 public immutable vaultNum;
     uint256 public lastRebalanceBlock;
     uint256 public highWater;
     uint256 public lowWater;
@@ -45,8 +26,12 @@ abstract contract MakerStrategy is Strategy {
         bytes32 _collateralType
     ) Strategy(_pool, _receiptToken) {
         collateralType = _collateralType;
-        vaultNum = _createVault(_collateralType, _cm);
         cm = ICollateralManager(_cm);
+    }
+
+    /// @notice Create new Maker vault
+    function createVault() external onlyGovernor {
+        cm.createVault(collateralType);
     }
 
     /**
@@ -91,12 +76,16 @@ abstract contract MakerStrategy is Strategy {
      */
     function totalValue() external view virtual override returns (uint256 _totalValue) {
         uint256 _daiBalance = _getDaiBalance();
-        uint256 _debt = cm.getVaultDebt(vaultNum);
+        uint256 _debt = cm.getVaultDebt(address(this));
         if (_daiBalance > _debt) {
             uint256 _daiEarned = _daiBalance - _debt;
             (, _totalValue) = UniMgr.bestPathFixedInput(DAI, address(collateralToken), _daiEarned);
         }
-        _totalValue += convertFrom18(cm.getVaultBalance(vaultNum));
+        _totalValue += convertFrom18(cm.getVaultBalance(address(this)));
+    }
+
+    function vaultNum() external view returns (uint256) {
+        return cm.vaultNum(address(this));
     }
 
     /// @dev Check whether given token is reserved or not. Reserved tokens are not allowed to sweep.
@@ -110,7 +99,7 @@ abstract contract MakerStrategy is Strategy {
      * @notice Earning - Sum of DAI balance and DAI from accured reward, if any, in lending pool.
      */
     function isUnderwater() public view virtual returns (bool) {
-        return cm.getVaultDebt(vaultNum) > _getDaiBalance();
+        return cm.getVaultDebt(address(this)) > _getDaiBalance();
     }
 
     /// @dev Convert from 18 decimals to token defined decimals. Default no conversion.
@@ -119,33 +108,16 @@ abstract contract MakerStrategy is Strategy {
     }
 
     /**
-     * @notice some strategy may want to prpeare before doing migration. 
-        Example In Maker old strategy want to give vault ownership to new strategy
-     * @param _newStrategy .
+     * @notice Before migration hook. It will be called during migration
+     * @dev Transfer Maker vault ownership to new strategy
+     * @param _newStrategy Address of new strategy.
      */
-    // TODO Migrate vault ownership to new strategy. This has some complications
-    // new strategy needs to accept ownership and also it should not create new vault
-    //solhint-disable-next-line
-    function _beforeMigration(address _newStrategy) internal override {}
-
-    /// @dev Create new Maker vault
-    function _createVault(bytes32 _collateralType, address _cm) internal returns (uint256 vaultId) {
-        address mcdManager = ICollateralManager(_cm).mcdManager();
-        ManagerInterface manager = ManagerInterface(mcdManager);
-        vaultId = manager.open(_collateralType, address(this));
-        manager.cdpAllow(vaultId, address(this), 1);
-
-        //hope and cpdAllow on vat for collateralManager's address
-        VatInterface(manager.vat()).hope(_cm);
-        manager.cdpAllow(vaultId, _cm, 1);
-
-        //Register vault with collateral Manager
-        ICollateralManager(_cm).registerVault(vaultId, _collateralType);
+    function _beforeMigration(address _newStrategy) internal virtual override {
+        cm.transferVaultOwnership(_newStrategy);
     }
 
     function _approveToken(uint256 _amount) internal virtual override {
         IERC20(DAI).safeApprove(address(cm), _amount);
-        IERC20(DAI).safeApprove(address(receiptToken), _amount);
         IERC20(DAI).safeApprove(address(UniMgr.ROUTER()), _amount);
         collateralToken.safeApprove(address(cm), _amount);
         collateralToken.safeApprove(pool, _amount);
@@ -155,12 +127,12 @@ abstract contract MakerStrategy is Strategy {
     function _moveDaiToMaker(uint256 _amount) internal {
         if (_amount != 0) {
             _withdrawDaiFromLender(_amount);
-            cm.payback(vaultNum, _amount);
+            cm.payback(_amount);
         }
     }
 
     function _moveDaiFromMaker(uint256 _amount) internal virtual {
-        cm.borrow(vaultNum, _amount);
+        cm.borrow(_amount);
         _amount = IERC20(DAI).balanceOf(address(this));
         _depositDaiToLender(_amount);
     }
@@ -201,7 +173,7 @@ abstract contract MakerStrategy is Strategy {
      * @return loss in collateral token
      */
     function _realizeLoss(uint256 _totalDebt) internal virtual override returns (uint256) {
-        uint256 _collateralLocked = convertFrom18(cm.getVaultBalance(vaultNum));
+        uint256 _collateralLocked = convertFrom18(cm.getVaultBalance(address(this)));
         return _totalDebt > _collateralLocked ? _totalDebt - _collateralLocked : 0;
     }
 
@@ -213,7 +185,7 @@ abstract contract MakerStrategy is Strategy {
     function _reinvest() internal virtual override {
         uint256 _collateralBalance = collateralToken.balanceOf(address(this));
         if (_collateralBalance != 0) {
-            cm.depositCollateral(vaultNum, _collateralBalance);
+            cm.depositCollateral(_collateralBalance);
         }
 
         (
@@ -222,7 +194,7 @@ abstract contract MakerStrategy is Strategy {
             uint256 _collateralUsdRate,
             uint256 _collateralRatio,
             uint256 _minimumAllowedDebt
-        ) = cm.getVaultInfo(vaultNum);
+        ) = cm.getVaultInfo(address(this));
         uint256 _maxDebt = (_collateralLocked * _collateralUsdRate) / highWater;
         if (_maxDebt < _minimumAllowedDebt) {
             // Dusting Scenario:: Based on collateral locked, if our max debt is less
@@ -243,15 +215,15 @@ abstract contract MakerStrategy is Strategy {
 
     function _resurface() internal virtual {
         uint256 _daiBalance = _getDaiBalance();
-        uint256 _daiDebt = cm.getVaultDebt(vaultNum);
+        uint256 _daiDebt = cm.getVaultDebt(address(this));
         require(_daiDebt > _daiBalance, "pool-is-above-water");
         uint256 _daiNeeded = _daiDebt - _daiBalance;
         (address[] memory _path, uint256 _collateralNeeded) =
             UniMgr.bestPathFixedOutput(address(collateralToken), DAI, _daiNeeded);
         if (_collateralNeeded != 0) {
-            cm.withdrawCollateral(vaultNum, _collateralNeeded);
+            cm.withdrawCollateral(_collateralNeeded);
             UniMgr.ROUTER().swapExactTokensForTokens(_collateralNeeded, 1, _path, address(this), block.timestamp + 30);
-            cm.payback(vaultNum, IERC20(DAI).balanceOf(address(this)));
+            cm.payback(IERC20(DAI).balanceOf(address(this)));
         }
     }
 
@@ -268,7 +240,7 @@ abstract contract MakerStrategy is Strategy {
             uint256 collateralUsdRate,
             uint256 collateralRatio,
             uint256 minimumDebt
-        ) = cm.whatWouldWithdrawDo(vaultNum, _amount);
+        ) = cm.whatWouldWithdrawDo(address(this), _amount);
         if (debt != 0 && collateralRatio < lowWater) {
             // If this withdraw results in Low Water scenario.
             uint256 maxDebt = (collateralLocked * collateralUsdRate) / highWater;
@@ -279,15 +251,15 @@ abstract contract MakerStrategy is Strategy {
                 _moveDaiToMaker(debt - maxDebt);
             }
         }
-        cm.withdrawCollateral(vaultNum, _amount);
+        cm.withdrawCollateral(_amount);
     }
 
     function _withdrawAll() internal override {
         _claimRewardsAndConvertTo(address(collateralToken));
-        _moveDaiToMaker(cm.getVaultDebt(vaultNum));
-        require(cm.getVaultDebt(vaultNum) == 0, "debt-should-be-0");
-        uint256 _collateralLocked = convertFrom18(cm.getVaultBalance(vaultNum));
-        cm.withdrawCollateral(vaultNum, _collateralLocked);
+        _moveDaiToMaker(cm.getVaultDebt(address(this)));
+        require(cm.getVaultDebt(address(this)) == 0, "debt-should-be-0");
+        uint256 _collateralLocked = convertFrom18(cm.getVaultBalance(address(this)));
+        cm.withdrawCollateral(_collateralLocked);
     }
 
     function _depositDaiToLender(uint256 _amount) internal virtual;

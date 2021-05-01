@@ -6,7 +6,7 @@ import "./AaveStrategy.sol";
 
 //solhint-disable no-empty-blocks
 contract AaveStrategyDAI is AaveStrategy {
-    string public constant NAME = "AaveV2-Strategy-DAI";
+    string public constant NAME = "Aave-Strategy-DAI";
     string public constant VERSION = "3.0.0";
 
     constructor(address _pool)

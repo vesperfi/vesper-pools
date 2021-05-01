@@ -20,7 +20,7 @@ abstract contract CompoundMakerStrategy is MakerStrategy {
         address _receiptToken,
         bytes32 _collateralType
     ) MakerStrategy(_pool, _cm, _receiptToken, _collateralType) {
-        require(_receiptToken != address(0), "cToken-is-zero-address");
+        require(_receiptToken != address(0), "cToken-address-is-zero");
         cToken = CToken(_receiptToken);
     }
 
@@ -31,7 +31,7 @@ abstract contract CompoundMakerStrategy is MakerStrategy {
      */
     function totalValue() external view virtual override returns (uint256 _totalValue) {
         uint256 _daiBalance = _getDaiBalance();
-        uint256 _debt = cm.getVaultDebt(vaultNum);
+        uint256 _debt = cm.getVaultDebt(address(this));
         if (_daiBalance > _debt) {
             uint256 _daiEarned = _daiBalance - _debt;
             (, _totalValue) = UniMgr.bestPathFixedInput(DAI, address(collateralToken), _daiEarned);
@@ -42,7 +42,7 @@ abstract contract CompoundMakerStrategy is MakerStrategy {
             (, uint256 _compAsCollateral) = UniMgr.bestPathFixedInput(COMP, address(collateralToken), _compAccrued);
             _totalValue += _compAsCollateral;
         }
-        _totalValue += convertFrom18(cm.getVaultBalance(vaultNum));
+        _totalValue += convertFrom18(cm.getVaultBalance(address(this)));
     }
 
     /// @dev Check whether given token is reserved or not. Reserved tokens are not allowed to sweep.
@@ -63,11 +63,12 @@ abstract contract CompoundMakerStrategy is MakerStrategy {
         if (_compAccrued != 0) {
             (, _daiEarned) = UniMgr.bestPathFixedInput(COMP, DAI, _compAccrued);
         }
-        return cm.getVaultDebt(vaultNum) > (_getDaiBalance() + _daiEarned);
+        return cm.getVaultDebt(address(this)) > (_getDaiBalance() + _daiEarned);
     }
 
     function _approveToken(uint256 _amount) internal override {
         super._approveToken(_amount);
+        IERC20(DAI).safeApprove(address(receiptToken), _amount);
         IERC20(COMP).safeApprove(address(UniMgr.ROUTER()), _amount);
     }
 
@@ -101,7 +102,7 @@ abstract contract CompoundMakerStrategy is MakerStrategy {
      * lender, in that case pool will be underwater even after rebalanceDai.
      */
     function _rebalanceDaiInLender() internal override {
-        uint256 _daiDebtInMaker = cm.getVaultDebt(vaultNum);
+        uint256 _daiDebtInMaker = cm.getVaultDebt(address(this));
         uint256 _daiInLender = _getDaiBalance();
         if (_daiInLender > _daiDebtInMaker) {
             _withdrawDaiFromLender(_daiInLender - _daiDebtInMaker);
