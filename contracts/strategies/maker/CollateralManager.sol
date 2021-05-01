@@ -13,44 +13,25 @@ contract DSMath {
     uint256 internal constant RAY = 10**27;
     uint256 internal constant WAD = 10**18;
 
-    function add(uint256 x, uint256 y) internal pure returns (uint256 z) {
-        require((z = x + y) >= x, "math-not-safe");
-    }
-
-    function sub(uint256 x, uint256 y) internal pure returns (uint256 z) {
-        require((z = x - y) <= x, "sub-overflow");
-    }
-
-    function mul(uint256 x, uint256 y) internal pure returns (uint256 z) {
-        require(y == 0 || (z = x * y) / y == x, "math-not-safe");
-    }
-
     function wmul(uint256 x, uint256 y) internal pure returns (uint256 z) {
-        z = add(mul(x, y), WAD / 2) / WAD;
+        z = ((x * y) + (WAD / 2)) / WAD;
     }
 
     function wdiv(uint256 x, uint256 y) internal pure returns (uint256 z) {
-        z = add(mul(x, WAD), y / 2) / y;
+        z = ((x * WAD) + (y / 2)) / y;
     }
 
     function rmul(uint256 x, uint256 y) internal pure returns (uint256 z) {
-        z = add(mul(x, y), RAY / 2) / RAY;
-    }
-
-    function toInt(uint256 x) internal pure returns (int256 y) {
-        y = int256(x);
-        require(y >= 0, "int-overflow");
+        z = ((x * y) + (RAY / 2)) / RAY;
     }
 
     function toRad(uint256 wad) internal pure returns (uint256 rad) {
-        rad = mul(wad, RAY);
+        rad = wad * RAY;
     }
 
-    /**
-     * @notice It will work only if _dec < 18
-     */
+    /// @notice It will work only if _dec < 18
     function convertTo18(uint256 _dec, uint256 _amt) internal pure returns (uint256 amt) {
-        amt = mul(_amt, 10**(18 - _dec));
+        amt = _amt * 10**(18 - _dec);
     }
 }
 
@@ -184,7 +165,7 @@ contract CollateralManager is ICollateralManager, DSMath, ReentrancyGuard, Gover
             manager.urns(_vaultNum),
             address(this),
             address(this),
-            toInt(_amount),
+            int256(_amount),
             0
         );
     }
@@ -199,7 +180,7 @@ contract CollateralManager is ICollateralManager, DSMath, ReentrancyGuard, Gover
         GemJoinLike gemJoin = GemJoinLike(mcdGemJoin[collateralType[_vaultNum]]);
         uint256 amount18 = convertTo18(gemJoin.dec(), _amount);
         // Unlocks Gem amount18 from the CDP
-        manager.frob(_vaultNum, -toInt(amount18), 0);
+        manager.frob(_vaultNum, -int256(amount18), 0);
         // Moves Gem amount18 from the CDP urn to this address
         manager.flux(_vaultNum, address(this), amount18);
         // Exits Gem amount to this address as a token
@@ -310,7 +291,7 @@ contract CollateralManager is ICollateralManager, DSMath, ReentrancyGuard, Gover
         GemJoinLike _gemJoin = GemJoinLike(mcdGemJoin[collateralType[vaultNum[_vaultOwner]]]);
         uint256 _amount18 = convertTo18(_gemJoin.dec(), _amount);
         require(_amount18 <= collateralLocked, "insufficient-collateral-locked");
-        collateralLocked = sub(collateralLocked, _amount18);
+        collateralLocked = collateralLocked - _amount18;
         collateralRatio = _getCollateralRatio(collateralLocked, collateralUsdRate, daiDebt);
     }
 
@@ -356,9 +337,9 @@ contract CollateralManager is ICollateralManager, DSMath, ReentrancyGuard, Gover
         (uint256 Art, uint256 rate, , uint256 line, ) = VatLike(_vat).ilks(_collateralType);
         // Calculate total issued debt is Art * rate [rad]
         // Calcualte total available dai [wad]
-        uint256 _totalAvailableDai = sub(line, mul(Art, rate)) / RAY;
+        uint256 _totalAvailableDai = (line - (Art * rate)) / RAY;
         // For safety reason, return 99% of available
-        return mul(_totalAvailableDai, 99) / 100;
+        return (_totalAvailableDai * 99) / 100;
     }
 
     function _joinDai(address _urn, uint256 _amount) internal {
@@ -401,11 +382,11 @@ contract CollateralManager is ICollateralManager, DSMath, ReentrancyGuard, Gover
         // Gets DAI balance of the urn in the vat
         uint256 dai = VatLike(_vat).dai(_urn);
         // If there was already enough DAI in the vat balance, just exits it without adding more debt
-        if (dai < mul(_wad, RAY)) {
+        if (dai < _wad * RAY) {
             // Calculates the needed amt so together with the existing dai in the vat is enough to exit wad amount of DAI tokens
-            amount = toInt(sub(mul(_wad, RAY), dai) / rate);
+            amount = int256(((_wad * RAY) - dai) / rate);
             // This is neeeded due lack of precision. It might need to sum an extra amt wei (for the given DAI wad amount)
-            amount = mul(uint256(amount), rate) < mul(_wad, RAY) ? amount + 1 : amount;
+            amount = (uint256(amount) * rate) < (_wad * RAY) ? amount + 1 : amount;
         }
     }
 
@@ -483,9 +464,9 @@ contract CollateralManager is ICollateralManager, DSMath, ReentrancyGuard, Gover
         uint256 _dai = VatLike(_vat).dai(_urn);
 
         // Uses the whole dai balance in the vat to reduce the debt
-        amount = toInt(_dai / _rate);
+        amount = int256(_dai / _rate);
         // Checks the calculated amt is not higher than urn.art (total debt), otherwise uses its value
-        amount = uint256(amount) <= _art ? -amount : -toInt(_art);
+        amount = uint256(amount) <= _art ? -amount : -int256(_art);
     }
 
     /// @notice Get collateral ratio
@@ -512,10 +493,10 @@ contract CollateralManager is ICollateralManager, DSMath, ReentrancyGuard, Gover
         uint256 _rate,
         uint256 _dai
     ) internal pure returns (uint256 wad) {
-        if (_dai < mul(_art, _rate)) {
-            uint256 rad = sub(mul(_art, _rate), _dai);
+        if (_dai < (_art * _rate)) {
+            uint256 rad = ((_art * _rate) - _dai);
             wad = rad / RAY;
-            wad = mul(wad, RAY) < rad ? wad + 1 : wad;
+            wad = (wad * RAY) < rad ? wad + 1 : wad;
         } else {
             wad = 0;
         }
