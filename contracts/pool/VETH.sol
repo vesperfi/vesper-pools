@@ -7,7 +7,7 @@ import "../interfaces/token/IToken.sol";
 
 contract VETH is VTokenBase {
     TokenLike public immutable weth;
-    bool internal shouldDeposit = true;
+    bool private withdrawInETH = false;
 
     constructor() VTokenBase("vETH Pool", "vETH", 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2) {
         weth = TokenLike(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);
@@ -15,14 +15,16 @@ contract VETH is VTokenBase {
 
     /// @dev Handle incoming ETH to the contract address.
     receive() external payable {
-        if (shouldDeposit) {
+        if (msg.sender != address(weth)) {
             deposit();
         }
     }
 
     /// @dev Burns tokens/shares and returns the ETH value, after fee, of those.
     function withdrawETH(uint256 _shares) external whenNotShutdown nonReentrant {
+        withdrawInETH = true;
         _withdraw(_shares);
+        withdrawInETH = false;
     }
 
     /**
@@ -30,10 +32,12 @@ contract VETH is VTokenBase {
      * It will withdraw collateral from strategy and transfer it to user.
      */
     function _afterBurning(uint256 _amount) internal override returns (uint256) {
-        shouldDeposit = false;
-        weth.withdraw(_amount);
-        shouldDeposit = true;
-        payable(_msgSender()).transfer(_amount);
+        if (withdrawInETH) {
+            weth.withdraw(_amount);
+            payable(_msgSender()).transfer(_amount);
+        } else {
+            super._afterBurning(_amount);
+        }
         return _amount;
     }
 

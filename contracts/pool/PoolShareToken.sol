@@ -15,6 +15,7 @@ import "../interfaces/bloq/IAddressListFactory.sol";
 // solhint-disable no-empty-blocks
 abstract contract PoolShareToken is ERC20Permit, Pausable, ReentrancyGuard, Governed {
     using SafeERC20 for IERC20;
+    string public constant VERSION = "3.0.0";
     IERC20 public immutable token;
     IAddressList public immutable feeWhiteList;
     uint256 public constant MAX_BPS = 10000;
@@ -161,7 +162,10 @@ abstract contract PoolShareToken is ERC20Permit, Pausable, ReentrancyGuard, Gove
      * @dev Hook that is called just after burning tokens.
      * @param _amount Collateral amount in collateral token defined decimals.
      */
-    function _afterBurning(uint256 _amount) internal virtual returns (uint256) {}
+    function _afterBurning(uint256 _amount) internal virtual returns (uint256) {
+        token.safeTransfer(_msgSender(), _amount);
+        return _amount;
+    }
 
     /**
      * @dev Hook that is called just before minting new tokens. To be used i.e.
