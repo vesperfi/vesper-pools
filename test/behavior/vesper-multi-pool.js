@@ -110,7 +110,22 @@ async function shouldBehaveLikeMultiPool(poolName) {
       })
 
       it('Should burn proportional amount if strategy do not return expected amount', async function () {
-        // TODO:
+        await pool.updateDebtRatio(strategies[0].instance.address, 5000)
+        await pool.updateDebtRatio(strategies[1].instance.address, 5000)
+        await rebalance(strategies)
+        await pool.updateWithdrawQueue([strategies[1].instance.address])
+        let balance = await pool.balanceOf(user1)
+        await pool.withdraw(balance, {from: user1})
+        const debt = (await pool.strategy(strategies[1].instance.address)).totalDebt
+        expect(debt).to.be.bignumber.eq(new BN('0'), 'Debt is strategy is wrong')
+        balance = await pool.balanceOf(user1)
+        expect(balance).to.be.bignumber.gt(new BN('0'), 'Remaining vToken balance of user is wrong')
+        const balanceBeforeDeposit = await pool.balanceOf(user2)
+        await deposit(20, user2)
+        balance = await pool.balanceOf(user2)
+        await pool.withdraw(balance, {from: user2})
+        balance = await pool.balanceOf(user2)
+        expect(balance).to.be.bignumber.eq(balanceBeforeDeposit, 'Withdraw from Strategy 2 is wrong')
       })
 
       it('Should be able to shuffle withdraw queue', async function () {
