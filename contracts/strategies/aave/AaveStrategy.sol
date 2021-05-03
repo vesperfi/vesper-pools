@@ -2,13 +2,8 @@
 
 pragma solidity 0.8.3;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./AaveCore.sol";
 import "../Strategy.sol";
-import "../../interfaces/aave/IAaveV2.sol";
-import "../../interfaces/vesper/IVesperPool.sol";
-import "../../interfaces/uniswap/IUniswapV2Router02.sol";
 
 /// @dev This strategy will deposit collateral token in Aave and earn interest.
 abstract contract AaveStrategy is Strategy, AaveCore {

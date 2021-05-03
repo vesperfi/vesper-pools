@@ -7,7 +7,6 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "../Governed.sol";
 import "../Pausable.sol";
-import "../interfaces/vesper/IVesperPool.sol";
 import "../interfaces/bloq/IAddressList.sol";
 import "../interfaces/bloq/IAddressListFactory.sol";
 
@@ -85,7 +84,7 @@ abstract contract PoolShareToken is ERC20Permit, Pausable, ReentrancyGuard, Gove
         bytes32 _r,
         bytes32 _s
     ) external virtual nonReentrant whenNotPaused {
-        IVesperPool(address(token)).permit(_msgSender(), address(this), _amount, _deadline, _v, _r, _s);
+        IERC20Permit(address(token)).permit(_msgSender(), address(this), _amount, _deadline, _v, _r, _s);
         _deposit(_amount);
     }
 

@@ -6,5 +6,6 @@ import "./VTokenBase.sol";
 
 //solhint-disable no-empty-blocks
 contract VDAI is VTokenBase {
+    // DAI = 0x6B175474E89094C44Da98b954EedeAC495271d0F
     constructor() VTokenBase("vDAI Pool", "vDAI", 0x6B175474E89094C44Da98b954EedeAC495271d0F) {}
 }

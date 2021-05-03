@@ -4,7 +4,6 @@ pragma solidity 0.8.3;
 
 import "../Strategy.sol";
 import "../../interfaces/vesper/ICollateralManager.sol";
-import "../../interfaces/uniswap/IUniswapV2Router02.sol";
 
 /// @dev This strategy will deposit collateral token in Maker, borrow Dai and
 /// deposit borrowed DAI in other lending pool to earn interest.

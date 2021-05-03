@@ -2,7 +2,6 @@
 
 pragma solidity 0.8.3;
 
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./PoolShareToken.sol";
 import "../interfaces/vesper/IStrategy.sol";
 
