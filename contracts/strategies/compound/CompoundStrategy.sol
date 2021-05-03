@@ -2,13 +2,8 @@
 
 pragma solidity 0.8.3;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../Strategy.sol";
 import "../../interfaces/compound/ICompound.sol";
-import "../../interfaces/vesper/IStrategy.sol";
-import "../../interfaces/vesper/IVesperPool.sol";
-import "../../interfaces/uniswap/IUniswapV2Router02.sol";
 
 /// @title This strategy will deposit collateral token in Compound and earn interest.
 abstract contract CompoundStrategy is Strategy {

@@ -5,12 +5,13 @@ pragma solidity 0.8.3;
 import "./CompoundStrategy.sol";
 import "../../interfaces/token/IToken.sol";
 
+// solhint-disable no-empty-blocks
 /// @title Deposit ETH/WETH in Compound and earn interest.
 contract CompoundStrategyETH is CompoundStrategy {
     string public constant NAME = "Compound-Strategy-ETH";
     string public constant VERSION = "3.0.0";
 
-    // solhint-disable-next-line no-empty-blocks
+    // cETH = 0x4Ddc2D193948926D02f9B1fE9e1daa0718270ED5
     constructor(address _pool) CompoundStrategy(_pool, 0x4Ddc2D193948926D02f9B1fE9e1daa0718270ED5) {}
 
     /// @dev Only receive ETH from either cToken or WETH

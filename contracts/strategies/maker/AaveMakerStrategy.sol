@@ -4,7 +4,6 @@ pragma solidity 0.8.3;
 
 import "./MakerStrategy.sol";
 import "../aave/AaveCore.sol";
-import "../../interfaces/aave/IAaveV2.sol";
 
 /// @dev This strategy will deposit collateral token in Maker, borrow Dai and
 /// deposit borrowed DAI in Aave to earn interest.

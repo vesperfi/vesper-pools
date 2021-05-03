@@ -9,6 +9,7 @@ contract VETH is VTokenBase {
     TokenLike public immutable weth;
     bool private withdrawInETH = false;
 
+    // WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2
     constructor() VTokenBase("vETH Pool", "vETH", 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2) {
         weth = TokenLike(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);
     }
