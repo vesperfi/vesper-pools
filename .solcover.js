@@ -4,6 +4,7 @@ require('dotenv').config()
 const {MNEMONIC} = require('./test/utils/testkey')
 
 module.exports = {
+  client: require('ganache-cli'),
   providerOptions: {
     fork: process.env.NODE_URL,
     default_balance_ether: 50000,
