@@ -7,10 +7,10 @@ set -e
 
 [ ! -d node_modules ] && npm ci
 
-scripts/kill-ganache-cli
+PID=$(lsof -i :8545 -s TCP:LISTEN -t) || true
+if [ -n "$PID" ]; then
+  echo "Killing $PID"
+  kill -TERM "$PID"
+fi
 
-# Default test mnemonic 
-mnemonic="opera tired scrap latin mosquito wall file diesel mad aware one merry"
-
-# test-runner script will pass --quiet param as $1
-npx ganache-cli --fork "$NODE_URL" --host 0.0.0.0 --mnemonic "$mnemonic" -e 100000 $1 &
+npx hardhat node --fork "$NODE_URL" &

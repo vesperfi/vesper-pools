@@ -23,6 +23,13 @@
       "globals": {
         "artifacts": "readonly"
       }
+    },
+    {
+      "files": ["hardhat*"],
+      "globals": {
+        "ethers":false,
+        "task":false
+      }
     }
   ],
   "root": true,

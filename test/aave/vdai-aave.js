@@ -1,35 +1,36 @@
 'use strict'
 
 const {shouldBehaveLikePool} = require('../behavior/vesper-pool')
-const {shouldBehaveLikeMultiPool} = require('../behavior/vesper-multi-pool')
+// const {shouldBehaveLikeMultiPool} = require('../behavior/vesper-multi-pool')
 // const {shouldBehaveLikeStrategy} = require('../behavior/aave-strategy')
-const {setupVPool} = require('../utils/setupHelper')
+const {getUsers, setupVPool} = require('../utils/setupHelper')
 const StrategyType = require('../utils/strategyTypes')
-
-const VDAI = artifacts.require('VDAI')
-const AaveStrategy = artifacts.require('AaveV2StrategyDAI')
-const CompoundStrategy = artifacts.require('CompoundStrategyDAI')
 const {constants} = require('@openzeppelin/test-helpers')
 
-contract('vDAI Pool with AaveStrategy', function (accounts) {
+/* eslint-disable mocha/no-setup-in-describe */
+describe('vDAI Pool with AaveStrategy', function () {
   const interestFee = '1500' // 15%
-  const feeCollector = accounts[9]
-  const config1 = {interestFee, debtRatio: 9000, maxDebtPerRebalance: constants.MAX_UINT256}
-  const config2 = {interestFee, debtRatio: 0, maxDebtPerRebalance: constants.MAX_UINT256}
+
+  const config1 = {interestFee, debtRatio: 9000, maxDebtPerRebalance: constants.MAX_UINT256.toString()}
+  const config2 = {interestFee, debtRatio: 0, maxDebtPerRebalance: constants.MAX_UINT256.toString()}
 
   beforeEach(async function () {
-    this.accounts = accounts
+    const users = await getUsers()
+    this.users = users
     await setupVPool(this, {
-      pool: VDAI,
-      feeCollector,
+      poolName: 'VDAI',
+      feeCollector: users[9].address,
       strategies: [
-        {artifact: AaveStrategy, type: StrategyType.AAAVE, config: config1, feeCollector: accounts[9]},
-        {artifact: CompoundStrategy, type: StrategyType.COMPOUND, config: config2, feeCollector: accounts[8]},
+        {name: 'AaveStrategyDAI', type: StrategyType.AAAVE, config: config1, feeCollector: users[9].address},
+        {name: 'CompoundStrategyDAI', type: StrategyType.COMPOUND, config: config2, feeCollector: users[8].address},
       ],
     })
+
+    
   })
 
   shouldBehaveLikePool('vDai', 'DAI')
-  shouldBehaveLikeMultiPool('vDai')
+  // TODO update below test suites according to hardhat
+  // shouldBehaveLikeMultiPool('vDai')
   // shouldBehaveLikeStrategy('vDai', 'DAI', StrategyType.AAAVE)
 })

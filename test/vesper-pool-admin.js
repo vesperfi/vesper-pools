@@ -2,16 +2,17 @@
 
 const {expect} = require('chai')
 const {expectRevert, constants} = require('@openzeppelin/test-helpers')
-const VETH = artifacts.require('VETH')
-const AddressList = artifacts.require('IAddressList')
+const {ethers} = require('hardhat')
 /* eslint-disable mocha/max-top-level-suites */
-contract('Vesper Pool: Admin only function tests', function (accounts) {
+describe('Vesper Pool: Admin only function tests', function () {
   let pool
 
-  const [, user1] = accounts
+  let user1
 
   beforeEach(async function () {
-    pool = await VETH.new()
+    ;[, user1] = (await ethers.getSigners()).map(signers => signers.address)
+    const POOL = await ethers.getContractFactory('VETH')
+    pool = await POOL.deploy()
   })
 
   describe('Create guardian list', function () {
@@ -20,8 +21,8 @@ contract('Vesper Pool: Admin only function tests', function (accounts) {
       await pool.createGuardianList()
       const guardianList = await pool.guardians()
       expect(guardianList).to.not.equal(constants.ZERO_ADDRESS, 'List creation failed')
-      const addressList = await AddressList.at(guardianList)
-      expect(await addressList.length()).to.be.bignumber.equal('1', 'List should have 1 element')
+      const addressList = await ethers.getContractAt('IAddressList', guardianList)
+      expect(await addressList.length()).to.be.equal('1', 'List should have 1 element')
     })
 
     it('Should revert if list already created', async function () {
@@ -37,13 +38,13 @@ contract('Vesper Pool: Admin only function tests', function (accounts) {
     beforeEach(async function () {
       await pool.createGuardianList()
       guardianList = await pool.guardians()
-      addressList = await AddressList.at(guardianList)
+      addressList = await ethers.getContractAt('IAddressList', guardianList)
     })
 
     context('Add address in guardian list', function () {
       it('Should add address in guardian list', async function () {
         await pool.addInList(guardianList, user1)
-        expect(await addressList.length()).to.be.bignumber.equal('2', 'Address added successfuly')
+        expect(await addressList.length()).to.be.equal('2', 'Address added successfuly')
       })
 
       it('Should revert if address already exist in list', async function () {
@@ -56,7 +57,7 @@ contract('Vesper Pool: Admin only function tests', function (accounts) {
       it('Should remove address from guardian list', async function () {
         await pool.addInList(guardianList, user1)
         await pool.removeFromList(guardianList, user1)
-        expect(await addressList.length()).to.be.bignumber.equal('1', 'Address removed successfuly')
+        expect(await addressList.length()).to.be.equal('1', 'Address removed successfuly')
       })
 
       it('Should revert if address not in list', async function () {

@@ -1,8 +1,8 @@
 {
-  "*.sol": [
-    "solhint"
-  ],
   "*.js": [
     "eslint"
+  ],
+  "*.sol": [
+    "solhint"
   ]
 }

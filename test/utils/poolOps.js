@@ -1,9 +1,9 @@
 'use strict'
 const swapper = require('./tokenSwapper')
-const IStrategy = artifacts.require('IStrategy')
-const {BN, time} = require('@openzeppelin/test-helpers')
-
-const DECIMAL = new BN('1000000000000000000')
+const {time} = require('@openzeppelin/test-helpers')
+const {ethers} = require('hardhat')
+const {BigNumber} = require('ethers')
+const DECIMAL = BigNumber.from('1000000000000000000')
 const WETH_ADDRESS = '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2'
 
 async function executeIfExist(fn) {
@@ -18,19 +18,20 @@ async function executeIfExist(fn) {
  * @param {object} pool Vepser pool instance where we want to deposit tokens
  * @param {object} token Colalteral token instance, the token you want to deposit
  * @param {number|string} amount Amount in ETH, ETH will be swapped for required token
- * @param {string} depositor User who will pay ETH and also deposit in Vesper pool
- * @returns {Promise<BN>} Promise of collateral amount which was deposited in Vesper pool
+ * @param {object} depositor User who will pay ETH and also deposit in Vesper pool
+ * @returns {Promise<BigNumber>} Promise of collateral amount which was deposited in Vesper pool
  */
 async function deposit(pool, token, amount, depositor) {
   let depositAmount
   if (token.address === WETH_ADDRESS) {
-    await token.deposit({value: new BN(amount).mul(new BN(DECIMAL)), from: depositor})
+    await token.connect(depositor.signer).deposit({value: BigNumber.from(amount).mul(DECIMAL)})
     depositAmount = await token.balanceOf(depositor)
   } else {
     depositAmount = await swapper.swapEthForToken(amount, token.address, depositor)
   }
-  await token.approve(pool.address, depositAmount, {from: depositor})
-  await pool.deposit(depositAmount, {from: depositor})
+  await token.connect(depositor.signer).approve(pool.address, depositAmount)
+  await pool.connect(depositor.signer).deposit(depositAmount)
+
   return depositAmount
 }
 
@@ -48,7 +49,7 @@ async function rebalance(strategies) {
     await executeIfExist(strategy.token.exchangeRateCurrent)
     if (strategy.type.includes('vesper')) {
       let s = await strategy.token.strategies(0)
-      s = await IStrategy.at(s)
+      s = await ethers.getContractAt('IStrategy', s)
       // TODO: do it recursive
       await s.rebalance()
     }
@@ -56,21 +57,20 @@ async function rebalance(strategies) {
   return txs
 }
 
-
 async function timeTravel(seconds = 6 * 60 * 60, blocks = 25, strategyType = '', underlayStrategy = '') {
   const timeTravelFn = () => time.increase(seconds)
-  const blockMineFn = async () => time.advanceBlockTo((await time.latestBlock()).add(new BN(blocks)))
+  const blockMineFn = async () => time.advanceBlockTo((await time.latestBlock()).add(BigNumber.from(blocks)))
   return strategyType.includes('compound') || underlayStrategy.includes('compound') ? blockMineFn() : timeTravelFn()
 }
 
 /**
- * 
+ *
  * @param {*} strategies .
  * @param {*} pool .
  * @returns {*} .
  */
 async function totalDebtOfAllStrategy(strategies, pool) {
-  let totalDebt = new BN('0')
+  let totalDebt = BigNumber.from(0)
   for (const strategy of strategies) {
     const strategyParams = await pool.strategy(strategy.instance.address)
     totalDebt = totalDebt.add(strategyParams.totalDebt)
