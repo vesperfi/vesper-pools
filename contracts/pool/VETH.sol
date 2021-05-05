@@ -35,7 +35,7 @@ contract VETH is VTokenBase {
     function _afterBurning(uint256 _amount) internal override returns (uint256) {
         if (withdrawInETH) {
             weth.withdraw(_amount);
-            payable(_msgSender()).transfer(_amount);
+            Address.sendValue(payable(_msgSender()), _amount);
         } else {
             super._afterBurning(_amount);
         }

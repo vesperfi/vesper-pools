@@ -164,7 +164,7 @@ abstract contract Strategy is IStrategy, Context {
         require(_fromToken != address(collateralToken), "not-allowed-to-sweep-collateral");
         require(!isReservedToken(_fromToken), "not-allowed-to-sweep");
         if (_fromToken == ETH) {
-            payable(feeCollector).transfer(address(this).balance);
+            Address.sendValue(payable(feeCollector), address(this).balance);
         } else {
             uint256 _amount = IERC20(_fromToken).balanceOf(address(this));
             IERC20(_fromToken).safeTransfer(feeCollector, _amount);
