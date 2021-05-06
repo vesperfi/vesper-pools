@@ -19,12 +19,12 @@ abstract contract AaveMakerStrategy is MakerStrategy, AaveCore {
     ) MakerStrategy(_pool, _cm, _receiptToken, _collateralType) AaveCore(_receiptToken) {}
 
     /// @notice Initiate cooldown to unstake aave.
-    function startCooldown() external onlyGuardians returns (bool) {
+    function startCooldown() external onlyKeeper returns (bool) {
         return _startCooldown();
     }
 
     /// @notice Unstake Aave from stakedAave contract
-    function unstakeAave() external onlyGuardians {
+    function unstakeAave() external onlyKeeper {
         _unstakeAave();
     }
 

@@ -18,7 +18,7 @@ abstract contract Strategy is IStrategy, Context {
     IERC20 public immutable collateralToken;
     address public immutable receiptToken;
     address public immutable override pool;
-    IAddressList public guardians;
+    IAddressList public keepers;
     address public override feeCollector;
     address internal constant ETH = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
     address internal constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
@@ -39,8 +39,8 @@ abstract contract Strategy is IStrategy, Context {
         _;
     }
 
-    modifier onlyGuardians() {
-        require(guardians.contains(_msgSender()), "caller-is-not-a-guardian");
+    modifier onlyKeeper() {
+        require(keepers.contains(_msgSender()), "caller-is-not-a-keeper");
         _;
     }
 
@@ -50,28 +50,28 @@ abstract contract Strategy is IStrategy, Context {
     }
 
     /**
-     * @notice Add given address in guardians list.
-     * @param _guardianAddress guardian address to add.
+     * @notice Add given address in keepers list.
+     * @param _keeperAddress keeper address to add.
      */
-    function addGuardian(address _guardianAddress) external onlyGovernor {
-        require(!guardians.contains(_guardianAddress), "guardian-already-in-list");
-        require(guardians.add(_guardianAddress), "add-guardian-failed");
+    function addKeeper(address _keeperAddress) external onlyGovernor {
+        require(!keepers.contains(_keeperAddress), "keeper-already-in-list");
+        require(keepers.add(_keeperAddress), "add-keeper-failed");
     }
 
     /**
-     * @notice Create guardian list
-     * NOTE: Any function with onlyGuardians modifier will not work until this function is called.
+     * @notice Create keeper list
+     * NOTE: Any function with onlyKeeper modifier will not work until this function is called.
      * NOTE: Due to gas constraint this function cannot be called in constructor.
      */
-    function createGuardianList() external onlyGovernor {
-        require(address(guardians) == address(0), "gaurdian-list-already-created");
-        // Prepare guardian list
+    function createKeeperList() external onlyGovernor {
+        require(address(keepers) == address(0), "keeper-list-already-created");
+        // Prepare keeper list
         IAddressListFactory _factory = IAddressListFactory(0xded8217De022706A191eE7Ee0Dc9df1185Fb5dA3);
-        guardians = IAddressList(_factory.createList());
+        keepers = IAddressList(_factory.createList());
         address _governor = IVesperPool(pool).governor();
-        require(guardians.add(_governor), "add-guardian-failed");
+        require(keepers.add(_governor), "add-keeper-failed");
         if (_msgSender() != _governor) {
-            require(guardians.add(_msgSender()), "add-guardian-failed");
+            require(keepers.add(_msgSender()), "add-keeper-failed");
         }
     }
 
@@ -89,12 +89,12 @@ abstract contract Strategy is IStrategy, Context {
     }
 
     /**
-     * @notice Remove given address from guardians list.
-     * @param _guardianAddress guardian address to remove.
+     * @notice Remove given address from keepers list.
+     * @param _keeperAddress keeper address to remove.
      */
-    function removeGuardian(address _guardianAddress) external onlyGovernor {
-        require(guardians.contains(_guardianAddress), "guardian-not-in-list");
-        require(guardians.remove(_guardianAddress), "remove-guardian-failed");
+    function removeKeeper(address _keeperAddress) external onlyGovernor {
+        require(keepers.contains(_keeperAddress), "keeper-not-in-list");
+        require(keepers.remove(_keeperAddress), "remove-keeper-failed");
     }
 
     /**
@@ -109,7 +109,7 @@ abstract contract Strategy is IStrategy, Context {
     }
 
     /// @dev Approve all required tokens
-    function approveToken() external onlyGuardians {
+    function approveToken() external onlyKeeper {
         _approveToken(0);
         _approveToken(MAX_UINT_VALUE);
     }
@@ -149,7 +149,7 @@ abstract contract Strategy is IStrategy, Context {
     /**
      * @dev Rebalance profit, loss and investment of this strategy
      */
-    function rebalance() external override onlyGuardians {
+    function rebalance() external override onlyKeeper {
         (uint256 _profit, uint256 _loss, uint256 _payback) = _generateReport();
         IVesperPool(pool).reportEarning(_profit, _loss, _payback);
         _reinvest();
@@ -159,7 +159,7 @@ abstract contract Strategy is IStrategy, Context {
      * @dev sweep given token to feeCollector of strategy
      * @param _fromToken token address to sweep
      */
-    function sweepERC20(address _fromToken) external override onlyGuardians {
+    function sweepERC20(address _fromToken) external override onlyKeeper {
         require(feeCollector != address(0), "fee-collector-not-set");
         require(_fromToken != address(collateralToken), "not-allowed-to-sweep-collateral");
         require(!isReservedToken(_fromToken), "not-allowed-to-sweep");

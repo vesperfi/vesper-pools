@@ -10,7 +10,7 @@ interface IVesperPool is IERC20 {
 
     function governor() external returns (address);
 
-    function guardians() external returns (address);
+    function keepers() external returns (address);
 
     function multiTransfer(uint256[] memory) external returns (bool);
 

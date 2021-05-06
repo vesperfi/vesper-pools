@@ -294,7 +294,7 @@ function shouldBehaveLikeStrategy(poolName, collateralName, strategyType) {
       })
     })
 
-    // TODO design decision is pending for privileged withdraw via governor/guardians
+    // TODO design decision is pending for privileged withdraw via governor/keepers
     // describe(`${poolName}:: Updates via Controller`, function () {
     //   it('Should call withdraw() in strategy', async function () {
     //     await deposit(pool, collateralToken, 10, user4)

@@ -24,7 +24,7 @@ contract VTokenBase is PoolShareToken {
     address[] public strategies;
     address[] public withdrawQueue;
 
-    IAddressList public guardians;
+    IAddressList public keepers;
     address internal constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     event StrategyAdded(
         address indexed strategy,
@@ -51,8 +51,8 @@ contract VTokenBase is PoolShareToken {
         address _token // solhint-disable-next-line no-empty-blocks
     ) PoolShareToken(name, symbol, _token) {}
 
-    modifier onlyGuardian() {
-        require(guardians.contains(_msgSender()), "caller-is-not-a-guardian");
+    modifier onlyKeeper() {
+        require(keepers.contains(_msgSender()), "caller-is-not-a-keeper");
         _;
     }
 
@@ -62,19 +62,19 @@ contract VTokenBase is PoolShareToken {
     }
 
     ///////////////////////////// Only Guradian ///////////////////////////////
-    function pause() external onlyGuardian {
+    function pause() external onlyKeeper {
         _pause();
     }
 
-    function unpause() external onlyGuardian {
+    function unpause() external onlyKeeper {
         _unpause();
     }
 
-    function shutdown() external onlyGuardian {
+    function shutdown() external onlyKeeper {
         _shutdown();
     }
 
-    function open() external onlyGuardian {
+    function open() external onlyKeeper {
         _open();
     }
 
@@ -83,21 +83,21 @@ contract VTokenBase is PoolShareToken {
     ////////////////////////////// Only Governor //////////////////////////////
 
     /**
-     * @notice Create guardian list
+     * @notice Create keeper list
      * @dev Create list and add governor into the list.
-     * NOTE: Any function with onlyGuardian modifier will not work until this function is called.
+     * NOTE: Any function with onlyKeeper modifier will not work until this function is called.
      * NOTE: Due to gas constraint this function cannot be called in constructor.
      */
-    function createGuardianList() external onlyGovernor {
-        require(address(guardians) == address(0), "guardian-list-already-created");
+    function createKeeperList() external onlyGovernor {
+        require(address(keepers) == address(0), "keeper-list-already-created");
         IAddressListFactory _factory = IAddressListFactory(0xded8217De022706A191eE7Ee0Dc9df1185Fb5dA3);
-        guardians = IAddressList(_factory.createList());
-        guardians.add(governor);
+        keepers = IAddressList(_factory.createList());
+        keepers.add(governor);
     }
 
     /**
      * @notice Add given address in provided address list.
-     * @dev Use it to add guardian in guardians list and to add address in feeWhiteList
+     * @dev Use it to add keeper in keepers list and to add address in feeWhiteList
      * @param _listToUpdate address of AddressList contract.
      * @param _addressToAdd address which we want to add in AddressList.
      */
@@ -108,7 +108,7 @@ contract VTokenBase is PoolShareToken {
 
     /**
      * @notice Remove given address from provided address list.
-     * @dev Use it to remove guardian from guardians list and to remove address from feeWhiteList
+     * @dev Use it to remove keeper from keepers list and to remove address from feeWhiteList
      * @param _listToUpdate address of AddressList contract.
      * @param _addressToRemove address which we want to remove from AddressList.
      */
@@ -272,7 +272,7 @@ contract VTokenBase is PoolShareToken {
      * @dev Transfer given ERC20 token to feeCollector
      * @param _fromToken Token address to sweep
      */
-    function sweepERC20(address _fromToken) external virtual onlyGuardian {
+    function sweepERC20(address _fromToken) external virtual onlyKeeper {
         require(_fromToken != address(token), "not-allowed-to-sweep");
         require(feeCollector != address(0), "fee-collector-not-set");
         IERC20(_fromToken).transfer(feeCollector, IERC20(_fromToken).balanceOf(address(this)));

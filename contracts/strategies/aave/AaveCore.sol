@@ -32,7 +32,7 @@ abstract contract AaveCore {
      * @notice Initiate cooldown to unstake aave.
      * @dev We only want to call this function when cooldown is expired and
      * that's the reason we have 'if' condition.
-     * @dev Child contract should expose this function as external and onlyGuardians
+     * @dev Child contract should expose this function as external and onlyKeeper
      */
     function _startCooldown() internal returns (bool) {
         if (canStartCooldown()) {
@@ -46,7 +46,7 @@ abstract contract AaveCore {
      * @notice Unstake Aave from stakedAave contract
      * @dev We want to unstake as soon as favorable condition exit
      * @dev No guarding condtion thus this call can fail, if we can't unstake.
-     * @dev Child contract should expose this function as external and onlyGuardians
+     * @dev Child contract should expose this function as external and onlyKeeper
      */
     function _unstakeAave() internal {
         stkAAVE.redeem(address(this), type(uint256).max);
