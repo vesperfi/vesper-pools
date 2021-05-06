@@ -1,6 +1,7 @@
 'use strict'
 require('@nomiclabs/hardhat-waffle')
 require('solidity-coverage')
+require('hardhat-log-remover')
 require('dotenv').config()
 
 const gasPrice = 55000000000
@@ -40,4 +41,7 @@ module.exports = {
       },
     },
   },
+  mocha: {
+    timeout: 200000
+  }
 }

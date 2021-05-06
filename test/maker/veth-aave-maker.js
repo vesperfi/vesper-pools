@@ -6,15 +6,16 @@ const {setupVPool} = require('../utils/setupHelper')
 const StrategyType = require('../utils/strategyTypes')
 const {deposit} = require('../utils/poolOps')
 const {expect} = require('chai')
-const {BN, time, constants} = require('@openzeppelin/test-helpers')
+const {time} = require('@openzeppelin/test-helpers')
 
 const VETH = artifacts.require('VETH')
 const AaveStrategy = artifacts.require('AaveMakerStrategyETH')
 // const AaveStrategyETH = artifacts.require('AaveStrategyETH')
 const CollateralManager = artifacts.require('CollateralManager')
 const JugLike = artifacts.require('JugLike')
-
-const DECIMAL = new BN('1000000000000000000')
+const {BigNumber: BN} = require('ethers')
+const DECIMAL18 = BN.from('1000000000000000000')
+const ONE_MILLION = DECIMAL18.mul('1000000')
 /* eslint-disable mocha/max-top-level-suites */
 contract('VETH Pool with AaveMakerStrategy', function (accounts) {
   let pool, strategy, collateralToken
@@ -22,7 +23,7 @@ contract('VETH Pool with AaveMakerStrategy', function (accounts) {
   const interestFee = '1500' // 15%
   const feeCollector = accounts[9]
 
-  const strategyConfig = {interestFee, debtRatio: 9000, maxDebtPerRebalance: constants.MAX_UINT256}
+  const strategyConfig = {interestFee, debtRatio: 9000, debtRate: ONE_MILLION}
 
   beforeEach(async function () {
     this.accounts = accounts
@@ -45,7 +46,7 @@ contract('VETH Pool with AaveMakerStrategy', function (accounts) {
 
   describe('Basic test with ETH as collateral', function() {
     it('Should deposit and rebalance', async function () {
-      const depositAmount = new BN(10).mul(DECIMAL).toString()
+      const depositAmount = BN.from('10').mul(DECIMAL18).toString()
       await pool.methods['deposit()']({value: depositAmount, from: user1})
         await pool.rebalance()
         return Promise.all([
@@ -63,7 +64,7 @@ contract('VETH Pool with AaveMakerStrategy', function (accounts) {
     })
 
     it('Should deposit via fallback and rebalance', async function () {
-      const depositAmount = new BN(10).mul(DECIMAL).toString()
+      const depositAmount = BN.from('10').mul(DECIMAL18).toString()
       await web3.eth.sendTransaction({from:user2, to: pool.address, value: depositAmount})
         await pool.rebalance()
         return Promise.all([
@@ -81,7 +82,7 @@ contract('VETH Pool with AaveMakerStrategy', function (accounts) {
     })
 
     it('Should withdraw all ETH after rebalance', async function () {
-      const depositAmount = new BN(10).mul(DECIMAL).toString()
+      const depositAmount = BN.from('10').mul(DECIMAL18).toString()
       await pool.methods['deposit()']({value: depositAmount, from: user3})
       await pool.rebalance()
       const ethBalanceBefore = await web3.eth.getBalance(user3)
@@ -124,8 +125,8 @@ contract('VETH Pool with AaveMakerStrategy', function (accounts) {
       const pricePerShare = await pool.getPricePerShare()
       
       const interestEarned = tokenLocked2.sub(tokenLocked1)
-      const expectedInterestFee = interestEarned.mul(interestFee).div(DECIMAL)
-      const expectedVPoolToken = expectedInterestFee.mul(DECIMAL).div(pricePerShare)
+      const expectedInterestFee = interestEarned.mul(interestFee).div(DECIMAL18)
+      const expectedVPoolToken = expectedInterestFee.mul(DECIMAL18).div(pricePerShare)
 
       let withdrawAmount = await pool.balanceOf(user1)
       await pool.withdraw(withdrawAmount, {from: user1})

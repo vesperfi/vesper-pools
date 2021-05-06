@@ -6,12 +6,14 @@ const {deposit} = require('../utils/poolOps')
 const {setupVPool} = require('../utils/setupHelper')
 const StrategyType = require('../utils/strategyTypes')
 const VDAI = artifacts.require('VDAI')
-const {constants} = require('@openzeppelin/test-helpers')
 const CollateralManager = artifacts.require('CollateralManager')
 const AaveStrategy = artifacts.require('AaveV2StrategyDAI')
 // const AaveStrategyETH = artifacts.require('AaveStrategyETH')
 const VETH = artifacts.require('VETH')
 const VesperStrategy = artifacts.require('VesperMakerStrategyETH')
+const {BigNumber: BN} = require('ethers')
+const DECIMAL18 = BN.from('1000000000000000000')
+const ONE_MILLION = DECIMAL18.mul('1000000')
 
 contract('VETH Pool', function (accounts) {
   let vDai, dai // vEth, strategy, weth
@@ -20,7 +22,7 @@ contract('VETH Pool', function (accounts) {
   const [, user1] = accounts
   const feeCollector = accounts[9]
 
-  const strategyConfig = {interestFee, debtRatio: 9000, maxDebtPerRebalance: constants.MAX_UINT256}
+  const strategyConfig = {interestFee, debtRatio: 9000, debtRate: ONE_MILLION}
 
   beforeEach(async function () {
     this.accounts = accounts
