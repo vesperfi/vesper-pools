@@ -15,9 +15,9 @@ import "@openzeppelin/contracts/utils/Context.sol";
  */
 contract Governed is Context {
     address public governor;
-    address private newGovernor;
+    address private proposedGovernor;
 
-    event UpdatedGovernor(address indexed previousGovernor, address indexed newGovernor);
+    event UpdatedGovernor(address indexed previousGovernor, address indexed proposedGovernor);
 
     /**
      * @dev Initializes the contract setting the deployer as the initial governor.
@@ -37,21 +37,23 @@ contract Governed is Context {
     }
 
     /**
-     * @dev Transfers governorship of the contract to a new account (`newGovernor`).
+     * @dev Transfers governorship of the contract to a new account (`proposedGovernor`).
      * Can only be called by the current owner.
      */
-    function transferGovernorship(address _newGovernor) external onlyGovernor {
-        require(_newGovernor != address(0), "new-governor-is-zero-address");
-        newGovernor = _newGovernor;
+    function transferGovernorship(address _proposedGovernor) external onlyGovernor {
+        //solhint-disable-next-line reason-string
+        require(_proposedGovernor != address(0), "proposed-governor-is-zero-address");
+        proposedGovernor = _proposedGovernor;
     }
 
     /**
      * @dev Allows new governor to accept governorship of the contract.
      */
     function acceptGovernorship() external {
-        require(msg.sender == newGovernor, "caller-is-not-the-new-governor");
-        emit UpdatedGovernor(governor, newGovernor);
-        governor = newGovernor;
-        newGovernor = address(0);
+        //solhint-disable-next-line reason-string
+        require(msg.sender == proposedGovernor, "caller-is-not-the-proposed-governor");
+        emit UpdatedGovernor(governor, proposedGovernor);
+        governor = proposedGovernor;
+        proposedGovernor = address(0);
     }
 }
