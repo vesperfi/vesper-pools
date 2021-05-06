@@ -130,7 +130,6 @@ abstract contract CompoundStrategy is Strategy {
     function _withdrawAll() internal override {
         require(cToken.redeem(cToken.balanceOf(address(this))) == 0, "withdrawAll-from-compound-failed");
         _afterRedeem();
-        // super.withdrawAll();
     }
 
     /// @dev Withdraw collateral here. Do not transfer to pool

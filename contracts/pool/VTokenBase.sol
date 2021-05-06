@@ -249,9 +249,9 @@ contract VTokenBase is PoolShareToken {
         }
         uint256 _totalPayback = _profit + _actualPayback;
         if (_totalPayback < _creditLine) {
-            token.transfer(_msgSender(), _creditLine - _totalPayback);
+            token.safeTransfer(_msgSender(), _creditLine - _totalPayback);
         } else if (_totalPayback > _creditLine) {
-            token.transferFrom(_msgSender(), address(this), _totalPayback - _creditLine);
+            token.safeTransferFrom(_msgSender(), address(this), _totalPayback - _creditLine);
         }
         if (_profit != 0) {
             strategy[_msgSender()].totalProfit += _profit;
@@ -275,7 +275,7 @@ contract VTokenBase is PoolShareToken {
     function sweepERC20(address _fromToken) external virtual onlyGuardian {
         require(_fromToken != address(token), "not-allowed-to-sweep");
         require(feeCollector != address(0), "fee-collector-not-set");
-        IERC20(_fromToken).transfer(feeCollector, IERC20(_fromToken).balanceOf(address(this)));
+        IERC20(_fromToken).safeTransfer(feeCollector, IERC20(_fromToken).balanceOf(address(this)));
     }
 
     /**
