@@ -11,11 +11,12 @@ contract VTokenBase is PoolShareToken {
     struct StrategyConfig {
         uint256 active; // active if != 0
         uint256 interestFee; // Strategy fee
+        uint256 debtRate; //strategy can not borrow large amount in short durations. Can set big limit for trusted strategy
+        uint256 lastRebalance;
         uint256 totalDebt; // Total outstanding debt stratgy has
         uint256 totalLoss; // Total loss that strategy has realized
         uint256 totalProfit; // Total gain that strategy has realized
         uint256 debtRatio; // % of asset allocation
-        uint256 maxDebtPerRebalance; // motivate strategy to call and borrow/payback asset from pool in reasonable interval.
     }
 
     mapping(address => StrategyConfig) public strategy;
@@ -31,10 +32,10 @@ contract VTokenBase is PoolShareToken {
         uint256 active,
         uint256 interestFee,
         uint256 debtRatio,
-        uint256 maxDebtPerRebalance
+        uint256 debtRate
     );
     event UpdatedInterestFee(address indexed strategy, uint256 interestFee);
-    event UpdatedStrategyDebtParams(address indexed strategy, uint256 debtRatio, uint256 maxDebtPerRebalance);
+    event UpdatedStrategyDebtParams(address indexed strategy, uint256 debtRatio, uint256 debtRate);
     event earningReported(
         address indexed strategy,
         uint256 profit,
@@ -123,7 +124,7 @@ contract VTokenBase is PoolShareToken {
         uint256 _active,
         uint256 _interestFee,
         uint256 _debtRatio,
-        uint256 _maxDebtPerRebalance
+        uint256 _debtRate
     ) public onlyGovernor {
         require(_strategy != address(0), "strategy-address-is-zero");
         require(strategy[_strategy].active == 0, "strategy-already-added");
@@ -138,11 +139,12 @@ contract VTokenBase is PoolShareToken {
                 totalDebt: 0,
                 totalProfit: 0,
                 totalLoss: 0,
-                maxDebtPerRebalance: _maxDebtPerRebalance
+                debtRate: _debtRate,
+                lastRebalance: block.number
             });
         strategy[_strategy] = newStrategy;
         strategies.push(_strategy);
-        emit StrategyAdded(_strategy, _active, _interestFee, _debtRatio, _maxDebtPerRebalance);
+        emit StrategyAdded(_strategy, _active, _interestFee, _debtRatio, _debtRate);
     }
 
     function migrateStrategy(address _old, address _new) external onlyGovernor {
@@ -159,11 +161,12 @@ contract VTokenBase is PoolShareToken {
                 totalDebt: strategy[_old].totalDebt,
                 totalProfit: 0,
                 totalLoss: 0,
-                maxDebtPerRebalance: strategy[_old].maxDebtPerRebalance
+                debtRate: strategy[_old].debtRate,
+                lastRebalance: strategy[_old].lastRebalance
             });
         strategy[_old].debtRatio = 0;
         strategy[_old].totalDebt = 0;
-        strategy[_old].maxDebtPerRebalance = 0;
+        strategy[_old].debtRate = 0;
         strategy[_old].active = 0;
         strategy[_new] = _newStrategy;
         // TODO: old strategy is still in array.
@@ -193,16 +196,16 @@ contract VTokenBase is PoolShareToken {
         totalDebtRatio = totalDebtRatio - strategy[_strategy].debtRatio + _debtRatio;
         require(totalDebtRatio <= MAX_BPS, "totalDebtRatio-above-max_bps");
         strategy[_strategy].debtRatio = _debtRatio;
-        emit UpdatedStrategyDebtParams(_strategy, _debtRatio, strategy[_strategy].maxDebtPerRebalance);
+        emit UpdatedStrategyDebtParams(_strategy, _debtRatio, strategy[_strategy].debtRate);
     }
 
     /**
-     * @dev Update maxDebtPerRebalance.  A strategy is retired when maxDebtPerRebalance is 0
+     * @dev Update debtRate per block.
      */
-    function updateDebtPerRebalance(address _strategy, uint256 _maxDebtPerRebalance) external onlyGovernor {
+    function updateDebtRate(address _strategy, uint256 _debtRate) external onlyGovernor {
         require(strategy[_strategy].active != 0, "strategy-not-active");
-        strategy[_strategy].maxDebtPerRebalance = _maxDebtPerRebalance;
-        emit UpdatedStrategyDebtParams(_strategy, strategy[_strategy].debtRatio, _maxDebtPerRebalance);
+        strategy[_strategy].debtRate = _debtRate;
+        emit UpdatedStrategyDebtParams(_strategy, strategy[_strategy].debtRatio, _debtRate);
     }
 
     /// @dev update withdrawl queue
@@ -324,7 +327,10 @@ contract VTokenBase is PoolShareToken {
                 _amountNeeded = _debt;
             }
             _balanceBefore = tokensHere();
-            IStrategy(withdrawQueue[i]).withdraw(_amountNeeded);
+            //solhint-disable no-empty-blocks
+            try IStrategy(withdrawQueue[i]).withdraw(_amountNeeded) {} catch {
+                continue;
+            }
             _balanceAfter = tokensHere();
             _amountWithdrawn = _balanceAfter - _balanceBefore;
             // Adjusting totalDebt. Assuming that during next reportEarning(), strategy will report loss if amountWithdrawn < _amountNeeded
@@ -392,7 +398,10 @@ contract VTokenBase is PoolShareToken {
         }
         uint256 _available = _maxDebt - _currentDebt;
         _available = _min(_min(tokensHere(), _available), _poolDebtLimit - totalDebt);
-        _available = _min(strategy[_strategy].maxDebtPerRebalance, _available);
+        _available = _min(
+            (block.number - strategy[_strategy].lastRebalance) * strategy[_strategy].debtRate,
+            _available
+        );
         return _available;
     }
 

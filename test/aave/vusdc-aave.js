@@ -9,7 +9,7 @@ const {BigNumber: BN} = require('ethers')
 const DECIMAL18 = BN.from('1000000000000000000')
 const ONE_MILLION = DECIMAL18.mul('1000000')
 /* eslint-disable mocha/no-setup-in-describe */
-describe('vDAI Pool with AaveStrategy', function () {
+describe('vUSDC Pool with AaveStrategy', function () {
   const interestFee = '1500' // 15%
 
   const config1 = {interestFee, debtRatio: 9000, debtRate: ONE_MILLION}
@@ -19,16 +19,18 @@ describe('vDAI Pool with AaveStrategy', function () {
     const users = await getUsers()
     this.users = users
     await setupVPool(this, {
-      poolName: 'VDAI',
+      poolName: 'VUSDC',
       feeCollector: users[9].address,
       strategies: [
-        {name: 'AaveStrategyDAI', type: StrategyType.AAAVE, config: config1, feeCollector: users[9].address},
-        {name: 'CompoundStrategyDAI', type: StrategyType.COMPOUND, config: config2, feeCollector: users[8].address},
+        {name: 'AaveStrategyUSDC', type: StrategyType.AAAVE, config: config1, feeCollector: users[9].address},
+        {name: 'CompoundStrategyUSDC', type: StrategyType.COMPOUND, config: config2, feeCollector: users[8].address}
       ],
-    })    
+    })
+
+    
   })
 
-  shouldBehaveLikePool('vDai', 'DAI')
-  shouldBehaveLikeMultiPool('vDai')
+  shouldBehaveLikePool('vUSDC', 'USDC')
+  shouldBehaveLikeMultiPool('vUSDC')
   // shouldBehaveLikeStrategy('vDai', 'DAI', StrategyType.AAAVE)
 })

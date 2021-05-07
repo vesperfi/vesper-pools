@@ -1,11 +1,12 @@
 'use strict'
 
 const {deposit: _deposit, rebalance} = require('../utils/poolOps')
+const {deployContract} = require('../utils/setupHelper')
 const {expect} = require('chai')
-const {BN} = require('@openzeppelin/test-helpers')
+const DECIMAL = '1000000000000000000'
 async function shouldBehaveLikeMultiPool(poolName) {
   let pool, strategies, collateralToken
-  let user1, user2
+  let user1, user2, gov
 
   async function deposit(amount, depositor) {
     return _deposit(pool, collateralToken, amount, depositor)
@@ -13,13 +14,13 @@ async function shouldBehaveLikeMultiPool(poolName) {
 
   describe(`${poolName} multi-pool`, function () {
     beforeEach(async function () {
-      ;[, user1, user2] = this.accounts
+      ;[gov, user1, user2] = this.users
       // This setup helps in not typing 'this' all the time
       pool = this.pool
       strategies = this.strategies
       collateralToken = this.collateralToken
-      await pool.updateDebtRatio(strategies[0].instance.address, 4800)
-      await pool.updateDebtRatio(strategies[1].instance.address, 4500)
+      await pool.connect(gov.signer).updateDebtRatio(strategies[0].instance.address, 4800)
+      await pool.connect(gov.signer).updateDebtRatio(strategies[1].instance.address, 4500)
     })
 
     describe(`${poolName}: Should migrate from old strategy to new`, function () {
@@ -41,9 +42,9 @@ async function shouldBehaveLikeMultiPool(poolName) {
           receiptToken.balanceOf(strategies[0].instance.address),
         ])
         // const
-        const newStrategy = await strategies[0].artifact.new(pool.address)
+        const newStrategy = await deployContract(strategies[0].name, [pool.address])
 
-        await pool.migrateStrategy(strategies[0].instance.address, newStrategy.address)
+        await pool.connect(gov.signer).migrateStrategy(strategies[0].instance.address, newStrategy.address)
 
         const [
           totalSupplyAfter,
@@ -60,28 +61,19 @@ async function shouldBehaveLikeMultiPool(poolName) {
           receiptToken.balanceOf(strategies[0].instance.address),
           receiptToken.balanceOf(newStrategy.address),
         ])
-        expect(totalSupplyAfter).to.be.bignumber.eq(
-          totalSupplyBefore,
-          `${poolName} total supply after migration is not correct`
-        )
-        expect(totalValueAfter).to.be.bignumber.eq(
-          totalValueBefore,
-          `${poolName} total value after migration is not correct`
-        )
-        expect(totalDebtAfter).to.be.bignumber.eq(
-          totalDebtBefore,
-          `${poolName} total debt after migration is not correct`
-        )
-        expect(totalDebtRatioAfter).to.be.bignumber.eq(
+        expect(totalSupplyAfter).to.be.eq(totalSupplyBefore, `${poolName} total supply after migration is not correct`)
+        expect(totalValueAfter).to.be.eq(totalValueBefore, `${poolName} total value after migration is not correct`)
+        expect(totalDebtAfter).to.be.eq(totalDebtBefore, `${poolName} total debt after migration is not correct`)
+        expect(totalDebtRatioAfter).to.be.eq(
           totalDebtRatioBefore,
           `${poolName} total debt ratio after migration is not correct`
         )
-        expect(receiptTokenAfter2).to.be.bignumber.gte(
+        expect(receiptTokenAfter2).to.be.gte(
           receiptTokenBefore,
           `${poolName} receipt  token balance of new strategy after migration is not correct`
         )
-        expect(receiptTokenAfter).to.be.bignumber.eq(
-          new BN('0'),
+        expect(receiptTokenAfter).to.be.eq(
+          0,
           `${poolName} receipt  token balance of new strategy after migration is not correct`
         )
       })
@@ -98,51 +90,57 @@ async function shouldBehaveLikeMultiPool(poolName) {
         let tokenHere = await pool.tokensHere()
         let debt0 = (await pool.strategy(strategies[0].instance.address)).totalDebt
         const debt1Before = (await pool.strategy(strategies[1].instance.address)).totalDebt
-        const withdrawAmount = await pool.balanceOf(user1)
-        const expectedFromS1 = withdrawAmount.sub(tokenHere).sub(debt0)
-        await pool.withdraw(withdrawAmount, {from: user1})
+        const withdrawAmount = await pool.balanceOf(user1.address)
+        const poolSharePrice = await pool.pricePerShare()
+        const expectedAmount = withdrawAmount.mul(poolSharePrice).div(DECIMAL)
+        const expectedFromS1 = expectedAmount.sub(tokenHere).sub(debt0)
+        await pool.connect(user1.signer).withdraw(withdrawAmount)
         const debt1After = (await pool.strategy(strategies[1].instance.address)).totalDebt
         const actualWithdrawFromS1 = debt1Before.sub(debt1After)
         debt0 = (await pool.strategy(strategies[0].instance.address)).totalDebt
         tokenHere = await pool.tokensHere()
-        expect(actualWithdrawFromS1).to.be.bignumber.eq(expectedFromS1, 'Withdraw from Strategy 2 is wrong')
-        expect(debt0).to.be.bignumber.eq(new BN('0'), 'Withdraw from Strategy 2 is wrong')
+        expect(actualWithdrawFromS1).to.be.eq(expectedFromS1, 'Withdraw from Strategy 2 is wrong')
+        expect(debt0).to.be.eq(0, 'Withdraw from Strategy 2 is wrong')
       })
 
       it('Should burn proportional amount if strategy do not return expected amount', async function () {
-        await pool.updateDebtRatio(strategies[0].instance.address, 5000)
-        await pool.updateDebtRatio(strategies[1].instance.address, 5000)
+        await pool.connect(gov.signer).updateDebtRatio(strategies[0].instance.address, 5000)
+        await pool.connect(gov.signer).updateDebtRatio(strategies[1].instance.address, 5000)
         await rebalance(strategies)
-        await pool.updateWithdrawQueue([strategies[1].instance.address])
-        let balance = await pool.balanceOf(user1)
-        await pool.withdraw(balance, {from: user1})
+        await pool.connect(gov.signer).updateWithdrawQueue([strategies[1].instance.address])
+        let balance = await pool.balanceOf(user1.address)
+        await pool.connect(user1.signer).withdraw(balance)
         const debt = (await pool.strategy(strategies[1].instance.address)).totalDebt
-        expect(debt).to.be.bignumber.eq(new BN('0'), 'Debt is strategy is wrong')
-        balance = await pool.balanceOf(user1)
-        expect(balance).to.be.bignumber.gt(new BN('0'), 'Remaining vToken balance of user is wrong')
-        const balanceBeforeDeposit = await pool.balanceOf(user2)
+        expect(debt).to.be.eq(0, 'Debt is strategy is wrong')
+        balance = await pool.balanceOf(user1.address)
+        expect(balance).to.be.gt(0, 'Remaining vToken balance of user is wrong')
+        const balanceBeforeDeposit = await pool.balanceOf(user2.address)
         await deposit(20, user2)
-        balance = await pool.balanceOf(user2)
-        await pool.withdraw(balance, {from: user2})
-        balance = await pool.balanceOf(user2)
-        expect(balance).to.be.bignumber.eq(balanceBeforeDeposit, 'Withdraw from Strategy 2 is wrong')
+        balance = await pool.balanceOf(user2.address)
+        await pool.connect(user2.signer).withdraw(balance)
+        balance = await pool.balanceOf(user2.address)
+        expect(balance).to.be.eq(balanceBeforeDeposit, 'Withdraw from Strategy 2 is wrong')
       })
 
       it('Should be able to shuffle withdraw queue', async function () {
-        await pool.updateWithdrawQueue([strategies[1].instance.address, strategies[0].instance.address])
+        await pool
+          .connect(gov.signer)
+          .updateWithdrawQueue([strategies[1].instance.address, strategies[0].instance.address])
         await rebalance(strategies)
         let tokenHere = await pool.tokensHere()
         let debt1 = (await pool.strategy(strategies[1].instance.address)).totalDebt
         const debt0Before = (await pool.strategy(strategies[0].instance.address)).totalDebt
-        const withdrawAmount = await pool.balanceOf(user1)
-        const expectedFromS0 = withdrawAmount.sub(tokenHere).sub(debt1)
-        await pool.withdraw(withdrawAmount, {from: user1})
+        const withdrawAmount = await pool.balanceOf(user1.address)
+        const poolSharePrice = await pool.pricePerShare()
+        const expectedAmount = withdrawAmount.mul(poolSharePrice).div(DECIMAL)
+        const expectedFromS0 = expectedAmount.sub(tokenHere).sub(debt1)
+        await pool.connect(user1.signer).withdraw(withdrawAmount)
         const debt0After = (await pool.strategy(strategies[0].instance.address)).totalDebt
         const actualWithdrawFromS0 = debt0Before.sub(debt0After)
         debt1 = (await pool.strategy(strategies[1].instance.address)).totalDebt
         tokenHere = await pool.tokensHere()
-        expect(actualWithdrawFromS0).to.be.bignumber.eq(expectedFromS0, 'Withdraw from Strategy 2 is wrong')
-        expect(debt1).to.be.bignumber.eq(new BN('0'), 'Withdraw from Strategy 2 is wrong')
+        expect(actualWithdrawFromS0).to.be.eq(expectedFromS0, 'Withdraw from Strategy 2 is wrong')
+        expect(debt1).to.be.eq(0, 'Withdraw from Strategy 2 is wrong')
       })
     })
 
