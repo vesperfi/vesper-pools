@@ -194,7 +194,7 @@ abstract contract PoolShareToken is ERC20Permit, Pausable, ReentrancyGuard, Gove
     }
 
     /// @dev Deposit incoming token and mint pool token i.e. shares.
-    function _deposit(uint256 _amount) internal whenNotPaused {
+    function _deposit(uint256 _amount) internal {
         uint256 _shares = _calculateShares(_amount);
         _beforeMinting(_amount);
         _mint(_msgSender(), _shares);
@@ -203,7 +203,7 @@ abstract contract PoolShareToken is ERC20Permit, Pausable, ReentrancyGuard, Gove
     }
 
     /// @dev Burns shares and returns the collateral value, after fee, of those.
-    function _withdraw(uint256 _shares) internal whenNotShutdown {
+    function _withdraw(uint256 _shares) internal {
         if (withdrawFee == 0) {
             _withdrawWithoutFee(_shares);
         } else {
