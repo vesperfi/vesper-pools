@@ -50,7 +50,7 @@ abstract contract MakerStrategy is Strategy {
      * Finally payback debt in Maker using DAI.
      * @dev Also report loss in pool.
      */
-    function resurface() external onlyGuardians {
+    function resurface() external onlyKeeper {
         _resurface();
     }
 
