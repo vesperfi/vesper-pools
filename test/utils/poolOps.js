@@ -1,7 +1,8 @@
 'use strict'
 const swapper = require('./tokenSwapper')
-const {time} = require('@openzeppelin/test-helpers')
-const {ethers} = require('hardhat')
+const hre = require('hardhat')
+const ethers = hre.ethers
+const provider = hre.waffle.provider
 const {BigNumber} = require('ethers')
 const DECIMAL = BigNumber.from('1000000000000000000')
 const WETH_ADDRESS = '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2'
@@ -25,7 +26,7 @@ async function deposit(pool, token, amount, depositor) {
   let depositAmount
   if (token.address === WETH_ADDRESS) {
     await token.connect(depositor.signer).deposit({value: BigNumber.from(amount).mul(DECIMAL)})
-    depositAmount = await token.balanceOf(depositor)
+    depositAmount = await token.balanceOf(depositor.address)
   } else {
     depositAmount = await swapper.swapEthForToken(amount, token.address, depositor)
   }
@@ -58,8 +59,15 @@ async function rebalance(strategies) {
 }
 
 async function timeTravel(seconds = 6 * 60 * 60, blocks = 25, strategyType = '', underlayStrategy = '') {
-  const timeTravelFn = () => time.increase(seconds)
-  const blockMineFn = async () => time.advanceBlockTo((await time.latestBlock()).add(BigNumber.from(blocks)))
+  const timeTravelFn = async function() {
+    await provider.send('evm_increaseTime', [seconds])
+    await provider.send('evm_mine')
+}
+  const blockMineFn = async function() {
+    for (let i = 0; i < blocks; i++) {
+      await provider.send('evm_mine')
+    }
+  }
   return strategyType.includes('compound') || underlayStrategy.includes('compound') ? blockMineFn() : timeTravelFn()
 }
 

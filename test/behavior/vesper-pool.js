@@ -3,7 +3,6 @@
 const swapper = require('../utils/tokenSwapper')
 const {deposit: _deposit, rebalance, totalDebtOfAllStrategy, timeTravel, executeIfExist} = require('../utils/poolOps')
 const {expect} = require('chai')
-const {expectRevert} = require('@openzeppelin/test-helpers')
 const {BigNumber: BN} = require('ethers')
 const {ethers} = require('hardhat')
 
@@ -68,8 +67,8 @@ async function shouldBehaveLikePool(poolName, collateralName) {
           await executeIfExist(strategy.token.exchangeRateCurrent)
           const strategyParams = await pool.strategy(strategy.instance.address)
           if (strategyParams.debtRatio.gt(0)) {
-            const receiptToken = await strategy.token.balanceOf(strategy.instance.address)
-            expect(receiptToken).to.be.gt(0, 'receipt token balance of strategy is wrong')
+            const receiptTokenBalance = await strategy.token.balanceOf(strategy.instance.address)
+            expect(receiptTokenBalance).to.be.gt(0, 'receipt token balance of strategy is wrong')
           }
         }
         const totalDebtOfStrategies = await totalDebtOfAllStrategy(strategies, pool)
@@ -255,7 +254,7 @@ async function shouldBehaveLikePool(poolName, collateralName) {
         await rebalance(strategies)
         const withdrawAmount = await pool.balanceOf(user2.address)
         const tx = pool.connect(user2.signer).withdrawByStrategy(withdrawAmount)
-        await expectRevert(tx, 'Not a white listed address')
+        await expect(tx).to.be.revertedWith('Not a white listed address')
       })
 
       it('Should allow fee collector to withdraw without fee', async function () {
@@ -338,7 +337,7 @@ async function shouldBehaveLikePool(poolName, collateralName) {
 
       it('Should not be able sweep reserved token', async function () {
         const tx = pool.sweepERC20(collateralToken.address)
-        await expectRevert(tx, 'not-allowed-to-sweep')
+        await expect(tx).to.be.revertedWith('not-allowed-to-sweep')
       })
     })
 

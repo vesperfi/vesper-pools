@@ -15,7 +15,15 @@
     "lint:fix": "eslint --cache --fix ./test --ext .js",
     "test": "hardhat test",
     "coverage": "hardhat coverage",
+<<<<<<< HEAD
     "prepare": "husky install"
+=======
+    "prepare": "husky install",
+    "postinstall": "patch-package",
+    "build": "npm run clean && npm run compile",
+    "clean": "npx hardhat clean",
+    "compile": "npx hardhat compile"
+>>>>>>> 5d1fc8e (Port 3Pool Strategy)
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.2",

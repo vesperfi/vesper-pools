@@ -133,14 +133,23 @@ async function createStrategies(obj, vPool) {
     const strategyTokenAddress = await strategy.instance.token()
     const strategyTokenName =
       strategyType === StrategyType.VESPER_MAKER ? IVesperPool : strategyType.includes('compound') ? CToken : TokenLike
-    strategy.token = await ethers.getContractAt(strategyTokenName, strategyTokenAddress)
+
+    if (strategyType === StrategyType.CURVE) {
+      // alias token.balanceOf to internal method for LP Balance
+      strategy.token = {
+        // eslint-disable-next-line no-unused-vars
+        async balanceOf(intentionallyDiscarded) { return strategy.instance.totalLp() }
+      }
+    } else {
+      strategy.token = await ethers.getContractAt(strategyTokenName, strategyTokenAddress)
+    }
   }
 }
 
 /**
  * @typedef {object} PoolData
  * @property {string} poolName - Pool name
- * @property {object []} strategies - Arrayu of strategy configuration
+ * @property {object []} strategies - Array of strategy configuration
  * @property {object} [vPool] - Optional. Vesper pool instance
  * @property {string} feeCollector - Fee collector address of pool
  */
