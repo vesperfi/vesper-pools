@@ -83,6 +83,7 @@ abstract contract AaveStrategy is Strategy, AaveCore {
      * @return profit in collateral token
      */
     function _realizeProfit(uint256 _totalDebt) internal override returns (uint256) {
+        _claimRewardsAndConvertTo(address(collateralToken));
         uint256 _aTokenBalance = aToken.balanceOf(address(this));
         if (_aTokenBalance > _totalDebt) {
             _withdraw(address(collateralToken), address(this), _aTokenBalance - _totalDebt);
