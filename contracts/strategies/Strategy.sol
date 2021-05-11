@@ -63,16 +63,12 @@ abstract contract Strategy is IStrategy, Context {
      * NOTE: Any function with onlyKeeper modifier will not work until this function is called.
      * NOTE: Due to gas constraint this function cannot be called in constructor.
      */
-    function createKeeperList() external onlyGovernor {
+    function init() external onlyGovernor {
         require(address(keepers) == address(0), "keeper-list-already-created");
         // Prepare keeper list
         IAddressListFactory _factory = IAddressListFactory(0xded8217De022706A191eE7Ee0Dc9df1185Fb5dA3);
         keepers = IAddressList(_factory.createList());
-        address _governor = IVesperPool(pool).governor();
-        require(keepers.add(_governor), "add-keeper-failed");
-        if (_msgSender() != _governor) {
-            require(keepers.add(_msgSender()), "add-keeper-failed");
-        }
+        require(keepers.add(_msgSender()), "add-keeper-failed");
     }
 
     /**
@@ -142,7 +138,7 @@ abstract contract Strategy is IStrategy, Context {
         } else {
             _loss = _totalDebt - _collateralHere;
         }
-        // Pool has a require check on (payback + profit = collateral in strategy)
+        // Pool has a require check on (payback + profit <= collateral in strategy)
         IVesperPool(pool).reportEarning(_profit, _loss, _collateralHere - _profit);
     }
 
