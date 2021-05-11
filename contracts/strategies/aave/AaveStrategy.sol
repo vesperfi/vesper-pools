@@ -115,6 +115,6 @@ abstract contract AaveStrategy is Strategy, AaveCore {
     }
 
     function _withdrawAll() internal override {
-        _withdraw(address(collateralToken), address(this), aToken.balanceOf(address(this)));
+        super._withdraw(address(collateralToken), address(this), aToken.balanceOf(address(this)));
     }
 }
