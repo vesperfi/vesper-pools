@@ -125,7 +125,7 @@ abstract contract Strategy is IStrategy, Context {
      * @dev To make withdrawAll fail safe, we bypass generateReport
      * function and prepared report here.
      */
-    function withdrawAll() external override onlyGovernor {
+    function withdrawAll() public override onlyGovernor {
         // Make sure to wtihdraw all collateral here
         _withdrawAll();
 
@@ -140,6 +140,14 @@ abstract contract Strategy is IStrategy, Context {
         }
         // Pool has a require check on (payback + profit <= collateral in strategy)
         IVesperPool(pool).reportEarning(_profit, _loss, _collateralHere - _profit);
+    }
+
+    /**
+     * @dev Rebalance earning and withdraw all collateral.
+     */
+    function withdrawAllWithEarn() external override onlyGovernor {
+        _claimRewardsAndConvertTo(address(collateralToken));
+        withdrawAll();
     }
 
     /**

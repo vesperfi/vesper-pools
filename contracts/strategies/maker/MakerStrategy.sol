@@ -34,14 +34,6 @@ abstract contract MakerStrategy is Strategy {
     }
 
     /**
-     * @dev Rebalance earning and withdraw all collateral.
-     */
-    function withdrawAllWithEarn() external onlyGovernor {
-        _realizeProfit(IVesperPool(pool).totalDebtOf(address(this)));
-        _withdrawAll();
-    }
-
-    /**
      * @dev If pool is underwater this function will resolve underwater condition.
      * If Debt in Maker is greater than Dai balance in lender then pool is underwater.
      * Lowering DAI debt in Maker will resolve underwater condtion.
@@ -254,7 +246,6 @@ abstract contract MakerStrategy is Strategy {
     }
 
     function _withdrawAll() internal override {
-        _claimRewardsAndConvertTo(address(collateralToken));
         _moveDaiToMaker(cm.getVaultDebt(address(this)));
         require(cm.getVaultDebt(address(this)) == 0, "debt-should-be-0");
         uint256 _collateralLocked = convertFrom18(cm.getVaultBalance(address(this)));
