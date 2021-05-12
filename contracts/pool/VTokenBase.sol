@@ -31,7 +31,7 @@ contract VTokenBase is PoolShareToken {
     event StrategyAdded(address indexed strategy, uint256 interestFee, uint256 debtRatio, uint256 debtRate);
     event UpdatedInterestFee(address indexed strategy, uint256 interestFee);
     event UpdatedStrategyDebtParams(address indexed strategy, uint256 debtRatio, uint256 debtRate);
-    event earningReported(
+    event EarningReported(
         address indexed strategy,
         uint256 profit,
         uint256 loss,
@@ -146,6 +146,7 @@ contract VTokenBase is PoolShareToken {
             });
         strategy[_strategy] = newStrategy;
         strategies.push(_strategy);
+        withdrawQueue.push(_strategy);
         emit StrategyAdded(_strategy, _interestFee, _debtRatio, _debtRate);
     }
 
@@ -171,9 +172,17 @@ contract VTokenBase is PoolShareToken {
         strategy[_old].debtRate = 0;
         strategy[_old].active = false;
         strategy[_new] = _newStrategy;
-        // TODO: old strategy is still in array.
-        strategies.push(_new);
+
         IStrategy(_old).migrate(_new);
+
+        // Strategies and withdrawQueue has same length but we still want
+        // to iterate over them in different loop.
+        for (uint256 i = 0; i < strategies.length; i++) {
+            if (strategies[i] == _old) {
+                strategies[i] = _new;
+                break;
+            }
+        }
         for (uint256 i = 0; i < withdrawQueue.length; i++) {
             if (withdrawQueue[i] == _old) {
                 withdrawQueue[i] = _new;
@@ -211,11 +220,11 @@ contract VTokenBase is PoolShareToken {
     }
 
     /// @dev update withdrawl queue
-    // TODO: make sure all strategy are in withdraw queue
-    // TODO: what happen if a strategy has fund but it is removed from withdraw queue?
-    function updateWithdrawQueue(address[] memory _withdrawQueue) public onlyMaintainer {
-        require(_withdrawQueue.length > 0, "withdrawal-queue-blank");
-        for (uint256 i = 0; i < _withdrawQueue.length; i++) {
+    function updateWithdrawQueue(address[] memory _withdrawQueue) external onlyMaintainer {
+        uint256 _length = _withdrawQueue.length;
+        require(_length > 0, "withdrawal-queue-blank");
+        require(_length == withdrawQueue.length && _length == strategies.length, "incorrect-withdraw-queue-length");
+        for (uint256 i = 0; i < _length; i++) {
             require(strategy[_withdrawQueue[i]].active, "invalid-strategy");
         }
         withdrawQueue = _withdrawQueue;
@@ -261,7 +270,7 @@ contract VTokenBase is PoolShareToken {
             strategy[_msgSender()].totalProfit += _profit;
             _transferInterestFee(_profit);
         }
-        emit earningReported(
+        emit EarningReported(
             _msgSender(),
             _profit,
             _loss,
