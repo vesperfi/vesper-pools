@@ -26,6 +26,7 @@ contract VTokenBase is PoolShareToken {
     address[] public withdrawQueue;
 
     IAddressList public keepers;
+    IAddressList public maintainers;
     address internal constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     event StrategyAdded(address indexed strategy, uint256 interestFee, uint256 debtRatio, uint256 debtRate);
     event UpdatedInterestFee(address indexed strategy, uint256 interestFee);
@@ -48,6 +49,11 @@ contract VTokenBase is PoolShareToken {
 
     modifier onlyKeeper() {
         require(keepers.contains(_msgSender()), "caller-is-not-a-keeper");
+        _;
+    }
+
+    modifier onlyMaintainer() {
+        require(maintainers.contains(_msgSender()), "caller-is-not-maintainer");
         _;
     }
 
@@ -78,16 +84,19 @@ contract VTokenBase is PoolShareToken {
     ////////////////////////////// Only Governor //////////////////////////////
 
     /**
-     * @notice Create keeper list
-     * @dev Create list and add governor into the list.
-     * NOTE: Any function with onlyKeeper modifier will not work until this function is called.
+     * @notice Create keeper and maintainer list
+     * @dev Create lists and add governor into the list.
+     * NOTE: Any function with onlyKeeper and onlyMaintainer modifier will not work until this function is called.
      * NOTE: Due to gas constraint this function cannot be called in constructor.
      */
-    function createKeeperList() external onlyGovernor {
-        require(address(keepers) == address(0), "keeper-list-already-created");
+    function init() external onlyGovernor {
+        require(address(keepers) == address(0), "list-already-created");
         IAddressListFactory _factory = IAddressListFactory(0xded8217De022706A191eE7Ee0Dc9df1185Fb5dA3);
         keepers = IAddressList(_factory.createList());
+        maintainers = IAddressList(_factory.createList());
+        // List creator i.e. governor can do job of keeper and maintainer.
         keepers.add(governor);
+        maintainers.add(governor);
     }
 
     /**
@@ -96,7 +105,7 @@ contract VTokenBase is PoolShareToken {
      * @param _listToUpdate address of AddressList contract.
      * @param _addressToAdd address which we want to add in AddressList.
      */
-    function addInList(address _listToUpdate, address _addressToAdd) external onlyGovernor {
+    function addInList(address _listToUpdate, address _addressToAdd) external onlyKeeper {
         require(!IAddressList(_listToUpdate).contains(_addressToAdd), "address-already-in-list");
         require(IAddressList(_listToUpdate).add(_addressToAdd), "add-in-list-failed");
     }
@@ -107,7 +116,7 @@ contract VTokenBase is PoolShareToken {
      * @param _listToUpdate address of AddressList contract.
      * @param _addressToRemove address which we want to remove from AddressList.
      */
-    function removeFromList(address _listToUpdate, address _addressToRemove) external onlyGovernor {
+    function removeFromList(address _listToUpdate, address _addressToRemove) external onlyKeeper {
         require(IAddressList(_listToUpdate).contains(_addressToRemove), "address-not-in-list");
         require(IAddressList(_listToUpdate).remove(_addressToRemove), "remove-from-list-failed");
     }
@@ -184,7 +193,7 @@ contract VTokenBase is PoolShareToken {
     /**
      * @dev Update debt ratio.  A strategy is retired when debtRatio is 0
      */
-    function updateDebtRatio(address _strategy, uint256 _debtRatio) external onlyGovernor {
+    function updateDebtRatio(address _strategy, uint256 _debtRatio) external onlyMaintainer {
         require(strategy[_strategy].active, "strategy-not-active");
         totalDebtRatio = totalDebtRatio - strategy[_strategy].debtRatio + _debtRatio;
         require(totalDebtRatio <= MAX_BPS, "totalDebtRatio-above-max_bps");
@@ -195,7 +204,7 @@ contract VTokenBase is PoolShareToken {
     /**
      * @dev Update debtRate per block.
      */
-    function updateDebtRate(address _strategy, uint256 _debtRate) external onlyGovernor {
+    function updateDebtRate(address _strategy, uint256 _debtRate) external onlyKeeper {
         require(strategy[_strategy].active, "strategy-not-active");
         strategy[_strategy].debtRate = _debtRate;
         emit UpdatedStrategyDebtParams(_strategy, strategy[_strategy].debtRatio, _debtRate);
@@ -204,7 +213,7 @@ contract VTokenBase is PoolShareToken {
     /// @dev update withdrawl queue
     // TODO: make sure all strategy are in withdraw queue
     // TODO: what happen if a strategy has fund but it is removed from withdraw queue?
-    function updateWithdrawQueue(address[] memory _withdrawQueue) public onlyGovernor {
+    function updateWithdrawQueue(address[] memory _withdrawQueue) public onlyMaintainer {
         require(_withdrawQueue.length > 0, "withdrawal-queue-blank");
         for (uint256 i = 0; i < _withdrawQueue.length; i++) {
             require(strategy[_withdrawQueue[i]].active, "invalid-strategy");
