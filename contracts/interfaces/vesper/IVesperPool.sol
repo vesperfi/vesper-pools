@@ -12,7 +12,7 @@ interface IVesperPool is IERC20 {
 
     function keepers() external returns (address);
 
-    function multiTransfer(uint256[] memory) external returns (bool);
+    function multiTransfer(address[] memory _recipients, uint256[] memory _amounts) external returns (bool);
 
     function excessDebt(address _strategy) external view returns (uint256);
 

@@ -6,6 +6,7 @@ import "./VTokenBase.sol";
 import "../interfaces/token/IToken.sol";
 
 contract VETH is VTokenBase {
+    string public constant VERSION = "3.0.0";
     TokenLike public immutable weth;
     bool private withdrawInETH = false;
 

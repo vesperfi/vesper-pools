@@ -92,7 +92,7 @@ async function createVesperMakerStrategy(obj, strategyName, vPool) {
   await strategyInstance.createVault()
   obj.vaultNum = await strategyInstance.vaultNum()
   await Promise.all([strategyInstance.updateBalancingFactor(300, 250), obj.collateralManager.addGemJoin(gemJoins)])
-  const feeList = await vPool.feeWhiteList()
+  const feeList = await vPool.feeWhitelist()
   await vPool.addInList(feeList, strategyInstance.address)
   return strategyInstance
 }

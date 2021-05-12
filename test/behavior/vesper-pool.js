@@ -263,7 +263,7 @@ async function shouldBehaveLikePool(poolName, collateralName) {
         const withdrawAmount = await pool.balanceOf(user2.address)
         await pool.connect(user2.signer).withdraw(withdrawAmount)
         // Add fee collector to fee white list
-        const target = await pool.feeWhiteList()
+        const target = await pool.feeWhitelist()
         await pool.addInList(target, feeCollector)
         const feeCollected = await pool.balanceOf(feeCollector)
         const signer = await ethers.getSigner(feeCollector)

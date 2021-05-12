@@ -236,7 +236,7 @@ contract CollateralManager is ICollateralManager, DSMath, ReentrancyGuard, Gover
 
     /// @dev sweep given ERC20 token to treasury pool
     function sweepErc20(address _fromToken) external {
-        require(treasury != address(0), "treasury-address-is-zero");
+        require(treasury != address(0), "treasury-not-set");
         uint256 amount = IERC20(_fromToken).balanceOf(address(this));
         IERC20(_fromToken).safeTransfer(treasury, amount);
     }
