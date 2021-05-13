@@ -14,10 +14,9 @@ import "../interfaces/bloq/IAddressListFactory.sol";
 // solhint-disable no-empty-blocks
 abstract contract PoolShareToken is ERC20Permit, Pausable, ReentrancyGuard, Governed {
     using SafeERC20 for IERC20;
-    string public constant VERSION = "3.0.0";
     IERC20 public immutable token;
-    IAddressList public immutable feeWhiteList;
-    uint256 public constant MAX_BPS = 10000;
+    IAddressList public immutable feeWhitelist;
+    uint256 public constant MAX_BPS = 10_000;
     address public feeCollector; // fee collector address
     uint256 public withdrawFee; // withdraw fee for this pool
 
@@ -33,8 +32,8 @@ abstract contract PoolShareToken is ERC20Permit, Pausable, ReentrancyGuard, Gove
     ) ERC20Permit(_name) ERC20(_name, _symbol) {
         token = IERC20(_token);
         IAddressListFactory factory = IAddressListFactory(0xded8217De022706A191eE7Ee0Dc9df1185Fb5dA3);
-        IAddressList _feeWhiteList = IAddressList(factory.createList());
-        feeWhiteList = _feeWhiteList;
+        IAddressList _feeWhitelist = IAddressList(factory.createList());
+        feeWhitelist = _feeWhitelist;
     }
 
     /**
@@ -42,7 +41,7 @@ abstract contract PoolShareToken is ERC20Permit, Pausable, ReentrancyGuard, Gove
      * @param _newFeeCollector new fee collector address
      */
     function updateFeeCollector(address _newFeeCollector) external onlyGovernor {
-        require(_newFeeCollector != address(0), "fee-collector-is-zero-address");
+        require(_newFeeCollector != address(0), "fee-collector-address-is-zero");
         require(feeCollector != _newFeeCollector, "same-fee-collector");
         emit UpdatedFeeCollector(feeCollector, _newFeeCollector);
         feeCollector = _newFeeCollector;
@@ -105,21 +104,21 @@ abstract contract PoolShareToken is ERC20Permit, Pausable, ReentrancyGuard, Gove
      * @param _shares Pool shares. It will be in 18 decimals.
      */
     function withdrawByStrategy(uint256 _shares) external virtual nonReentrant whenNotShutdown {
-        require(feeWhiteList.get(_msgSender()) != 0, "Not a white listed address");
+        require(feeWhitelist.contains(_msgSender()), "not-a-white-listed-address");
         _withdrawWithoutFee(_shares);
     }
 
     /**
      * @notice Transfer tokens to multiple recipient
-     * @dev Left 160 bits are the recipient address and the right 96 bits are the token amount.
-     * @param _bits array of uint
+     * @dev Address array and amount array are 1:1 and are in order.
+     * @param _recipients array of receipient addresses
+     * @param _amounts array of token amounts
      * @return true/false
      */
-    function multiTransfer(uint256[] memory _bits) external returns (bool) {
-        for (uint256 i = 0; i < _bits.length; i++) {
-            address a = address(uint160(_bits[i] >> 96));
-            uint256 amount = _bits[i] & ((1 << 96) - 1);
-            require(transfer(a, amount), "Transfer failed");
+    function multiTransfer(address[] memory _recipients, uint256[] memory _amounts) external returns (bool) {
+        require(_recipients.length == _amounts.length, "input-length-mismatch");
+        for (uint256 i = 0; i < _recipients.length; i++) {
+            require(transfer(_recipients[i], _amounts[i]), "multi-transfer-failed");
         }
         return true;
     }
@@ -189,7 +188,7 @@ abstract contract PoolShareToken is ERC20Permit, Pausable, ReentrancyGuard, Gove
      */
     // TODO: handle rounding effect
     function _calculateShares(uint256 _amount) internal view returns (uint256) {
-        require(_amount != 0, "amount is 0");
+        require(_amount != 0, "amount-is-0");
         return (_amount * 1e18) / pricePerShare();
     }
 
@@ -207,7 +206,7 @@ abstract contract PoolShareToken is ERC20Permit, Pausable, ReentrancyGuard, Gove
         if (withdrawFee == 0) {
             _withdrawWithoutFee(_shares);
         } else {
-            require(_shares != 0, "share is 0");
+            require(_shares != 0, "share-is-0");
             uint256 _fee = (_shares * withdrawFee) / MAX_BPS;
             uint256 _sharesAfterFee = _shares - _fee;
             uint256 _amountWithdrawn = _beforeBurning(_sharesAfterFee);
@@ -228,7 +227,7 @@ abstract contract PoolShareToken is ERC20Permit, Pausable, ReentrancyGuard, Gove
 
     /// @dev Burns shares and returns the collateral value of those.
     function _withdrawWithoutFee(uint256 _shares) internal {
-        require(_shares != 0, "share is 0");
+        require(_shares != 0, "share-is-0");
         uint256 _amountWithdrawn = _beforeBurning(_shares);
         uint256 _proportionalShares = _calculateShares(_amountWithdrawn);
         if (_proportionalShares < _shares) {

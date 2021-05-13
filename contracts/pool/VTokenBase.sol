@@ -101,7 +101,7 @@ contract VTokenBase is PoolShareToken {
 
     /**
      * @notice Add given address in provided address list.
-     * @dev Use it to add keeper in keepers list and to add address in feeWhiteList
+     * @dev Use it to add keeper in keepers list and to add address in feeWhitelist
      * @param _listToUpdate address of AddressList contract.
      * @param _addressToAdd address which we want to add in AddressList.
      */
@@ -112,7 +112,7 @@ contract VTokenBase is PoolShareToken {
 
     /**
      * @notice Remove given address from provided address list.
-     * @dev Use it to remove keeper from keepers list and to remove address from feeWhiteList
+     * @dev Use it to remove keeper from keepers list and to remove address from feeWhitelist
      * @param _listToUpdate address of AddressList contract.
      * @param _addressToRemove address which we want to remove from AddressList.
      */

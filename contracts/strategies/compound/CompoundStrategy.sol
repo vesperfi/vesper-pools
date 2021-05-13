@@ -14,7 +14,7 @@ abstract contract CompoundStrategy is Strategy {
     Comptroller internal constant COMPTROLLER = Comptroller(0x3d9819210A31b4961b30EF54bE2aeD79B9c9Cd3B);
 
     constructor(address _pool, address _receiptToken) Strategy(_pool, _receiptToken) {
-        require(_receiptToken != address(0), "cToken-is-zero-address");
+        require(_receiptToken != address(0), "cToken-address-is-zero");
         cToken = CToken(_receiptToken);
     }
 
