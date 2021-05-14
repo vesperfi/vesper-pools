@@ -180,6 +180,11 @@ abstract contract Strategy is IStrategy, Context {
         return receiptToken;
     }
 
+    /// @dev Convert from 18 decimals to token defined decimals. Default no conversion.
+    function convertFrom18(uint256 amount) public pure virtual returns (uint256) {
+        return amount;
+    }
+
     /**
      * @notice Calculate total value of asset under management
      * @dev Report total value in collateral token

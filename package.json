@@ -15,7 +15,10 @@
     "lint:fix": "eslint --cache --fix ./test --ext .js",
     "test": "hardhat test",
     "coverage": "hardhat coverage",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "build": "npm run clean && npm run compile",
+    "clean": "npx hardhat clean",
+    "compile": "npx hardhat compile"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.2",

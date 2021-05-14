@@ -93,11 +93,6 @@ abstract contract MakerStrategy is Strategy {
         return cm.getVaultDebt(address(this)) > _getDaiBalance();
     }
 
-    /// @dev Convert from 18 decimals to token defined decimals. Default no conversion.
-    function convertFrom18(uint256 _amount) public pure virtual returns (uint256) {
-        return _amount;
-    }
-
     /**
      * @notice Before migration hook. It will be called during migration
      * @dev Transfer Maker vault ownership to new strategy
