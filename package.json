@@ -14,11 +14,13 @@
     "lint": "eslint --cache ./test/*",
     "lint:fix": "eslint --cache --fix ./test --ext .js",
     "test": "hardhat test",
+    "deploy": "hardhat deploy",
+    "verify": "hardhat etherscan-verify --api-key",
     "coverage": "hardhat coverage",
     "prepare": "husky install"
   },
   "devDependencies": {
-    "@nomiclabs/hardhat-ethers": "^2.0.2",
+    "@nomiclabs/hardhat-ethers": "npm:hardhat-deploy-ethers@^0.3.0-beta.7",
     "@nomiclabs/hardhat-waffle": "^2.0.1",
     "@openzeppelin/contracts": "^4.0.0",
     "@openzeppelin/test-helpers": "^0.5.11",
@@ -42,6 +44,7 @@
     "ethereum-waffle": "^3.3.0",
     "ethers": "^5.1.4",
     "hardhat": "^2.2.1",
+    "hardhat-deploy": "^0.7.5",
     "hardhat-log-remover": "^2.0.1",
     "husky": "^6.0.0",
     "ledger-provider": "github:bloq/ledger-provider",
