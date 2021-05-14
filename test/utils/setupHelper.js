@@ -56,7 +56,7 @@ async function deployContract(name, params) {
  */
 async function addStrategiesInPool(obj) {
   for (const strategy of obj.strategies) {
-    await obj.pool.addStrategy(strategy.instance.address, 1, ...Object.values(strategy.config))
+    await obj.pool.addStrategy(strategy.instance.address, ...Object.values(strategy.config))
   }
 }
 
@@ -157,7 +157,7 @@ async function setupVPool(obj, poolData) {
   obj.feeCollector = feeCollector
 
   obj.pool = await deployContract(poolName)
-  await obj.pool.createKeeperList()
+  await obj.pool.init()
   await createStrategies(obj, vPool)
   await addStrategiesInPool(obj)
 
