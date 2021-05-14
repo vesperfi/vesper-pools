@@ -10,7 +10,11 @@ abstract contract AaveStrategy is Strategy, AaveCore {
     using SafeERC20 for IERC20;
 
     //solhint-disable-next-line no-empty-blocks
-    constructor(address _pool, address _receiptToken) Strategy(_pool, _receiptToken) AaveCore(_receiptToken) {}
+    constructor(
+        address _pool,
+        address _swapManager,
+        address _receiptToken
+    ) Strategy(_pool, _swapManager, _receiptToken) AaveCore(_receiptToken) {}
 
     /// @notice Initiate cooldown to unstake aave.
     function startCooldown() external onlyKeeper returns (bool) {
@@ -44,9 +48,11 @@ abstract contract AaveStrategy is Strategy, AaveCore {
 
     /// @notice Large approval of token
     function _approveToken(uint256 _amount) internal override {
-        collateralToken.safeApprove(pool, _amount);
-        collateralToken.safeApprove(address(aaveLendingPool), _amount);
-        IERC20(AAVE).safeApprove(address(UniMgr.ROUTER()), _amount);
+        collateralToken.approve(pool, _amount);
+        collateralToken.approve(address(aaveLendingPool), _amount);
+        for (uint256 i = 0; i < swapManager.N_DEX(); i++) {
+            IERC20(AAVE).approve(address(swapManager.ROUTERS(i)), _amount);
+        }
     }
 
     /**
@@ -64,7 +70,7 @@ abstract contract AaveStrategy is Strategy, AaveCore {
     function _claimRewardsAndConvertTo(address _toToken) internal override {
         uint256 _aaveAmount = _claimAave();
         if (_aaveAmount > 0) {
-            _safeSwap(AAVE, _toToken, _aaveAmount);
+            _safeSwap(AAVE, _toToken, _aaveAmount, 1);
         }
     }
 

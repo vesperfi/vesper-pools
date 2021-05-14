@@ -13,7 +13,11 @@ abstract contract CompoundStrategy is Strategy {
     address internal constant COMP = 0xc00e94Cb662C3520282E6f5717214004A7f26888;
     Comptroller internal constant COMPTROLLER = Comptroller(0x3d9819210A31b4961b30EF54bE2aeD79B9c9Cd3B);
 
-    constructor(address _pool, address _receiptToken) Strategy(_pool, _receiptToken) {
+    constructor(
+        address _pool,
+        address _swapManager,
+        address _receiptToken
+    ) Strategy(_pool, _swapManager, _receiptToken) {
         require(_receiptToken != address(0), "cToken-address-is-zero");
         cToken = CToken(_receiptToken);
     }
@@ -25,7 +29,7 @@ abstract contract CompoundStrategy is Strategy {
     function totalValue() external view override returns (uint256 _totalValue) {
         uint256 _compAccrued = COMPTROLLER.compAccrued(address(this));
         if (_compAccrued != 0) {
-            (, _totalValue) = UniMgr.bestPathFixedInput(COMP, address(collateralToken), _compAccrued);
+            (, _totalValue) = swapManager.bestPathFixedInput(COMP, address(collateralToken), _compAccrued, 0);
         }
         _totalValue += _convertToCollateral(cToken.balanceOf(address(this)));
     }
@@ -36,9 +40,11 @@ abstract contract CompoundStrategy is Strategy {
 
     /// @notice Approve all required tokens
     function _approveToken(uint256 _amount) internal override {
-        collateralToken.safeApprove(pool, _amount);
-        collateralToken.safeApprove(address(cToken), _amount);
-        IERC20(COMP).safeApprove(address(UniMgr.ROUTER()), _amount);
+        collateralToken.approve(pool, _amount);
+        collateralToken.approve(address(cToken), _amount);
+        for (uint256 i = 0; i < swapManager.N_DEX(); i++) {
+            IERC20(COMP).approve(address(swapManager.ROUTERS(i)), _amount);
+        }
     }
 
     /**
@@ -62,7 +68,7 @@ abstract contract CompoundStrategy is Strategy {
         _claimComp();
         uint256 _compAmount = IERC20(COMP).balanceOf(address(this));
         if (_compAmount != 0) {
-            _safeSwap(COMP, _toToken, _compAmount);
+            _safeSwap(COMP, _toToken, _compAmount, 1);
         }
     }
 

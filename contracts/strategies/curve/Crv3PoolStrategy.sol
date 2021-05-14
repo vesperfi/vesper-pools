@@ -16,7 +16,11 @@ abstract contract Crv3PoolStrategy is Crv3PoolMgr, Strategy {
     uint256 public immutable collIdx;
     uint256 public prevLpRate;
 
-    constructor(address _pool, uint256 _collateralIdx) Strategy(_pool, THREECRV) Crv3PoolMgr() {
+    constructor(
+        address _pool,
+        address _swapManager,
+        uint256 _collateralIdx
+    ) Strategy(_pool, _swapManager, THREECRV) Crv3PoolMgr() {
         require(_collateralIdx < COINS.length, "Invalid collateral for 3Pool");
         require(COIN_ADDRS[_collateralIdx] == IVesperPool(_pool).token(), "Collateral does not match");
         reservedToken[THREECRV] = true;
@@ -33,7 +37,9 @@ abstract contract Crv3PoolStrategy is Crv3PoolMgr, Strategy {
     function _approveToken(uint256 _amount) internal override {
         collateralToken.approve(pool, _amount);
         collateralToken.approve(crvPool, _amount);
-        IERC20(CRV).approve(address(UniMgr.ROUTER()), _amount);
+        for (uint256 i = 0; i < swapManager.N_DEX(); i++) {
+            IERC20(CRV).approve(address(swapManager.ROUTERS(i)), _amount);
+        }
         IERC20(crvLp).approve(crvGauge, _amount);
     }
 
@@ -62,11 +68,7 @@ abstract contract Crv3PoolStrategy is Crv3PoolMgr, Strategy {
         if (_amount == 0) return 0;
         (uint256 lpToWithdraw, uint256 unstakeAmt) = calcWithdrawLpAs(_amount, collIdx);
         _unstakeLpFromGauge(unstakeAmt);
-        _withdrawAsFromCrvPool(
-            lpToWithdraw,
-            estimateFeeImpact(convertFrom18((lpToWithdraw * (prevLpRate)) / (1e18))),
-            collIdx
-        );
+        _withdrawAsFromCrvPool(lpToWithdraw, convertFrom18(minimumLpPrice()), collIdx);
         return collateralToken.balanceOf(address(this));
     }
 
@@ -92,7 +94,7 @@ abstract contract Crv3PoolStrategy is Crv3PoolMgr, Strategy {
         _claimCrv();
         uint256 amt = IERC20(CRV).balanceOf(address(this));
         if (amt != 0) {
-            _safeSwap(CRV, _toToken, amt);
+            _safeSwap(CRV, _toToken, amt, 1);
         }
     }
 

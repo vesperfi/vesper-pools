@@ -11,5 +11,7 @@ contract CompoundStrategyUSDC is CompoundStrategy {
     string public constant VERSION = "3.0.0";
 
     // cUSDC = 0x39AA39c021dfbaE8faC545936693aC917d5E7563
-    constructor(address _pool) CompoundStrategy(_pool, 0x39AA39c021dfbaE8faC545936693aC917d5E7563) {}
+    constructor(address _pool, address _swapManager)
+        CompoundStrategy(_pool, _swapManager, 0x39AA39c021dfbaE8faC545936693aC917d5E7563)
+    {}
 }

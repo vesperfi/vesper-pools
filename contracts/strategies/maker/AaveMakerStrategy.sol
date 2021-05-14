@@ -14,9 +14,10 @@ abstract contract AaveMakerStrategy is MakerStrategy, AaveCore {
     constructor(
         address _pool,
         address _cm,
+        address _swapManager,
         address _receiptToken,
         bytes32 _collateralType
-    ) MakerStrategy(_pool, _cm, _receiptToken, _collateralType) AaveCore(_receiptToken) {}
+    ) MakerStrategy(_pool, _cm, _swapManager, _receiptToken, _collateralType) AaveCore(_receiptToken) {}
 
     /// @notice Initiate cooldown to unstake aave.
     function startCooldown() external onlyKeeper returns (bool) {
@@ -43,8 +44,10 @@ abstract contract AaveMakerStrategy is MakerStrategy, AaveCore {
 
     function _approveToken(uint256 _amount) internal override {
         super._approveToken(_amount);
-        IERC20(DAI).safeApprove(address(aaveLendingPool), _amount);
-        IERC20(AAVE).safeApprove(address(UniMgr.ROUTER()), _amount);
+        IERC20(DAI).approve(address(aaveLendingPool), _amount);
+        for (uint256 i = 0; i < swapManager.N_DEX(); i++) {
+            IERC20(AAVE).approve(address(swapManager.ROUTERS(i)), _amount);
+        }
     }
 
     /**
@@ -60,7 +63,7 @@ abstract contract AaveMakerStrategy is MakerStrategy, AaveCore {
     function _claimRewardsAndConvertTo(address _toToken) internal override {
         uint256 _aaveAmount = _claimAave();
         if (_aaveAmount > 0) {
-            _safeSwap(AAVE, _toToken, _aaveAmount);
+            _safeSwap(AAVE, _toToken, _aaveAmount, 1);
         }
     }
 

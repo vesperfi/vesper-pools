@@ -17,9 +17,10 @@ abstract contract CompoundMakerStrategy is MakerStrategy {
     constructor(
         address _pool,
         address _cm,
+        address _swapManager,
         address _receiptToken,
         bytes32 _collateralType
-    ) MakerStrategy(_pool, _cm, _receiptToken, _collateralType) {
+    ) MakerStrategy(_pool, _cm, _swapManager, _receiptToken, _collateralType) {
         require(_receiptToken != address(0), "cToken-address-is-zero");
         cToken = CToken(_receiptToken);
     }
@@ -34,12 +35,13 @@ abstract contract CompoundMakerStrategy is MakerStrategy {
         uint256 _debt = cm.getVaultDebt(address(this));
         if (_daiBalance > _debt) {
             uint256 _daiEarned = _daiBalance - _debt;
-            (, _totalValue) = UniMgr.bestPathFixedInput(DAI, address(collateralToken), _daiEarned);
+            (, _totalValue) = swapManager.bestPathFixedInput(DAI, address(collateralToken), _daiEarned, 0);
         }
 
         uint256 _compAccrued = COMPTROLLER.compAccrued(address(this));
         if (_compAccrued != 0) {
-            (, uint256 _compAsCollateral) = UniMgr.bestPathFixedInput(COMP, address(collateralToken), _compAccrued);
+            (, uint256 _compAsCollateral) =
+                swapManager.bestPathFixedInput(COMP, address(collateralToken), _compAccrued, 0);
             _totalValue += _compAsCollateral;
         }
         _totalValue += convertFrom18(cm.getVaultBalance(address(this)));
@@ -61,7 +63,7 @@ abstract contract CompoundMakerStrategy is MakerStrategy {
         uint256 _compAccrued = COMPTROLLER.compAccrued(address(this));
         uint256 _daiEarned;
         if (_compAccrued != 0) {
-            (, _daiEarned) = UniMgr.bestPathFixedInput(COMP, DAI, _compAccrued);
+            (, _daiEarned) = swapManager.bestPathFixedInput(COMP, DAI, _compAccrued, 0);
         }
         return cm.getVaultDebt(address(this)) > (_getDaiBalance() + _daiEarned);
     }
@@ -69,7 +71,9 @@ abstract contract CompoundMakerStrategy is MakerStrategy {
     function _approveToken(uint256 _amount) internal override {
         super._approveToken(_amount);
         IERC20(DAI).safeApprove(address(receiptToken), _amount);
-        IERC20(COMP).safeApprove(address(UniMgr.ROUTER()), _amount);
+        for (uint256 i = 0; i < swapManager.N_DEX(); i++) {
+            IERC20(COMP).approve(address(swapManager.ROUTERS(i)), _amount);
+        }
     }
 
     /// @notice Claim rewardToken from lender and convert it into DAI
@@ -80,7 +84,7 @@ abstract contract CompoundMakerStrategy is MakerStrategy {
 
         uint256 _compAmount = IERC20(COMP).balanceOf(address(this));
         if (_compAmount > 0) {
-            _safeSwap(COMP, _toToken, _compAmount);
+            _safeSwap(COMP, _toToken, _compAmount, 1);
         }
     }
 

@@ -14,6 +14,8 @@ const CToken = 'CToken'
 const TokenLike = 'TokenLikeTest'
 const CollateralManager = 'CollateralManager'
 
+let swapManager
+
 /**
  * @typedef {object} User
  * @property {any} signer - ethers.js signer instance of user
@@ -68,7 +70,8 @@ async function addStrategiesInPool(obj) {
  */
 async function createMakerStrategy(obj, strategyName) {
   obj.collateralManager = await deployContract(CollateralManager)
-  const strategyInstance = await deployContract(strategyName, [obj.pool.address, obj.collateralManager.address])
+  const strategyInstance = 
+    await deployContract(strategyName, [obj.pool.address, obj.collateralManager.address, swapManager.address])
   await strategyInstance.createVault()
   obj.vaultNum = await strategyInstance.vaultNum()
   await Promise.all([strategyInstance.updateBalancingFactor(300, 250), obj.collateralManager.addGemJoin(gemJoins)])
@@ -87,6 +90,7 @@ async function createVesperMakerStrategy(obj, strategyName, vPool) {
   const strategyInstance = await deployContract(strategyName, [
     obj.pool.address,
     obj.collateralManager.address,
+    swapManager.address,
     vPool.address,
   ])
   await strategyInstance.createVault()
@@ -104,6 +108,9 @@ async function createVesperMakerStrategy(obj, strategyName, vPool) {
  * @param {object} [vPool] Vesper pool object
  */
 async function createStrategies(obj, vPool) {
+  const SWAP = await ethers.getContractFactory('SwapManager')
+  swapManager = await SWAP.deploy()
+  await swapManager.deployed()
   for (const strategy of obj.strategies) {
     const strategyType = strategy.type
     if (strategyType === StrategyType.AAVE_MAKER || strategyType === StrategyType.COMPOUND_MAKER) {
@@ -111,7 +118,7 @@ async function createStrategies(obj, vPool) {
     } else if (strategyType === StrategyType.VESPER_MAKER) {
       strategy.instance = await createVesperMakerStrategy(obj, strategy.name, vPool)
     } else {
-      strategy.instance = await deployContract(strategy.name, [obj.pool.address])
+      strategy.instance = await deployContract(strategy.name, [obj.pool.address, swapManager.address])
     }
     strategy.strategyType = strategyType
     await strategy.instance.init()

@@ -21,9 +21,10 @@ abstract contract MakerStrategy is Strategy {
     constructor(
         address _pool,
         address _cm,
+        address _swapManager,
         address _receiptToken,
         bytes32 _collateralType
-    ) Strategy(_pool, _receiptToken) {
+    ) Strategy(_pool, _swapManager, _receiptToken) {
         collateralType = _collateralType;
         cm = ICollateralManager(_cm);
     }
@@ -70,7 +71,7 @@ abstract contract MakerStrategy is Strategy {
         uint256 _debt = cm.getVaultDebt(address(this));
         if (_daiBalance > _debt) {
             uint256 _daiEarned = _daiBalance - _debt;
-            (, _totalValue) = UniMgr.bestPathFixedInput(DAI, address(collateralToken), _daiEarned);
+            (, _totalValue) = swapManager.bestPathFixedInput(DAI, address(collateralToken), _daiEarned, 0);
         }
         _totalValue += convertFrom18(cm.getVaultBalance(address(this)));
     }
@@ -103,11 +104,13 @@ abstract contract MakerStrategy is Strategy {
     }
 
     function _approveToken(uint256 _amount) internal virtual override {
-        IERC20(DAI).safeApprove(address(cm), _amount);
-        IERC20(DAI).safeApprove(address(UniMgr.ROUTER()), _amount);
-        collateralToken.safeApprove(address(cm), _amount);
-        collateralToken.safeApprove(pool, _amount);
-        collateralToken.safeApprove(address(UniMgr.ROUTER()), _amount);
+        IERC20(DAI).approve(address(cm), _amount);
+        collateralToken.approve(address(cm), _amount);
+        collateralToken.approve(pool, _amount);
+        for (uint256 i = 0; i < swapManager.N_DEX(); i++) {
+            collateralToken.approve(address(swapManager.ROUTERS(i)), _amount);
+            IERC20(DAI).approve(address(swapManager.ROUTERS(i)), _amount);
+        }
     }
 
     function _moveDaiToMaker(uint256 _amount) internal {
@@ -147,7 +150,7 @@ abstract contract MakerStrategy is Strategy {
         _rebalanceDaiInLender();
         uint256 _daiBalance = IERC20(DAI).balanceOf(address(this));
         if (_daiBalance != 0) {
-            _safeSwap(DAI, address(collateralToken), _daiBalance);
+            _safeSwap(DAI, address(collateralToken), _daiBalance, 1);
         }
         return collateralToken.balanceOf(address(this));
     }
@@ -204,11 +207,17 @@ abstract contract MakerStrategy is Strategy {
         uint256 _daiDebt = cm.getVaultDebt(address(this));
         require(_daiDebt > _daiBalance, "pool-is-above-water");
         uint256 _daiNeeded = _daiDebt - _daiBalance;
-        (address[] memory _path, uint256 _collateralNeeded) =
-            UniMgr.bestPathFixedOutput(address(collateralToken), DAI, _daiNeeded);
+        (address[] memory _path, uint256 _collateralNeeded, uint256 rIdx) =
+            swapManager.bestInputFixedOutput(address(collateralToken), DAI, _daiNeeded);
         if (_collateralNeeded != 0) {
             cm.withdrawCollateral(_collateralNeeded);
-            UniMgr.ROUTER().swapExactTokensForTokens(_collateralNeeded, 1, _path, address(this), block.timestamp + 30);
+            swapManager.ROUTERS(rIdx).swapExactTokensForTokens(
+                _collateralNeeded,
+                1,
+                _path,
+                address(this),
+                block.timestamp + 30
+            );
             cm.payback(IERC20(DAI).balanceOf(address(this)));
         }
     }

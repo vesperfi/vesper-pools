@@ -9,5 +9,5 @@ contract Crv3PoolStrategyDAI is Crv3PoolStrategy {
     string public constant NAME = "Strategy-Curve-3pool-DAI";
     string public constant VERSION = "1.0.0";
 
-    constructor(address _pool) Crv3PoolStrategy(_pool, 0) {}
+    constructor(address _pool, address _swapManager) Crv3PoolStrategy(_pool, _swapManager, 0) {}
 }
