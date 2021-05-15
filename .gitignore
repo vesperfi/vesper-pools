@@ -20,3 +20,6 @@ cache
 coverage
 coverage.json
 .coverage*
+
+*.iml
+.idea

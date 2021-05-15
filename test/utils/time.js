@@ -8,8 +8,12 @@ const {BigNumber} = require('ethers')
 // Modified to support hardhat and ethers
 /* eslint-disable */
 
-function advanceBlock() {
-  return ethers.provider.send('evm_mine')
+async function advanceBlock(blockCount = 1) {
+  if (blockCount === 1) {
+    return ethers.provider.send('evm_mine')
+  }
+  const block = await latestBlock()
+  return advanceBlockTo(block.add(blockCount))
 }
 
 // Advance the block to the passed height
