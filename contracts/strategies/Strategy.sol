@@ -4,7 +4,7 @@ pragma solidity 0.8.3;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
-import "../UniswapManager.sol";
+import "../interfaces/bloq/ISwapManager.sol";
 import "../interfaces/bloq/IAddressList.sol";
 import "../interfaces/bloq/IAddressListFactory.sol";
 import "../interfaces/vesper/IStrategy.sol";
@@ -13,22 +13,28 @@ import "../interfaces/vesper/IVesperPool.sol";
 abstract contract Strategy is IStrategy, Context {
     using SafeERC20 for IERC20;
 
-    // solhint-disable-next-line var-name-mixedcase
-    UniswapManager public immutable UniMgr;
     IERC20 public immutable collateralToken;
     address public immutable receiptToken;
     address public immutable override pool;
     IAddressList public keepers;
     address public override feeCollector;
+    ISwapManager public swapManager;
+
     address internal constant ETH = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
     address internal constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     uint256 internal constant MAX_UINT_VALUE = type(uint256).max;
 
     event UpdatedFeeCollector(address indexed previousFeeCollector, address indexed newFeeCollector);
+    event UpdatedSwapManager(address indexed previousSwapManager, address indexed newSwapManager);
 
-    constructor(address _pool, address _receiptToken) {
+    constructor(
+        address _pool,
+        address _swapManager,
+        address _receiptToken
+    ) {
         require(_pool != address(0), "pool-address-is-zero");
-        UniMgr = new UniswapManager();
+        require(_swapManager != address(0), "sm-address-is-zero");
+        swapManager = ISwapManager(_swapManager);
         pool = _pool;
         collateralToken = IERC20(IVesperPool(_pool).token());
         receiptToken = _receiptToken;
@@ -102,6 +108,17 @@ abstract contract Strategy is IStrategy, Context {
         require(_feeCollector != feeCollector, "fee-collector-is-same");
         emit UpdatedFeeCollector(feeCollector, _feeCollector);
         feeCollector = _feeCollector;
+    }
+
+    /**
+     * @notice Update swap manager address
+     * @param _swapManager swap manager address
+     */
+    function updateSwapManager(address _swapManager) external onlyGovernor {
+        require(_swapManager != address(0), "sm-address-is-zero");
+        require(_swapManager != address(swapManager), "sm-is-same");
+        emit UpdatedSwapManager(address(swapManager), _swapManager);
+        swapManager = ISwapManager(_swapManager);
     }
 
     /// @dev Approve all required tokens
@@ -225,21 +242,31 @@ abstract contract Strategy is IStrategy, Context {
     }
 
     /**
-     * @notice Safe swap via Uniswap
+     * @notice Safe swap via Uniswap / Sushiswap (better rate of the two)
      * @dev There are many scenarios when token swap via Uniswap can fail, so this
      * method will wrap Uniswap call in a 'try catch' to make it fail safe.
      * @param _from address of from token
      * @param _to address of to token
-     * @param _amount Amount to be swapped
+     * @param _amountIn Amount to be swapped
+     * @param _minAmountOut minimum acceptable return amount
      */
     function _safeSwap(
         address _from,
         address _to,
-        uint256 _amount
+        uint256 _amountIn,
+        uint256 _minAmountOut
     ) internal {
-        (address[] memory _path, uint256 amountOut) = UniMgr.bestPathFixedInput(_from, _to, _amount);
+        (address[] memory path, uint256 amountOut, uint256 rIdx) =
+            swapManager.bestOutputFixedInput(_from, _to, _amountIn);
+        if (_minAmountOut == 0) _minAmountOut = 1;
         if (amountOut != 0) {
-            UniMgr.ROUTER().swapExactTokensForTokens(_amount, 1, _path, address(this), block.timestamp + 30);
+            swapManager.ROUTERS(rIdx).swapExactTokensForTokens(
+                _amountIn,
+                _minAmountOut,
+                path,
+                address(this),
+                block.timestamp + 30
+            );
         }
     }
 

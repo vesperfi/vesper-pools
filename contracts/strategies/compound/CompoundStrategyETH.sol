@@ -12,7 +12,9 @@ contract CompoundStrategyETH is CompoundStrategy {
     string public constant VERSION = "3.0.0";
 
     // cETH = 0x4Ddc2D193948926D02f9B1fE9e1daa0718270ED5
-    constructor(address _pool) CompoundStrategy(_pool, 0x4Ddc2D193948926D02f9B1fE9e1daa0718270ED5) {}
+    constructor(address _pool, address _swapManager)
+        CompoundStrategy(_pool, _swapManager, 0x4Ddc2D193948926D02f9B1fE9e1daa0718270ED5)
+    {}
 
     /// @dev Only receive ETH from either cToken or WETH
     receive() external payable {

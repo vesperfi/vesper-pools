@@ -12,6 +12,7 @@ contract VesperMakerStrategyETH is VesperMakerStrategy {
     constructor(
         address _pool,
         address _cm,
+        address _swapManager,
         address _vPool
-    ) VesperMakerStrategy(_pool, _cm, _vPool, "ETH-A") {}
+    ) VesperMakerStrategy(_pool, _cm, _swapManager, _vPool, "ETH-A") {}
 }

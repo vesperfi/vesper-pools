@@ -11,7 +11,9 @@ contract CompoundMakerStrategyETH is CompoundMakerStrategy {
     string public constant VERSION = "3.0.0";
 
     // cDAI = 0x5d3a536E4D6DbD6114cc1Ead35777bAB948E3643
-    constructor(address _pool, address _cm)
-        CompoundMakerStrategy(_pool, _cm, 0x5d3a536E4D6DbD6114cc1Ead35777bAB948E3643, "ETH-A")
-    {}
+    constructor(
+        address _pool,
+        address _cm,
+        address _swapManager
+    ) CompoundMakerStrategy(_pool, _cm, _swapManager, 0x5d3a536E4D6DbD6114cc1Ead35777bAB948E3643, "ETH-A") {}
 }

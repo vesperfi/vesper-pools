@@ -11,5 +11,7 @@ contract CompoundStrategyWBTC is CompoundStrategy {
     string public constant VERSION = "3.0.0";
 
     // cWBTC = 0xC11b1268C1A384e55C48c2391d8d480264A3A7F4
-    constructor(address _pool) CompoundStrategy(_pool, 0xC11b1268C1A384e55C48c2391d8d480264A3A7F4) {}
+    constructor(address _pool, address _swapManager)
+        CompoundStrategy(_pool, _swapManager, 0xC11b1268C1A384e55C48c2391d8d480264A3A7F4)
+    {}
 }

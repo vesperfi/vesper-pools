@@ -10,5 +10,7 @@ contract AaveStrategyUSDC is AaveStrategy {
     string public constant VERSION = "3.0.0";
 
     // aUSDC = 0xBcca60bB61934080951369a648Fb03DF4F96263C
-    constructor(address _pool) AaveStrategy(_pool, 0xBcca60bB61934080951369a648Fb03DF4F96263C) {}
+    constructor(address _pool, address _swapManager)
+        AaveStrategy(_pool, _swapManager, 0xBcca60bB61934080951369a648Fb03DF4F96263C)
+    {}
 }
