@@ -44,6 +44,10 @@ Coverage will launch its own in-process ganache server, so all you need to run i
 ```sh
 npm run coverage
 ```
+Coverage for one file
+```
+npm run coverage -- --testfiles "<<filename>>"
+```
 If you get heap memory error in solidity coverage then try below command
 ```sh
    node --max-old-space-size=4096 ./node_modules/.bin/truffle run coverage
