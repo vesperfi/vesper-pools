@@ -132,12 +132,6 @@ abstract contract CompoundStrategy is Strategy {
         return _withdrawHere(_amount < _collateralBalance ? _amount : _collateralBalance);
     }
 
-    /// @dev Withdraw all collateral here. Earning report will be filed in pool
-    function _withdrawAll() internal override {
-        require(cToken.redeem(cToken.balanceOf(address(this))) == 0, "withdrawAll-from-compound-failed");
-        _afterRedeem();
-    }
-
     /// @dev Withdraw collateral here. Do not transfer to pool
     function _withdrawHere(uint256 _amount) internal returns (uint256) {
         if (_amount != 0) {

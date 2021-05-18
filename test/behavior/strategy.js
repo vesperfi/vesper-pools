@@ -192,98 +192,9 @@ function shouldBehaveLikeStrategy(strategyIndex, strategyName) {
       })
     })
 
-    describe('Withdraw operations', function () {
+    describe('Only pool can call withdraw', function () {
       it('Should not be able to withdraw from pool', async function () {
         await expect(strategy.withdraw(1)).to.be.revertedWith('caller-is-not-vesper-pool')
-      })
-
-      it('Should revert if withdrawAll called from non governor', async function () {
-        await expect(strategy.connect(user4.signer).withdrawAll()).to.be.revertedWith('caller-is-not-the-governor')
-      })
-
-      it('Should not revert if withdrawAll called from governor without deposit', async function () {
-        await expect(strategy.withdrawAll()).to.not.reverted
-      })
-
-      it('Should have zero total debt after withdrawAll', async function () {
-        await deposit(pool, collateralToken, 1, user1)
-        await strategy.rebalance()
-        await advanceBlock(50)
-        await strategy.rebalance()
-        await strategy.withdrawAll()
-        const totalDebt = (await pool.strategy(strategy.address)).totalDebt
-        expect(totalDebt).to.be.equal(0, 'Total debt should be 0')
-      })
-
-      it('Should move colleteral from strategy to pool on withdrawAll', async function () {
-        let balance = await collateralToken.balanceOf(strategy.address)
-        expect(balance).to.be.equal(0, 'Strategy token should be zero')
-        await deposit(pool, collateralToken, 1, user1)
-        await strategy.rebalance()
-        expect(await strategy.totalValue()).to.be.gt(0, 'Strategy token should be > zero')
-        await strategy.withdrawAll()
-        balance = await collateralToken.balanceOf(strategy.address)
-        expect(await strategy.totalValue()).to.be.equal(0, 'Strategy token should be zero')
-      })
-
-      it('Should allow multiple withdrawAll', async function () {
-        await deposit(pool, collateralToken, 1, user1)
-        let balance = await collateralToken.balanceOf(strategy.address)
-        expect(balance).to.be.equal(0, 'Strategy token should be zero')
-        await strategy.withdrawAll()
-        balance = await collateralToken.balanceOf(strategy.address)
-        expect(balance).to.be.equal(0, 'Strategy token should be zero')
-        await strategy.withdrawAll()
-        const newBalance = await collateralToken.balanceOf(strategy.address)
-        expect(balance).to.be.equal(newBalance, 'Strategy balance should not change')
-      })
-
-      it('Should have zero collateral after withdrawAll', async function () {
-        await deposit(pool, collateralToken, 1, user1)
-        await strategy.rebalance()
-        await strategy.withdrawAll()
-        expect(await collateralToken.balanceOf(strategy.address)).to.be.equal(0, 'Strategy balance should be 0')
-      })
-
-      it('Should not revert if withdrawAllWithEarn called from governor without deposit', async function () {
-        await expect(strategy.withdrawAllWithEarn()).to.not.reverted
-      })
-
-      it('Should revert if withdrawAllWithEarn called from non governor', async function () {
-        await expect(strategy.connect(user4.signer).withdrawAllWithEarn()).to.be.revertedWith(
-          'caller-is-not-the-governor'
-        )
-      })
-
-      it('Should rebalance earning and withdraw all collateral', async function () {
-        await expect(strategy.withdrawAllWithEarn()).to.not.reverted
-      })
-
-      it('Should have zero total debt after withdrawAllWithEarn', async function () {
-        await deposit(pool, collateralToken, 1, user1)
-        await strategy.rebalance()
-        await advanceBlock(50)
-        await strategy.withdrawAllWithEarn()
-        const totalDebt = (await pool.strategy(strategy.address)).totalDebt
-        expect(totalDebt).to.be.equal(0, 'Total debt should be 0')
-      })
-
-      it('Should move colleteral from strategy to pool on withdrawAllWithEarn', async function () {
-        let balance = await collateralToken.balanceOf(strategy.address)
-        expect(balance).to.be.equal(0, 'Strategy token should be zero')
-        await deposit(pool, collateralToken, 1, user1)
-        await strategy.rebalance()
-        expect(await strategy.totalValue()).to.be.gt(0, 'Strategy token should be > zero')
-        await strategy.withdrawAllWithEarn()
-        balance = await collateralToken.balanceOf(strategy.address)
-        expect(await strategy.totalValue()).to.be.equal(0, 'Strategy token should be zero')
-      })
-
-      it('Should have zero collateral after withdrawAllWithEarn', async function () {
-        await deposit(pool, collateralToken, 1, user1)
-        await strategy.rebalance()
-        await strategy.withdrawAllWithEarn()
-        expect(await collateralToken.balanceOf(strategy.address)).to.be.equal(0, 'Strategy balance should be 0')
       })
     })
 

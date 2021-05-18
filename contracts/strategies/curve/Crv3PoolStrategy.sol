@@ -58,12 +58,6 @@ abstract contract Crv3PoolStrategy is Crv3PoolMgr, Strategy {
         collateralToken.safeTransfer(pool, IERC20(collateralToken).balanceOf(address(this)));
     }
 
-    function _withdrawAll() internal override {
-        _unstakeAllLpFromGauge();
-        _withdrawAllAs(collIdx);
-        collateralToken.safeTransfer(pool, collateralToken.balanceOf(address(this)));
-    }
-
     function _unstakeAndWithdrawAsCollateral(uint256 _amount) internal returns (uint256) {
         if (_amount == 0) return 0;
         (uint256 lpToWithdraw, uint256 unstakeAmt) = calcWithdrawLpAs(_amount, collIdx);

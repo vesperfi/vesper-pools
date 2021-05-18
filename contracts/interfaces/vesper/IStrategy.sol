@@ -9,10 +9,6 @@ interface IStrategy {
 
     function withdraw(uint256 _amount) external;
 
-    function withdrawAll() external;
-
-    function withdrawAllWithEarn() external;
-
     function feeCollector() external view returns (address);
 
     function isReservedToken(address _token) external view returns (bool);
