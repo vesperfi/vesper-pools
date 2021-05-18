@@ -45,7 +45,7 @@ abstract contract AaveCore {
     /**
      * @notice Unstake Aave from stakedAave contract
      * @dev We want to unstake as soon as favorable condition exit
-     * @dev No guarding condtion thus this call can fail, if we can't unstake.
+     * @dev No guarding condition thus this call can fail, if we can't unstake.
      * @dev Child contract should expose this function as external and onlyKeeper
      */
     function _unstakeAave() internal {
@@ -134,10 +134,10 @@ abstract contract AaveCore {
         uint256 _amount
     ) internal returns (uint256) {
         uint256 _aTokenBalance = aToken.balanceOf(address(this));
-        // If Vesper becomes large liquidity provider in Aave(This happended in past in vUSDC 1.0)
+        // If Vesper becomes large liquidity provider in Aave(This happened in past in vUSDC 1.0)
         // In this case we might have more aToken compare to available liquidity in Aave and any
         // withdraw asking more than available liquidity will fail. To do safe withdraw, check
-        // _amount against availble liquidity.
+        // _amount against available liquidity.
         (uint256 _availableLiquidity, , , , , , , , , ) = aaveProtocolDataProvider.getReserveData(_asset);
         // Get minimum of _amount, _aTokenBalance and _availableLiquidity
         return _withdraw(_asset, _to, _min(_amount, _min(_aTokenBalance, _availableLiquidity)));
@@ -180,7 +180,7 @@ abstract contract AaveCore {
         return _token == address(aToken) || _token == AAVE || _token == address(stkAAVE);
     }
 
-    /// @notice Returns minumum of 2 given numbers
+    /// @notice Returns minimum of 2 given numbers
     function _min(uint256 a, uint256 b) internal pure returns (uint256) {
         return a < b ? a : b;
     }

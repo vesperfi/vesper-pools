@@ -116,7 +116,7 @@ describe('Vesper Pool: Admin only function tests', function () {
         )
       })
 
-      it('Should revert if not auhorized users add in maintainer', async function () {
+      it('Should revert if not authorized users add in maintainer', async function () {
         await expect(pool.connect(user3.signer).addInList(maintainersList, user4.address)).to.be.revertedWith(
           'caller-is-not-a-keeper'
         )

@@ -43,7 +43,7 @@ function shouldClaimAaveRewards(strategyIndex) {
         await stakeAave(strategy.address, user1)
         await strategy.startCooldown()
         const data = await strategy.cooldownData()
-        expect(data._cooldownStart).to.be.eq(await time.latest(), 'Cooldown strat is not correct')
+        expect(data._cooldownStart).to.be.eq(await time.latest(), 'Cooldown start is not correct')
       })
     })
 

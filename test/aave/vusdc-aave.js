@@ -22,7 +22,7 @@ describe('vUSDC Pool with AaveStrategy', function () {
       poolName: 'VUSDC',
       feeCollector: users[7].address,
       strategies: [
-        {name: 'AaveStrategyUSDC', type: StrategyType.AAAVE, config: config1, feeCollector: users[9].address},
+        {name: 'AaveStrategyUSDC', type: StrategyType.AAVE, config: config1, feeCollector: users[9].address},
         {name: 'CompoundStrategyUSDC', type: StrategyType.COMPOUND, config: config2, feeCollector: users[8].address}
       ],
     })    

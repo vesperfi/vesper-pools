@@ -24,7 +24,7 @@ contract('vDAI Pool with multiple strategy', function (accounts) {
       pool: VDAI,
       feeCollector,
       strategies: [
-        {artifact: AaveStrategy, type: StrategyType.AAAVE, config: config1, feeCollector: accounts[9]},
+        {artifact: AaveStrategy, type: StrategyType.AAVE, config: config1, feeCollector: accounts[9]},
         {artifact: CompoundStrategy, type: StrategyType.COMPOUND, config: config2, feeCollector: accounts[8]},
       ],
     })

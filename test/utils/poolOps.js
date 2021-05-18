@@ -16,8 +16,8 @@ async function executeIfExist(fn) {
 /**
  *  Swap given ETH for given token type and deposit tokens into Vesper pool
  *
- * @param {object} pool Vepser pool instance where we want to deposit tokens
- * @param {object} token Colalteral token instance, the token you want to deposit
+ * @param {object} pool Vesper pool instance where we want to deposit tokens
+ * @param {object} token Collateral token instance, the token you want to deposit
  * @param {number|string} amount Amount in ETH, ETH will be swapped for required token
  * @param {object} depositor User who will pay ETH and also deposit in Vesper pool
  * @returns {Promise<BigNumber>} Promise of collateral amount which was deposited in Vesper pool

@@ -60,7 +60,6 @@ abstract contract Strategy is IStrategy, Context {
      * @param _keeperAddress keeper address to add.
      */
     function addKeeper(address _keeperAddress) external onlyGovernor {
-        require(!keepers.contains(_keeperAddress), "keeper-already-in-list");
         require(keepers.add(_keeperAddress), "add-keeper-failed");
     }
 
@@ -95,7 +94,6 @@ abstract contract Strategy is IStrategy, Context {
      * @param _keeperAddress keeper address to remove.
      */
     function removeKeeper(address _keeperAddress) external onlyGovernor {
-        require(keepers.contains(_keeperAddress), "keeper-not-in-list");
         require(keepers.remove(_keeperAddress), "remove-keeper-failed");
     }
 
@@ -180,7 +178,7 @@ abstract contract Strategy is IStrategy, Context {
     function isReservedToken(address _token) public view virtual override returns (bool);
 
     /**
-     * @notice some strategy may want to prpeare before doing migration. 
+     * @notice some strategy may want to prepare before doing migration. 
         Example In Maker old strategy want to give vault ownership to new strategy
      * @param _newStrategy .
      */
@@ -242,7 +240,7 @@ abstract contract Strategy is IStrategy, Context {
 
     function _approveToken(uint256 _amount) internal virtual;
 
-    // Some streateies may not have rewards hence they do not need this function.
+    // Some strategies may not have rewards hence they do not need this function.
     //solhint-disable-next-line no-empty-blocks
     function _claimRewardsAndConvertTo(address _toToken) internal virtual {}
 

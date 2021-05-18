@@ -55,7 +55,7 @@ abstract contract CompoundMakerStrategy is MakerStrategy {
     /**
      * @notice Returns true if pool is underwater.
      * @notice Underwater - If debt is greater than earning of pool.
-     * @notice Earning - Sum of DAI balance and DAI from accured reward, if any, in lending pool.
+     * @notice Earning - Sum of DAI balance and DAI from accrued reward, if any, in lending pool.
      * @dev There can be a scenario when someone calls claimComp() periodically which will
      * leave compAccrued = 0 and pool might be underwater. Call rebalance() to liquidate COMP.
      */

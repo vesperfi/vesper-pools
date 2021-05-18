@@ -51,7 +51,7 @@ contract Governed is Context {
      */
     function acceptGovernorship() external {
         //solhint-disable-next-line reason-string
-        require(msg.sender == proposedGovernor, "caller-is-not-the-proposed-governor");
+        require(proposedGovernor == _msgSender(), "caller-is-not-the-proposed-governor");
         emit UpdatedGovernor(governor, proposedGovernor);
         governor = proposedGovernor;
         proposedGovernor = address(0);
