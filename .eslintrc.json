@@ -15,7 +15,8 @@
       },
       "rules": {
         "mocha/no-top-level-hooks": "off",
-        "mocha/no-hooks-for-single-case": "off"
+        "mocha/no-hooks-for-single-case": "off",
+        "mocha/no-exports":"off"
       }
     },
     {

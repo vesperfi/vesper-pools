@@ -29,6 +29,13 @@ contract VTokenBase is PoolShareToken {
     IAddressList public maintainers;
     address internal constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     event StrategyAdded(address indexed strategy, uint256 interestFee, uint256 debtRatio, uint256 debtRate);
+    event StrategyMigrated(
+        address indexed oldStrategy,
+        address indexed newStrategy,
+        uint256 interestFee,
+        uint256 debtRatio,
+        uint256 debtRate
+    );
     event UpdatedInterestFee(address indexed strategy, uint256 interestFee);
     event UpdatedStrategyDebtParams(address indexed strategy, uint256 debtRatio, uint256 debtRate);
     event EarningReported(
@@ -155,6 +162,7 @@ contract VTokenBase is PoolShareToken {
         require(_old != address(0), "old-address-is-zero");
         require(IStrategy(_new).pool() == address(this), "not-valid-new-strategy");
         require(IStrategy(_old).pool() == address(this), "not-valid-old-strategy");
+        require(strategy[_old].active, "strategy-already-migrated");
         require(!strategy[_new].active, "strategy-already-added");
         StrategyConfig memory _newStrategy =
             StrategyConfig({
@@ -189,6 +197,13 @@ contract VTokenBase is PoolShareToken {
                 break;
             }
         }
+        emit StrategyMigrated(
+            _old,
+            _new,
+            strategy[_new].interestFee,
+            strategy[_new].debtRatio,
+            strategy[_new].debtRate
+        );
     }
 
     function updateInterestFee(address _strategy, uint256 _interestFee) external onlyGovernor {
