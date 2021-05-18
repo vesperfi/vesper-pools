@@ -67,6 +67,7 @@ async function addStrategiesInPool(obj) {
  *
  * @param {object} obj Test class object
  * @param {object} strategyName  Strategy name
+ * @returns {object} Strategy instance
  */
 async function createMakerStrategy(obj, strategyName) {
   obj.collateralManager = await deployContract(CollateralManager)
@@ -84,6 +85,7 @@ async function createMakerStrategy(obj, strategyName) {
  * @param {object} obj Test class object
  * @param {object} strategyName Strategy name
  * @param {object} vPool Vesper pool instance
+ * @returns {object} Strategy instance
  */
 async function createVesperMakerStrategy(obj, strategyName, vPool) {
   obj.collateralManager = await deployContract(CollateralManager)

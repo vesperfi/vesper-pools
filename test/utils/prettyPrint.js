@@ -7,5 +7,5 @@ module.exports = function (data) {
             object[key] = value.toString()
         }
     })
-    return object
+    console.log(object)
 }

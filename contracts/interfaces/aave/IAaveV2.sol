@@ -58,6 +58,8 @@ interface StakedAave is IERC20 {
 
     function cooldown() external;
 
+    function stake(address onBehalfOf, uint256 amount) external;
+
     function redeem(address to, uint256 amount) external;
 
     function getTotalRewardsBalance(address staker) external view returns (uint256);
