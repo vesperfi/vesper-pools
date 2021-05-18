@@ -4,6 +4,7 @@ const {expect} = require('chai')
 const {getUsers} = require('../utils/setupHelper')
 const {constants} = require('@openzeppelin/test-helpers')
 const metAddress = '0xa3d58c4e56fedcae3a7c43a725aee9a71f0ece4e'
+const aaveLendingPoolAddressesProvider = '0xB53C1a33016B2DC2fF3653530bfF1848a515c8c5'
 
 // Aave strategy specific tests
 function shouldBehaveLikeAaveStrategy(strategyIndex, poolName) {
@@ -45,7 +46,7 @@ function shouldBehaveLikeAaveStrategy(strategyIndex, poolName) {
         'same-addresses-provider'
       )
       await expect(
-        strategy.connect(owner.signer).updateAddressesProvider('0xB53C1a33016B2DC2fF3653530bfF1848a515c8c5')
+        strategy.connect(owner.signer).updateAddressesProvider(aaveLendingPoolAddressesProvider)
       ).to.be.revertedWith('same-addresses-provider')
     })
   })

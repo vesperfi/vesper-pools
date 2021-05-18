@@ -4,6 +4,7 @@ const {shouldBehaveLikePool} = require('../behavior/vesper-pool')
 const {shouldBehaveLikeMultiPool} = require('../behavior/vesper-multi-pool')
 const {shouldBehaveLikeStrategy} = require('../behavior/strategy')
 const {shouldBehaveLikeAaveStrategy} = require('../behavior/aave-strategy')
+const {shouldClaimAaveRewards} = require('../behavior/aave-reward')
 const {getUsers, setupVPool} = require('../utils/setupHelper')
 const StrategyType = require('../utils/strategyTypes')
 const {BigNumber: BN} = require('ethers')
@@ -32,4 +33,5 @@ describe('vDAI Pool with AaveStrategy', function () {
   shouldBehaveLikeStrategy(0, 'AaveStrategyDAI') // first strategy AaveStrategyDAI
   shouldBehaveLikeStrategy(1, 'CompoundStrategyDAI') // second strategy CompoundStrategyDAI
   shouldBehaveLikeAaveStrategy(0, 'vDai') // run Aave specific tests
+  shouldClaimAaveRewards(0) // run Aave rewards tests
 })
