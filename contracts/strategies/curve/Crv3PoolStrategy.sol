@@ -75,15 +75,15 @@ abstract contract Crv3PoolStrategy is Crv3PoolMgr, Strategy {
     }
 
     /**
-     * @notice some strategy may want to prpeare before doing migration. 
+     * @notice some strategy may want to prepare before doing migration. 
         Example In Maker old strategy want to give vault ownership to new strategy
-     * @param _newStrategy .
      */
-    function _beforeMigration(address _newStrategy) internal override {
+    function _beforeMigration(
+        address /*_newStrategy*/
+    ) internal override {
         _unstakeAllLpFromGauge();
     }
 
-    // Some streateies may not have rewards hence they do not need this function.
     function _claimRewardsAndConvertTo(address _toToken) internal override {
         _claimCrv();
         uint256 amt = IERC20(CRV).balanceOf(address(this));

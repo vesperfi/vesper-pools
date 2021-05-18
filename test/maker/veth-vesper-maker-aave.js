@@ -28,7 +28,7 @@ contract('VETH Pool', function (accounts) {
     this.accounts = accounts
     await setupVPool(vDaiPoolObj, {
       pool: VDAI,
-      strategies: [{artifact: AaveStrategy, type: StrategyType.AAAVE, config: strategyConfig, feeCollector}],
+      strategies: [{artifact: AaveStrategy, type: StrategyType.AAVE, config: strategyConfig, feeCollector}],
       feeCollector,
     })
     vDai = vDaiPoolObj.pool

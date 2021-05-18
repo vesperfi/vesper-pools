@@ -23,7 +23,7 @@ contract CompoundStrategyETH is CompoundStrategy {
 
     /**
      * @dev This hook get called after collateral is redeemed from Compound
-     * Vepser deals in WETH as collateral so convert ETH to WETH
+     * Vesper deals in WETH as collateral so convert ETH to WETH
      */
     function _afterRedeem() internal override {
         TokenLike(WETH).deposit{value: address(this).balance}();

@@ -111,7 +111,7 @@ abstract contract PoolShareToken is ERC20Permit, Pausable, ReentrancyGuard, Gove
     /**
      * @notice Transfer tokens to multiple recipient
      * @dev Address array and amount array are 1:1 and are in order.
-     * @param _recipients array of receipient addresses
+     * @param _recipients array of recipient addresses
      * @param _amounts array of token amounts
      * @return true/false
      */
@@ -151,7 +151,7 @@ abstract contract PoolShareToken is ERC20Permit, Pausable, ReentrancyGuard, Gove
     function totalValue() public view virtual returns (uint256);
 
     /**
-     * @dev Hook that is called just before burning tokens. This withdraw collatoral from withdraw queue
+     * @dev Hook that is called just before burning tokens. This withdraw collateral from withdraw queue
      * @param _share Pool share in 18 decimals
      */
     function _beforeBurning(uint256 _share) internal virtual returns (uint256) {}

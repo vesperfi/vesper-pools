@@ -1,6 +1,6 @@
 'use strict'
 const StrategyType = {
-  AAAVE: 'aave',
+  AAVE: 'aave',
   COMPOUND: 'compound',
   AAVE_MAKER: 'aaveMaker',
   COMPOUND_MAKER: 'compoundMaker',

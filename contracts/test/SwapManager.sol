@@ -166,7 +166,7 @@ contract SwapManager is ISwapManager {
     // Rather than let the getAmountsIn call fail due to low liquidity, we
     // catch the error and return 0 in place of the reversion
     // this is useful when we want to proceed with logic (occurs when amountOut is
-    // greater than avaiable reserve (ds-math-sub-underflow)
+    // greater than available reserve (ds-math-sub-underflow)
     function safeGetAmountsIn(
         uint256 _amountOut,
         address[] memory _path,

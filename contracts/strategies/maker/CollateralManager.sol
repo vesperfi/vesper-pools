@@ -53,7 +53,7 @@ contract CollateralManager is ICollateralManager, DSMath, ReentrancyGuard, Gover
     uint256 internal constant MAX_UINT_VALUE = type(uint256).max;
 
     event AddedGemJoin(address indexed gemJoin, bytes32 ilk);
-    event CreatedValut(address indexed owner, uint256 indexed vaultNum, bytes32 indexed collateralType);
+    event CreatedVault(address indexed owner, uint256 indexed vaultNum, bytes32 indexed collateralType);
     event TransferredVaultOwnership(uint256 indexed vaultNum, address indexed previousOwner, address indexed newOwner);
     event UpdatedMCDAddresses(address mcdManager, address mcdDaiJoin, address mcdSpot, address mcdJug);
     event UpdatedTreasury(address indexed previousTreasury, address indexed newTreasury);
@@ -91,7 +91,7 @@ contract CollateralManager is ICollateralManager, DSMath, ReentrancyGuard, Gover
 
         vaultNum[msg.sender] = _vaultNum;
         collateralType[_vaultNum] = _collateralType;
-        emit CreatedValut(msg.sender, _vaultNum, _collateralType);
+        emit CreatedVault(msg.sender, _vaultNum, _collateralType);
     }
 
     /**
@@ -269,7 +269,7 @@ contract CollateralManager is ICollateralManager, DSMath, ReentrancyGuard, Gover
     /**
      * @dev Calculate state based on withdraw amount.
      * @param _vaultOwner Address of vault owner
-     * @param _amount Collateral amount to withraw.
+     * @param _amount Collateral amount to withdraw.
      */
     function whatWouldWithdrawDo(address _vaultOwner, uint256 _amount)
         external
@@ -326,7 +326,7 @@ contract CollateralManager is ICollateralManager, DSMath, ReentrancyGuard, Gover
 
     /**
      * @notice Get max available DAI safe to borrow
-     * @dev Calcualtion based on current DAI debt and DAI limit for given collateral type.
+     * @dev Calculation based on current DAI debt and DAI limit for given collateral type.
      * @param _vat Vat address
      * @param _collateralType Vault collateral type.
      */
@@ -335,7 +335,7 @@ contract CollateralManager is ICollateralManager, DSMath, ReentrancyGuard, Gover
         //solhint-disable-next-line var-name-mixedcase
         (uint256 Art, uint256 rate, , uint256 line, ) = VatLike(_vat).ilks(_collateralType);
         // Calculate total issued debt is Art * rate [rad]
-        // Calcualte total available dai [wad]
+        // Calculate total available dai [wad]
         uint256 _totalAvailableDai = (line - (Art * rate)) / RAY;
         // For safety reason, return 99% of available
         return (_totalAvailableDai * 99) / 100;
@@ -384,7 +384,7 @@ contract CollateralManager is ICollateralManager, DSMath, ReentrancyGuard, Gover
         if (dai < _wad * RAY) {
             // Calculates the needed amt so together with the existing dai in the vat is enough to exit wad amount of DAI tokens
             amount = int256(((_wad * RAY) - dai) / rate);
-            // This is neeeded due lack of precision. It might need to sum an extra amt wei (for the given DAI wad amount)
+            // This is needed due lack of precision. It might need to sum an extra amt wei (for the given DAI wad amount)
             amount = (uint256(amount) * rate) < (_wad * RAY) ? amount + 1 : amount;
         }
     }
@@ -412,7 +412,7 @@ contract CollateralManager is ICollateralManager, DSMath, ReentrancyGuard, Gover
         address _urn,
         address _vat
     ) internal view returns (uint256 wad) {
-        // Get normalised debt [wad]
+        // Get normalized debt [wad]
         (, uint256 art) = VatLike(_vat).urns(_ilk, _urn);
         // Get stable coin rate [ray]
         (, uint256 rate, , , ) = VatLike(_vat).ilks(_ilk);
@@ -436,7 +436,7 @@ contract CollateralManager is ICollateralManager, DSMath, ReentrancyGuard, Gover
         bytes32 _ilk = collateralType[_vaultNum];
         // Get minimum liquidation ratio [ray]
         (, uint256 mat) = SpotterLike(mcdSpot).ilks(_ilk);
-        // Get collateral locked and normalised debt [wad] [wad]
+        // Get collateral locked and normalized debt [wad] [wad]
         (uint256 ink, uint256 art) = VatLike(_vat).urns(_ilk, _urn);
         // Get stable coin and collateral rate  and min debt [ray] [ray] [rad]
         (, uint256 rate, uint256 spot, , uint256 dust) = VatLike(_vat).ilks(_ilk);
@@ -450,7 +450,7 @@ contract CollateralManager is ICollateralManager, DSMath, ReentrancyGuard, Gover
 
     /**
      * @dev Get Payback amount.
-     * @notice We need to fetch latest art, rate and dai to calcualte payback amount.
+     * @notice We need to fetch latest art, rate and dai to calculate payback amount.
      */
     function _getWipeAmount(
         bytes32 _ilk,

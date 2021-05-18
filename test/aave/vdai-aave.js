@@ -23,7 +23,7 @@ describe('vDAI Pool with AaveStrategy', function () {
       poolName: 'VDAI',
       feeCollector: users[7].address,
       strategies: [
-        {name: 'AaveStrategyDAI', type: StrategyType.AAAVE, config: config1, feeCollector: users[9].address},
+        {name: 'AaveStrategyDAI', type: StrategyType.AAVE, config: config1, feeCollector: users[9].address},
         {name: 'CompoundStrategyDAI', type: StrategyType.COMPOUND, config: config2, feeCollector: users[8].address},
       ],
     })

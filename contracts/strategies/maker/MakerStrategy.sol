@@ -37,7 +37,7 @@ abstract contract MakerStrategy is Strategy {
     /**
      * @dev If pool is underwater this function will resolve underwater condition.
      * If Debt in Maker is greater than Dai balance in lender then pool is underwater.
-     * Lowering DAI debt in Maker will resolve underwater condtion.
+     * Lowering DAI debt in Maker will resolve underwater condition.
      * Resolve: Calculate required collateral token to lower DAI debt. Withdraw required
      * collateral token from Maker and convert those to DAI via Uniswap.
      * Finally payback debt in Maker using DAI.
@@ -88,7 +88,7 @@ abstract contract MakerStrategy is Strategy {
     /**
      * @notice Returns true if pool is underwater.
      * @notice Underwater - If debt is greater than earning of pool.
-     * @notice Earning - Sum of DAI balance and DAI from accured reward, if any, in lending pool.
+     * @notice Earning - Sum of DAI balance and DAI from accrued reward, if any, in lending pool.
      */
     function isUnderwater() public view virtual returns (bool) {
         return cm.getVaultDebt(address(this)) > _getDaiBalance();

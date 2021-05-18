@@ -217,7 +217,7 @@ function shouldBehaveLikeStrategy(poolName, collateralName, accounts) {
         expect(tokensInPool).to.be.bignumber.gte(totalLocked, 'TokensHere in pool is not correct')
       })
 
-      it('Should rebalance after withdrawAll() and adding new strtegy', async function () {
+      it('Should rebalance after withdrawAll() and adding new strategy', async function () {
         await deposit(pool, collateralToken, 200, user3)
         await pool.rebalance()
         await mineBlocks(25)
