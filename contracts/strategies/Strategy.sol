@@ -136,38 +136,6 @@ abstract contract Strategy is IStrategy, Context {
     }
 
     /**
-     * @notice Withdraw all collateral.
-     * @notice Governor only function, called when migrating strategy.
-     * @dev File report to pool with proper profit, loss and payback.
-     * @dev To make withdrawAll fail safe, we bypass generateReport
-     * function and prepared report here.
-     */
-    function withdrawAll() public override onlyGovernor {
-        // Make sure to wtihdraw all collateral here
-        _withdrawAll();
-
-        uint256 _totalDebt = IVesperPool(pool).totalDebtOf(address(this));
-        uint256 _collateralHere = collateralToken.balanceOf(address(this));
-        uint256 _profit;
-        uint256 _loss;
-        if (_collateralHere > _totalDebt) {
-            _profit = _collateralHere - _totalDebt;
-        } else {
-            _loss = _totalDebt - _collateralHere;
-        }
-        // Pool has a require check on (payback + profit <= collateral in strategy)
-        IVesperPool(pool).reportEarning(_profit, _loss, _collateralHere - _profit);
-    }
-
-    /**
-     * @dev Rebalance earning and withdraw all collateral.
-     */
-    function withdrawAllWithEarn() external override onlyGovernor {
-        _claimRewardsAndConvertTo(address(collateralToken));
-        withdrawAll();
-    }
-
-    /**
      * @dev Rebalance profit, loss and investment of this strategy
      */
     function rebalance() external override onlyKeeper {
@@ -271,8 +239,6 @@ abstract contract Strategy is IStrategy, Context {
     }
 
     function _withdraw(uint256 _amount) internal virtual;
-
-    function _withdrawAll() internal virtual;
 
     function _approveToken(uint256 _amount) internal virtual;
 

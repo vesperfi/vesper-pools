@@ -120,8 +120,4 @@ abstract contract AaveStrategy is Strategy, AaveCore {
     function _withdraw(uint256 _amount) internal override {
         _safeWithdraw(address(collateralToken), pool, _amount);
     }
-
-    function _withdrawAll() internal override {
-        super._withdraw(address(collateralToken), address(this), aToken.balanceOf(address(this)));
-    }
 }

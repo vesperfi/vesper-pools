@@ -249,13 +249,6 @@ abstract contract MakerStrategy is Strategy {
         cm.withdrawCollateral(_amount);
     }
 
-    function _withdrawAll() internal override {
-        _moveDaiToMaker(cm.getVaultDebt(address(this)));
-        require(cm.getVaultDebt(address(this)) == 0, "debt-should-be-0");
-        uint256 _collateralLocked = convertFrom18(cm.getVaultBalance(address(this)));
-        cm.withdrawCollateral(_collateralLocked);
-    }
-
     function _depositDaiToLender(uint256 _amount) internal virtual;
 
     function _rebalanceDaiInLender() internal virtual;
