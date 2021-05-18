@@ -12,8 +12,8 @@ const ONE_MILLION = DECIMAL18.mul('1000000')
 describe('vUSDC Pool with AaveStrategy', function () {
   const interestFee = '1500' // 15%
 
-  const config1 = {interestFee, debtRatio: 8000, debtRate: ONE_MILLION}
-  const config2 = {interestFee, debtRatio: 2000, debtRate: ONE_MILLION}
+  const config1 = {interestFee, debtRatio: 4000, debtRate: ONE_MILLION}
+  const config2 = {interestFee, debtRatio: 4000, debtRate: ONE_MILLION}
 
   beforeEach(async function () {
     const users = await getUsers()

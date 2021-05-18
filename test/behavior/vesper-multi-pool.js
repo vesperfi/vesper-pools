@@ -41,8 +41,8 @@ async function shouldBehaveLikeMultiPool(poolName) {
           pool.totalDebtRatio(),
           receiptToken.balanceOf(strategies[0].instance.address),
         ])
-        // const
-        const newStrategy = await deployContract(strategies[0].name, [pool.address])
+        const swapManager = await deployContract('SwapManager')
+        const newStrategy = await deployContract(strategies[0].name, [pool.address, swapManager.address])
 
         await pool.connect(gov.signer).migrateStrategy(strategies[0].instance.address, newStrategy.address)
 
@@ -101,25 +101,6 @@ async function shouldBehaveLikeMultiPool(poolName) {
         tokenHere = await pool.tokensHere()
         expect(actualWithdrawFromS1).to.be.eq(expectedFromS1, 'Withdraw from Strategy 2 is wrong')
         expect(debt0).to.be.eq(0, 'Withdraw from Strategy 2 is wrong')
-      })
-
-      it('Should burn proportional amount if strategy do not return expected amount', async function () {
-        await pool.connect(gov.signer).updateDebtRatio(strategies[0].instance.address, 5000)
-        await pool.connect(gov.signer).updateDebtRatio(strategies[1].instance.address, 5000)
-        await rebalance(strategies)
-        await pool.connect(gov.signer).updateWithdrawQueue([strategies[1].instance.address])
-        let balance = await pool.balanceOf(user1.address)
-        await pool.connect(user1.signer).withdraw(balance)
-        const debt = (await pool.strategy(strategies[1].instance.address)).totalDebt
-        expect(debt).to.be.eq(0, 'Debt is strategy is wrong')
-        balance = await pool.balanceOf(user1.address)
-        expect(balance).to.be.gt(0, 'Remaining vToken balance of user is wrong')
-        const balanceBeforeDeposit = await pool.balanceOf(user2.address)
-        await deposit(20, user2)
-        balance = await pool.balanceOf(user2.address)
-        await pool.connect(user2.signer).withdraw(balance)
-        balance = await pool.balanceOf(user2.address)
-        expect(balance).to.be.eq(balanceBeforeDeposit, 'Withdraw from Strategy 2 is wrong')
       })
 
       it('Should be able to shuffle withdraw queue', async function () {
