@@ -103,7 +103,7 @@ abstract contract PoolShareToken is ERC20Permit, Pausable, ReentrancyGuard, Gove
      * when this function is called. Only some white listed address can call this function.
      * @param _shares Pool shares. It will be in 18 decimals.
      */
-    function withdrawByStrategy(uint256 _shares) external virtual nonReentrant whenNotShutdown {
+    function whitelistedWithdraw(uint256 _shares) external virtual nonReentrant whenNotShutdown {
         require(feeWhitelist.contains(_msgSender()), "not-a-white-listed-address");
         _withdrawWithoutFee(_shares);
     }

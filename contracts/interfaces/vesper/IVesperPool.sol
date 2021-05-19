@@ -40,7 +40,7 @@ interface IVesperPool is IERC20 {
 
     function withdrawETH(uint256 _amount) external;
 
-    function withdrawByStrategy(uint256 _amount) external;
+    function whitelistedWithdraw(uint256 _amount) external;
 
     function feeCollector() external view returns (address);
 

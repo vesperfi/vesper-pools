@@ -34,7 +34,7 @@ abstract contract VesperMakerStrategy is MakerStrategy {
 
     function _withdrawDaiFromLender(uint256 _amount) internal override {
         uint256 _vAmount = (_amount * 1e18) / IVesperPool(receiptToken).pricePerShare();
-        IVesperPool(receiptToken).withdrawByStrategy(_vAmount);
+        IVesperPool(receiptToken).whitelistedWithdraw(_vAmount);
     }
 
     function _rebalanceDaiInLender() internal override {
