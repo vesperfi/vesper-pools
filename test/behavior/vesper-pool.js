@@ -255,7 +255,7 @@ async function shouldBehaveLikePool(poolName, collateralName) {
       it('Should not allow user to withdraw without fee', async function () {
         await rebalance(strategies)
         const withdrawAmount = await pool.balanceOf(user2.address)
-        const tx = pool.connect(user2.signer).withdrawByStrategy(withdrawAmount)
+        const tx = pool.connect(user2.signer).whiteListedWithdraw(withdrawAmount)
         await expect(tx).to.be.revertedWith('not-a-white-listed-address')
       })
 
@@ -268,7 +268,7 @@ async function shouldBehaveLikePool(poolName, collateralName) {
         await pool.addInList(target, feeCollector)
         const feeCollected = await pool.balanceOf(feeCollector)
         const signer = await ethers.getSigner(feeCollector)
-        await pool.connect(signer).withdrawByStrategy(feeCollected)
+        await pool.connect(signer).whiteListedWithdraw(feeCollected)
         const vPoolBalanceFC = await pool.balanceOf(feeCollector)
         expect(vPoolBalanceFC).to.be.eq('0', `${poolName} balance of FC is not correct`)
         const collateralBalance = await collateralToken.balanceOf(feeCollector)
