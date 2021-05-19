@@ -71,8 +71,11 @@ async function addStrategiesInPool(obj) {
  */
 async function createMakerStrategy(obj, strategyName) {
   obj.collateralManager = await deployContract(CollateralManager)
-  const strategyInstance = 
-    await deployContract(strategyName, [obj.pool.address, obj.collateralManager.address, swapManager.address])
+  const strategyInstance = await deployContract(strategyName, [
+    obj.pool.address,
+    obj.collateralManager.address,
+    swapManager.address,
+  ])
   await strategyInstance.createVault()
   obj.vaultNum = await strategyInstance.vaultNum()
   await Promise.all([strategyInstance.updateBalancingFactor(300, 250), obj.collateralManager.addGemJoin(gemJoins)])
@@ -134,7 +137,9 @@ async function createStrategies(obj, vPool) {
       // alias token.balanceOf to internal method for LP Balance
       strategy.token = {
         // eslint-disable-next-line no-unused-vars
-        async balanceOf(intentionallyDiscarded) { return strategy.instance.totalLp() }
+        async balanceOf(intentionallyDiscarded) {
+          return strategy.instance.totalLp()
+        },
       }
     } else {
       strategy.token = await ethers.getContractAt(strategyTokenName, strategyTokenAddress)
@@ -170,4 +175,29 @@ async function setupVPool(obj, poolData) {
   obj.collateralToken = await ethers.getContractAt(TokenLike, collateralTokenAddress)
 }
 
-module.exports = {deployContract, getUsers, setupVPool}
+/**
+ * Get first event for a transaction
+ *
+ * @param {object} txnObj transaction object
+ * @param {object} contractInstance contract instance which generate an event
+ * @param {string} eventName event name
+ * @returns {object} an event object
+ */
+ async function getEvent(txnObj, contractInstance, eventName) {
+  const txnData = await txnObj.wait()
+  const events = txnData.events.filter(event => event.address === contractInstance.address)
+  // in case more than one events are found.
+  const decodedEvents =  events.map(function (event) {
+    try {
+      // Events from same contract with different name will fail
+      return contractInstance.interface.decodeEventLog(eventName, event.data)
+    } catch (e) {
+      // ignore decoding error as it will fail for events with different name than requested
+      return undefined
+    }
+  })
+  // Find 1st event
+  return decodedEvents.find(event => !!event)
+}
+
+module.exports = {deployContract, getUsers, setupVPool, getEvent}

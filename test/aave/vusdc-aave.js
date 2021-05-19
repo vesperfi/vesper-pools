@@ -29,11 +29,11 @@ describe('vUSDC Pool with AaveStrategy', function () {
     await setupVPool(this, {
       poolName: 'VUSDC',
       feeCollector: users[7].address,
-      strategies: strategies.map(item => ({
+      strategies: strategies.map((item, i) => ({
         ...item,
-        feeCollector: users[8].address,
+        feeCollector: users[i + 8].address, // leave first 8 users for other testing
       })),
-    })    
+    })
   })
 
   shouldBehaveLikePool('vUSDC', 'USDC')

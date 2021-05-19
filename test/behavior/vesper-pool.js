@@ -255,7 +255,7 @@ async function shouldBehaveLikePool(poolName, collateralName) {
       it('Should not allow user to withdraw without fee', async function () {
         await rebalance(strategies)
         const withdrawAmount = await pool.balanceOf(user2.address)
-        const tx = pool.connect(user2.signer).whiteListedWithdraw(withdrawAmount)
+        const tx = pool.connect(user2.signer).whitelistedWithdraw(withdrawAmount)
         await expect(tx).to.be.revertedWith('not-a-white-listed-address')
       })
 
@@ -268,7 +268,7 @@ async function shouldBehaveLikePool(poolName, collateralName) {
         await pool.addInList(target, feeCollector)
         const feeCollected = await pool.balanceOf(feeCollector)
         const signer = await ethers.getSigner(feeCollector)
-        await pool.connect(signer).whiteListedWithdraw(feeCollected)
+        await pool.connect(signer).whitelistedWithdraw(feeCollected)
         const vPoolBalanceFC = await pool.balanceOf(feeCollector)
         expect(vPoolBalanceFC).to.be.eq('0', `${poolName} balance of FC is not correct`)
         const collateralBalance = await collateralToken.balanceOf(feeCollector)
@@ -367,15 +367,16 @@ async function shouldBehaveLikePool(poolName, collateralName) {
           pool.totalDebt(),
         ])
         let maxDebt = totalValue.mul(totalDebtRatio).div(MAX_BPS)
-        expect(maxDebt).to.be.eq(totalDebtBefore, `Total debt of ${poolName} is wrong after rebalance`)
+        expect(maxDebt.sub(totalDebtBefore)).to.almost.equal(1, `Total debt of ${poolName} is wrong after rebalance`)
         const totalDebtOfStrategies = await totalDebtOfAllStrategy(strategies, pool)
-        expect(maxDebt).to.be.eq(totalDebtOfStrategies, 'Total debt of all strategies is wrong after rebalance')
+        expect(maxDebt.sub(totalDebtOfStrategies)).to.almost.equal(1, 
+          'Total debt of all strategies is wrong after rebalance')
         const withdrawAmount = await pool.balanceOf(user1.address)
         await pool.connect(user1.signer).withdraw(withdrawAmount)
         let totalDebtAfter = await pool.totalDebt()
         totalValue = await pool.totalValue()
         maxDebt = totalValue.mul(totalDebtRatio).div(MAX_BPS)
-        expect(maxDebt).to.be.lt(totalDebtAfter, `Total debt of ${poolName} is wrong after withdraw`)
+        expect(maxDebt).to.be.lte(totalDebtAfter, `Total debt of ${poolName} is wrong after withdraw`)
         expect(totalDebtAfter).to.be.lt(totalDebtBefore, `Total debt of ${poolName} is wrong after withdraw`)
         await rebalance(strategies)
         totalDebtAfter = await pool.totalDebt()
@@ -436,13 +437,13 @@ async function shouldBehaveLikePool(poolName, collateralName) {
         const blockNumber = await ethers.provider.getBlockNumber()
         let expectedLimited = BN.from(blockNumber).sub(strategyParams.lastRebalance).mul(strategyParams.debtRate)
         const creditLimit = await pool.availableCreditLimit(strategies[0].instance.address)
-        expect(creditLimit).to.be.eq(expectedLimited, `Credit limit of strategy in ${poolName} is wrong`)
+        expect(creditLimit).to.almost.equal(expectedLimited, `Credit limit of strategy in ${poolName} is wrong`)
         const debtBefore = strategyParams.totalDebt
         await rebalance(strategies)
         // add limit of one more block
         expectedLimited = expectedLimited.add(strategyParams.debtRate)
         const debtAfter = (await pool.strategy(strategies[0].instance.address)).totalDebt
-        expect(debtAfter.sub(debtBefore)).to.be.eq(expectedLimited, `Debt of strategy in ${poolName} is wrong`)
+        expect(debtAfter.sub(debtBefore)).to.almost.equal(expectedLimited, `Debt of strategy in ${poolName} is wrong`)
       })
 
       it('Strategy should not receive more than available limit in one rebalance', async function () {

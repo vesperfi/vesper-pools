@@ -4,6 +4,8 @@ const {shouldBehaveLikePool} = require('../behavior/vesper-pool')
 const {shouldBehaveLikeMultiPool} = require('../behavior/vesper-multi-pool')
 const {shouldBehaveLikeStrategy} = require('../behavior/strategy')
 const {shouldClaimAaveRewards} = require('../behavior/aave-reward')
+const {shouldBehaveLikeAaveStrategy} = require('../behavior/aave-strategy')
+const {shouldBehaveLikeCompoundStrategy} = require('../behavior/compound-strategy')
 const {getUsers, setupVPool} = require('../utils/setupHelper')
 const StrategyType = require('../utils/strategyTypes')
 const {BigNumber: BN} = require('ethers')
@@ -30,9 +32,9 @@ describe('vDAI Pool with AaveStrategy', function () {
     await setupVPool(this, {
       poolName: 'VDAI',
       feeCollector: users[7].address,
-      strategies: strategies.map(item => ({
+      strategies: strategies.map((item, i) => ({
         ...item,
-        feeCollector: users[8].address,
+        feeCollector: users[i + 8].address, // leave first 8 users for other testing
       })),
     })
   })
@@ -41,5 +43,7 @@ describe('vDAI Pool with AaveStrategy', function () {
   for (let i = 0; i < strategies.length; i++) {
     shouldBehaveLikeStrategy(i, strategies[i].type, strategies[i].name)
   }
+  shouldBehaveLikeAaveStrategy(0) // run Aave strategy tests
   shouldClaimAaveRewards(0) // run Aave rewards tests
+  shouldBehaveLikeCompoundStrategy(1) // run Compound strategy tests
 })
