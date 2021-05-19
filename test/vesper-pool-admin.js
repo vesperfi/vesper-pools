@@ -50,7 +50,7 @@ describe('Vesper Pool: Admin only function tests', function () {
 
       it('Should revert if address already exist in list', async function () {
         await pool.addInList(keeperList, user1.address)
-        await expect(pool.addInList(keeperList, user1.address)).to.be.revertedWith('address-already-in-list')
+        await expect(pool.addInList(keeperList, user1.address)).to.be.revertedWith('add-in-list-failed')
       })
     })
     context('Remove address from keeper list', function () {
@@ -61,7 +61,7 @@ describe('Vesper Pool: Admin only function tests', function () {
       })
 
       it('Should revert if address not in list', async function () {
-        await expect(pool.removeFromList(keeperList, user1.address)).to.be.revertedWith('address-not-in-list')
+        await expect(pool.removeFromList(keeperList, user1.address)).to.be.revertedWith('remove-from-list-failed')
       })
 
       it('Should revert if non-gov users add in keeper', async function () {
@@ -110,9 +110,8 @@ describe('Vesper Pool: Admin only function tests', function () {
 
       it('Should revert if address already exist in list', async function () {
         await pool.addInList(maintainersList, user2.address)
-        await expect(pool.addInList(maintainersList, user2.address)).to.be.revertedWith('address-already-in-list')
         await expect(pool.connect(user1.signer).addInList(maintainersList, user2.address)).to.be.revertedWith(
-          'address-already-in-list'
+          'add-in-list-failed'
         )
       })
 
