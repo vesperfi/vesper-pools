@@ -7,10 +7,10 @@ const metAddress = '0xa3d58c4e56fedcae3a7c43a725aee9a71f0ece4e'
 const aaveLendingPoolAddressesProvider = '0xB53C1a33016B2DC2fF3653530bfF1848a515c8c5'
 
 // Aave strategy specific tests
-function shouldBehaveLikeAaveStrategy(strategyIndex, poolName) {
+function shouldBehaveLikeAaveStrategy(strategyIndex) {
   let strategy, owner, user1, user2
 
-  describe(`${poolName}:: AaveStrategy specific tests`, function () {
+  describe('AaveStrategy specific tests', function () {
     beforeEach(async function () {
       const users = await getUsers()
       ;[owner, user1, user2] = users
