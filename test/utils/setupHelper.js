@@ -8,6 +8,8 @@ const mcdWbtcJoin = '0xBF72Da2Bd84c5170618Fbe5914B0ECA9638d5eb5'
 const mcdLinkJoin = '0xdFccAf8fDbD2F4805C174f856a317765B49E4a50'
 const gemJoins = [mcdEthJoin, mcdWbtcJoin, mcdLinkJoin]
 
+const SWAP = '0xC48ea9A2daA4d816e4c9333D6689C70070010174'
+
 // Contract names
 const IVesperPool = 'IVesperPoolTest'
 const CToken = 'CToken'

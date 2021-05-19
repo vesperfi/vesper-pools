@@ -3,7 +3,7 @@
 pragma solidity 0.8.3;
 
 interface IOracleSimple {
-    function update() external;
+    function update() external returns (bool);
 
     function consult(address token, uint256 amountIn) external view returns (uint256 amountOut);
 }

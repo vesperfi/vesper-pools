@@ -66,16 +66,4 @@ abstract contract CrvPoolMgrBase {
     function totalLp() public view returns (uint256 total) {
         total = IERC20(crvLp).balanceOf(address(this)) + IERC20(crvGauge).balanceOf(address(this));
     }
-
-    // if using this contract on its own.
-    function approveLpForGauge() external {
-        IERC20(crvLp).safeApprove(crvGauge, 0);
-        IERC20(crvLp).safeApprove(crvGauge, type(uint256).max);
-    }
-
-    // if using this contract on its own.
-    function approveTokenForPool(address _token) external {
-        IERC20(_token).safeApprove(crvPool, 0);
-        IERC20(_token).safeApprove(crvPool, type(uint256).max);
-    }
 }

@@ -5,7 +5,7 @@ pragma solidity 0.8.3;
 import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
 
 interface ISwapManager {
-    event OracleCreated(address indexed _sender, address indexed _newOracle);
+    event OracleCreated(address indexed _sender, address indexed _newOracle, uint256 _period);
 
     function N_DEX() external view returns (uint256);
 
@@ -102,7 +102,7 @@ interface ISwapManager {
         uint256 _i
     ) external view returns (address);
 
-    function createOracle(
+    function createOrUpdateOracle(
         address _tokenA,
         address _tokenB,
         uint256 _period,
@@ -131,4 +131,8 @@ interface ISwapManager {
             uint256 lastUpdatedAt,
             bool updated
         );
+
+    function updateOracles() external returns (uint256 updated, uint256 expected);
+
+    function updateOracles(address[] memory _oracleAddrs) external returns (uint256 updated, uint256 expected);
 }

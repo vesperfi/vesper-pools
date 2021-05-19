@@ -7,14 +7,20 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../../interfaces/vesper/IVesperPool.sol";
 import "../Strategy.sol";
 import "./Crv3PoolMgr.sol";
+import "hardhat/console.sol";
 
 /// @title This strategy will deposit collateral token in Compound and earn interest.
 abstract contract Crv3PoolStrategy is Crv3PoolMgr, Strategy {
     using SafeERC20 for IERC20;
 
     mapping(address => bool) private reservedToken;
+    address[] private oracles;
+
+    uint256 public constant ORACLE_PERIOD = 3600; // 1h
     uint256 public immutable collIdx;
-    uint256 public prevLpRate;
+    uint256 public usdRate;
+    uint256 public usdRateTimestamp;
+    uint256 private depositBuffer;
 
     constructor(
         address _pool,
@@ -27,6 +33,55 @@ abstract contract Crv3PoolStrategy is Crv3PoolMgr, Strategy {
         reservedToken[COIN_ADDRS[_collateralIdx]] = true;
         reservedToken[CRV] = true;
         collIdx = _collateralIdx;
+        _setupOracles();
+    }
+
+    function _setupOracles() internal {
+        oracles.push(swapManager.createOrUpdateOracle(CRV, WETH, ORACLE_PERIOD, 0));
+        for (uint256 i = 0; i < COIN_ADDRS.length; i++) {
+            oracles.push(swapManager.createOrUpdateOracle(COIN_ADDRS[i], WETH, ORACLE_PERIOD, 0));
+        }
+    }
+
+    function _consultOracle(
+        address _from,
+        address _to,
+        uint256 _amt
+    ) internal returns (uint256, bool) {
+        // from, to, amountIn, period, router
+        (uint256 rate, uint256 lastUpdate, ) = swapManager.consult(_from, _to, _amt, ORACLE_PERIOD, 0);
+        // We're looking at a TWAP ORACLE with a 1 hr Period that has been updated within the last hour
+        if ((lastUpdate > (block.timestamp - ORACLE_PERIOD)) && (rate != 0)) return (rate, true);
+        return (0, false);
+    }
+
+    // WILL THIS WORK?
+    // given the rates of 3 stablecoins compared with a common denominator
+    // return the lowest divided by the highest
+    function _getSafeUsdRate() internal returns (uint256) {
+        // use a stored rate if we've looked it up recently
+        if (usdRateTimestamp > block.timestamp - ORACLE_PERIOD && usdRate != 0) return usdRate;
+        // otherwise, calculate a rate and store it.
+        uint256 lowest;
+        uint256 highest;
+        for (uint256 i = 0; i < COIN_ADDRS.length; i++) {
+            // get the rate for $1
+            (uint256 rate, bool isValid) = _consultOracle(COIN_ADDRS[i], WETH, 10**DECIMALS[i]);
+            if (isValid) {
+                if (lowest == 0 || rate < lowest) {
+                    lowest = rate;
+                }
+                if (highest < rate) {
+                    highest = rate;
+                }
+            }
+        }
+        // We only need to check one of them because if a single valid rate is returned,
+        // highest == lowest and highest > 0 && lowest > 0
+        require(lowest != 0, "no-oracle-rates");
+        usdRateTimestamp = block.timestamp;
+        usdRate = (lowest * 1e18) / highest;
+        return usdRate;
     }
 
     /// @dev Check whether given token is reserved or not. Reserved tokens are not allowed to sweep.
@@ -44,26 +99,30 @@ abstract contract Crv3PoolStrategy is Crv3PoolMgr, Strategy {
     }
 
     function _reinvest() internal override {
-        uint256 amt = collateralToken.balanceOf(address(this));
-        if (amt != 0) {
+        if (depositBuffer != 0) {
             uint256[3] memory depositAmounts;
-            depositAmounts[collIdx] = amt;
+            depositAmounts[collIdx] = depositBuffer;
             THREEPOOL.add_liquidity(depositAmounts, 1);
             _stakeAllLpToGauge();
+            depositBuffer = 0;
         }
     }
 
     function _withdraw(uint256 _amount) internal override {
-        _unstakeAndWithdrawAsCollateral(_amount);
-        collateralToken.safeTransfer(pool, IERC20(collateralToken).balanceOf(address(this)));
+        collateralToken.safeTransfer(pool, _unstakeAndWithdrawAsCollateral(_amount));
     }
 
     function _unstakeAndWithdrawAsCollateral(uint256 _amount) internal returns (uint256) {
         if (_amount == 0) return 0;
         (uint256 lpToWithdraw, uint256 unstakeAmt) = calcWithdrawLpAs(_amount, collIdx);
         _unstakeLpFromGauge(unstakeAmt);
-        _withdrawAsFromCrvPool(lpToWithdraw, convertFrom18(minimumLpPrice()), collIdx);
-        return collateralToken.balanceOf(address(this));
+
+        uint256 minAmtOut = (convertFrom18(_minimumLpPrice(_getSafeUsdRate())) * lpToWithdraw) / 1e18;
+
+        _withdrawAsFromCrvPool(lpToWithdraw, minAmtOut, collIdx);
+        uint256 toWithdraw = collateralToken.balanceOf(address(this));
+        if (toWithdraw > _amount) toWithdraw = _amount;
+        return toWithdraw;
     }
 
     /**
@@ -71,7 +130,7 @@ abstract contract Crv3PoolStrategy is Crv3PoolMgr, Strategy {
      * @dev Report total value in collateral token
      */
     function totalValue() external view override returns (uint256 _value) {
-        _value = collateralToken.balanceOf(address(this)) + getLpValueAs(totalLp(), collIdx);
+        _value = collateralToken.balanceOf(address(this)) + getLpValue(totalLp());
     }
 
     /**
@@ -95,26 +154,51 @@ abstract contract Crv3PoolStrategy is Crv3PoolMgr, Strategy {
     /**
      * @notice Withdraw collateral to payback excess debt in pool.
      * @param _excessDebt Excess debt of strategy in collateral token
+     * @param _extra additional amount to unstake and withdraw, in collateral token
      * @return _payback amount in collateral token. Usually it is equal to excess debt.
      */
-    function _liquidate(uint256 _excessDebt) internal override returns (uint256 _payback) {
-        _payback = _unstakeAndWithdrawAsCollateral(_excessDebt);
+
+    function _liquidate(uint256 _excessDebt, uint256 _extra) internal returns (uint256 _payback) {
+        _payback = _unstakeAndWithdrawAsCollateral(_excessDebt + _extra);
+        // we dont want to return a value greater than we need to
+        if (_payback > _excessDebt) _payback = _excessDebt;
     }
 
-    function _realizeGross(uint256 _totalDebt) internal returns (uint256 _profit, uint256 _loss) {
-        _claimRewardsAndConvertTo(address(collateralToken));
-        uint256 _collateralBalance = getLpValueAs(totalLp(), collIdx);
-        if (_collateralBalance > _totalDebt) {
-            _unstakeAndWithdrawAsCollateral(_collateralBalance - _totalDebt);
-        } else {
-            _loss = _totalDebt - _collateralBalance;
-        }
-        _profit = collateralToken.balanceOf(address(this));
-    }
+    function _liquidate(uint256 _excessDebt) internal override returns (uint256 _payback) {}
 
     function _realizeProfit(uint256 _totalDebt) internal override returns (uint256 _profit) {}
 
     function _realizeLoss(uint256 _totalDebt) internal override returns (uint256 _loss) {}
+
+    function _realizeGross(uint256 _totalDebt)
+        internal
+        returns (
+            uint256 _profit,
+            uint256 _loss,
+            uint256 _toUnstake
+        )
+    {
+        uint256 baseline = collateralToken.balanceOf(address(this));
+        _claimRewardsAndConvertTo(address(collateralToken));
+        console.log("Rewards profit: %s", _profit);
+        uint256 _collateralBalance = convertFrom18(estimateFeeImpact(getLpValue(totalLp())));
+        if (_collateralBalance > _totalDebt) {
+            _toUnstake = _collateralBalance - _totalDebt;
+            console.log("Appreciation Profit: %s", _toUnstake);
+        } else {
+            _loss = _totalDebt - _collateralBalance;
+        }
+
+        _profit = collateralToken.balanceOf(address(this)) + _toUnstake - baseline;
+        if (_profit > _loss) {
+            _profit = _profit - _loss;
+            _loss = 0;
+        } else {
+            _loss = _loss - _profit;
+            _profit = 0;
+            _toUnstake = 0;
+        }
+    }
 
     function _generateReport()
         internal
@@ -127,7 +211,17 @@ abstract contract Crv3PoolStrategy is Crv3PoolMgr, Strategy {
     {
         uint256 _excessDebt = IVesperPool(pool).excessDebt(address(this));
         uint256 _totalDebt = IVesperPool(pool).totalDebtOf(address(this));
-        (_profit, _loss) = _realizeGross(_totalDebt);
-        _payback = _liquidate(_excessDebt);
+        uint256 _toUnstake;
+        (_profit, _loss, _toUnstake) = _realizeGross(_totalDebt);
+        // only make call to unstake and withdraw once
+        _payback = _liquidate(_excessDebt, _toUnstake);
+    }
+
+    function rebalance() external override onlyKeeper {
+        _reinvest();
+        (uint256 _profit, uint256 _loss, uint256 _payback) = _generateReport();
+        console.log("P,L,P: %s, %s, %s", _profit, _loss, _payback);
+        IVesperPool(pool).reportEarning(_profit, _loss, _payback);
+        depositBuffer = collateralToken.balanceOf(address(this));
     }
 }
