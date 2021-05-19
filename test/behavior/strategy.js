@@ -4,15 +4,19 @@ const {ethers} = require('hardhat')
 const {expect} = require('chai')
 const {constants} = require('@openzeppelin/test-helpers')
 const {getUsers} = require('../utils/setupHelper')
+const {shouldBehaveLikeAaveStrategy} = require('../behavior/aave-strategy')
 const swapper = require('../utils/tokenSwapper')
 const {deposit} = require('../utils/poolOps')
 const {advanceBlock} = require('../utils/time')
-
-function shouldBehaveLikeStrategy(strategyIndex, strategyName) {
+const StrategyType = require('../utils/strategyTypes')
+function shouldBehaveLikeStrategy(strategyIndex, type) {
   let owner, user1, user2, user3, user4, user5, strategy, pool, feeCollector, collateralToken
+  const behaviors = {
+    [StrategyType.AAVE]:shouldBehaveLikeAaveStrategy
+  }
   const metAddress = '0xa3d58c4e56fedcae3a7c43a725aee9a71f0ece4e'
-
-  describe(`Strategy ${strategyName} common tests`, function () {
+  const shouldBehaveLikeSpecificStrategy = behaviors[type]
+  describe('Strategy common behaviour tests', function () {
     beforeEach(async function () {
       const users = await getUsers()
       ;[owner, user1, user2, user3, user4, user5] = users
@@ -21,7 +25,6 @@ function shouldBehaveLikeStrategy(strategyIndex, strategyName) {
       collateralToken = this.collateralToken
       feeCollector = this.strategies[strategyIndex].feeCollector
     })
-
     describe('Initialize strategy', function () {
       it('Should not re-initialize strategy', async function () {
         await expect(strategy.init()).to.be.revertedWith('keeper-list-already-created')
@@ -208,6 +211,9 @@ function shouldBehaveLikeStrategy(strategyIndex, strategyName) {
       })
     })
   })
+  if (behaviors[type]) {
+    shouldBehaveLikeSpecificStrategy(strategyIndex)
+  }
 }
 
 module.exports = {shouldBehaveLikeStrategy}
