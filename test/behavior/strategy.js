@@ -3,16 +3,17 @@
 const {ethers} = require('hardhat')
 const {expect} = require('chai')
 const {constants} = require('@openzeppelin/test-helpers')
-const {getUsers} = require('../utils/setupHelper')
+const {getUsers, getEvent} = require('../utils/setupHelper')
 const {shouldBehaveLikeAaveStrategy} = require('../behavior/aave-strategy')
 const swapper = require('../utils/tokenSwapper')
 const {deposit} = require('../utils/poolOps')
 const {advanceBlock} = require('../utils/time')
 const StrategyType = require('../utils/strategyTypes')
+
 function shouldBehaveLikeStrategy(strategyIndex, type) {
   let owner, user1, user2, user3, user4, user5, strategy, pool, feeCollector, collateralToken
   const behaviors = {
-    [StrategyType.AAVE]:shouldBehaveLikeAaveStrategy
+    [StrategyType.AAVE]: shouldBehaveLikeAaveStrategy,
   }
   const metAddress = '0xa3d58c4e56fedcae3a7c43a725aee9a71f0ece4e'
   const shouldBehaveLikeSpecificStrategy = behaviors[type]
@@ -73,8 +74,8 @@ function shouldBehaveLikeStrategy(strategyIndex, type) {
 
       it('Should revert if keeper address already exist in list', async function () {
         await strategy.addKeeper(user2.address)
-        await expect(strategy.addKeeper(user2.address)).to.be.revertedWith('keeper-already-in-list')
-        await expect(strategy.addKeeper(owner.address)).to.be.revertedWith('keeper-already-in-list')
+        await expect(strategy.addKeeper(user2.address)).to.be.revertedWith('add-keeper-failed')
+        await expect(strategy.addKeeper(owner.address)).to.be.revertedWith('add-keeper-failed')
       })
 
       it('Should revert if non-gov user add a keeper', async function () {
@@ -90,7 +91,7 @@ function shouldBehaveLikeStrategy(strategyIndex, type) {
       })
 
       it('Should revert if keeper address not exist in list', async function () {
-        await expect(strategy.removeKeeper(user2.address)).to.be.revertedWith('keeper-not-in-list')
+        await expect(strategy.removeKeeper(user2.address)).to.be.revertedWith('remove-keeper-failed')
       })
 
       it('Should revert if non-gov user remove a keeper', async function () {
@@ -130,7 +131,7 @@ function shouldBehaveLikeStrategy(strategyIndex, type) {
         expect(initialTotalValue).to.be.equal('0', 'Initial total tokens value should be zero')
       })
 
-      it('Should not change total value on collateral token deposit without rebalance', async function () {
+      it('Should not change total value on collateral token deposit', async function () {
         deposit(pool, collateralToken, 1, user1)
         const totalValue = await strategy.totalValue()
         expect(totalValue).to.be.equal('0', 'Total tokens should be zero')
@@ -162,18 +163,17 @@ function shouldBehaveLikeStrategy(strategyIndex, type) {
         expect(await strategy.totalValue()).to.be.gt(totalValueBefore, 'Total value should increase')
       })
 
-      it('Should raise EarningReported event', async function () {
-        await collateralToken.balanceOf(strategy.address)
-        await deposit(pool, collateralToken, 1, user1)
+      it('Should generate EarningReported event', async function () {
+        await deposit(pool, collateralToken, 1, user2)
         await strategy.rebalance()
         await advanceBlock(50)
-        // const tx = await strategy.rebalance()
-        // const waitObj = await tx.wait()
-        // waitObj.events.forEach(function (event) {
-        //   if (event.topics && event.topics.length === 7) {
-        //     console.log(event.topics.toString())
-        //   }
-        // })
+        const txnObj = await strategy.rebalance()
+        const event = await getEvent(txnObj, pool, 'EarningReported')
+        expect(event.profit).to.be.gt(0, 'Should have some profit')
+        expect(event.loss).to.be.gte(0, 'Should have some loss')
+        expect(event.profit).to.be.gt(event.loss, 'Should have profit > loss')
+        expect(event.payback).to.be.equal(0, 'Should have 0 payback')
+        expect(event.poolDebt).to.be.equal(event.strategyDebt, 'Should have same strategyDebt and poolDebt')
       })
     })
 
