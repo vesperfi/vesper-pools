@@ -1,8 +1,8 @@
-name: vUSDC pool with Aave and Compound V3 Strategies
+name: vDAI with Aave and Compound
 on: [pull_request]
 
 jobs:
-  vusdc-aave-compund-strategy-test:
+  vdai-aave-compund-strategy-test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -21,5 +21,5 @@ jobs:
       - name: Run npm install with node v${{ matrix.node }}
         run: npm install
 
-      - name: Running tests for vUSDC pool with Aave and Compound V3 Strategies
-        run: npm test "test/aave/vusdc-aave.js"
+      - name: Running tests for vDAI with Aave and Compound
+        run: npm test "test/vdai/aave-compound.js"
