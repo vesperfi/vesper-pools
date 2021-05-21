@@ -1,7 +1,15 @@
 'use strict'
 
 const swapper = require('../utils/tokenSwapper')
-const {deposit: _deposit, rebalance, totalDebtOfAllStrategy, timeTravel, executeIfExist} = require('../utils/poolOps')
+const StrategyType = require('../utils/strategyTypes')
+const {
+  deposit: _deposit,
+  rebalance,
+  rebalanceStrategy,
+  totalDebtOfAllStrategy,
+  timeTravel,
+  executeIfExist,
+} = require('../utils/poolOps')
 const chaiAlmost = require('chai-almost')
 const chai = require('chai')
 chai.use(chaiAlmost(1))
@@ -28,6 +36,10 @@ async function shouldBehaveLikePool(poolName, collateralName) {
   function convertFrom18(amount) {
     const divisor = DECIMAL18.div(BN.from(10).pow(collateralDecimal))
     return BN.from(amount).div(divisor)
+  }
+
+  function isMaker(strategy) {
+    return strategy.strategyType === StrategyType.AAVE_MAKER || strategy.strategyType === StrategyType.COMPOUND_MAKER
   }
 
   describe(`${poolName} basic operation tests`, function () {
@@ -62,10 +74,10 @@ async function shouldBehaveLikePool(poolName, collateralName) {
         const totalValue = await pool.totalValue()
         for (const strategy of strategies) {
           await executeIfExist(strategy.token.exchangeRateCurrent)
-          await strategy.instance.rebalance()
+          await rebalanceStrategy(strategy)
           await executeIfExist(strategy.token.exchangeRateCurrent)
           const strategyParams = await pool.strategy(strategy.instance.address)
-          if (strategyParams.debtRatio.gt(0)) {
+          if (!isMaker(strategy) && strategyParams.debtRatio.gt(0)) {
             const receiptTokenBalance = await strategy.token.balanceOf(strategy.instance.address)
             expect(receiptTokenBalance).to.be.gt(0, 'receipt token balance of strategy is wrong')
           }
@@ -264,7 +276,7 @@ async function shouldBehaveLikePool(poolName, collateralName) {
       })
 
       it('Should allow fee collector to withdraw without fee', async function () {
-        // Add fee collector to fee white list
+        await rebalance(strategies)
         for (let i = 1; i < 4; i++) {
           await deposit(10, user2)
           await rebalance(strategies)
@@ -290,7 +302,7 @@ async function shouldBehaveLikePool(poolName, collateralName) {
         const fc = await strategies[0].feeCollector
         await timeTravel()
         // Another deposit
-        await deposit(200, user2)
+        await deposit(20, user2)
         await rebalance(strategies)
         await strategies[0].instance.sweepERC20(pool.address)
         const feeEarned1 = await pool.balanceOf(fc)
@@ -307,7 +319,7 @@ async function shouldBehaveLikePool(poolName, collateralName) {
         await rebalance(strategies)
         // Time travel to generate earning
         await timeTravel()
-        await deposit(200, user2)
+        await deposit(20, user2)
         await rebalance(strategies)
         const fc = strategies[0].instance.address
         let vPoolBalanceFC = await pool.balanceOf(fc)
@@ -349,7 +361,9 @@ async function shouldBehaveLikePool(poolName, collateralName) {
     })
 
     describe(`${poolName}: Should report earning correctly`, function () {
-      it('Should not be able to payback more than total debt', async function () {})
+      it('Should not be able to payback more than total debt', async function () {
+        // TODO
+      })
 
       it('Strategy should receive more amount when new deposit happen', async function () {
         await deposit(200, user2)

@@ -1,16 +1,12 @@
 'use strict'
-const {shouldBehaveLikePool} = require('../behavior/vesper-pool')
-const {shouldBehaveLikeMultiPool} = require('../behavior/vesper-multi-pool')
-const {shouldMigrateStrategies} = require('../behavior/strategy-migration')
-const {shouldBehaveLikeStrategy} = require('../behavior/strategy')
-const {shouldClaimAaveRewards} = require('../behavior/aave-reward')
+
 const {getUsers, setupVPool} = require('../utils/setupHelper')
 const StrategyType = require('../utils/strategyTypes')
 const {BigNumber: BN} = require('ethers')
 const DECIMAL18 = BN.from('1000000000000000000')
 const ONE_MILLION = DECIMAL18.mul('1000000')
-/* eslint-disable mocha/no-setup-in-describe */
-describe('vUSDC Pool', function () {
+
+function prepareConfig() {
   const interestFee = '1500' // 15%
   const strategies = [
     {
@@ -36,12 +32,7 @@ describe('vUSDC Pool', function () {
       })),
     })
   })
+  return strategies
+}
 
-  shouldBehaveLikePool('vUSDC', 'USDC')
-  shouldBehaveLikeMultiPool('vUSDC')
-  for (let i = 0; i < strategies.length; i++) {
-    shouldBehaveLikeStrategy(i, strategies[i].type, strategies[i].name)
-  }
-  shouldClaimAaveRewards(0) // run Aave rewards tests
-  shouldMigrateStrategies('vUSDC')
-})
+module.exports = {prepareConfig}

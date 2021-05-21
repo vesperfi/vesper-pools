@@ -6,18 +6,20 @@ const {constants} = require('@openzeppelin/test-helpers')
 const {getUsers, getEvent} = require('../utils/setupHelper')
 const {shouldBehaveLikeAaveStrategy} = require('../behavior/aave-strategy')
 const {shouldBehaveLikeCompoundStrategy} = require('../behavior/compound-strategy')
+const {shouldBehaveLikeMakerStrategy} = require('../behavior/maker-strategy')
 
 const swapper = require('../utils/tokenSwapper')
-const {deposit} = require('../utils/poolOps')
+const {deposit, rebalanceStrategy} = require('../utils/poolOps')
 const {advanceBlock} = require('../utils/time')
 const StrategyType = require('../utils/strategyTypes')
 
 function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
   let owner, user1, user2, user3, user4, user5, strategy, pool, feeCollector, collateralToken
-  
+
   const behaviors = {
     [StrategyType.AAVE]: shouldBehaveLikeAaveStrategy,
-    [StrategyType.COMPOUND]: shouldBehaveLikeCompoundStrategy
+    [StrategyType.COMPOUND]: shouldBehaveLikeCompoundStrategy,
+    [StrategyType.AAVE_MAKER]: shouldBehaveLikeMakerStrategy,
   }
   const metAddress = '0xa3d58c4e56fedcae3a7c43a725aee9a71f0ece4e'
   const shouldBehaveLikeSpecificStrategy = behaviors[type]
@@ -148,10 +150,6 @@ function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
         await expect(strategy.connect(user4.signer).rebalance()).to.be.revertedWith('caller-is-not-a-keeper')
       })
 
-      it('Should not revert if rebalance called without deposit', async function () {
-        await expect(strategy.rebalance()).to.not.reverted
-      })
-
       it('Should have same total value and total debt without rebalance', async function () {
         await deposit(pool, collateralToken, 1, user1)
         const totalDebtBefore = (await pool.strategy(strategy.address)).totalDebt
@@ -159,6 +157,7 @@ function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
       })
 
       it('Should increase total value after rebalance', async function () {
+        await rebalanceStrategy(this.strategies[strategyIndex]) // rebalance to handle under water
         await deposit(pool, collateralToken, 1, user1)
         const totalValueBefore = await strategy.totalValue()
         const totalDebtBefore = (await pool.strategy(strategy.address)).totalDebt
@@ -169,7 +168,8 @@ function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
       })
 
       it('Should generate EarningReported event', async function () {
-        await deposit(pool, collateralToken, 1, user2)
+        await rebalanceStrategy(this.strategies[strategyIndex]) // rebalance to handle under water
+        await deposit(pool, collateralToken, 50, user2) // deposit 50 ETH to generate some profit
         await strategy.rebalance()
         await advanceBlock(50)
         const txnObj = await strategy.rebalance()
@@ -215,7 +215,13 @@ function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
         await expect(strategy.approveToken()).to.not.reverted
       })
     })
+
+    it('Should payback all debt when debt ratio in pool is set 0 for the strategy.', async function () {
+      // TODO
+    })
   })
+
+  // Run strategy specific tets
   if (behaviors[type]) {
     shouldBehaveLikeSpecificStrategy(strategyIndex)
   }
