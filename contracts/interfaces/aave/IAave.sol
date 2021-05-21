@@ -10,6 +10,23 @@ interface AaveLendingPoolAddressesProvider {
     function getAddress(bytes32 id) external view returns (address);
 }
 
+interface AToken is IERC20 {
+    /**
+     * @dev Returns the address of the incentives controller contract
+     **/
+    function getIncentivesController() external view returns (address);
+}
+
+interface IAaveIncentivesController {
+    function getRewardsBalance(address[] calldata assets, address user) external view returns (uint256);
+
+    function claimRewards(
+        address[] calldata assets,
+        uint256 amount,
+        address to
+    ) external returns (uint256);
+}
+
 interface AaveLendingPool {
     function deposit(
         address asset,
