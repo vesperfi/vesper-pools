@@ -5,19 +5,24 @@ const {expect} = require('chai')
 const {constants} = require('@openzeppelin/test-helpers')
 const {getUsers, getEvent} = require('../utils/setupHelper')
 const {shouldBehaveLikeAaveStrategy} = require('../behavior/aave-strategy')
+const {shouldBehaveLikeCompoundStrategy} = require('../behavior/compound-strategy')
+
 const swapper = require('../utils/tokenSwapper')
 const {deposit} = require('../utils/poolOps')
 const {advanceBlock} = require('../utils/time')
 const StrategyType = require('../utils/strategyTypes')
 
-function shouldBehaveLikeStrategy(strategyIndex, type) {
+function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
   let owner, user1, user2, user3, user4, user5, strategy, pool, feeCollector, collateralToken
+  
   const behaviors = {
     [StrategyType.AAVE]: shouldBehaveLikeAaveStrategy,
+    [StrategyType.COMPOUND]: shouldBehaveLikeCompoundStrategy
   }
   const metAddress = '0xa3d58c4e56fedcae3a7c43a725aee9a71f0ece4e'
   const shouldBehaveLikeSpecificStrategy = behaviors[type]
-  describe('Strategy common behaviour tests', function () {
+
+  describe(`${strategyName} Strategy common behaviour tests`, function () {
     beforeEach(async function () {
       const users = await getUsers()
       ;[owner, user1, user2, user3, user4, user5] = users

@@ -8,6 +8,8 @@ const {deposit} = require('../utils/poolOps')
 const AAVE_ADDRESS = '0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9'
 const STAKED_AAVE_ADDRESS = '0x4da27a545c0c5B758a6BA100e3a049001de870f5'
 
+// TODO merge aave rewards tests in aave-strategy.js file 
+
 // Aave reward claim and unstake behavior tests for Aave and AaveMaker strategy
 function shouldClaimAaveRewards(strategyIndex) {
   let strategy, aave, stakedAave, pool, collateralToken
