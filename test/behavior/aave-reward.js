@@ -109,6 +109,13 @@ function shouldClaimAaveRewards(strategyIndex) {
         expect(stkAaveAfter).to.be.gt(stkAaveBefore, 'should claim more stake aave')
       })
 
+      it('Should startCooldown with rebalance', async function () {
+        await time.increase(10 * 60 * 60)
+        await strategy.rebalance()
+        const data = await strategy.cooldownData()
+        expect(data._cooldownStart).to.be.eq(await time.latest(), 'Cooldown start is not correct')
+      })
+
       it('Should unstake aave of accumulated in very long period', async function () {
         await strategy.rebalance()
         await time.increase(18 * 24 * 60 * 60)
@@ -128,21 +135,6 @@ function shouldClaimAaveRewards(strategyIndex) {
         await strategy.rebalance()
         const balance5 = await stakedAave.balanceOf(strategy.address)
         expect(balance5).to.be.eq(0, 'should claim more stake aave')
-      })
-
-      it('Should startCooldown with rebalance', async function () {
-        await strategy.rebalance()
-        const data = await strategy.cooldownData()
-        expect(data._cooldownStart).to.be.eq(await time.latest(), 'Cooldown start is not correct')
-      })
-    })
-
-    describe('rebalance', function () {
-      it('Should startCooldown with rebalance', async function () {
-        await deposit(pool, collateralToken, 1, user1)
-        await strategy.rebalance()
-        const data = await strategy.cooldownData()
-        expect(data._cooldownStart).to.be.eq(await time.latest(), 'Cooldown start is not correct')
       })
     })
   })
