@@ -212,7 +212,11 @@ abstract contract PoolShareToken is ERC20Permit, Pausable, ReentrancyGuard, Gove
             uint256 _amountWithdrawn = _beforeBurning(_sharesAfterFee);
             // Recalculate proportional share on actual amount withdrawn
             uint256 _proportionalShares = _calculateShares(_amountWithdrawn);
-            if (_proportionalShares < _sharesAfterFee) {
+
+            // Using convertFrom18() to avoid dust.
+            // Pool share token is in 18 decimal and collatoral token decimal is <=18.
+            // Anything less than 10**(18-collortalTokenDecimal) is dust.
+            if (convertFrom18(_proportionalShares) < convertFrom18(_sharesAfterFee)) {
                 // Recalculate shares to withdraw, fee and shareAfterFee
                 _shares = (_proportionalShares * MAX_BPS) / (MAX_BPS - withdrawFee);
                 _fee = _shares - _proportionalShares;
@@ -230,7 +234,7 @@ abstract contract PoolShareToken is ERC20Permit, Pausable, ReentrancyGuard, Gove
         require(_shares != 0, "share-is-0");
         uint256 _amountWithdrawn = _beforeBurning(_shares);
         uint256 _proportionalShares = _calculateShares(_amountWithdrawn);
-        if (_proportionalShares < _shares) {
+        if (convertFrom18(_proportionalShares) < convertFrom18(_shares)) {
             _shares = _proportionalShares;
         }
         _burn(_msgSender(), _shares);
