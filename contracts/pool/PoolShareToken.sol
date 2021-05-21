@@ -186,10 +186,10 @@ abstract contract PoolShareToken is ERC20Permit, Pausable, ReentrancyGuard, Gove
      * @param _amount Collateral amount in collateral token defined decimals.
      * @return share amount in 18 decimal
      */
-    // TODO: handle rounding effect
     function _calculateShares(uint256 _amount) internal view returns (uint256) {
         require(_amount != 0, "amount-is-0");
-        return (_amount * 1e18) / pricePerShare();
+        uint256 _share = ((_amount * 1e18) / pricePerShare());
+        return _amount > ((_share * pricePerShare()) / 1e18) ? _share + 1 : _share;
     }
 
     /// @dev Deposit incoming token and mint pool token i.e. shares.
