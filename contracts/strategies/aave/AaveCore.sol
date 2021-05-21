@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.3;
 
-import "../../interfaces/aave/IAaveV2.sol";
+import "../../interfaces/aave/IAave.sol";
 
 /// @title This contract provide core operations for Aave
 abstract contract AaveCore {
@@ -15,13 +15,13 @@ abstract contract AaveCore {
     AaveLendingPool public aaveLendingPool;
     AaveProtocolDataProvider public aaveProtocolDataProvider;
 
-    IERC20 internal immutable aToken;
+    AToken internal immutable aToken;
     bytes32 private constant AAVE_PROVIDER_ID = 0x0100000000000000000000000000000000000000000000000000000000000000;
     event UpdatedAddressesProvider(address _previousProvider, address _newProvider);
 
     constructor(address _receiptToken) {
         require(_receiptToken != address(0), "aToken-address-is-zero");
-        aToken = IERC20(_receiptToken);
+        aToken = AToken(_receiptToken);
         aaveLendingPool = AaveLendingPool(aaveAddressesProvider.getLendingPool());
         aaveProtocolDataProvider = AaveProtocolDataProvider(aaveAddressesProvider.getAddress(AAVE_PROVIDER_ID));
     }
@@ -102,7 +102,18 @@ abstract contract AaveCore {
      */
     function _claimAave() internal returns (uint256) {
         (uint256 _cooldownStart, uint256 _cooldownEnd, uint256 _unstakeEnd) = cooldownData();
-
+        if (_cooldownStart == 0 || block.timestamp > _unstakeEnd) {
+            // claim stkAave when its first rebalance or unstake period passed.
+            address[] memory _assets = new address[](1);
+            _assets[0] = address(aToken);
+            IAaveIncentivesController(aToken.getIncentivesController()).claimRewards(
+                _assets,
+                type(uint256).max,
+                address(this)
+            );
+        }
+        // Fetch and check again for next action.
+        (_cooldownStart, _cooldownEnd, _unstakeEnd) = cooldownData();
         if (_canUnstake(_cooldownEnd, _unstakeEnd)) {
             stkAAVE.redeem(address(this), type(uint256).max);
         } else if (_canStartCooldown(_cooldownStart, _unstakeEnd)) {
