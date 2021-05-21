@@ -1,0 +1,15 @@
+{
+  "version": "3.0.0",
+  "networks": {
+    "mainnet": {
+      "VUSDC": {
+        "pool": "0x777A7850251b7A301cfA1E7b1d8a9c4a9C49Cf85",
+        "strategy": [
+            {
+                "AaveStrategyUSDC":"0xd313dB0CFA6460336BfaEce4841fC73777A11a91"
+            }
+        ]
+      }
+    }
+  }
+}
