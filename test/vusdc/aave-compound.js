@@ -1,6 +1,7 @@
 'use strict'
 const {shouldBehaveLikePool} = require('../behavior/vesper-pool')
 const {shouldBehaveLikeMultiPool} = require('../behavior/vesper-multi-pool')
+const {shouldMigrateStrategies} = require('../behavior/strategy-migration')
 const {shouldBehaveLikeStrategy} = require('../behavior/strategy')
 const {shouldClaimAaveRewards} = require('../behavior/aave-reward')
 const {getUsers, setupVPool} = require('../utils/setupHelper')
@@ -42,4 +43,5 @@ describe('vUSDC Pool', function () {
     shouldBehaveLikeStrategy(i, strategies[i].type, strategies[i].name)
   }
   shouldClaimAaveRewards(0) // run Aave rewards tests
+  shouldMigrateStrategies('vUSDC')
 })

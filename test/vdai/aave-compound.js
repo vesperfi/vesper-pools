@@ -2,6 +2,7 @@
 
 const {shouldBehaveLikePool} = require('../behavior/vesper-pool')
 const {shouldBehaveLikeMultiPool} = require('../behavior/vesper-multi-pool')
+const {shouldMigrateStrategies} = require('../behavior/strategy-migration')
 const {shouldBehaveLikeStrategy} = require('../behavior/strategy')
 const {shouldClaimAaveRewards} = require('../behavior/aave-reward')
 const {getUsers, setupVPool} = require('../utils/setupHelper')
@@ -38,8 +39,10 @@ describe('vDAI Pool', function () {
   })
   shouldBehaveLikePool('vDai', 'DAI')
   shouldBehaveLikeMultiPool('vDai')
+  
   for (let i = 0; i < strategies.length; i++) {
     shouldBehaveLikeStrategy(i, strategies[i].type, strategies[i].name)
   }  
   shouldClaimAaveRewards(0) // run Aave rewards tests
+  shouldMigrateStrategies('vDai')
 })

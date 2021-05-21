@@ -1,7 +1,6 @@
 'use strict'
 
 const {deposit: _deposit, rebalance} = require('../utils/poolOps')
-const {deployContract} = require('../utils/setupHelper')
 const {expect} = require('chai')
 const DECIMAL = '1000000000000000000'
 async function shouldBehaveLikeMultiPool(poolName) {
@@ -23,62 +22,6 @@ async function shouldBehaveLikeMultiPool(poolName) {
       await pool.connect(gov.signer).updateDebtRatio(strategies[1].instance.address, 4500)
     })
 
-    describe(`${poolName}: Should migrate from old strategy to new`, function () {
-      it(`Should be able to migrate strategy successfully in ${poolName}`, async function () {
-        await Promise.all([deposit(200, user2), deposit(200, user1)])
-        await rebalance(strategies)
-        const receiptToken = strategies[0].token
-        const [
-          totalSupplyBefore,
-          totalValueBefore,
-          totalDebtBefore,
-          totalDebtRatioBefore,
-          receiptTokenBefore,
-        ] = await Promise.all([
-          pool.totalSupply(),
-          pool.totalValue(),
-          pool.totalDebt(),
-          pool.totalDebtRatio(),
-          receiptToken.balanceOf(strategies[0].instance.address),
-        ])
-        const swapManager = await deployContract('SwapManager')
-        const newStrategy = await deployContract(strategies[0].name, [pool.address, swapManager.address])
-
-        await pool.connect(gov.signer).migrateStrategy(strategies[0].instance.address, newStrategy.address)
-
-        const [
-          totalSupplyAfter,
-          totalValueAfter,
-          totalDebtAfter,
-          totalDebtRatioAfter,
-          receiptTokenAfter,
-          receiptTokenAfter2,
-        ] = await Promise.all([
-          pool.totalSupply(),
-          pool.totalValue(),
-          pool.totalDebt(),
-          pool.totalDebtRatio(),
-          receiptToken.balanceOf(strategies[0].instance.address),
-          receiptToken.balanceOf(newStrategy.address),
-        ])
-        expect(totalSupplyAfter).to.be.eq(totalSupplyBefore, `${poolName} total supply after migration is not correct`)
-        expect(totalValueAfter).to.be.eq(totalValueBefore, `${poolName} total value after migration is not correct`)
-        expect(totalDebtAfter).to.be.eq(totalDebtBefore, `${poolName} total debt after migration is not correct`)
-        expect(totalDebtRatioAfter).to.be.eq(
-          totalDebtRatioBefore,
-          `${poolName} total debt ratio after migration is not correct`
-        )
-        expect(receiptTokenAfter2).to.be.gte(
-          receiptTokenBefore,
-          `${poolName} receipt  token balance of new strategy after migration is not correct`
-        )
-        expect(receiptTokenAfter).to.be.eq(
-          0,
-          `${poolName} receipt  token balance of new strategy after migration is not correct`
-        )
-      })
-    })
-
     describe(`${poolName}: Withdraw queue`, function () {
       beforeEach(async function () {
         await deposit(80, user1)
@@ -94,9 +37,11 @@ async function shouldBehaveLikeMultiPool(poolName) {
         const poolSharePrice = await pool.pricePerShare()
         const expectedAmount = withdrawAmount.mul(poolSharePrice).div(DECIMAL)
         const expectedFromS1 = expectedAmount.sub(tokenHere).sub(debt0)
+
         await pool.connect(user1.signer).withdraw(withdrawAmount)
         const debt1After = (await pool.strategy(strategies[1].instance.address)).totalDebt
         const actualWithdrawFromS1 = debt1Before.sub(debt1After)
+
         debt0 = (await pool.strategy(strategies[0].instance.address)).totalDebt
         tokenHere = await pool.tokensHere()
         expect(actualWithdrawFromS1).to.be.eq(expectedFromS1, 'Withdraw from Strategy 2 is wrong')
