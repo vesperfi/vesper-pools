@@ -235,16 +235,24 @@ async function shouldBehaveLikePool(poolName, collateralName) {
         await deposit(10, user2)
         feeCollector = this.feeCollector
         await pool.updateWithdrawFee(fee)
+        const feeCollected = await pool.balanceOf(feeCollector)
+        // Add fee collector to fee white list
+        const target = await pool.feeWhitelist()
+        await pool.addInList(target, feeCollector)
+        // clean up any fee collected before running tests
+        if (feeCollected.gt(0)) {
+          const signer = await ethers.getSigner(feeCollector)
+          await pool.connect(signer).whitelistedWithdraw(feeCollected)
+        }
       })
 
-      // TODO Need some clean up before this test. It passes for first strategy and failed for next one.
-      // it('Should collect fee on withdraw', async function () {
-      //   const withdrawAmount = await pool.balanceOf(user2.address)
-      //   await pool.connect(user2.signer).withdraw(withdrawAmount)
-      //   const feeToCollect = withdrawAmount.mul(fee).div(MAX_BPS)
-      //   const vPoolBalanceFC = await pool.balanceOf(feeCollector)
-      //   expect(vPoolBalanceFC).to.be.equal(feeToCollect, 'Withdraw fee transfer failed')
-      // })
+      it('Should collect fee on withdraw', async function () {
+        const withdrawAmount = await pool.balanceOf(user2.address)
+        await pool.connect(user2.signer).withdraw(withdrawAmount)
+        const feeToCollect = withdrawAmount.mul(fee).div(MAX_BPS)
+        const vPoolBalanceFC = await pool.balanceOf(feeCollector)
+        expect(vPoolBalanceFC).to.be.equal(feeToCollect, 'Withdraw fee transfer failed')
+      })
 
       it('Should collect fee on withdraw after rebalance', async function () {
         await rebalance(strategies)
@@ -265,9 +273,6 @@ async function shouldBehaveLikePool(poolName, collateralName) {
         await rebalance(strategies)
         const withdrawAmount = await pool.balanceOf(user2.address)
         await pool.connect(user2.signer).withdraw(withdrawAmount)
-        // Add fee collector to fee white list
-        const target = await pool.feeWhitelist()
-        await pool.addInList(target, feeCollector)
         const feeCollected = await pool.balanceOf(feeCollector)
         const signer = await ethers.getSigner(feeCollector)
         await pool.connect(signer).whitelistedWithdraw(feeCollected)
