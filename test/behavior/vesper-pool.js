@@ -235,15 +235,9 @@ async function shouldBehaveLikePool(poolName, collateralName) {
         await deposit(10, user2)
         feeCollector = this.feeCollector
         await pool.updateWithdrawFee(fee)
-        const feeCollected = await pool.balanceOf(feeCollector)
         // Add fee collector to fee white list
         const target = await pool.feeWhitelist()
         await pool.addInList(target, feeCollector)
-        // clean up any fee collected before running tests
-        if (feeCollected.gt(0)) {
-          const signer = await ethers.getSigner(feeCollector)
-          await pool.connect(signer).whitelistedWithdraw(feeCollected)
-        }
       })
 
       it('Should collect fee on withdraw', async function () {
@@ -459,7 +453,10 @@ async function shouldBehaveLikePool(poolName, collateralName) {
         // add limit of one more block
         expectedLimited = expectedLimited.add(strategyParams.debtRate)
         const debtAfter = (await pool.strategy(strategies[0].instance.address)).totalDebt
-        expect(debtAfter.sub(debtBefore)).to.almost.equal(expectedLimited, `Debt of strategy in ${poolName} is wrong`)
+        expect(Math.abs(debtAfter.sub(debtBefore).sub(expectedLimited))).to.almost.equal(
+          1,
+          `Debt of strategy in ${poolName} is wrong`
+        )
       })
 
       it('Strategy should not receive more than available limit in one rebalance', async function () {
