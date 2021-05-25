@@ -394,7 +394,7 @@ contract CollateralManager is ICollateralManager, DSMath, ReentrancyGuard, Gover
         uint256 _vaultNum,
         address _owner,
         address _newOwner
-    ) internal onlyGovernor {
+    ) internal {
         require(_newOwner != address(0), "new-owner-address-is-zero");
         require(vaultNum[_owner] == _vaultNum, "invalid-vault-num");
         require(vaultNum[_newOwner] == 0, "new-owner-owns-another-vault");
