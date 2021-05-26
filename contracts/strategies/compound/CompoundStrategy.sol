@@ -26,7 +26,7 @@ abstract contract CompoundStrategy is Strategy {
      * @notice Calculate total value using COMP accrued and cToken
      * @dev Report total value in collateral token
      */
-    function totalValue() external view override returns (uint256 _totalValue) {
+    function totalValue() external view virtual override returns (uint256 _totalValue) {
         uint256 _compAccrued = COMPTROLLER.compAccrued(address(this));
         if (_compAccrued != 0) {
             (, _totalValue) = swapManager.bestPathFixedInput(COMP, address(collateralToken), _compAccrued, 0);
@@ -34,12 +34,12 @@ abstract contract CompoundStrategy is Strategy {
         _totalValue += _convertToCollateral(cToken.balanceOf(address(this)));
     }
 
-    function isReservedToken(address _token) public view override returns (bool) {
+    function isReservedToken(address _token) public view virtual override returns (bool) {
         return _token == address(cToken) || _token == COMP;
     }
 
     /// @notice Approve all required tokens
-    function _approveToken(uint256 _amount) internal override {
+    function _approveToken(uint256 _amount) internal virtual override {
         collateralToken.safeApprove(pool, _amount);
         collateralToken.safeApprove(address(cToken), _amount);
         for (uint256 i = 0; i < swapManager.N_DEX(); i++) {
@@ -51,7 +51,7 @@ abstract contract CompoundStrategy is Strategy {
      * @notice Claim COMP and transfer to new strategy
      * @param _newStrategy Address of new strategy.
      */
-    function _beforeMigration(address _newStrategy) internal override {
+    function _beforeMigration(address _newStrategy) internal virtual override {
         _claimComp();
         IERC20(COMP).safeTransfer(_newStrategy, IERC20(COMP).balanceOf(address(this)));
     }
@@ -87,7 +87,7 @@ abstract contract CompoundStrategy is Strategy {
      * @param _totalDebt Total collateral debt of this strategy
      * @return profit in collateral token
      */
-    function _realizeProfit(uint256 _totalDebt) internal override returns (uint256) {
+    function _realizeProfit(uint256 _totalDebt) internal virtual override returns (uint256) {
         _claimRewardsAndConvertTo(address(collateralToken));
         uint256 _collateralBalance = _convertToCollateral(cToken.balanceOf(address(this)));
         if (_collateralBalance > _totalDebt) {

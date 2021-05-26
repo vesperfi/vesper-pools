@@ -8,6 +8,7 @@ const {getUsers, getEvent} = require('../utils/setupHelper')
 const {shouldBehaveLikeAaveStrategy} = require('../behavior/aave-strategy')
 const {shouldBehaveLikeCompoundStrategy} = require('../behavior/compound-strategy')
 const {shouldBehaveLikeMakerStrategy} = require('../behavior/maker-strategy')
+const {shouldBehaveLikeCreamStrategy} = require('../behavior/cream-strategy')
 
 const swapper = require('../utils/tokenSwapper')
 const {deposit, rebalanceStrategy} = require('../utils/poolOps')
@@ -22,7 +23,9 @@ function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
     [StrategyType.COMPOUND]: shouldBehaveLikeCompoundStrategy,
     [StrategyType.AAVE_MAKER]: shouldBehaveLikeMakerStrategy,
     [StrategyType.COMPOUND_MAKER]: shouldBehaveLikeMakerStrategy,    
+    [StrategyType.CREAM]: shouldBehaveLikeCreamStrategy
   }
+  
   const metAddress = '0xa3d58c4e56fedcae3a7c43a725aee9a71f0ece4e'
   const shouldBehaveLikeSpecificStrategy = behaviors[type]
 
