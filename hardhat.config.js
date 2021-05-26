@@ -34,7 +34,7 @@ module.exports = {
   namedAccounts: {
     deployer: {
       default: 0, // here this will by default take the first account as deployer
-      1: 0, // similarly on mainnet it will take the first account as deployer.
+      1: 'ledger://0xB5AbDABE50b5193d4dB92a16011792B22bA3Ef51', 
       4: '0xA296a3d5F026953e17F472B497eC29a5631FB51B', // but for rinkeby it will be a specific address
       goerli: '0x84b9514E013710b9dD0811c9Fe46b837a4A0d8E0',
     }
