@@ -4,6 +4,7 @@ require('@nomiclabs/hardhat-ethers')
 require('solidity-coverage')
 require('hardhat-deploy')
 require('hardhat-log-remover')
+require('hardhat-gas-reporter')
 require('dotenv').config()
 
 const gasPrice = 55000000000
