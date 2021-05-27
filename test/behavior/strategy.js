@@ -21,6 +21,7 @@ function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
     [StrategyType.AAVE]: shouldBehaveLikeAaveStrategy,
     [StrategyType.COMPOUND]: shouldBehaveLikeCompoundStrategy,
     [StrategyType.AAVE_MAKER]: shouldBehaveLikeMakerStrategy,
+    [StrategyType.COMPOUND_MAKER]: shouldBehaveLikeMakerStrategy,    
   }
   const metAddress = '0xa3d58c4e56fedcae3a7c43a725aee9a71f0ece4e'
   const shouldBehaveLikeSpecificStrategy = behaviors[type]

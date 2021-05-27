@@ -14,7 +14,6 @@ async function shouldBehaveLikeMultiPool(poolName) {
   describe(`${poolName} multi-pool`, function () {
     beforeEach(async function () {
       ;[gov, user1, user2] = this.users
-      // This setup helps in not typing 'this' all the time
       pool = this.pool
       strategies = this.strategies
       collateralToken = this.collateralToken
@@ -24,8 +23,8 @@ async function shouldBehaveLikeMultiPool(poolName) {
 
     describe(`${poolName}: Withdraw queue`, function () {
       beforeEach(async function () {
-        await deposit(80, user1)
-        await deposit(20, user2)
+        await deposit(250, user1)
+        await deposit(200, user2)
       })
 
       it('Should withdraw everything from 0th strategy.', async function () {
@@ -44,8 +43,8 @@ async function shouldBehaveLikeMultiPool(poolName) {
 
         debt0 = (await pool.strategy(strategies[0].instance.address)).totalDebt
         tokenHere = await pool.tokensHere()
-        expect(actualWithdrawFromS1).to.be.eq(expectedFromS1, 'Withdraw from Strategy 2 is wrong')
-        expect(debt0).to.be.eq(0, 'Withdraw from Strategy 2 is wrong')
+        expect(actualWithdrawFromS1).to.be.eq(expectedFromS1, 'Withdraw from Strategy 1 is wrong')
+        expect(debt0).to.be.eq(0, 'Withdraw from Strategy 1 is wrong')
       })
 
       it('Should be able to shuffle withdraw queue', async function () {

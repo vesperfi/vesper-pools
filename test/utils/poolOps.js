@@ -43,9 +43,9 @@ async function deposit(pool, token, amount, depositor) {
 async function bringAboveWater(strategy, amount) {
   if (strategy.instance.isUnderwater !== undefined && (await strategy.instance.isUnderwater())) {
     // deposit some amount in aave/compound to bring it above water.
-    if (strategy.strategyType === StrategyType.AAVE_MAKER) {
+    if (strategy.type === StrategyType.AAVE_MAKER) {
       await depositTokenToAave(amount, DAI, strategy.instance.address)
-    } else if (strategy.strategyType === StrategyType.COMPOUND_MAKER) {
+    } else if (strategy.type === StrategyType.COMPOUND_MAKER) {
       await depositTokenToCompound(amount, DAI, strategy.instance.address)
     }
     const lowWater = await strategy.instance.isUnderwater()
@@ -69,7 +69,9 @@ async function rebalanceStrategy(strategy) {
   await executeIfExist(strategy.token.exchangeRateCurrent)
   let tx
   try {
-    await bringAboveWater(strategy, 10)
+    if (strategy.type.includes('Maker')) {
+      await bringAboveWater(strategy, 10)
+    }
     tx = await strategy.instance.rebalance()
   } catch (error) {
     // ignore under water error and give one more try.

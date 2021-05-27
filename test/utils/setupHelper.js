@@ -125,7 +125,6 @@ async function createStrategies(obj, vPool) {
     } else {
       strategy.instance = await deployContract(strategy.name, [obj.pool.address, swapManager.address])
     }
-    strategy.strategyType = strategyType
     await strategy.instance.init()
     await strategy.instance.approveToken()
     await strategy.instance.updateFeeCollector(strategy.feeCollector)

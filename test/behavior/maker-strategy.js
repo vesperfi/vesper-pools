@@ -1,6 +1,6 @@
 'use strict'
 
-const {deposit, executeIfExist, timeTravel} = require('../utils/poolOps')
+const {deposit, executeIfExist, timeTravel, rebalanceStrategy} = require('../utils/poolOps')
 const {expect} = require('chai')
 const {ethers} = require('hardhat')
 const {BigNumber: BN} = require('ethers')
@@ -26,13 +26,13 @@ function shouldBehaveLikeMakerStrategy(strategyIndex) {
     beforeEach(async function () {
       ;[gov, user1, user2] = await getUsers()
       pool = this.pool
-      strategy = this.strategies[strategyIndex].instance
+      strategy = this.strategies[strategyIndex]
       strategyName = this.strategies[strategyIndex].name
       collateralToken = this.collateralToken
       token = this.strategies[strategyIndex].token
-      isUnderwater = await strategy.isUnderwater()
-      cm = strategy.collateralManager
-      vaultNum = await strategy.vaultNum()
+      isUnderwater = await strategy.instance.isUnderwater()
+      cm = strategy.instance.collateralManager
+      vaultNum = await strategy.instance.vaultNum()
       // Decimal will be used for amount conversion
       collateralDecimal = await this.collateralToken.decimals()
       swapManager = await deployContract('SwapManager')
@@ -41,9 +41,16 @@ function shouldBehaveLikeMakerStrategy(strategyIndex) {
     describe('Resurface', function () {
       it('Should resurface only when pool is underwater ', async function () {
         if (isUnderwater) {
-          await expect(strategy.resurface()).to.not.reverted
+          await expect(strategy.instance.resurface()).to.not.reverted
         }
-        await expect(strategy.resurface()).to.be.revertedWith('pool-is-above-water')
+        await expect(strategy.instance.resurface()).to.be.revertedWith('pool-is-above-water')
+      })
+
+      it('Should bring the pool above water on resurface', async function () {
+        if (isUnderwater) {
+          await expect(strategy.instance.resurface()).to.not.reverted
+          await expect(strategy.instance.isUnderwater()).to.be.true
+        }
       })
     })
 
@@ -51,7 +58,7 @@ function shouldBehaveLikeMakerStrategy(strategyIndex) {
       it('Should deposit and rebalance', async function () {
         const depositAmount = await deposit(pool, collateralToken, 10, user1)
         const depositAmount18 = convertTo18(depositAmount)
-        await strategy.rebalance()
+        await rebalanceStrategy(strategy)
         return Promise.all([pool.totalSupply(), pool.totalValue(), pool.balanceOf(user1.address)]).then(function ([
           totalSupply,
           totalValue,
@@ -72,7 +79,7 @@ function shouldBehaveLikeMakerStrategy(strategyIndex) {
             value: ethers.utils.parseUnits(depositAmount.toString(), 'ether').toHexString(),
           },
         ])
-        await strategy.rebalance()
+        await rebalanceStrategy(strategy)
         return Promise.all([pool.totalSupply(), pool.totalValue(), pool.balanceOf(user1.address)]).then(function ([
           totalSupply,
           totalValue,
@@ -93,24 +100,24 @@ function shouldBehaveLikeMakerStrategy(strategyIndex) {
 
       it('Should transfer vault ownership on strategy migration', async function () {
         const newStrategy = await deployContract(strategyName, [pool.address, cm.address, swapManager.address])
-        const vaultBeforeMigration = await cm.vaultNum(strategy.address)
+        const vaultBeforeMigration = await cm.vaultNum(strategy.instance.address)
 
-        await pool.connect(gov.signer).migrateStrategy(strategy.address, newStrategy.address)
+        await pool.connect(gov.signer).migrateStrategy(strategy.instance.address, newStrategy.address)
 
         const vaultAfterMigration = await cm.vaultNum(newStrategy.address)
         expect(vaultNum).to.be.equal(vaultBeforeMigration, 'vault number should match for strategy and cm.')
         expect(vaultAfterMigration).to.be.equal(vaultBeforeMigration, 'vault number should be same')
 
-        const vaultWithOldStrategy = await cm.vaultNum(strategy.address)
+        const vaultWithOldStrategy = await cm.vaultNum(strategy.instance.address)
         expect(vaultWithOldStrategy).to.be.equal(0, 'Old strategy should not own vault.')
       })
 
       it('Should have new strategy as owner of the vault.', async function () {
-        const vaultInfoBefore = await cm.getVaultInfo(strategy.address)
+        const vaultInfoBefore = await cm.getVaultInfo(strategy.instance.address)
         const newStrategy = await deployContract(strategyName, [pool.address, cm.address, swapManager.address])
 
-        await pool.connect(gov.signer).migrateStrategy(strategy.address, newStrategy.address)
-        await expect(cm.getVaultInfo(strategy.address)).to.be.revertedWith('invalid-vault-number')
+        await pool.connect(gov.signer).migrateStrategy(strategy.instance.address, newStrategy.address)
+        await expect(cm.getVaultInfo(strategy.instance.address)).to.be.revertedWith('invalid-vault-number')
 
         const vaultInfoAfter = await cm.getVaultInfo(newStrategy.address)
         expect(vaultInfoBefore.collateralLocked).to.be.equal(vaultInfoAfter.collateralLocked)
@@ -124,7 +131,7 @@ function shouldBehaveLikeMakerStrategy(strategyIndex) {
     describe('Withdraw scenario', function () {
       it('Should withdraw after rebalance', async function () {
         await deposit(pool, collateralToken, 10, user2)
-        await strategy.rebalance()
+        await rebalanceStrategy(strategy)
         const balanceBefore = await ethers.provider.getBalance(user2.address)
         const withdrawAmount = await pool.balanceOf(user2.address)
         await pool.connect(user2.signer).withdrawETH(withdrawAmount)
@@ -146,11 +153,11 @@ function shouldBehaveLikeMakerStrategy(strategyIndex) {
       it('Should pay back all debt if debt is below dust.', async function () {
         await deposit(pool, collateralToken, 20, user1)
         const withdrawAmount = (await pool.balanceOf(user1.address)).sub(BN.from('100')).toString()
-        await strategy.rebalance()
+        await rebalanceStrategy(strategy)
         await executeIfExist(token.exchangeRateCurrent)
 
         await pool.connect(user1.signer).withdraw(withdrawAmount)
-        const vaultInfo = await cm.getVaultInfo(strategy.address)
+        const vaultInfo = await cm.getVaultInfo(strategy.instance.address)
         const balance = await collateralToken.balanceOf(user1.address)
 
         expect(balance).to.be.equal(convertFrom18(withdrawAmount), 'Collateral balance is wrong')
@@ -161,14 +168,14 @@ function shouldBehaveLikeMakerStrategy(strategyIndex) {
     describe('Earning scenario', function () {
       beforeEach(async function () {
         await deposit(pool, collateralToken, 20, user1)
-        await strategy.rebalance()
+        await rebalanceStrategy(strategy)
       })
       it('Should report earning on rebalance', async function () {
         const tokensHere = await pool.tokensHere()
         // Time travel trigger some earning
         await timeTravel()
         await executeIfExist(token.exchangeRateCurrent)
-        await strategy.rebalance()
+        await rebalanceStrategy(strategy)
 
         const tokensHereAfter = await pool.tokensHere()
         expect(tokensHereAfter).to.be.gt(tokensHere, 'Collateral token in pool should increase')
@@ -176,7 +183,24 @@ function shouldBehaveLikeMakerStrategy(strategyIndex) {
 
       describe('Interest fee calculation via Jug Drip', function () {
         it('Should earn interest fee on earned amount', async function () {
-          // TODO
+          const feeBalanceBefore = await pool.balanceOf(strategy.instance.address)
+          const totalSupplyBefore = await pool.totalSupply()
+          await deposit(pool, collateralToken, 20, user2)
+         
+          await rebalanceStrategy(strategy)
+          await timeTravel()
+          await executeIfExist(strategy.instance.token.exchangeRateCurrent)
+
+          // Update rate using Jug drip
+          const jugLike = await ethers.getContractAt('JugLike', '0x19c0976f590D67707E62397C87829d896Dc0f1F1')
+          const vaultType = await strategy.instance.collateralType()
+          await jugLike.drip(vaultType)
+
+          const feeBalanceAfter = await pool.balanceOf(strategy.instance.address)
+          expect(feeBalanceAfter).to.be.gt(feeBalanceBefore, 'Fee should increase')
+
+          const totalSupplyAfter = await pool.totalSupply()
+          expect(totalSupplyAfter).to.be.gt(totalSupplyBefore, 'Total supply should increase')
         })
       })
 
@@ -186,11 +210,7 @@ function shouldBehaveLikeMakerStrategy(strategyIndex) {
 
       it('Should report loss in rebalance in underwater situation', async function () {
         // TODO
-      })
-
-      it('Should bring the pool above water on resurface', async function () {
-        // TODO
-      })
+      })      
     })
   })
 }

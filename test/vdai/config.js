@@ -6,9 +6,9 @@ const {BigNumber: BN} = require('ethers')
 const DECIMAL18 = BN.from('1000000000000000000')
 const ONE_MILLION = DECIMAL18.mul('1000000')
 
-function prepareConfig() {
+function prepareConfig(_strategies) {
   const interestFee = '1500' // 15%
-  const strategies = [
+  const strategies = _strategies || [
     {
       name: 'AaveStrategyDAI',
       type: StrategyType.AAVE,
