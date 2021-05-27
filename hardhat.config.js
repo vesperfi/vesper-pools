@@ -5,6 +5,7 @@ require('solidity-coverage')
 require('hardhat-deploy')
 require('hardhat-log-remover')
 require('hardhat-gas-reporter')
+require('hardhat-contract-sizer')
 require('dotenv').config()
 
 const gasPrice = 55000000000
@@ -18,7 +19,7 @@ module.exports = {
     hardhat: {
       forking: {
         url: process.env.NODE_URL,
-        blockNumber: process.env.BLOCK_NUMBER? parseInt(process.env.BLOCK_NUMBER) : undefined
+        blockNumber: process.env.BLOCK_NUMBER ? parseInt(process.env.BLOCK_NUMBER) : undefined,
       },
       saveDeployments: true,
     },
@@ -33,12 +34,11 @@ module.exports = {
     deployments: 'deployments',
   },
   namedAccounts: {
-    deployer: {
-      default: 0, // here this will by default take the first account as deployer
-      1: 'ledger://0xB5AbDABE50b5193d4dB92a16011792B22bA3Ef51', 
-      4: '0xA296a3d5F026953e17F472B497eC29a5631FB51B', // but for rinkeby it will be a specific address
-      goerli: '0x84b9514E013710b9dD0811c9Fe46b837a4A0d8E0',
-    }
+    deployer: process.env.DEPLOYER || 0,
+  },
+  contractSizer: {
+    alphaSort: true,
+    runOnCompile: true,
   },
   solidity: {
     version: '0.8.3',
@@ -46,8 +46,8 @@ module.exports = {
       optimizer: {
         enabled: true,
         runs: 200,
-      }
-    }
+      },
+    },
   },
   mocha: {
     timeout: 200000,
