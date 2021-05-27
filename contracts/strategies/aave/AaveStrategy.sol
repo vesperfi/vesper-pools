@@ -9,12 +9,14 @@ import "../Strategy.sol";
 abstract contract AaveStrategy is Strategy, AaveCore {
     using SafeERC20 for IERC20;
 
-    //solhint-disable-next-line no-empty-blocks
+    //solhint-disable no-empty-blocks
     constructor(
         address _pool,
         address _swapManager,
         address _receiptToken
     ) Strategy(_pool, _swapManager, _receiptToken) AaveCore(_receiptToken) {}
+
+    //solhint-enable
 
     /// @notice Initiate cooldown to unstake aave.
     function startCooldown() external onlyKeeper returns (bool) {
