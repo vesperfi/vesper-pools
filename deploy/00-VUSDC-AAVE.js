@@ -26,7 +26,7 @@ module.exports = async ({getNamedAccounts, deployments}) => {
     log: true,
     args: [vUSDC.address, swapManager]
   })
-  // TODO: ledger has some issues in calling methods
+  // TODO: use 'execute' method from deployments instead of signing transaction directly
   let vUSDCStrategy = await deployments.get(strategyName)
   vUSDCStrategy = await ethers.getContractAt(strategyName, vUSDCStrategy.address)
   await vUSDCStrategy.init()
