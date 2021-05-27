@@ -2,6 +2,7 @@
 
 const {deposit: _deposit, rebalance} = require('../utils/poolOps')
 const {expect} = require('chai')
+const {deployContract} = require('../utils/setupHelper')
 const DECIMAL = '1000000000000000000'
 async function shouldBehaveLikeMultiPool(poolName) {
   let pool, strategies, collateralToken
@@ -67,6 +68,67 @@ async function shouldBehaveLikeMultiPool(poolName) {
         tokenHere = await pool.tokensHere()
         expect(actualWithdrawFromS0).to.be.eq(expectedFromS0, 'Withdraw from Strategy 2 is wrong')
         expect(debt1).to.be.eq(0, 'Withdraw from Strategy 2 is wrong')
+      })
+    })
+
+    describe(`${poolName}: Remove strategy`, function () {
+      beforeEach(async function () {
+        await deposit(80, user1)
+      })
+
+      it('Only governor should be able to remove strategy', async function () {
+        const tx = pool.connect(user2.signer).removeStrategy(1)
+        await expect(tx).to.be.revertedWith('caller-is-not-the-governor')
+      })
+
+      it('Should not remove if strategy has debt', async function () {
+        await rebalance(strategies)
+        const tx = pool.connect(gov.signer).removeStrategy(1)
+        await expect(tx).to.be.revertedWith('strategy-has-debt')
+      })
+
+      it('Should remove if strategy has 0 debt', async function () {
+        await rebalance(strategies)
+        await pool.connect(gov.signer).updateDebtRatio(strategies[0].instance.address, 0)
+        await rebalance(strategies)
+        const strategyParamsBefore = await pool.strategy(strategies[0].instance.address)
+        await pool.connect(gov.signer).removeStrategy(0)
+        const strat0 = await pool.strategies(0)
+        expect(strat0).to.be.eq(strategies[1].instance.address, 'wrong strategies array')
+        const q0 = await pool.withdrawQueue(0)
+        expect(q0).to.be.eq(strategies[1].instance.address, 'wrong strategies in withdraw queue')
+        const strategyParamsAfter = await pool.strategy(strategies[0].instance.address)
+        expect(strategyParamsBefore.active).to.be.eq(true, 'strategy should inactive')
+        expect(strategyParamsAfter.active).to.be.eq(false, 'strategy should inactive')
+        expect(strategyParamsAfter.debtRate).to.be.eq(0, 'strategy should have 0 debt rate')
+      })
+
+      it('Should not disturb the withdraw queue order', async function () {
+        await rebalance(strategies)
+        const swapManager = await deployContract('SwapManager')
+        const newStrategy = await deployContract(strategies[0].name, [pool.address, swapManager.address])
+        await Promise.all([
+          newStrategy.init(),
+          newStrategy.approveToken(),
+          newStrategy.updateFeeCollector(strategies[0].feeCollector),
+          pool.connect(gov.signer).updateDebtRatio(strategies[0].instance.address, 3000),
+          pool.connect(gov.signer).updateDebtRatio(strategies[1].instance.address, 3000)
+        ])
+        const config = {interestFee: 1500, debtRatio: 2000, debtRate: strategies[0].config.debtRate}
+        await pool.connect(gov.signer).addStrategy(newStrategy.address, ...Object.values(config))
+        await pool
+          .connect(gov.signer)
+          .updateWithdrawQueue([newStrategy.address, strategies[0].instance.address, strategies[1].instance.address])
+        await newStrategy.rebalance()
+        await pool.connect(gov.signer).updateDebtRatio(strategies[0].instance.address, 0)
+        // This pay back all debt
+        await rebalance(strategies)
+        await pool.connect(gov.signer).removeStrategy(0)
+        // Withdraw queue order was 2,0,1 before 0th strategy is removed. new order is 2,1
+        const q0 = await pool.withdrawQueue(0)
+        expect(q0).to.be.eq(newStrategy.address, 'wrong strategies in withdraw queue')
+        const q1 = await pool.withdrawQueue(1)
+        expect(q1).to.be.eq(strategies[1].instance.address, 'wrong strategies in withdraw queue')
       })
     })
 
