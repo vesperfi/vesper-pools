@@ -14,10 +14,10 @@ const StrategyType = require('../utils/strategyTypes')
 
 function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
   let owner, user1, user2, user3, user4, user5, strategy, pool, feeCollector, collateralToken
-  
+
   const behaviors = {
     [StrategyType.AAVE]: shouldBehaveLikeAaveStrategy,
-    [StrategyType.COMPOUND]: shouldBehaveLikeCompoundStrategy
+    [StrategyType.COMPOUND]: shouldBehaveLikeCompoundStrategy,
   }
   const metAddress = '0xa3d58c4e56fedcae3a7c43a725aee9a71f0ece4e'
   const shouldBehaveLikeSpecificStrategy = behaviors[type]
