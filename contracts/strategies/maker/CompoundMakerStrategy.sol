@@ -72,7 +72,7 @@ abstract contract CompoundMakerStrategy is MakerStrategy {
         super._approveToken(_amount);
         IERC20(DAI).safeApprove(address(receiptToken), _amount);
         for (uint256 i = 0; i < swapManager.N_DEX(); i++) {
-            IERC20(COMP).approve(address(swapManager.ROUTERS(i)), _amount);
+            IERC20(COMP).safeApprove(address(swapManager.ROUTERS(i)), _amount);
         }
     }
 

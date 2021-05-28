@@ -40,10 +40,10 @@ abstract contract CompoundStrategy is Strategy {
 
     /// @notice Approve all required tokens
     function _approveToken(uint256 _amount) internal override {
-        collateralToken.approve(pool, _amount);
-        collateralToken.approve(address(cToken), _amount);
+        collateralToken.safeApprove(pool, _amount);
+        collateralToken.safeApprove(address(cToken), _amount);
         for (uint256 i = 0; i < swapManager.N_DEX(); i++) {
-            IERC20(COMP).approve(address(swapManager.ROUTERS(i)), _amount);
+            IERC20(COMP).safeApprove(address(swapManager.ROUTERS(i)), _amount);
         }
     }
 

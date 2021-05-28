@@ -50,10 +50,10 @@ abstract contract AaveStrategy is Strategy, AaveCore {
 
     /// @notice Large approval of token
     function _approveToken(uint256 _amount) internal override {
-        collateralToken.approve(pool, _amount);
-        collateralToken.approve(address(aaveLendingPool), _amount);
+        collateralToken.safeApprove(pool, _amount);
+        collateralToken.safeApprove(address(aaveLendingPool), _amount);
         for (uint256 i = 0; i < swapManager.N_DEX(); i++) {
-            IERC20(AAVE).approve(address(swapManager.ROUTERS(i)), _amount);
+            IERC20(AAVE).safeApprove(address(swapManager.ROUTERS(i)), _amount);
         }
     }
 
