@@ -4,7 +4,7 @@ const {deposit, executeIfExist, timeTravel, rebalanceStrategy} = require('../uti
 const {expect} = require('chai')
 const {ethers} = require('hardhat')
 const {BigNumber: BN} = require('ethers')
-const {getUsers, deployContract} = require('../utils/setupHelper')
+const {getUsers, deployContract, getEvent} = require('../utils/setupHelper')
 const DECIMAL18 = BN.from('1000000000000000000')
 
 function shouldBehaveLikeMakerStrategy(strategyIndex) {
@@ -22,7 +22,15 @@ function shouldBehaveLikeMakerStrategy(strategyIndex) {
     return BN.from(amount).div(divisor).toString()
   }
 
-  describe('MakerStrategy specific tests', function () {
+  async function updateRate() {
+    await executeIfExist(strategy.instance.token.exchangeRateCurrent)
+    // Update rate using Jug drip
+    const jugLike = await ethers.getContractAt('JugLike', '0x19c0976f590D67707E62397C87829d896Dc0f1F1')
+    const vaultType = await strategy.instance.collateralType()
+    await jugLike.drip(vaultType)
+  }
+
+  describe(`MakerStrategy specific tests for strategy[${strategyIndex}]`, function () {
     beforeEach(async function () {
       ;[gov, user1, user2] = await getUsers()
       pool = this.pool
@@ -170,7 +178,8 @@ function shouldBehaveLikeMakerStrategy(strategyIndex) {
         await deposit(pool, collateralToken, 20, user1)
         await rebalanceStrategy(strategy)
       })
-      it('Should report earning on rebalance', async function () {
+
+      it('Should increase pool token on rebalance', async function () {
         const tokensHere = await pool.tokensHere()
         // Time travel trigger some earning
         await timeTravel()
@@ -182,19 +191,14 @@ function shouldBehaveLikeMakerStrategy(strategyIndex) {
       })
 
       describe('Interest fee calculation via Jug Drip', function () {
-        it('Should earn interest fee on earned amount', async function () {
+        it('Should earn interest fee', async function () {
           const feeBalanceBefore = await pool.balanceOf(strategy.instance.address)
           const totalSupplyBefore = await pool.totalSupply()
-          await deposit(pool, collateralToken, 20, user2)
-         
+          await deposit(pool, collateralToken, 50, user2)
+
           await rebalanceStrategy(strategy)
           await timeTravel()
-          await executeIfExist(strategy.instance.token.exchangeRateCurrent)
-
-          // Update rate using Jug drip
-          const jugLike = await ethers.getContractAt('JugLike', '0x19c0976f590D67707E62397C87829d896Dc0f1F1')
-          const vaultType = await strategy.instance.collateralType()
-          await jugLike.drip(vaultType)
+          await updateRate()
 
           const feeBalanceAfter = await pool.balanceOf(strategy.instance.address)
           expect(feeBalanceAfter).to.be.gt(feeBalanceBefore, 'Fee should increase')
@@ -204,13 +208,34 @@ function shouldBehaveLikeMakerStrategy(strategyIndex) {
         })
       })
 
-      it('Should report earning on rebalance based on daiBalance and vault debt', async function () {
-        // TODO
+      it('Should increase dai balance on rebalance', async function () {
+        await deposit(pool, collateralToken, 40, user2)
+        await rebalanceStrategy(strategy)
+        const tokenBalanceBefore = await token.balanceOf(strategy.instance.address)
+        await timeTravel()
+        await updateRate()
+        const txnObj = await rebalanceStrategy(strategy)
+        const event = await getEvent(txnObj, pool, 'EarningReported')
+        const tokenBalanceAfter = await token.balanceOf(strategy.instance.address)
+        expect(event.profit).to.be.gt(0, 'Should have some profit')
+        expect(event.loss).to.be.equal(0, 'Should have no loss')
+        expect(tokenBalanceAfter).to.be.gt(tokenBalanceBefore, 'Should increase dai balance in aave maker strategy')
+      })
+
+      it('Should increase vault debt on rebalance', async function () {
+        await deposit(pool, collateralToken, 50, user2)
+        await rebalanceStrategy(strategy)
+        const daiDebtBefore = await cm.getVaultDebt(strategy.instance.address)
+        await timeTravel()
+        await updateRate()
+        await rebalanceStrategy(strategy)
+        const daiDebtAfter = await cm.getVaultDebt(strategy.instance.address)
+        expect(daiDebtAfter).to.be.gt(daiDebtBefore, 'Should increase vault debt on rebalance')
       })
 
       it('Should report loss in rebalance in underwater situation', async function () {
         // TODO
-      })      
+      })
     })
   })
 }

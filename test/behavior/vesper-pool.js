@@ -64,7 +64,7 @@ async function shouldBehaveLikePool(poolName, collateralName) {
       })
 
       it(`Should deposit ${collateralName} and call rebalance() of each strategy`, async function () {
-        const depositAmount = await deposit(200, user4)
+        const depositAmount = await deposit(50, user4)
         const depositAmount18 = convertTo18(depositAmount)
         const totalValue = await pool.totalValue()
         for (const strategy of strategies) {
@@ -315,7 +315,7 @@ async function shouldBehaveLikePool(poolName, collateralName) {
         await rebalance(strategies)
         // Time travel to generate earning
         await timeTravel()
-        await deposit(20, user2)
+        await deposit(50, user2)
         await rebalance(strategies)
         const fc = strategies[0].instance.address
         let vPoolBalanceFC = await pool.balanceOf(fc)
@@ -333,7 +333,7 @@ async function shouldBehaveLikePool(poolName, collateralName) {
       it(`Should sweep ERC20 for ${collateralName}`, async function () {
         const metAddress = '0xa3d58c4e56fedcae3a7c43a725aee9a71f0ece4e'
         const MET = await ethers.getContractAt('ERC20', metAddress)
-        await deposit(200, user2)
+        await deposit(60, user2)
         await swapper.swapEthForToken(2, metAddress, user1, pool.address)
         await pool.sweepERC20(metAddress)
         const fc = await pool.feeCollector()
@@ -362,11 +362,11 @@ async function shouldBehaveLikePool(poolName, collateralName) {
       })
 
       it('Strategy should receive more amount when new deposit happen', async function () {
-        await deposit(200, user2)
+        await deposit(75, user2)
         await rebalance(strategies)
         let strategyParams = await pool.strategy(strategies[0].instance.address)
         const totalDebtBefore = strategyParams.totalDebt
-        await deposit(200, user2)
+        await deposit(50, user2)
         await rebalance(strategies)
         strategyParams = await pool.strategy(strategies[0].instance.address)
         const totalDebtAfter = strategyParams.totalDebt
@@ -374,7 +374,7 @@ async function shouldBehaveLikePool(poolName, collateralName) {
       })
 
       it('Strategy should not receive new amount if current debt of pool > max debt', async function () {
-        await Promise.all([deposit(200, user1), deposit(200, user2)])
+        await Promise.all([deposit(50, user1), deposit(60, user2)])
         await rebalance(strategies)
         let [totalDebtRatio, totalValue, totalDebtBefore] = await Promise.all([
           pool.totalDebtRatio(),
@@ -411,7 +411,7 @@ async function shouldBehaveLikePool(poolName, collateralName) {
       })
 
       it('Pool record correct value of profit and loss', async function () {
-        await deposit(200, user2)
+        await deposit(70, user2)
         await rebalance(strategies)
         await timeTravel()
         await rebalance(strategies)
@@ -423,9 +423,9 @@ async function shouldBehaveLikePool(poolName, collateralName) {
 
     describe(`${poolName}: Available credit line`, function () {
       it('Should return 0 credit line when pool is shutdown', async function () {
-        await deposit(200, user2)
+        await deposit(50, user2)
         await rebalance(strategies)
-        await deposit(200, user1)
+        await deposit(55, user1)
         let creditLimit = await pool.availableCreditLimit(strategies[0].instance.address)
         expect(creditLimit).to.be.gt(0, `Credit limit of strategy in ${poolName} is wrong`)
         await pool.shutdown()
@@ -434,9 +434,9 @@ async function shouldBehaveLikePool(poolName, collateralName) {
       })
 
       it('Should return 0 credit line  when current debt > max debt', async function () {
-        await deposit(200, user2)
+        await deposit(100, user2)
         await rebalance(strategies)
-        await deposit(200, user1)
+        await deposit(100, user1)
         const withdrawAmount = await pool.balanceOf(user2.address)
         await pool.connect(user2.signer).withdraw(withdrawAmount)
         const creditLimit = await pool.availableCreditLimit(strategies[0].instance.address)
@@ -444,17 +444,17 @@ async function shouldBehaveLikePool(poolName, collateralName) {
       })
 
       it('Credit line should be > 0 when new deposit receive', async function () {
-        await deposit(200, user2)
+        await deposit(65, user2)
         await rebalance(strategies)
-        await deposit(200, user1)
+        await deposit(50, user1)
         const creditLimit = await pool.availableCreditLimit(strategies[0].instance.address)
         expect(creditLimit).to.be.gt(0, `Credit limit of strategy in ${poolName} is wrong`)
       })
 
       it('Credit line should be min of debtRate, tokens here', async function () {
-        await deposit(200, user2)
+        await deposit(60, user2)
         await rebalance(strategies)
-        await deposit(200, user1)
+        await deposit(40, user1)
         await pool.updateDebtRate(strategies[0].instance.address, 20000)
         const strategyParams = await pool.strategy(strategies[0].instance.address)
         const blockNumber = await ethers.provider.getBlockNumber()
