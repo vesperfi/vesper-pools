@@ -1,5 +1,5 @@
 diff --git a/node_modules/hardhat-deploy/dist/src/helpers.js b/node_modules/hardhat-deploy/dist/src/helpers.js
-index e49205f..8b4836d 100644
+index e49205f..96bb148 100644
 --- a/node_modules/hardhat-deploy/dist/src/helpers.js
 +++ b/node_modules/hardhat-deploy/dist/src/helpers.js
 @@ -290,6 +290,10 @@ function addHelpers(deploymentManager, partialExtension, network, getArtifact, s
@@ -40,3 +40,14 @@ index e49205f..8b4836d 100644
                  return { differences: false, address: deployment.address };
              }
          }
+@@ -1296,6 +1308,10 @@ data: ${data}
+         if (options.log || hardwareWallet) {
+             print(`: performed with ${receipt.gasUsed} gas\n`);
+         }
++        if(hardwareWallet){
++            const __eth = await ethersSigner._eth
++            await __eth.transport.device.close()
++        }
+         return receipt;
+     }
+     // TODO ?
