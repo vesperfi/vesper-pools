@@ -1,0 +1,28 @@
+name: vUSDC Strategies
+on: [pull_request]
+
+jobs:
+  vusdc-strategies-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: [12]
+    steps:
+      - uses: actions/checkout@v2.3.1
+        with:
+          submodules: true
+      - run: cat "${GITHUB_WORKSPACE}/.github/env.properties" >> $GITHUB_ENV
+
+      - name: Use Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node }}
+
+      - name: Run npm install with node v${{ matrix.node }}
+        run: npm install
+
+      - name: Running vUSDC with Aave and Compound
+        run: npm test "test/vusdc/aave-compound.js"
+
+      - name: Running vUSDC AaveV1 and Aave 
+        run: npm test "test/vusdc/aaveV1-aave.js"

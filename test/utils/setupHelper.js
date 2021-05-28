@@ -70,15 +70,15 @@ async function addStrategiesInPool(obj) {
  * @returns {object} Strategy instance
  */
 async function createMakerStrategy(obj, strategyName) {
-  obj.collateralManager = await deployContract(CollateralManager)
+  const collateralManager = await deployContract(CollateralManager)
   const strategyInstance = await deployContract(strategyName, [
     obj.pool.address,
-    obj.collateralManager.address,
+    collateralManager.address,
     swapManager.address,
   ])
-  await strategyInstance.createVault()
-  obj.vaultNum = await strategyInstance.vaultNum()
-  await Promise.all([strategyInstance.updateBalancingFactor(300, 250), obj.collateralManager.addGemJoin(gemJoins)])
+  await strategyInstance.createVault()  
+  strategyInstance.collateralManager = collateralManager
+  await Promise.all([strategyInstance.updateBalancingFactor(300, 250), collateralManager.addGemJoin(gemJoins)])
   return strategyInstance
 }
 
@@ -91,16 +91,16 @@ async function createMakerStrategy(obj, strategyName) {
  * @returns {object} Strategy instance
  */
 async function createVesperMakerStrategy(obj, strategyName, vPool) {
-  obj.collateralManager = await deployContract(CollateralManager)
+  const collateralManager = await deployContract(CollateralManager)
   const strategyInstance = await deployContract(strategyName, [
     obj.pool.address,
-    obj.collateralManager.address,
+    collateralManager.address,
     swapManager.address,
     vPool.address,
   ])
   await strategyInstance.createVault()
-  obj.vaultNum = await strategyInstance.vaultNum()
-  await Promise.all([strategyInstance.updateBalancingFactor(300, 250), obj.collateralManager.addGemJoin(gemJoins)])
+  strategyInstance.collateralManager = collateralManager
+  await Promise.all([strategyInstance.updateBalancingFactor(300, 250), collateralManager.addGemJoin(gemJoins)])
   const feeList = await vPool.feeWhitelist()
   await vPool.addInList(feeList, strategyInstance.address)
   return strategyInstance
@@ -125,7 +125,6 @@ async function createStrategies(obj, vPool) {
     } else {
       strategy.instance = await deployContract(strategy.name, [obj.pool.address, swapManager.address])
     }
-    strategy.strategyType = strategyType
     await strategy.instance.init()
     await strategy.instance.approveToken()
     await strategy.instance.updateFeeCollector(strategy.feeCollector)

@@ -1,8 +1,8 @@
-name: Vesper Pool test
+name: vETH Strategies Migration and Reward
 on: [pull_request]
 
 jobs:
-  vesper-pool-test:
+  veth-test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -21,5 +21,8 @@ jobs:
       - name: Run npm install with node v${{ matrix.node }}
         run: npm install
 
-      - name: Running tests for Vesper Pool Admin
-        run: npm test "test/vesper-pool-admin.js"
+      - name: Running vETH Strategies Migration tests
+        run: npm test "test/veth/migration.js"
+
+      - name: Running vETH Reward tests
+        run: npm test "test/veth/reward.js"

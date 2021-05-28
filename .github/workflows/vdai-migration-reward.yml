@@ -1,8 +1,8 @@
-name: vUSDC with Aave and Compound
+name: vDAI Strategies Migration and Reward
 on: [pull_request]
 
 jobs:
-  vusdc-aave-compund-strategy-test:
+  vdai-test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -21,5 +21,9 @@ jobs:
       - name: Run npm install with node v${{ matrix.node }}
         run: npm install
 
-      - name: Running tests for vUSDC with Aave and Compound
-        run: npm test "test/vusdc/aave-compound.js"
+      - name: Running vDAI Strategies Migration tests
+        run: npm test "test/vdai/migration.js"
+
+      - name: Running vDAI Reward tests
+        run: npm test "test/vdai/reward.js"
+
