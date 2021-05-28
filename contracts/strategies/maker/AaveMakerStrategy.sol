@@ -44,9 +44,9 @@ abstract contract AaveMakerStrategy is MakerStrategy, AaveCore {
 
     function _approveToken(uint256 _amount) internal override {
         super._approveToken(_amount);
-        IERC20(DAI).approve(address(aaveLendingPool), _amount);
+        IERC20(DAI).safeApprove(address(aaveLendingPool), _amount);
         for (uint256 i = 0; i < swapManager.N_DEX(); i++) {
-            IERC20(AAVE).approve(address(swapManager.ROUTERS(i)), _amount);
+            IERC20(AAVE).safeApprove(address(swapManager.ROUTERS(i)), _amount);
         }
     }
 

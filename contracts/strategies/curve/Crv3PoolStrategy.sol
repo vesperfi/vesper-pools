@@ -35,12 +35,12 @@ abstract contract Crv3PoolStrategy is Crv3PoolMgr, Strategy {
     }
 
     function _approveToken(uint256 _amount) internal override {
-        collateralToken.approve(pool, _amount);
-        collateralToken.approve(crvPool, _amount);
+        collateralToken.safeApprove(pool, _amount);
+        collateralToken.safeApprove(crvPool, _amount);
         for (uint256 i = 0; i < swapManager.N_DEX(); i++) {
-            IERC20(CRV).approve(address(swapManager.ROUTERS(i)), _amount);
+            IERC20(CRV).safeApprove(address(swapManager.ROUTERS(i)), _amount);
         }
-        IERC20(crvLp).approve(crvGauge, _amount);
+        IERC20(crvLp).safeApprove(crvGauge, _amount);
     }
 
     function _reinvest() internal override {

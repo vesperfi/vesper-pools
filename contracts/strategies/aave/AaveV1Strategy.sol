@@ -63,8 +63,8 @@ abstract contract AaveV1Strategy is Strategy {
 
     /// @notice Large approval of token
     function _approveToken(uint256 _amount) internal override {
-        collateralToken.approve(pool, _amount);
-        collateralToken.approve(address(aaveLendingPoolCore), _amount);
+        collateralToken.safeApprove(pool, _amount);
+        collateralToken.safeApprove(address(aaveLendingPoolCore), _amount);
     }
 
     /// @notice No action needed before migration

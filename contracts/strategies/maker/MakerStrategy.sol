@@ -104,12 +104,12 @@ abstract contract MakerStrategy is Strategy {
     }
 
     function _approveToken(uint256 _amount) internal virtual override {
-        IERC20(DAI).approve(address(cm), _amount);
-        collateralToken.approve(address(cm), _amount);
-        collateralToken.approve(pool, _amount);
+        IERC20(DAI).safeApprove(address(cm), _amount);
+        collateralToken.safeApprove(address(cm), _amount);
+        collateralToken.safeApprove(pool, _amount);
         for (uint256 i = 0; i < swapManager.N_DEX(); i++) {
-            collateralToken.approve(address(swapManager.ROUTERS(i)), _amount);
-            IERC20(DAI).approve(address(swapManager.ROUTERS(i)), _amount);
+            collateralToken.safeApprove(address(swapManager.ROUTERS(i)), _amount);
+            IERC20(DAI).safeApprove(address(swapManager.ROUTERS(i)), _amount);
         }
     }
 
