@@ -450,7 +450,7 @@ async function shouldBehaveLikePool(poolName, collateralName) {
         const creditLimit = await pool.availableCreditLimit(strategies[0].instance.address)
         expect(creditLimit).to.almost.equal(expectedLimited, `Credit limit of strategy in ${poolName} is wrong`)
         const debtBefore = strategyParams.totalDebt
-        await rebalance(strategies)
+        await strategies[0].instance.rebalance()
         // add limit of one more block
         expectedLimited = expectedLimited.add(strategyParams.debtRate)
         const debtAfter = (await pool.strategy(strategies[0].instance.address)).totalDebt
