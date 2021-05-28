@@ -1,0 +1,23 @@
+{
+  "version": "3.0.2",
+  "networks": {
+    "mainnet": {
+      "VUSDC": {
+        "pool": "0x777A7850251b7A301cfA1E7b1d8a9c4a9C49Cf85",
+        "strategy": [
+          {
+            "AaveStrategyUSDC": "0x856678bA7e5E57642b71af14425af4cBe9830F0f"
+          }
+        ]
+      },
+      "VUNI": {
+        "pool": "0xf858a354AD255D21e17C56f8F2b10Ed67dfb40aE",
+        "strategy": [
+          {
+            "CompoundStrategyUNI": "0x09c78EB6A65CbF17a589A387A6752316A65b4D3f"
+          }
+        ]
+      }
+    }
+  }
+}
