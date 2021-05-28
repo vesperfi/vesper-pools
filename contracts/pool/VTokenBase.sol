@@ -204,6 +204,31 @@ contract VTokenBase is PoolShareToken {
         );
     }
 
+    /**
+     * @dev Revoke and remove strategy from array. Update withdraw queue.
+     * Withdraw queue order should not change after remove.
+     * Strategy can be removed only after it has paid all debt.
+     * Use migrate strategy if debt is not paid and want to upgrade strat.
+     */
+    function removeStrategy(uint256 _index) external onlyGovernor {
+        address _strategy = strategies[_index];
+        require(strategy[_strategy].active, "strategy-not-active");
+        require(strategy[_strategy].totalDebt == 0, "strategy-has-debt");
+        delete strategy[_strategy];
+        strategies[_index] = strategies[strategies.length - 1];
+        strategies.pop();
+        address[] memory _withdrawQueue = new address[](strategies.length);
+        uint256 j;
+        // After above update, withdrawQueue.length > strategies.length
+        for (uint256 i = 0; i < withdrawQueue.length; i++) {
+            if (withdrawQueue[i] != _strategy) {
+                _withdrawQueue[j] = withdrawQueue[i];
+                j++;
+            }
+        }
+        withdrawQueue = _withdrawQueue;
+    }
+
     function updateInterestFee(address _strategy, uint256 _interestFee) external onlyGovernor {
         require(_strategy != address(0), "strategy-address-is-zero");
         require(strategy[_strategy].active, "strategy-not-active");
