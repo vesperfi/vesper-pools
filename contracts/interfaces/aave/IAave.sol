@@ -17,7 +17,7 @@ interface AToken is IERC20 {
     function getIncentivesController() external view returns (address);
 }
 
-interface IAaveIncentivesController {
+interface AaveIncentivesController {
     function getRewardsBalance(address[] calldata assets, address user) external view returns (uint256);
 
     function claimRewards(
