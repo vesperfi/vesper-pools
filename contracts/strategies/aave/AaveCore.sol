@@ -14,6 +14,7 @@ abstract contract AaveCore {
         AaveLendingPoolAddressesProvider(0xB53C1a33016B2DC2fF3653530bfF1848a515c8c5);
     AaveLendingPool public aaveLendingPool;
     AaveProtocolDataProvider public aaveProtocolDataProvider;
+    AaveIncentivesController public aaveIncentivesController;
 
     AToken internal immutable aToken;
     bytes32 private constant AAVE_PROVIDER_ID = 0x0100000000000000000000000000000000000000000000000000000000000000;
@@ -22,6 +23,7 @@ abstract contract AaveCore {
     constructor(address _receiptToken) {
         require(_receiptToken != address(0), "aToken-address-is-zero");
         aToken = AToken(_receiptToken);
+        aaveIncentivesController = AaveIncentivesController(AToken(_receiptToken).getIncentivesController());
         aaveLendingPool = AaveLendingPool(aaveAddressesProvider.getLendingPool());
         aaveProtocolDataProvider = AaveProtocolDataProvider(aaveAddressesProvider.getAddress(AAVE_PROVIDER_ID));
     }
@@ -106,11 +108,7 @@ abstract contract AaveCore {
             // claim stkAave when its first rebalance or unstake period passed.
             address[] memory _assets = new address[](1);
             _assets[0] = address(aToken);
-            IAaveIncentivesController(aToken.getIncentivesController()).claimRewards(
-                _assets,
-                type(uint256).max,
-                address(this)
-            );
+            aaveIncentivesController.claimRewards(_assets, type(uint256).max, address(this));
         }
         // Fetch and check again for next action.
         (_cooldownStart, _cooldownEnd, _unstakeEnd) = cooldownData();
