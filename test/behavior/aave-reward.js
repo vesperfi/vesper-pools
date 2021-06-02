@@ -114,25 +114,32 @@ function shouldClaimAaveRewards(strategyIndex) {
         expect(data._cooldownStart).to.be.eq(await time.latest(), 'Cooldown start is not correct')
       })
 
-      it('Should unstake aave of accumulated in very long period', async function () {
+      it('Should claim StakedAave accumulated in very long period', async function () {
         await rebalanceStrategy(strategy)
+        // Takes time out of unstake window
         await time.increase(18 * 24 * 60 * 60)
         const balance1 = await stakedAave.balanceOf(strategy.instance.address)
         await rebalanceStrategy(strategy)
         const balance2 = await stakedAave.balanceOf(strategy.instance.address)
-        expect(balance2).to.be.gt(balance1, 'should claim more stake aave')
-        await time.increase(3 * 24 * 60 * 60)
-        await rebalanceStrategy(strategy)
-        const balance3 = await stakedAave.balanceOf(strategy.instance.address)
-        expect(balance3).to.be.eq(balance2, 'should claim more stake aave')
+        expect(balance2).to.be.gt(balance1, 'should claim stake aave')
+        // Stake aave rewards ends on July 15th which will results in no new stakedAave.
         await time.increase(120 * 24 * 60 * 60)
         await rebalanceStrategy(strategy)
-        const balance4 = await stakedAave.balanceOf(strategy.instance.address)
-        expect(balance4).to.be.gt(balance3, 'should claim more stake aave')
+        // It may have same value as previous if current time is greater than 15th July
+        const balance3 = await stakedAave.balanceOf(strategy.instance.address)
+        // 1626393600 = July 16th
+        // if current time in fork > 16th July
+        if ((await time.latest()).gte('1626393600')) {
+          expect(balance3).to.be.eq(balance2, 'should NOT claim stake aave as there is nothing to')
+        } else {
+          expect(balance3).to.be.gt(balance2, 'should claim more stake aave')
+        }
+        // Increase time to be in unstake window
         await time.increase(11 * 24 * 60 * 60)
+        // Unstake all StakedAave
         await rebalanceStrategy(strategy)
         const balance5 = await stakedAave.balanceOf(strategy.instance.address)
-        expect(balance5).to.be.eq(0, 'should claim more stake aave')
+        expect(balance5).to.be.eq(0, 'should liquidate all stake aave and do not claim more')
       })
     })
   })
