@@ -9,6 +9,7 @@ import "../Governed.sol";
 import "../Pausable.sol";
 import "../interfaces/bloq/IAddressList.sol";
 import "../interfaces/bloq/IAddressListFactory.sol";
+import "../interfaces/vesper/IPoolRewards.sol";
 
 /// @title Holding pool share token
 // solhint-disable no-empty-blocks
@@ -16,6 +17,7 @@ abstract contract PoolShareToken is ERC20Permit, Pausable, ReentrancyGuard, Gove
     using SafeERC20 for IERC20;
     IERC20 public immutable token;
     IAddressList public immutable feeWhitelist;
+    IPoolRewards public poolRewards;
     uint256 public constant MAX_BPS = 10_000;
     address public feeCollector; // fee collector address
     uint256 public withdrawFee; // withdraw fee for this pool
@@ -23,6 +25,7 @@ abstract contract PoolShareToken is ERC20Permit, Pausable, ReentrancyGuard, Gove
     event Deposit(address indexed owner, uint256 shares, uint256 amount);
     event Withdraw(address indexed owner, uint256 shares, uint256 amount);
     event UpdatedFeeCollector(address indexed previousFeeCollector, address indexed newFeeCollector);
+    event UpdatedPoolRewards(address indexed previousPoolRewards, address indexed newPoolRewards);
     event UpdatedWithdrawFee(uint256 previousWithdrawFee, uint256 newWithdrawFee);
 
     constructor(
@@ -45,6 +48,16 @@ abstract contract PoolShareToken is ERC20Permit, Pausable, ReentrancyGuard, Gove
         require(feeCollector != _newFeeCollector, "same-fee-collector");
         emit UpdatedFeeCollector(feeCollector, _newFeeCollector);
         feeCollector = _newFeeCollector;
+    }
+
+    /**
+     * @notice Update pool rewards address for this pool
+     * @param _newPoolRewards new pool rewards address
+     */
+    function updatePoolRewards(address _newPoolRewards) external onlyGovernor {
+        require(address(poolRewards) != _newPoolRewards, "same-pool-rewards");
+        emit UpdatedPoolRewards(address(poolRewards), _newPoolRewards);
+        poolRewards = IPoolRewards(_newPoolRewards);
     }
 
     /**
@@ -180,6 +193,22 @@ abstract contract PoolShareToken is ERC20Permit, Pausable, ReentrancyGuard, Gove
      * @param _amount Collateral amount in collateral token defined decimals.
      */
     function _afterMinting(uint256 _amount) internal virtual {}
+
+    /// @dev Update pool reward of sender and receiver before transfer.
+    function _beforeTokenTransfer(
+        address from,
+        address to,
+        uint256 /* amount */
+    ) internal virtual override {
+        if (address(poolRewards) != address(0)) {
+            if (from != address(0)) {
+                IPoolRewards(poolRewards).updateReward(from);
+            }
+            if (to != address(0)) {
+                IPoolRewards(poolRewards).updateReward(to);
+            }
+        }
+    }
 
     /**
      * @dev Calculate shares to mint based on the current share price and given amount.
