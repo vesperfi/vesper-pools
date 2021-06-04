@@ -15,15 +15,13 @@ const config = {
 module.exports = async ({getNamedAccounts, deployments}) => {
   const {deploy, execute} = deployments
   const {deployer} = await getNamedAccounts()
-  await deploy(poolName, {
+  const vUSDT = await deploy(poolName, {
     from: deployer,
     log: true,
   })
   await execute(poolName, {from: deployer, log: true}, 'updateFeeCollector', config.feeCollector)
   await execute(poolName, {from: deployer, log: true}, 'updateWithdrawFee', 60)
 
-
-  const vUSDT = await deployments.get(poolName)
   const swapManager = '0xC48ea9A2daA4d816e4c9333D6689C70070010174'
   await deploy(strategyName, {
     from: deployer,
