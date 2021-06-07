@@ -15,7 +15,6 @@ chai.use(chaiAlmost(1))
 const expect = chai.expect
 const {BigNumber: BN} = require('ethers')
 const {ethers} = require('hardhat')
-
 const DECIMAL18 = BN.from('1000000000000000000')
 const MAX_BPS = BN.from('10000')
 
@@ -96,7 +95,7 @@ async function shouldBehaveLikePool(poolName, collateralName) {
       beforeEach(async function () {
         totalSupplyBefore = await pool.totalSupply()
         totalDebtBefore = await pool.totalDebt()
-        totalValueBefore = await pool.totalValue()        
+        totalValueBefore = await pool.totalValue()
         depositAmount = await deposit(20, user1)
       })
       it(`Should withdraw all ${collateralName} before rebalance`, async function () {
@@ -178,6 +177,31 @@ async function shouldBehaveLikePool(poolName, collateralName) {
           expect(vPoolBalance).to.be.equal('0', `${poolName} balance of user is wrong`)
           expect(collateralBalance).to.be.gte(depositAmount, `${collateralName} balance of user is wrong`)
         })
+      })
+    })
+
+    describe(`Transfer ${poolName} pool`, function () {
+      
+      it('Should transfer to multiple recipients', async function () {
+        await deposit(10, user1)
+        const balanceBefore = await pool.balanceOf(user4.address)
+        expect(balanceBefore).to.be.equal(0, `${collateralName} balance should be 0`)
+        await pool
+          .connect(user1.signer)
+          .multiTransfer([user3.address, user4.address], [DECIMAL18.mul(BN.from(1)), DECIMAL18.mul(BN.from(2))])
+        return Promise.all([pool.balanceOf(user3.address), pool.balanceOf(user4.address)]).then(function ([
+          balance1,
+          balance2,
+        ]) {
+          expect(balance1).to.be.equal(balance1, `${collateralName} balance is wrong`)
+          expect(balance2).to.be.equal(balance2, `${collateralName} balance is wrong`)
+        })
+      })
+
+      it('Should have same size for recipients and amounts', async function () {
+        await deposit(10, user1)
+        const tx = pool.connect(user1.signer).multiTransfer([user3.address, user4.address], [DECIMAL18.mul(BN.from(1))])
+        await expect(tx).to.be.revertedWith('input-length-mismatch')
       })
     })
 
