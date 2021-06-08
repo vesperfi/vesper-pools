@@ -194,20 +194,17 @@ abstract contract PoolShareToken is ERC20Permit, Pausable, ReentrancyGuard, Gove
      */
     function _afterMinting(uint256 _amount) internal virtual {}
 
-    /// @dev Update pool reward of sender and receiver before transfer.
-    function _beforeTokenTransfer(
-        address from,
-        address to,
-        uint256 /* amount */
+    /// @dev Update pool rewards of sender and receiver during transfer.
+    function _transfer(
+        address sender,
+        address recipient,
+        uint256 amount
     ) internal virtual override {
         if (address(poolRewards) != address(0)) {
-            if (from != address(0)) {
-                IPoolRewards(poolRewards).updateReward(from);
-            }
-            if (to != address(0)) {
-                IPoolRewards(poolRewards).updateReward(to);
-            }
+            IPoolRewards(poolRewards).updateReward(sender);
+            IPoolRewards(poolRewards).updateReward(recipient);
         }
+        super._transfer(sender, recipient, amount);
     }
 
     /**
@@ -221,8 +218,16 @@ abstract contract PoolShareToken is ERC20Permit, Pausable, ReentrancyGuard, Gove
         return _amount > ((_share * pricePerShare()) / 1e18) ? _share + 1 : _share;
     }
 
+    /// @notice claim rewards of account
+    function _claimRewards(address _account) internal {
+        if (address(poolRewards) != address(0)) {
+            IPoolRewards(poolRewards).claimReward(_account);
+        }
+    }
+
     /// @dev Deposit incoming token and mint pool token i.e. shares.
     function _deposit(uint256 _amount) internal {
+        _claimRewards(_msgSender());
         uint256 _shares = _calculateShares(_amount);
         _beforeMinting(_amount);
         _mint(_msgSender(), _shares);
@@ -236,6 +241,7 @@ abstract contract PoolShareToken is ERC20Permit, Pausable, ReentrancyGuard, Gove
             _withdrawWithoutFee(_shares);
         } else {
             require(_shares != 0, "share-is-0");
+            _claimRewards(_msgSender());
             uint256 _fee = (_shares * withdrawFee) / MAX_BPS;
             uint256 _sharesAfterFee = _shares - _fee;
             uint256 _amountWithdrawn = _beforeBurning(_sharesAfterFee);
@@ -261,6 +267,7 @@ abstract contract PoolShareToken is ERC20Permit, Pausable, ReentrancyGuard, Gove
     /// @dev Burns shares and returns the collateral value of those.
     function _withdrawWithoutFee(uint256 _shares) internal {
         require(_shares != 0, "share-is-0");
+        _claimRewards(_msgSender());
         uint256 _amountWithdrawn = _beforeBurning(_shares);
         uint256 _proportionalShares = _calculateShares(_amountWithdrawn);
         if (convertFrom18(_proportionalShares) < convertFrom18(_shares)) {

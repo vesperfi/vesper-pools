@@ -3,11 +3,15 @@
 pragma solidity 0.8.3;
 
 interface IPoolRewards {
-    function notifyRewardAmount(uint256) external;
-
     function claimReward(address) external;
 
+    function notifyRewardAmount(uint256 rewardAmount, uint256 endTime) external;
+
+    function updateRewardEnd() external;
+
     function updateReward(address) external;
+
+    function withdrawRemaining(address _toAddress) external;
 
     function rewardForDuration() external view returns (uint256);
 
