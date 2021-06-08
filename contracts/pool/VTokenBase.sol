@@ -208,7 +208,7 @@ contract VTokenBase is PoolShareToken {
      * @dev Revoke and remove strategy from array. Update withdraw queue.
      * Withdraw queue order should not change after remove.
      * Strategy can be removed only after it has paid all debt.
-     * Use migrate strategy if debt is not paid and want to upgrade strat.
+     * Use migrate strategy if debt is not paid and want to upgrade strategy.
      */
     function removeStrategy(uint256 _index) external onlyGovernor {
         address _strategy = strategies[_index];

@@ -1,6 +1,8 @@
 'use strict'
 
 const swapper = require('../utils/tokenSwapper')
+const {getPermitData} = require('../utils/signHelper')
+const {MNEMONIC} = require('../utils/testkey')
 const {
   deposit: _deposit,
   rebalance,
@@ -46,6 +48,16 @@ async function shouldBehaveLikePool(poolName, collateralName) {
       collateralToken = this.collateralToken
       // Decimal will be used for amount conversion
       collateralDecimal = await this.collateralToken.decimals()
+    })
+
+    describe(`Gasless approval for ${poolName} token`, function () {
+      it('Should allow gasless approval using permit()', async function () {
+        const amount = DECIMAL18.toString()
+        const {owner, deadline, sign} = await getPermitData(pool, amount, MNEMONIC, user1.address)
+        await pool.permit(owner, user1.address, amount, deadline, sign.v, sign.r, sign.s)
+        const allowance = await pool.allowance(owner, user1.address)
+        expect(allowance).to.be.equal(amount, `${poolName} allowance is wrong`)
+      })
     })
 
     describe(`Deposit ${collateralName} into the ${poolName} pool`, function () {
@@ -96,7 +108,7 @@ async function shouldBehaveLikePool(poolName, collateralName) {
       beforeEach(async function () {
         totalSupplyBefore = await pool.totalSupply()
         totalDebtBefore = await pool.totalDebt()
-        totalValueBefore = await pool.totalValue()        
+        totalValueBefore = await pool.totalValue()
         depositAmount = await deposit(20, user1)
       })
       it(`Should withdraw all ${collateralName} before rebalance`, async function () {
