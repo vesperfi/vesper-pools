@@ -214,8 +214,8 @@ abstract contract PoolShareToken is ERC20Permit, Pausable, ReentrancyGuard, Gove
             uint256 _proportionalShares = _calculateShares(_amountWithdrawn);
 
             // Using convertFrom18() to avoid dust.
-            // Pool share token is in 18 decimal and collatoral token decimal is <=18.
-            // Anything less than 10**(18-collortalTokenDecimal) is dust.
+            // Pool share token is in 18 decimal and collateral token decimal is <=18.
+            // Anything less than 10**(18-collateralTokenDecimal) is dust.
             if (convertFrom18(_proportionalShares) < convertFrom18(_sharesAfterFee)) {
                 // Recalculate shares to withdraw, fee and shareAfterFee
                 _shares = (_proportionalShares * MAX_BPS) / (MAX_BPS - withdrawFee);
