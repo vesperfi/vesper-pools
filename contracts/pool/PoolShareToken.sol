@@ -9,6 +9,7 @@ import "../Governed.sol";
 import "../Pausable.sol";
 import "../interfaces/bloq/IAddressList.sol";
 import "../interfaces/bloq/IAddressListFactory.sol";
+import "../interfaces/vesper/IPoolRewards.sol";
 
 /// @title Holding pool share token
 // solhint-disable no-empty-blocks
@@ -16,6 +17,7 @@ abstract contract PoolShareToken is ERC20Permit, Pausable, ReentrancyGuard, Gove
     using SafeERC20 for IERC20;
     IERC20 public immutable token;
     IAddressList public immutable feeWhitelist;
+    IPoolRewards public poolRewards;
     uint256 public constant MAX_BPS = 10_000;
     address public feeCollector; // fee collector address
     uint256 public withdrawFee; // withdraw fee for this pool
@@ -23,6 +25,7 @@ abstract contract PoolShareToken is ERC20Permit, Pausable, ReentrancyGuard, Gove
     event Deposit(address indexed owner, uint256 shares, uint256 amount);
     event Withdraw(address indexed owner, uint256 shares, uint256 amount);
     event UpdatedFeeCollector(address indexed previousFeeCollector, address indexed newFeeCollector);
+    event UpdatedPoolRewards(address indexed previousPoolRewards, address indexed newPoolRewards);
     event UpdatedWithdrawFee(uint256 previousWithdrawFee, uint256 newWithdrawFee);
 
     constructor(
@@ -45,6 +48,16 @@ abstract contract PoolShareToken is ERC20Permit, Pausable, ReentrancyGuard, Gove
         require(feeCollector != _newFeeCollector, "same-fee-collector");
         emit UpdatedFeeCollector(feeCollector, _newFeeCollector);
         feeCollector = _newFeeCollector;
+    }
+
+    /**
+     * @notice Update pool rewards address for this pool
+     * @param _newPoolRewards new pool rewards address
+     */
+    function updatePoolRewards(address _newPoolRewards) external onlyGovernor {
+        require(address(poolRewards) != _newPoolRewards, "same-pool-rewards");
+        emit UpdatedPoolRewards(address(poolRewards), _newPoolRewards);
+        poolRewards = IPoolRewards(_newPoolRewards);
     }
 
     /**
@@ -181,6 +194,19 @@ abstract contract PoolShareToken is ERC20Permit, Pausable, ReentrancyGuard, Gove
      */
     function _afterMinting(uint256 _amount) internal virtual {}
 
+    /// @dev Update pool rewards of sender and receiver during transfer.
+    function _transfer(
+        address sender,
+        address recipient,
+        uint256 amount
+    ) internal virtual override {
+        if (address(poolRewards) != address(0)) {
+            IPoolRewards(poolRewards).updateReward(sender);
+            IPoolRewards(poolRewards).updateReward(recipient);
+        }
+        super._transfer(sender, recipient, amount);
+    }
+
     /**
      * @dev Calculate shares to mint based on the current share price and given amount.
      * @param _amount Collateral amount in collateral token defined decimals.
@@ -192,8 +218,16 @@ abstract contract PoolShareToken is ERC20Permit, Pausable, ReentrancyGuard, Gove
         return _amount > ((_share * pricePerShare()) / 1e18) ? _share + 1 : _share;
     }
 
+    /// @notice claim rewards of account
+    function _claimRewards(address _account) internal {
+        if (address(poolRewards) != address(0)) {
+            IPoolRewards(poolRewards).claimReward(_account);
+        }
+    }
+
     /// @dev Deposit incoming token and mint pool token i.e. shares.
     function _deposit(uint256 _amount) internal {
+        _claimRewards(_msgSender());
         uint256 _shares = _calculateShares(_amount);
         _beforeMinting(_amount);
         _mint(_msgSender(), _shares);
@@ -207,6 +241,7 @@ abstract contract PoolShareToken is ERC20Permit, Pausable, ReentrancyGuard, Gove
             _withdrawWithoutFee(_shares);
         } else {
             require(_shares != 0, "share-is-0");
+            _claimRewards(_msgSender());
             uint256 _fee = (_shares * withdrawFee) / MAX_BPS;
             uint256 _sharesAfterFee = _shares - _fee;
             uint256 _amountWithdrawn = _beforeBurning(_sharesAfterFee);
@@ -232,6 +267,7 @@ abstract contract PoolShareToken is ERC20Permit, Pausable, ReentrancyGuard, Gove
     /// @dev Burns shares and returns the collateral value of those.
     function _withdrawWithoutFee(uint256 _shares) internal {
         require(_shares != 0, "share-is-0");
+        _claimRewards(_msgSender());
         uint256 _amountWithdrawn = _beforeBurning(_shares);
         uint256 _proportionalShares = _calculateShares(_amountWithdrawn);
         if (convertFrom18(_proportionalShares) < convertFrom18(_shares)) {
