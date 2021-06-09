@@ -9,6 +9,7 @@ import "../strategies/curve/Crv3PoolMgr.sol";
 contract Crv3PoolMock is Crv3PoolMgr {
     /* solhint-disable */
     using SafeERC20 for IERC20;
+
     constructor() Crv3PoolMgr() {}
 
     /* solhint-enable */

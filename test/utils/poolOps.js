@@ -161,4 +161,18 @@ async function totalDebtOfAllStrategy(strategies, pool) {
   return totalDebt
 }
 
-module.exports = {deposit, rebalance, rebalanceStrategy, totalDebtOfAllStrategy, executeIfExist, timeTravel}
+async function reset() {
+  // eslint-disable-next-line
+  console.log('Resetting Network...')
+  await provider.send(
+    'hardhat_reset',
+    [{
+      forking: {
+        jsonRpcUrl: process.env.NODE_URL,
+        blockNumber: process.env.BLOCK_NUMBER ? parseInt(process.env.BLOCK_NUMBER) : undefined
+      }
+    }]
+  )
+}
+
+module.exports = {deposit, rebalance, rebalanceStrategy, totalDebtOfAllStrategy, executeIfExist, timeTravel, reset}

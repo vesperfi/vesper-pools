@@ -10,6 +10,7 @@ const {
   totalDebtOfAllStrategy,
   timeTravel,
   executeIfExist,
+  reset
 } = require('../utils/poolOps')
 const chaiAlmost = require('chai-almost')
 const chai = require('chai')
@@ -60,6 +61,7 @@ async function shouldBehaveLikePool(poolName, collateralName) {
     })
 
     describe(`Deposit ${collateralName} into the ${poolName} pool`, function () {
+      after(reset)
       it(`Should deposit ${collateralName}`, async function () {
         const depositAmount = await deposit(10, user1)
         const depositAmount18 = convertTo18(depositAmount)
@@ -105,11 +107,10 @@ async function shouldBehaveLikePool(poolName, collateralName) {
     describe(`Withdraw ${collateralName} from ${poolName} pool`, function () {
       let depositAmount
       beforeEach(async function () {
-        totalSupplyBefore = await pool.totalSupply()
-        totalDebtBefore = await pool.totalDebt()
-        totalValueBefore = await pool.totalValue()
         depositAmount = await deposit(20, user1)
       })
+      after(reset)
+
       it(`Should withdraw all ${collateralName} before rebalance`, async function () {
         const withdrawAmount = await pool.balanceOf(user1.address)
         await pool.connect(user1.signer).withdraw(withdrawAmount)
@@ -222,6 +223,8 @@ async function shouldBehaveLikePool(poolName, collateralName) {
     })
 
     describe(`Rebalance ${poolName} pool`, function () {
+      after(reset)
+      
       it('Should rebalance multiple times.', async function () {
         const depositAmount = (await deposit(10, user3)).toString()
         await rebalance(strategies)
@@ -263,6 +266,7 @@ async function shouldBehaveLikePool(poolName, collateralName) {
     })
 
     describe(`Price per share of ${poolName} pool`, function () {
+
       it('Should increase pool value', async function () {
         await deposit(20, user1)
         const value1 = await pool.totalValue()
@@ -294,6 +298,7 @@ async function shouldBehaveLikePool(poolName, collateralName) {
         const target = await pool.feeWhitelist()
         await pool.addInList(target, feeCollector)
       })
+      after(reset)
 
       it('Should collect fee on withdraw', async function () {
         const withdrawAmount = await pool.balanceOf(user2.address)
@@ -340,6 +345,8 @@ async function shouldBehaveLikePool(poolName, collateralName) {
       beforeEach(async function () {
         await deposit(20, user1)
       })
+      after(reset)
+
       it('Should earn interest fee on rebalance', async function () {
         await rebalance(strategies)
         const fc = await strategies[0].feeCollector
@@ -377,6 +384,7 @@ async function shouldBehaveLikePool(poolName, collateralName) {
     })
 
     describe(`Sweep ERC20 token in ${poolName} pool`, function () {
+      after(reset)
       it(`Should sweep ERC20 for ${collateralName}`, async function () {
         const metAddress = '0xa3d58c4e56fedcae3a7c43a725aee9a71f0ece4e'
         const MET = await ethers.getContractAt('ERC20', metAddress)
@@ -404,6 +412,7 @@ async function shouldBehaveLikePool(poolName, collateralName) {
     })
 
     describe(`${poolName}: Should report earning correctly`, function () {
+      after(reset)
       it('Should not be able to payback more than total debt', async function () {
         // TODO
       })
@@ -422,7 +431,9 @@ async function shouldBehaveLikePool(poolName, collateralName) {
 
       it('Strategy should not receive new amount if current debt of pool > max debt', async function () {
         await Promise.all([deposit(50, user1), deposit(60, user2)])
-        await rebalance(strategies)
+        // manually trigger rebalance here, for curve
+        // alt: await rebalance(strategies)
+        await strategies[0].instance.rebalance()
         let [totalDebtRatio, totalValue, totalDebtBefore] = await Promise.all([
           pool.totalDebtRatio(),
           pool.totalValue(),
@@ -469,6 +480,8 @@ async function shouldBehaveLikePool(poolName, collateralName) {
     })
 
     describe(`${poolName}: Available credit line`, function () {
+      afterEach(reset)
+
       it('Should return 0 credit line when pool is shutdown', async function () {
         await deposit(50, user2)
         await rebalance(strategies)

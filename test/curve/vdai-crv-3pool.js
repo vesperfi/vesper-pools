@@ -7,7 +7,7 @@ const ethers = hre.ethers
 
 const {shouldBehaveLikePool} = require('../behavior/vesper-pool')
 const {shouldBehaveLikeCrvStrategy} = require('../behavior/crv-strategy')
-const {deposit, timeTravel} = require('../utils/poolOps')
+const {deposit, timeTravel, reset} = require('../utils/poolOps')
 const {swapEthForToken} = require('../utils/tokenSwapper')
 const StrategyType = require('../utils/strategyTypes')
 const {setupVPool, getUsers} = require('../utils/setupHelper')
@@ -29,9 +29,6 @@ describe('vDAI Pool with Crv3PoolStrategy', function () {
 
     ;[, user1, user2, user3, user4, feeAcct] = users
     threePool = await ethers.getContractAt('IStableSwap3Pool', THREE_POOL)
-    await swapEthForToken(200, USDC, user4)
-    const usdcToken = await ethers.getContractAt('IERC20', USDC)
-    usdcToken.connect(user4.signer).approve(THREE_POOL, ONE_MILLION)
   })
 
   beforeEach(async function () {
@@ -54,13 +51,19 @@ describe('vDAI Pool with Crv3PoolStrategy', function () {
 
     timeTravel(3600)
     await swapManager['updateOracles()']()
-
   })
 
-  shouldBehaveLikePool('vDai', 'DAI')
-  shouldBehaveLikeCrvStrategy(0)
+  describe('Pool Tests', function() {
+    shouldBehaveLikePool('vDai', 'DAI')
+  })
+
+  describe('Strategy Tests', function() {
+    after(reset)
+    shouldBehaveLikeCrvStrategy(0)
+  })
 
   describe('Crv3PoolStrategy: DAI Functionality', function() {
+    afterEach(reset)
     it('Should calculate fees properly and reflect those in share price', async function () {
       await deposit(pool, collateralToken, 20, user1)
       await strategy.rebalance()
@@ -86,6 +89,10 @@ describe('vDAI Pool with Crv3PoolStrategy', function () {
     // This doesnt actually test anything, it just makes it easy to estimate APY
     // eslint-disable-next-line
     it('Crv3PoolStrategy: DAI APY', async function() {
+      await swapEthForToken(200, USDC, user4)
+      const usdcToken = await ethers.getContractAt('IERC20', USDC)
+      usdcToken.connect(user4.signer).approve(THREE_POOL, ONE_MILLION)
+
       await deposit(pool, collateralToken, 100, user3)
       await deposit(pool, collateralToken, 100, user2)
       const initPPS = await pool.pricePerShare()

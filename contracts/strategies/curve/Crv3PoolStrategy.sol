@@ -7,7 +7,6 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../../interfaces/vesper/IVesperPool.sol";
 import "../Strategy.sol";
 import "./Crv3PoolMgr.sol";
-import "hardhat/console.sol";
 
 /// @title This strategy will deposit collateral token in Compound and earn interest.
 abstract contract Crv3PoolStrategy is Crv3PoolMgr, Strategy {
@@ -21,6 +20,9 @@ abstract contract Crv3PoolStrategy is Crv3PoolMgr, Strategy {
     uint256 public usdRate;
     uint256 public usdRateTimestamp;
     uint256 private depositBuffer;
+
+    uint256 public depositSlippage = 500; // 10000 is 100%
+    event UpdatedDepositSlippage(uint256 oldSlippage, uint256 newSlippage);
 
     constructor(
         address _pool,
@@ -36,11 +38,22 @@ abstract contract Crv3PoolStrategy is Crv3PoolMgr, Strategy {
         _setupOracles();
     }
 
+    function updateDepositSlippage(uint256 _newSlippage) external onlyGovernor {
+        require(_newSlippage != depositSlippage, "same-slippage");
+        require(_newSlippage < 10000, "invalid-slippage-value");
+        emit UpdatedDepositSlippage(depositSlippage, _newSlippage);
+        depositSlippage = _newSlippage;
+    }
+
     function _setupOracles() internal {
         oracles.push(swapManager.createOrUpdateOracle(CRV, WETH, ORACLE_PERIOD, 0));
         for (uint256 i = 0; i < COIN_ADDRS.length; i++) {
             oracles.push(swapManager.createOrUpdateOracle(COIN_ADDRS[i], WETH, ORACLE_PERIOD, 0));
         }
+    }
+
+    function _estimateSlippage(uint256 _amount, uint256 _slippage) internal pure returns (uint256) {
+        return (_amount * (10000 - _slippage)) / (10000);
     }
 
     function _consultOracle(
@@ -102,14 +115,25 @@ abstract contract Crv3PoolStrategy is Crv3PoolMgr, Strategy {
         if (depositBuffer != 0) {
             uint256[3] memory depositAmounts;
             depositAmounts[collIdx] = depositBuffer;
-            THREEPOOL.add_liquidity(depositAmounts, 1);
+            uint256 minLpAmount =
+                _estimateSlippage(
+                    (depositAmounts[collIdx] * 1e18) / _minimumLpPrice(_getSafeUsdRate()),
+                    depositSlippage
+                );
+            THREEPOOL.add_liquidity(depositAmounts, minLpAmount);
             _stakeAllLpToGauge();
             depositBuffer = 0;
         }
     }
 
     function _withdraw(uint256 _amount) internal override {
-        collateralToken.safeTransfer(pool, _unstakeAndWithdrawAsCollateral(_amount));
+        if (_amount < depositBuffer) {
+            depositBuffer -= _amount;
+        } else {
+            depositBuffer = 0;
+            _unstakeAndWithdrawAsCollateral(_amount - depositBuffer);
+        }
+        collateralToken.safeTransfer(pool, _amount);
     }
 
     function _unstakeAndWithdrawAsCollateral(uint256 _amount) internal returns (uint256) {
@@ -180,11 +204,9 @@ abstract contract Crv3PoolStrategy is Crv3PoolMgr, Strategy {
     {
         uint256 baseline = collateralToken.balanceOf(address(this));
         _claimRewardsAndConvertTo(address(collateralToken));
-        console.log("Rewards profit: %s", _profit);
         uint256 _collateralBalance = convertFrom18(estimateFeeImpact(getLpValue(totalLp())));
         if (_collateralBalance > _totalDebt) {
             _toUnstake = _collateralBalance - _totalDebt;
-            console.log("Appreciation Profit: %s", _toUnstake);
         } else {
             _loss = _totalDebt - _collateralBalance;
         }
@@ -220,7 +242,6 @@ abstract contract Crv3PoolStrategy is Crv3PoolMgr, Strategy {
     function rebalance() external override onlyKeeper {
         _reinvest();
         (uint256 _profit, uint256 _loss, uint256 _payback) = _generateReport();
-        console.log("P,L,P: %s, %s, %s", _profit, _loss, _payback);
         IVesperPool(pool).reportEarning(_profit, _loss, _payback);
         depositBuffer = collateralToken.balanceOf(address(this));
     }
