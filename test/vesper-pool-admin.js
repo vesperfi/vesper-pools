@@ -4,6 +4,7 @@ const {expect} = require('chai')
 const {constants} = require('@openzeppelin/test-helpers')
 const {ethers} = require('hardhat')
 const {getUsers} = require('./utils/setupHelper')
+
 /* eslint-disable mocha/max-top-level-suites */
 describe('Vesper Pool: Admin only function tests', function () {
   let pool
@@ -70,6 +71,54 @@ describe('Vesper Pool: Admin only function tests', function () {
         )
       })
     })
+  })
+
+  describe('Keeper operations', function () {
+    let keeperList
+    beforeEach(async function () {
+      await pool.init()
+      keeperList = await pool.keepers()
+      await pool.addInList(keeperList, user1.address)      
+    })
+
+    it('Should pause pool', async function () {
+      const tx = pool.connect(user1.signer).pause()
+      await expect(tx).to.not.reverted
+    })
+
+    it('Should unpause pool', async function () {
+      await pool.connect(user1.signer).pause()
+      const tx = pool.connect(user1.signer).unpause()
+      await expect(tx).to.not.reverted
+    })
+
+    it('Should not pause pool', async function () {
+      await expect(pool.connect(user2.signer).pause()).to.be.revertedWith('caller-is-not-a-keeper')
+    })
+
+    it('Should not unpause pool', async function () {
+      await expect(pool.connect(user1.signer).unpause()).to.be.revertedWith('not paused')
+    })
+
+    it('Should shutdown pool', async function () {
+      const tx = pool.connect(user1.signer).shutdown()
+      await expect(tx).to.not.reverted
+    })
+
+    it('Should open pool', async function () {
+      let tx = pool.connect(user1.signer).shutdown()
+      await expect(tx).to.not.reverted
+      tx = pool.connect(user1.signer).open()
+      await expect(tx).to.not.reverted
+    })
+
+    it('Should not shutdown pool', async function () {
+      await expect(pool.connect(user2.signer).shutdown()).to.be.revertedWith('caller-is-not-a-keeper')
+    })
+
+    it('Should not open pool', async function () {
+      await expect(pool.connect(user2.signer).open()).to.be.revertedWith('caller-is-not-a-keeper')
+    })   
   })
 
   describe('Create maintainer list', function () {
