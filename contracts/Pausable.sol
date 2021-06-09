@@ -19,21 +19,21 @@ contract Pausable is Context {
     bool public stopEverything;
 
     modifier whenNotPaused() {
-        require(!paused, "Pausable: paused");
+        require(!paused, "paused");
         _;
     }
     modifier whenPaused() {
-        require(paused, "Pausable: not paused");
+        require(paused, "not-paused");
         _;
     }
 
     modifier whenNotShutdown() {
-        require(!stopEverything, "Pausable: shutdown");
+        require(!stopEverything, "shutdown");
         _;
     }
 
     modifier whenShutdown() {
-        require(stopEverything, "Pausable: not shutdown");
+        require(stopEverything, "not-shutdown");
         _;
     }
 

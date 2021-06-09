@@ -213,7 +213,7 @@ async function shouldBehaveLikePool(poolName, collateralName) {
       it('Should have same size for recipients and amounts', async function () {
         await deposit(10, user1)
         const tx = pool.connect(user1.signer).multiTransfer([user3.address, user4.address], [DECIMAL18.mul(BN.from(1))])
-        await expect(tx).to.be.revertedWith('input-length-mismatch')
+        await expect(tx).to.be.revertedWith('4')
       })
     })
 
@@ -306,7 +306,7 @@ async function shouldBehaveLikePool(poolName, collateralName) {
         await rebalance(strategies)
         const withdrawAmount = await pool.balanceOf(user2.address)
         const tx = pool.connect(user2.signer).whitelistedWithdraw(withdrawAmount)
-        await expect(tx).to.be.revertedWith('not-a-white-listed-address')
+        await expect(tx).to.be.revertedWith('5')
       })
 
       it('Should allow fee collector to withdraw without fee', async function () {
@@ -388,7 +388,7 @@ async function shouldBehaveLikePool(poolName, collateralName) {
 
       it('Should not be able sweep reserved token', async function () {
         const tx = pool.sweepERC20(collateralToken.address)
-        await expect(tx).to.be.revertedWith('not-allowed-to-sweep')
+        await expect(tx).to.be.revertedWith('8')
       })
     })
 
