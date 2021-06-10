@@ -2,10 +2,11 @@
 
 pragma solidity 0.8.3;
 
+import "./Errors.sol";
 import "./PoolShareToken.sol";
 import "../interfaces/vesper/IStrategy.sol";
 
-contract VTokenBase is PoolShareToken {
+abstract contract VTokenBase is PoolShareToken {
     using SafeERC20 for IERC20;
 
     struct StrategyConfig {
@@ -55,17 +56,12 @@ contract VTokenBase is PoolShareToken {
     ) PoolShareToken(name, symbol, _token) {}
 
     modifier onlyKeeper() {
-        require(keepers.contains(_msgSender()), "caller-is-not-a-keeper");
+        require(keepers.contains(_msgSender()), "not-a-keeper");
         _;
     }
 
     modifier onlyMaintainer() {
-        require(maintainers.contains(_msgSender()), "caller-is-not-maintainer");
-        _;
-    }
-
-    modifier onlyStrategy() {
-        require(strategy[_msgSender()].active, "caller-is-not-active-strategy");
+        require(maintainers.contains(_msgSender()), "not-a-maintainer");
         _;
     }
 
@@ -97,7 +93,7 @@ contract VTokenBase is PoolShareToken {
      * NOTE: Due to gas constraint this function cannot be called in constructor.
      */
     function init() external onlyGovernor {
-        require(address(keepers) == address(0), "list-already-created");
+        require(address(keepers) == address(0), Errors.ALREADY_INITIALIZED);
         IAddressListFactory _factory = IAddressListFactory(0xded8217De022706A191eE7Ee0Dc9df1185Fb5dA3);
         keepers = IAddressList(_factory.createList());
         maintainers = IAddressList(_factory.createList());
@@ -113,7 +109,7 @@ contract VTokenBase is PoolShareToken {
      * @param _addressToAdd address which we want to add in AddressList.
      */
     function addInList(address _listToUpdate, address _addressToAdd) external onlyKeeper {
-        require(IAddressList(_listToUpdate).add(_addressToAdd), "add-in-list-failed");
+        require(IAddressList(_listToUpdate).add(_addressToAdd), Errors.ADD_IN_LIST_FAILED);
     }
 
     /**
@@ -123,7 +119,7 @@ contract VTokenBase is PoolShareToken {
      * @param _addressToRemove address which we want to remove from AddressList.
      */
     function removeFromList(address _listToUpdate, address _addressToRemove) external onlyKeeper {
-        require(IAddressList(_listToUpdate).remove(_addressToRemove), "remove-from-list-failed");
+        require(IAddressList(_listToUpdate).remove(_addressToRemove), Errors.REMOVE_FROM_LIST_FAILED);
     }
 
     /// @dev Add strategy
@@ -133,11 +129,11 @@ contract VTokenBase is PoolShareToken {
         uint256 _debtRatio,
         uint256 _debtRate
     ) public onlyGovernor {
-        require(_strategy != address(0), "strategy-address-is-zero");
-        require(!strategy[_strategy].active, "strategy-already-added");
+        require(_strategy != address(0), Errors.INPUT_ADDRESS_IS_ZERO);
+        require(!strategy[_strategy].active, Errors.STRATEGY_IS_ACTIVE);
         totalDebtRatio = totalDebtRatio + _debtRatio;
-        require(totalDebtRatio <= MAX_BPS, "totalDebtRatio-above-max_bps");
-        require(_interestFee <= MAX_BPS, "interest-fee-above-max_bps");
+        require(totalDebtRatio <= MAX_BPS, Errors.DEBT_RATIO_LIMIT_REACHED);
+        require(_interestFee <= MAX_BPS, Errors.FEE_LIMIT_REACHED);
         StrategyConfig memory newStrategy =
             StrategyConfig({
                 active: true,
@@ -156,12 +152,12 @@ contract VTokenBase is PoolShareToken {
     }
 
     function migrateStrategy(address _old, address _new) external onlyGovernor {
-        require(_new != address(0), "new-address-is-zero");
-        require(_old != address(0), "old-address-is-zero");
-        require(IStrategy(_new).pool() == address(this), "not-valid-new-strategy");
-        require(IStrategy(_old).pool() == address(this), "not-valid-old-strategy");
-        require(strategy[_old].active, "strategy-already-migrated");
-        require(!strategy[_new].active, "strategy-already-added");
+        require(
+            IStrategy(_new).pool() == address(this) && IStrategy(_old).pool() == address(this),
+            Errors.INVALID_STRATEGY
+        );
+        require(strategy[_old].active, Errors.STRATEGY_IS_NOT_ACTIVE);
+        require(!strategy[_new].active, Errors.STRATEGY_IS_ACTIVE);
         StrategyConfig memory _newStrategy =
             StrategyConfig({
                 active: true,
@@ -212,8 +208,8 @@ contract VTokenBase is PoolShareToken {
      */
     function removeStrategy(uint256 _index) external onlyGovernor {
         address _strategy = strategies[_index];
-        require(strategy[_strategy].active, "strategy-not-active");
-        require(strategy[_strategy].totalDebt == 0, "strategy-has-debt");
+        require(strategy[_strategy].active, Errors.STRATEGY_IS_NOT_ACTIVE);
+        require(strategy[_strategy].totalDebt == 0, Errors.TOTAL_DEBT_IS_NOT_ZERO);
         delete strategy[_strategy];
         strategies[_index] = strategies[strategies.length - 1];
         strategies.pop();
@@ -230,9 +226,8 @@ contract VTokenBase is PoolShareToken {
     }
 
     function updateInterestFee(address _strategy, uint256 _interestFee) external onlyGovernor {
-        require(_strategy != address(0), "strategy-address-is-zero");
-        require(strategy[_strategy].active, "strategy-not-active");
-        require(_interestFee <= MAX_BPS, "interest-fee-above-max_bps");
+        require(strategy[_strategy].active, Errors.STRATEGY_IS_NOT_ACTIVE);
+        require(_interestFee <= MAX_BPS, Errors.FEE_LIMIT_REACHED);
         strategy[_strategy].interestFee = _interestFee;
         emit UpdatedInterestFee(_strategy, _interestFee);
     }
@@ -241,18 +236,21 @@ contract VTokenBase is PoolShareToken {
      * @dev Update debt ratio.  A strategy is retired when debtRatio is 0
      */
     function updateDebtRatio(address _strategy, uint256 _debtRatio) external onlyMaintainer {
-        require(strategy[_strategy].active, "strategy-not-active");
+        require(strategy[_strategy].active, Errors.STRATEGY_IS_NOT_ACTIVE);
         totalDebtRatio = totalDebtRatio - strategy[_strategy].debtRatio + _debtRatio;
-        require(totalDebtRatio <= MAX_BPS, "totalDebtRatio-above-max_bps");
+        require(totalDebtRatio <= MAX_BPS, Errors.DEBT_RATIO_LIMIT_REACHED);
         strategy[_strategy].debtRatio = _debtRatio;
         emit UpdatedStrategyDebtParams(_strategy, _debtRatio, strategy[_strategy].debtRate);
     }
 
     /**
-     * @dev Update debtRate per block.
+     * @notice Update debtRate per block.
+     * @dev Only Keeper can call.
+     * @param _strategy Strategy address for which debt rate is being updated
+     * @param _debtRate New debt rate
      */
     function updateDebtRate(address _strategy, uint256 _debtRate) external onlyKeeper {
-        require(strategy[_strategy].active, "strategy-not-active");
+        require(strategy[_strategy].active, Errors.STRATEGY_IS_NOT_ACTIVE);
         strategy[_strategy].debtRate = _debtRate;
         emit UpdatedStrategyDebtParams(_strategy, strategy[_strategy].debtRatio, _debtRate);
     }
@@ -260,10 +258,9 @@ contract VTokenBase is PoolShareToken {
     /// @dev update withdrawal queue
     function updateWithdrawQueue(address[] memory _withdrawQueue) external onlyMaintainer {
         uint256 _length = _withdrawQueue.length;
-        require(_length > 0, "withdrawal-queue-blank");
-        require(_length == withdrawQueue.length && _length == strategies.length, "incorrect-withdraw-queue-length");
+        require(_length == withdrawQueue.length && _length == strategies.length, Errors.INPUT_LENGTH_MISMATCH);
         for (uint256 i = 0; i < _length; i++) {
-            require(strategy[_withdrawQueue[i]].active, "invalid-strategy");
+            require(strategy[_withdrawQueue[i]].active, Errors.STRATEGY_IS_NOT_ACTIVE);
         }
         withdrawQueue = _withdrawQueue;
     }
@@ -281,8 +278,9 @@ contract VTokenBase is PoolShareToken {
         uint256 _profit,
         uint256 _loss,
         uint256 _payback
-    ) external onlyStrategy {
-        require(token.balanceOf(_msgSender()) >= (_profit + _payback), "insufficient-balance-in-strategy");
+    ) external {
+        require(strategy[_msgSender()].active, Errors.STRATEGY_IS_NOT_ACTIVE);
+        require(token.balanceOf(_msgSender()) >= (_profit + _payback), Errors.INSUFFICIENT_BALANCE);
         if (_loss != 0) {
             _reportLoss(_msgSender(), _loss);
         }
@@ -324,8 +322,8 @@ contract VTokenBase is PoolShareToken {
      * @param _fromToken Token address to sweep
      */
     function sweepERC20(address _fromToken) external virtual onlyKeeper {
-        require(_fromToken != address(token), "not-allowed-to-sweep");
-        require(feeCollector != address(0), "fee-collector-not-set");
+        require(_fromToken != address(token), Errors.NOT_ALLOWED_TO_SWEEP);
+        require(feeCollector != address(0), Errors.FEE_COLLECTOR_NOT_SET);
         IERC20(_fromToken).safeTransfer(feeCollector, IERC20(_fromToken).balanceOf(address(this)));
     }
 
@@ -412,7 +410,7 @@ contract VTokenBase is PoolShareToken {
     */
     function _reportLoss(address _strategy, uint256 _loss) internal {
         uint256 _currentDebt = strategy[_strategy].totalDebt;
-        require(_currentDebt >= _loss, "loss-too-high");
+        require(_currentDebt >= _loss, Errors.LOSS_TOO_HIGH);
         strategy[_strategy].totalLoss += _loss;
         strategy[_strategy].totalDebt -= _loss;
         totalDebt -= _loss;

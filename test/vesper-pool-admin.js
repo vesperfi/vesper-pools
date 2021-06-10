@@ -31,7 +31,7 @@ describe('Vesper Pool: Admin only function tests', function () {
     it('Should revert if list already created', async function () {
       await pool.init()
       // Trying to create list again
-      await expect(pool.init()).to.be.revertedWith('list-already-created')
+      await expect(pool.init()).to.be.revertedWith('12')
     })
   })
 
@@ -51,7 +51,7 @@ describe('Vesper Pool: Admin only function tests', function () {
 
       it('Should revert if address already exist in list', async function () {
         await pool.addInList(keeperList, user1.address)
-        await expect(pool.addInList(keeperList, user1.address)).to.be.revertedWith('add-in-list-failed')
+        await expect(pool.addInList(keeperList, user1.address)).to.be.revertedWith('13')
       })
     })
     context('Remove address from keeper list', function () {
@@ -62,12 +62,12 @@ describe('Vesper Pool: Admin only function tests', function () {
       })
 
       it('Should revert if address not in list', async function () {
-        await expect(pool.removeFromList(keeperList, user1.address)).to.be.revertedWith('remove-from-list-failed')
+        await expect(pool.removeFromList(keeperList, user1.address)).to.be.revertedWith('14')
       })
 
       it('Should revert if non-gov users add in keeper', async function () {
         await expect(pool.connect(user3.signer).addInList(keeperList, user1.address)).to.be.revertedWith(
-          'caller-is-not-a-keeper'
+          'not-a-keeper'
         )
       })
     })
@@ -93,11 +93,11 @@ describe('Vesper Pool: Admin only function tests', function () {
     })
 
     it('Should not pause pool', async function () {
-      await expect(pool.connect(user2.signer).pause()).to.be.revertedWith('caller-is-not-a-keeper')
+      await expect(pool.connect(user2.signer).pause()).to.be.revertedWith('not-a-keeper')
     })
 
     it('Should not unpause pool', async function () {
-      await expect(pool.connect(user1.signer).unpause()).to.be.revertedWith('not paused')
+      await expect(pool.connect(user1.signer).unpause()).to.be.revertedWith('not-paused')
     })
 
     it('Should shutdown pool', async function () {
@@ -113,11 +113,11 @@ describe('Vesper Pool: Admin only function tests', function () {
     })
 
     it('Should not shutdown pool', async function () {
-      await expect(pool.connect(user2.signer).shutdown()).to.be.revertedWith('caller-is-not-a-keeper')
+      await expect(pool.connect(user2.signer).shutdown()).to.be.revertedWith('not-a-keeper')
     })
 
     it('Should not open pool', async function () {
-      await expect(pool.connect(user2.signer).open()).to.be.revertedWith('caller-is-not-a-keeper')
+      await expect(pool.connect(user2.signer).open()).to.be.revertedWith('not-a-keeper')
     })   
   })
 
@@ -160,13 +160,13 @@ describe('Vesper Pool: Admin only function tests', function () {
       it('Should revert if address already exist in list', async function () {
         await pool.addInList(maintainersList, user2.address)
         await expect(pool.connect(user1.signer).addInList(maintainersList, user2.address)).to.be.revertedWith(
-          'add-in-list-failed'
+          '13'
         )
       })
 
       it('Should revert if not authorized users add in maintainer', async function () {
         await expect(pool.connect(user3.signer).addInList(maintainersList, user4.address)).to.be.revertedWith(
-          'caller-is-not-a-keeper'
+          'not-a-keeper'
         )
       })
     })

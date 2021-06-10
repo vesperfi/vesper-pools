@@ -32,7 +32,7 @@ contract Governed is Context {
      * @dev Throws if called by any account other than the governor.
      */
     modifier onlyGovernor {
-        require(governor == _msgSender(), "caller-is-not-the-governor");
+        require(governor == _msgSender(), "not-the-governor");
         _;
     }
 
@@ -41,8 +41,7 @@ contract Governed is Context {
      * Can only be called by the current owner.
      */
     function transferGovernorship(address _proposedGovernor) external onlyGovernor {
-        //solhint-disable-next-line reason-string
-        require(_proposedGovernor != address(0), "proposed-governor-is-zero-address");
+        require(_proposedGovernor != address(0), "proposed-governor-is-zero");
         proposedGovernor = _proposedGovernor;
     }
 
@@ -50,8 +49,7 @@ contract Governed is Context {
      * @dev Allows new governor to accept governorship of the contract.
      */
     function acceptGovernorship() external {
-        //solhint-disable-next-line reason-string
-        require(proposedGovernor == _msgSender(), "caller-is-not-the-proposed-governor");
+        require(proposedGovernor == _msgSender(), "not-the-proposed-governor");
         emit UpdatedGovernor(governor, proposedGovernor);
         governor = proposedGovernor;
         proposedGovernor = address(0);

@@ -77,13 +77,13 @@ async function shouldBehaveLikeMultiPool(poolName) {
 
       it('Only governor should be able to remove strategy', async function () {
         const tx = pool.connect(user2.signer).removeStrategy(1)
-        await expect(tx).to.be.revertedWith('caller-is-not-the-governor')
+        await expect(tx).to.be.revertedWith('not-the-governor')
       })
 
       it('Should not remove if strategy has debt', async function () {
         await rebalance(strategies)
         const tx = pool.connect(gov.signer).removeStrategy(1)
-        await expect(tx).to.be.revertedWith('strategy-has-debt')
+        await expect(tx).to.be.revertedWith('19')
       })
 
       it('Should remove if strategy has 0 debt', async function () {
