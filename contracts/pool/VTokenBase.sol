@@ -65,25 +65,6 @@ abstract contract VTokenBase is PoolShareToken {
         _;
     }
 
-    ///////////////////////////// Only Keeper ///////////////////////////////
-    function pause() external onlyKeeper {
-        _pause();
-    }
-
-    function unpause() external onlyKeeper {
-        _unpause();
-    }
-
-    function shutdown() external onlyKeeper {
-        _shutdown();
-    }
-
-    function open() external onlyKeeper {
-        _open();
-    }
-
-    ///////////////////////////////////////////////////////////////////////////
-
     ////////////////////////////// Only Governor //////////////////////////////
 
     /**
@@ -100,26 +81,6 @@ abstract contract VTokenBase is PoolShareToken {
         // List creator i.e. governor can do job of keeper and maintainer.
         keepers.add(governor);
         maintainers.add(governor);
-    }
-
-    /**
-     * @notice Add given address in provided address list.
-     * @dev Use it to add keeper in keepers list and to add address in feeWhitelist
-     * @param _listToUpdate address of AddressList contract.
-     * @param _addressToAdd address which we want to add in AddressList.
-     */
-    function addInList(address _listToUpdate, address _addressToAdd) external onlyKeeper {
-        require(IAddressList(_listToUpdate).add(_addressToAdd), Errors.ADD_IN_LIST_FAILED);
-    }
-
-    /**
-     * @notice Remove given address from provided address list.
-     * @dev Use it to remove keeper from keepers list and to remove address from feeWhitelist
-     * @param _listToUpdate address of AddressList contract.
-     * @param _addressToRemove address which we want to remove from AddressList.
-     */
-    function removeFromList(address _listToUpdate, address _addressToRemove) external onlyKeeper {
-        require(IAddressList(_listToUpdate).remove(_addressToRemove), Errors.REMOVE_FROM_LIST_FAILED);
     }
 
     /// @dev Add strategy
@@ -151,6 +112,14 @@ abstract contract VTokenBase is PoolShareToken {
         emit StrategyAdded(_strategy, _interestFee, _debtRatio, _debtRate);
     }
 
+    /**
+     * @notice Migrate existing strategy to new strategy.
+     * @dev Migrating strategy aka old and new strategy should be of same type.
+     * @dev New strategy will replace old strategy in strategy mapping,
+     * strategies array, withdraw queue.
+     * @param _old Address of strategy being migrated
+     * @param _new Address of new strategy
+     */
     function migrateStrategy(address _old, address _new) external onlyGovernor {
         require(
             IStrategy(_new).pool() == address(this) && IStrategy(_old).pool() == address(this),
@@ -225,6 +194,11 @@ abstract contract VTokenBase is PoolShareToken {
         withdrawQueue = _withdrawQueue;
     }
 
+    /**
+     * @notice Update interest fee of strategy
+     * @param _strategy Strategy address for which interest fee is being updated
+     * @param _interestFee New interest fee
+     */
     function updateInterestFee(address _strategy, uint256 _interestFee) external onlyGovernor {
         require(strategy[_strategy].active, Errors.STRATEGY_IS_NOT_ACTIVE);
         require(_interestFee <= MAX_BPS, Errors.FEE_LIMIT_REACHED);
@@ -232,8 +206,60 @@ abstract contract VTokenBase is PoolShareToken {
         emit UpdatedInterestFee(_strategy, _interestFee);
     }
 
+    ///////////////////////////// Only Keeper ///////////////////////////////
+    function pause() external onlyKeeper {
+        _pause();
+    }
+
+    function unpause() external onlyKeeper {
+        _unpause();
+    }
+
+    function shutdown() external onlyKeeper {
+        _shutdown();
+    }
+
+    function open() external onlyKeeper {
+        _open();
+    }
+
     /**
-     * @dev Update debt ratio.  A strategy is retired when debtRatio is 0
+     * @notice Add given address in provided address list.
+     * @dev Use it to add keeper in keepers list and to add address in feeWhitelist
+     * @param _listToUpdate address of AddressList contract.
+     * @param _addressToAdd address which we want to add in AddressList.
+     */
+    function addInList(address _listToUpdate, address _addressToAdd) external onlyKeeper {
+        require(IAddressList(_listToUpdate).add(_addressToAdd), Errors.ADD_IN_LIST_FAILED);
+    }
+
+    /**
+     * @notice Remove given address from provided address list.
+     * @dev Use it to remove keeper from keepers list and to remove address from feeWhitelist
+     * @param _listToUpdate address of AddressList contract.
+     * @param _addressToRemove address which we want to remove from AddressList.
+     */
+    function removeFromList(address _listToUpdate, address _addressToRemove) external onlyKeeper {
+        require(IAddressList(_listToUpdate).remove(_addressToRemove), Errors.REMOVE_FROM_LIST_FAILED);
+    }
+
+    /**
+     * @notice Update debtRate per block.
+     * @param _strategy Strategy address for which debt rate is being updated
+     * @param _debtRate New debt rate
+     */
+    function updateDebtRate(address _strategy, uint256 _debtRate) external onlyKeeper {
+        require(strategy[_strategy].active, Errors.STRATEGY_IS_NOT_ACTIVE);
+        strategy[_strategy].debtRate = _debtRate;
+        emit UpdatedStrategyDebtParams(_strategy, strategy[_strategy].debtRatio, _debtRate);
+    }
+
+    ///////////////////////////// Only Maintainer /////////////////////////////
+    /**
+     * @notice Update debt ratio.
+     * @dev A strategy is retired when debtRatio is 0
+     * @param _strategy Strategy address for which debt ratio is being updated
+     * @param _debtRatio New debt ratio
      */
     function updateDebtRatio(address _strategy, uint256 _debtRatio) external onlyMaintainer {
         require(strategy[_strategy].active, Errors.STRATEGY_IS_NOT_ACTIVE);
@@ -244,18 +270,13 @@ abstract contract VTokenBase is PoolShareToken {
     }
 
     /**
-     * @notice Update debtRate per block.
-     * @dev Only Keeper can call.
-     * @param _strategy Strategy address for which debt rate is being updated
-     * @param _debtRate New debt rate
+     * @notice Update withdraw queue. Withdraw queue is list of strategy in the order in which
+     * funds should be withdrawn.
+     * @dev Pool always keep some buffer amount to satisfy withdrawal request, any withdrawal
+     * request higher than buffer will withdraw from withdraw queue. So withdrawQueue[0] will
+     * be the first strategy where withdrawal request will be send.
+     * @param _withdrawQueue Ordered list of strategy.
      */
-    function updateDebtRate(address _strategy, uint256 _debtRate) external onlyKeeper {
-        require(strategy[_strategy].active, Errors.STRATEGY_IS_NOT_ACTIVE);
-        strategy[_strategy].debtRate = _debtRate;
-        emit UpdatedStrategyDebtParams(_strategy, strategy[_strategy].debtRatio, _debtRate);
-    }
-
-    /// @dev update withdrawal queue
     function updateWithdrawQueue(address[] memory _withdrawQueue) external onlyMaintainer {
         uint256 _length = _withdrawQueue.length;
         require(_length == withdrawQueue.length && _length == strategies.length, Errors.INPUT_LENGTH_MISMATCH);
