@@ -12,8 +12,9 @@ const TOTAL_REWARD = ethers.utils.parseUnits('150000')
 const REWARD_DURATION = 30 * 24 * 60 * 60
 /* eslint-disable mocha/no-setup-in-describe */
 describe('Rewards for VDAI Pool', function () {
-  let vdai, dai, vsp, poolRewards
+  let vdai, dai, vsp, poolRewards, poolRewardsImpl
   let governor, user1, user2, user3
+  let proxyAdmin, proxy
 
   const ONE_MILLION = ethers.utils.parseUnits('1000000', 'ether')
   const interestFee = '1500' // 15%
@@ -38,8 +39,16 @@ describe('Rewards for VDAI Pool', function () {
     vdai = this.pool
     dai = this.collateralToken
     vsp = await deployContract('VSP', [])
-    poolRewards = await deployContract('PoolRewards', [vdai.address, vsp.address])
-    await vdai.updatePoolRewards(poolRewards.address)
+    // Deploy pool rewards implementation
+    poolRewardsImpl = await deployContract('PoolRewards', [])
+    // Deploy proxy admin
+    proxyAdmin = await deployContract('ProxyAdmin', [])
+    const initData = poolRewardsImpl.interface.encodeFunctionData('initialize', [vdai.address, vsp.address])
+    // deploy proxy with logic implementation
+    proxy = await deployContract('TransparentUpgradeableProxy', [poolRewardsImpl.address, proxyAdmin.address, initData])
+    // Get implementation from proxy
+    poolRewards = await ethers.getContractAt('PoolRewards', proxy.address)
+    await vdai.updatePoolRewards(proxy.address)
   })
 
   describe('Governor function tests', function () {
@@ -64,13 +73,13 @@ describe('Rewards for VDAI Pool', function () {
     })
 
     it('updateRewardEnd:: Should revert if non governor calls', async function () {
-      const tx = poolRewards.connect(user2.signer).updateRewardEnd()
+      const tx = poolRewards.connect(user2.signer).updateRewardEndTime()
       await expect(tx).to.be.revertedWith('not-authorized')
     })
 
     it('updateRewardEnd:: Should allow governor to update end time', async function () {
-      const tx = poolRewards.connect(governor.signer).updateRewardEnd()
-      await expect(tx).to.emit(poolRewards, 'UpdatedRewardEnd')
+      const tx = poolRewards.connect(governor.signer).updateRewardEndTime()
+      await expect(tx).to.emit(poolRewards, 'UpdatedRewardEndTime')
       expect(await poolRewards.rewardEndTime()).to.be.gt(0, 'End time update failed')
     })
 
@@ -85,14 +94,14 @@ describe('Rewards for VDAI Pool', function () {
     })
 
     it('withdrawRemaining:: Should withdraw remaining rewards', async function () {
-      await poolRewards.connect(governor.signer).updateRewardEnd()
+      await poolRewards.connect(governor.signer).updateRewardEndTime()
       await time.increase(31 * 24 * 60 * 60)
       const tx = poolRewards.connect(governor.signer).withdrawRemaining(user2.address)
       await expect(tx).to.emit(poolRewards, 'RewardEnded').withArgs(user2.address, 0)
     })
   })
 
-  describe('Rewards claim', function () {
+  describe('Reward claim', function () {
     beforeEach(async function () {
       await vsp.connect(governor.signer).mint(poolRewards.address, TOTAL_REWARD)
       await poolRewards.connect(governor.signer).notifyRewardAmount(TOTAL_REWARD, REWARD_DURATION)
@@ -229,7 +238,7 @@ describe('Rewards for VDAI Pool', function () {
       expect(claimable).to.be.gt(0, 'Claimable should be greater than 0')
       claimable = await poolRewards.claimable(user2.address)
       expect(claimable).to.be.gt(0, 'Claimable should be greater than 0')
-      
+
       // Trigger reward calculation by another transfer
       await vdai.connect(user2.signer).transfer(user3.address, await vdai.balanceOf(user2.address))
       // Claim reward for user2
@@ -279,6 +288,29 @@ describe('Rewards for VDAI Pool', function () {
       const finalClaimable = await poolRewards.claimable(user1.address)
       // ensure dust is within .01%, due to rounding
       expect(totalRewards.sub(finalClaimable)).to.be.lte(finalClaimable.div(10000), 'Final claimable is wrong')
+    })
+  })
+
+  describe('Update proxy implementation', function () {
+    it('Should deploy new implementation and upgrade in proxy', async function () {
+      const implAddress = poolRewardsImpl.address
+      await vsp.connect(governor.signer).mint(poolRewards.address, TOTAL_REWARD)
+      await poolRewards.connect(governor.signer).notifyRewardAmount(TOTAL_REWARD, REWARD_DURATION)
+      const rewardRate = await poolRewards.rewardRate()
+      expect(rewardRate).to.be.gt(0, 'Reward rate should be > 0')
+
+      // Deploy new implementation
+      poolRewardsImpl = await deployContract('PoolRewards', [])
+      expect(poolRewardsImpl.address !== implAddress, 'Impl address should be different').to.be.true
+
+      const proxyAddress = poolRewards.address
+      // Upgrade proxy to point to new implementation
+      await proxyAdmin.connect(governor.signer).upgrade(proxy.address, poolRewardsImpl.address)
+      poolRewards = await ethers.getContractAt('PoolRewards', proxy.address)
+
+      expect(poolRewards.address === proxyAddress, 'Pool rewards proxy address should be same').to.be.true
+      const rewardRateAfter = await poolRewards.rewardRate()
+      expect(rewardRateAfter).to.be.eq(rewardRate, 'Reward rate after proxy upgrade should be same as before')
     })
   })
 })
