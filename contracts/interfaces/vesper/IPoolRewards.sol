@@ -3,23 +3,30 @@
 pragma solidity 0.8.3;
 
 interface IPoolRewards {
+    /// Emitted after reward added
+    event RewardAdded(uint256 reward);
+    /// Emitted whenever any user claim rewards
+    event RewardPaid(address indexed user, uint256 reward);
+    /// Emitted when reward is ended
+    event RewardEnded(address indexed dustReceiver, uint256 dust);
+    // Emitted when pool governor update reward end time
+    event UpdatedRewardEndTime(uint256 previousRewardEndTime, uint256 newRewardEndTime);
+
     function claimReward(address) external;
 
     function notifyRewardAmount(uint256 rewardAmount, uint256 endTime) external;
 
-    function updateRewardEnd() external;
+    function updateRewardEndTime() external;
 
     function updateReward(address) external;
 
     function withdrawRemaining(address _toAddress) external;
 
-    function rewardForDuration() external view returns (uint256);
-
     function claimable(address) external view returns (uint256);
 
-    function pool() external view returns (address);
-
     function lastTimeRewardApplicable() external view returns (uint256);
+
+    function rewardForDuration() external view returns (uint256);
 
     function rewardPerToken() external view returns (uint256);
 }
