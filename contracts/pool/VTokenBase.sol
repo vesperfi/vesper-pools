@@ -339,6 +339,16 @@ abstract contract VTokenBase is PoolShareToken {
     }
 
     /**
+     @dev Some strategies pay deposit fee upfront. Curve's 3pool has some slippage due to deposit of one asset in 3pool. 
+      This is actually a upfront loss. Strategy may want report this loss instead of waiting for next rebalance.
+     @param _loss Strategy want to report loss
+     */
+    function reportLoss(uint256 _loss) external {
+        require(strategy[_msgSender()].active, Errors.STRATEGY_IS_NOT_ACTIVE);
+        _reportLoss(_msgSender(), _loss);
+    }
+
+    /**
      * @dev Transfer given ERC20 token to feeCollector
      * @param _fromToken Token address to sweep
      */
