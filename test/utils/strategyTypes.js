@@ -7,7 +7,8 @@ const StrategyType = {
   COMPOUND_MAKER: 'compoundMaker',
   VESPER_MAKER: 'vesperMaker',
   CURVE: 'curve',
-  CREAM: 'cream'
+  CREAM: 'cream',
+  YEARN: 'yearn'
 }
 
 module.exports = Object.freeze(StrategyType)

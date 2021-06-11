@@ -182,11 +182,11 @@ async function shouldBehaveLikePool(poolName, collateralName) {
           pool.balanceOf(user1.address),
           collateralToken.balanceOf(user2.address),
         ]).then(function ([totalDebt, totalSupply, totalValue, vPoolBalance, collateralBalance]) {
-          // Due to rounding some dust, 10000 wei, might left in case of Compound strategy
+          // Due to rounding some dust, 10000 wei, might left in case of Compound and Yearn strategy
           expect(totalDebtBefore.sub(totalDebt)).to.be.lte(dust, `${collateralName} total debt is wrong`)
-          expect(totalSupplyBefore.sub(totalSupply)).to.be.equal('0', `Total supply of ${poolName} is wrong`)
+          expect(totalSupplyBefore.sub(totalSupply)).to.be.lte(dust, `Total supply of ${poolName} is wrong`)
           expect(totalValueBefore.sub(totalValue)).to.be.lte(dust, `Total value of ${poolName} is wrong`)
-          expect(vPoolBalance).to.be.equal('0', `${poolName} balance of user is wrong`)
+          expect(vPoolBalance).to.be.lte(dust, `${poolName} balance of user is wrong`)
           expect(collateralBalance).to.be.gte(depositAmount, `${collateralName} balance of user is wrong`)
         })
       })
@@ -310,6 +310,7 @@ async function shouldBehaveLikePool(poolName, collateralName) {
       })
 
       it('Should allow fee collector to withdraw without fee', async function () {
+        const dust = DECIMAL18.div(BN.from(100)) // Dust is less than 1e16
         await deposit(10, user2)
         await rebalance(strategies)
         const withdrawAmount = await pool.balanceOf(user2.address)
@@ -318,7 +319,8 @@ async function shouldBehaveLikePool(poolName, collateralName) {
         const signer = await ethers.getSigner(feeCollector)
         await pool.connect(signer).whitelistedWithdraw(feeCollected)
         const vPoolBalanceFC = await pool.balanceOf(feeCollector)
-        expect(vPoolBalanceFC).to.be.eq('0', `${poolName} balance of FC is not correct`)
+        // Due to rounding some dust, 10000 wei, might left in case of Yearn strategy
+        expect(vPoolBalanceFC).to.be.lte(dust, `${poolName} balance of FC is not correct`)
 
         const collateralBalance = await collateralToken.balanceOf(feeCollector)
         expect(collateralBalance).to.be.gt('0', `${collateralName} balance of FC is not correct`)
@@ -488,6 +490,7 @@ async function shouldBehaveLikePool(poolName, collateralName) {
       })
 
       it('Credit line should be min of debtRate, tokens here', async function () {
+        const dust = DECIMAL18.div(BN.from(100)) // Dust is less than 1e16
         await deposit(60, user2)
         await rebalance(strategies)
         await deposit(40, user1)
@@ -502,8 +505,9 @@ async function shouldBehaveLikePool(poolName, collateralName) {
         // add limit of one more block
         expectedLimit = expectedLimit.add(strategyParams.debtRate)
         const debtAfter = (await pool.strategy(strategies[0].instance.address)).totalDebt
-        expect(Math.abs(debtAfter.sub(debtBefore).sub(expectedLimit))).to.almost.equal(
-          1,
+        // Due to rounding some dust, 10000 wei, might left in case of Yearn strategy
+        expect(Math.abs(debtAfter.sub(debtBefore).sub(expectedLimit))).to.lte(
+          dust,
           `Debt of strategy in ${poolName} is wrong`
         )
       })

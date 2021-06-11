@@ -61,6 +61,25 @@ async function bringAboveWater(strategy, amount) {
 }
 
 /**
+ * Simulates harvesting in a Yearn Vault
+ * Yearn vaults don't have a predictable profit outcome so here's what we do:
+ * 1. Swaps some ethers for collateral into a vault
+ * 2. This causes vault' pricePerShare to increase
+ *
+ * @param {object} strategy - strategy object
+ */
+ async function harvestYearn(strategy) {
+
+  const collateralTokenAddress = await strategy.instance.collateralToken()
+  const vault = await strategy.instance.receiptToken()
+
+  const signer = await ethers.provider.getSigner(strategy.signer)
+
+  await swapper.swapEthForToken(5, collateralTokenAddress,{ signer }, vault)
+
+}
+
+/**
  * Rebalance one strategy
  *
  * @param {object} strategy - strategy object
@@ -71,6 +90,9 @@ async function rebalanceStrategy(strategy) {
   try {
     if (strategy.type.includes('Maker')) {
       await bringAboveWater(strategy, 10)
+    }
+    if (strategy.type.includes('yearn')) {
+      await harvestYearn(strategy)
     }
     tx = await strategy.instance.rebalance()
   } catch (error) {
