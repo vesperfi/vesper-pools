@@ -338,6 +338,8 @@ async function shouldBehaveLikePool(poolName, collateralName) {
         const feeCollected = await pool.balanceOf(feeCollector)
         const signer = await ethers.getSigner(feeCollector)
         await pool.connect(signer).whitelistedWithdraw(feeCollected)
+
+
         const vPoolBalanceFC = await pool.balanceOf(feeCollector)
         // Due to rounding some dust, 10000 wei, might left in case of Yearn strategy
         expect(vPoolBalanceFC).to.be.lte(dust, `${poolName} balance of FC is not correct`)

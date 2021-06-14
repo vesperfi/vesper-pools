@@ -2,7 +2,7 @@ name: vDAI with Curve 3Pool
 on: [pull_request]
 
 jobs:
-  vlink-cream-strategy-test:
+  vdai-curve3p-strategy-test:
     runs-on: ubuntu-latest
     strategy:
       matrix:

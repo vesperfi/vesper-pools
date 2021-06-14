@@ -2,7 +2,7 @@ name: vUSDC with Curve 3Pool
 on: [pull_request]
 
 jobs:
-  vlink-cream-strategy-test:
+  vusdc-curve3p-strategy-test:
     runs-on: ubuntu-latest
     strategy:
       matrix:

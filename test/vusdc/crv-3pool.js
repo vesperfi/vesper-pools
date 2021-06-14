@@ -6,7 +6,7 @@ const hre = require('hardhat')
 const ethers = hre.ethers
 
 const {shouldBehaveLikePool} = require('../behavior/vesper-pool')
-const {shouldBehaveLikeCrvStrategy} = require('../behavior/crv-strategy')
+const {shouldBehaveLikeStrategy} = require('../behavior/strategy')
 const {deposit, timeTravel, reset} = require('../utils/poolOps')
 const StrategyType = require('../utils/strategyTypes')
 const {setupVPool, getUsers} = require('../utils/setupHelper')
@@ -23,7 +23,8 @@ describe('vUSDC Pool with Crv3PoolStrategy', function () {
     const users = await getUsers()
     this.users = users
 
-    ;[, user1, user2, user3, feeAcct] = users
+    ;[, user1, user2, user3] = users
+    feeAcct = users[9]
   })
 
   beforeEach(async function () {
@@ -53,7 +54,7 @@ describe('vUSDC Pool with Crv3PoolStrategy', function () {
 
   describe('Strategy Tests', function() {
     after(reset)
-    shouldBehaveLikeCrvStrategy(0)
+    shouldBehaveLikeStrategy(0, StrategyType.CURVE, 'Crv3PoolStrategyUSDC')
   })
 
   describe('Crv3PoolStrategy: USDC Functionality', function() {

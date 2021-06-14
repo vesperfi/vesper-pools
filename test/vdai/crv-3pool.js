@@ -6,7 +6,7 @@ const hre = require('hardhat')
 const ethers = hre.ethers
 
 const {shouldBehaveLikePool} = require('../behavior/vesper-pool')
-const {shouldBehaveLikeCrvStrategy} = require('../behavior/crv-strategy')
+const {shouldBehaveLikeStrategy} = require('../behavior/strategy')
 const {deposit, timeTravel, reset} = require('../utils/poolOps')
 const {swapEthForToken} = require('../utils/tokenSwapper')
 const StrategyType = require('../utils/strategyTypes')
@@ -27,7 +27,8 @@ describe('vDAI Pool with Crv3PoolStrategy', function () {
     const users = await getUsers()
     this.users = users
 
-    ;[, user1, user2, user3, user4, feeAcct] = users
+    ;[, user1, user2, user3, user4] = users
+    feeAcct = users[9]
     threePool = await ethers.getContractAt('IStableSwap3Pool', THREE_POOL)
   })
 
@@ -59,7 +60,7 @@ describe('vDAI Pool with Crv3PoolStrategy', function () {
 
   describe('Strategy Tests', function() {
     after(reset)
-    shouldBehaveLikeCrvStrategy(0)
+    shouldBehaveLikeStrategy(0, StrategyType.CURVE, 'Crv3PoolStrategyDAI')
   })
 
   describe('Crv3PoolStrategy: DAI Functionality', function() {
@@ -83,9 +84,25 @@ describe('vDAI Pool with Crv3PoolStrategy', function () {
       expect(price3).to.be.gt(price2, 'Share value should increase (2)')
     })
 
+    it('Should fail to deposit when there is slippage, but maintain funds', async function () {
+      await deposit(pool, collateralToken, 200, user1)
+      await deposit(pool, collateralToken, 200, user2)
+      await deposit(pool, collateralToken, 200, user3)
+      await deposit(pool, collateralToken, 200, feeAcct)
+      const price1 = await pool.pricePerShare()
+
+      await timeTravel(30*24*60*60)
+      await strategy.rebalance()
+
+      const price2 = await pool.pricePerShare()
+      expect(price2).to.be.equal(price1, 'Share value should not increase')
+      const bal = await collateralToken.balanceOf(strategy.address)
+      expect(bal).to.be.gt(0)
+    })
+
     // This doesnt actually test anything, it just makes it easy to estimate APY
     // eslint-disable-next-line
-    it('Crv3PoolStrategy: DAI APY', async function() {
+    xit('Crv3PoolStrategy: DAI APY', async function() {
       await swapEthForToken(200, USDC, user4)
       const usdcToken = await ethers.getContractAt('IERC20', USDC)
       usdcToken.connect(user4.signer).approve(THREE_POOL, ONE_MILLION)

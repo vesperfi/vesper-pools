@@ -19,9 +19,11 @@ abstract contract Crv3PoolStrategy is Crv3PoolMgr, Strategy {
     uint256 public immutable collIdx;
     uint256 public usdRate;
     uint256 public usdRateTimestamp;
+    bool public depositError;
 
     uint256 public depositSlippage = 500; // 10000 is 100%
     event UpdatedDepositSlippage(uint256 oldSlippage, uint256 newSlippage);
+    event DepositFailed(string reason);
 
     constructor(
         address _pool,
@@ -31,7 +33,6 @@ abstract contract Crv3PoolStrategy is Crv3PoolMgr, Strategy {
         require(_collateralIdx < COINS.length, "Invalid collateral for 3Pool");
         require(COIN_ADDRS[_collateralIdx] == IVesperPool(_pool).token(), "Collateral does not match");
         reservedToken[THREECRV] = true;
-        reservedToken[COIN_ADDRS[_collateralIdx]] = true;
         reservedToken[CRV] = true;
         collIdx = _collateralIdx;
         _setupOracles();
@@ -110,12 +111,17 @@ abstract contract Crv3PoolStrategy is Crv3PoolMgr, Strategy {
     }
 
     function _reinvest() internal override {
+        depositError = false;
         uint256 amt = collateralToken.balanceOf(address(this));
         if (amt != 0) {
             uint256[3] memory depositAmounts;
             depositAmounts[collIdx] = amt;
             uint256 minLpAmount = _estimateSlippage((amt * 1e18) / _minimumLpPrice(_getSafeUsdRate()), depositSlippage);
-            THREEPOOL.add_liquidity(depositAmounts, minLpAmount);
+            // solhint-disable-next-line no-empty-blocks
+            try THREEPOOL.add_liquidity(depositAmounts, minLpAmount) {} catch Error(string memory reason) {
+                depositError = true;
+                emit DepositFailed(reason);
+            }
             _stakeAllLpToGauge();
         }
     }
@@ -133,9 +139,7 @@ abstract contract Crv3PoolStrategy is Crv3PoolMgr, Strategy {
         if (_amount == 0) return 0;
         (uint256 lpToWithdraw, uint256 unstakeAmt) = calcWithdrawLpAs(_amount, collIdx);
         _unstakeLpFromGauge(unstakeAmt);
-
         uint256 minAmtOut = (convertFrom18(_minimumLpPrice(_getSafeUsdRate())) * lpToWithdraw) / 1e18;
-
         _withdrawAsFromCrvPool(lpToWithdraw, minAmtOut, collIdx);
         uint256 toWithdraw = collateralToken.balanceOf(address(this));
         if (toWithdraw > _amount) toWithdraw = _amount;
@@ -200,6 +204,7 @@ abstract contract Crv3PoolStrategy is Crv3PoolMgr, Strategy {
             uint256 _toUnstake
         )
     {
+        uint256 baseline = collateralToken.balanceOf(address(this));
         _claimRewardsAndConvertTo(address(collateralToken));
         uint256 _collateralBalance = convertFrom18(estimateFeeImpact(getLpValue(totalLp())));
         if (_collateralBalance > _totalDebt) {
@@ -208,7 +213,7 @@ abstract contract Crv3PoolStrategy is Crv3PoolMgr, Strategy {
             _loss = _totalDebt - _collateralBalance;
         }
 
-        _profit = collateralToken.balanceOf(address(this)) + _toUnstake;
+        _profit = collateralToken.balanceOf(address(this)) + _toUnstake - baseline;
         if (_profit > _loss) {
             _profit = _profit - _loss;
             _loss = 0;
@@ -240,7 +245,9 @@ abstract contract Crv3PoolStrategy is Crv3PoolMgr, Strategy {
         (uint256 _profit, uint256 _loss, uint256 _payback) = _generateReport();
         IVesperPool(pool).reportEarning(_profit, _loss, _payback);
         _reinvest();
-        uint256 depositLoss = _realizeLoss(IVesperPool(pool).totalDebtOf(address(this)));
-        if (depositLoss > _loss) IVesperPool(pool).reportLoss(depositLoss - _loss);
+        if (!depositError) {
+            uint256 depositLoss = _realizeLoss(IVesperPool(pool).totalDebtOf(address(this)));
+            if (depositLoss > _loss) IVesperPool(pool).reportLoss(depositLoss - _loss);
+        }
     }
 }

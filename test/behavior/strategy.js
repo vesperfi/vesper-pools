@@ -8,6 +8,7 @@ const {shouldBehaveLikeAaveStrategy} = require('../behavior/aave-strategy')
 const {shouldBehaveLikeCompoundStrategy} = require('../behavior/compound-strategy')
 const {shouldBehaveLikeMakerStrategy} = require('../behavior/maker-strategy')
 const {shouldBehaveLikeCreamStrategy} = require('../behavior/cream-strategy')
+const {shouldBehaveLikeCurveStrategy} = require('../behavior/crv-strategy')
 
 const swapper = require('../utils/tokenSwapper')
 const {deposit, rebalanceStrategy} = require('../utils/poolOps')
@@ -23,6 +24,7 @@ function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
     [StrategyType.AAVE_MAKER]: shouldBehaveLikeMakerStrategy,
     [StrategyType.COMPOUND_MAKER]: shouldBehaveLikeMakerStrategy,
     [StrategyType.CREAM]: shouldBehaveLikeCreamStrategy,
+    [StrategyType.CURVE]: shouldBehaveLikeCurveStrategy,
   }
 
   const metAddress = '0xa3d58c4e56fedcae3a7c43a725aee9a71f0ece4e'
@@ -183,7 +185,9 @@ function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
         expect(event.profit).to.be.gt(0, 'Should have some profit')
         expect(event.loss).to.be.gte(0, 'Should have some loss')
         expect(event.profit).to.be.gt(event.loss, 'Should have profit > loss')
-        expect(event.payback).to.be.equal(0, 'Should have 0 payback')
+        if(this.strategies[strategyIndex].type !== StrategyType.CURVE) {
+          expect(event.payback).to.be.equal(0, 'Should have 0 payback')
+        }
         expect(event.poolDebt).to.be.equal(event.strategyDebt, 'Should have same strategyDebt and poolDebt')
       })
     })

@@ -96,7 +96,7 @@ contract Crv3PoolMgr is CrvPoolMgrBase {
     }
 
     function estimatedFees() public view returns (uint256) {
-        return (THREEPOOL.fee() * 8) / 3;
+        return (THREEPOOL.fee() * 4);
     }
 
     function setCheckpoint() external {
