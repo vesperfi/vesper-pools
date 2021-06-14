@@ -1,44 +1,26 @@
 'use strict'
 
 const {expect} = require('chai')
-const {constants} = require('@openzeppelin/test-helpers')
 const {ethers} = require('hardhat')
-const {getUsers} = require('./utils/setupHelper')
-const addressListFactory = '0xded8217De022706A191eE7Ee0Dc9df1185Fb5dA3'
+const {getUsers, deployContract} = require('./utils/setupHelper')
+
 /* eslint-disable mocha/max-top-level-suites */
 describe('Vesper Pool: Admin only function tests', function () {
+  const poolName = 'VDAI'
+  const addressListFactory = '0xded8217De022706A191eE7Ee0Dc9df1185Fb5dA3'
   let pool
-
   let user1, user2, user3, user4
 
   beforeEach(async function () {
     const users = await getUsers()
     ;[, user1, user2, user3, user4] = users
-    const POOL = await ethers.getContractFactory('VETH')
-    pool = await POOL.deploy()
-  })
-
-  describe('Create keeper list', function () {
-    it('Should create keeper list and add governor in list', async function () {
-      expect(await pool.keepers()).to.equal(constants.ZERO_ADDRESS, 'List already exist')
-      await pool.init(addressListFactory)
-      const keeperList = await pool.keepers()
-      expect(keeperList).to.not.equal(constants.ZERO_ADDRESS, 'List creation failed')
-      const addressList = await ethers.getContractAt('IAddressList', keeperList)
-      expect(await addressList.length()).to.be.equal('1', 'List should have 1 element')
-    })
-
-    it('Should revert if list already created', async function () {
-      await pool.init(addressListFactory)
-      // Trying to create list again
-      await expect(pool.init(addressListFactory)).to.be.revertedWith('12')
-    })
+    pool = await deployContract(poolName)
+    await pool.initialize(addressListFactory)
   })
 
   describe('Update keeper list', function () {
     let keeperList, addressList
     beforeEach(async function () {
-      await pool.init(addressListFactory)
       keeperList = await pool.keepers()
       addressList = await ethers.getContractAt('IAddressList', keeperList)
     })
@@ -66,9 +48,7 @@ describe('Vesper Pool: Admin only function tests', function () {
       })
 
       it('Should revert if non-gov users add in keeper', async function () {
-        await expect(pool.connect(user3.signer).addInList(keeperList, user1.address)).to.be.revertedWith(
-          'not-a-keeper'
-        )
+        await expect(pool.connect(user3.signer).addInList(keeperList, user1.address)).to.be.revertedWith('not-a-keeper')
       })
     })
   })
@@ -76,9 +56,8 @@ describe('Vesper Pool: Admin only function tests', function () {
   describe('Keeper operations', function () {
     let keeperList
     beforeEach(async function () {
-      await pool.init(addressListFactory)
       keeperList = await pool.keepers()
-      await pool.addInList(keeperList, user1.address)      
+      await pool.addInList(keeperList, user1.address)
     })
 
     it('Should pause pool', async function () {
@@ -118,24 +97,12 @@ describe('Vesper Pool: Admin only function tests', function () {
 
     it('Should not open pool', async function () {
       await expect(pool.connect(user2.signer).open()).to.be.revertedWith('not-a-keeper')
-    })   
-  })
-
-  describe('Create maintainer list', function () {
-    it('Should create maintainer list and add governor in list', async function () {
-      expect(await pool.maintainers()).to.equal(constants.ZERO_ADDRESS, 'List already exist')
-      await pool.init(addressListFactory)
-      const maintainerList = await pool.maintainers()
-      expect(maintainerList).to.not.equal(constants.ZERO_ADDRESS, 'List creation failed')
-      const addressList = await ethers.getContractAt('IAddressList', maintainerList)
-      expect(await addressList.length()).to.be.equal('1', 'List should have 1 element')
     })
   })
 
   describe('Update maintainer list', function () {
     let addressList, maintainersList, keeperList
     beforeEach(async function () {
-      await pool.init(addressListFactory)
       keeperList = await pool.keepers()
       await pool.addInList(keeperList, user1.address)
       maintainersList = await pool.maintainers()
@@ -159,9 +126,7 @@ describe('Vesper Pool: Admin only function tests', function () {
 
       it('Should revert if address already exist in list', async function () {
         await pool.addInList(maintainersList, user2.address)
-        await expect(pool.connect(user1.signer).addInList(maintainersList, user2.address)).to.be.revertedWith(
-          '13'
-        )
+        await expect(pool.connect(user1.signer).addInList(maintainersList, user2.address)).to.be.revertedWith('13')
       })
 
       it('Should revert if not authorized users add in maintainer', async function () {

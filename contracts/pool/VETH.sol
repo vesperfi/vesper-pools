@@ -7,11 +7,14 @@ import "../interfaces/token/IToken.sol";
 
 contract VETH is VTokenBase {
     string public constant VERSION = "3.0.0";
-    TokenLike public immutable weth;
+    TokenLike public weth;
     bool private withdrawInETH = false;
 
     // WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2
-    constructor() VTokenBase("vETH Pool", "vETH", 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2) {
+    function initialize(address _addressListFactory) external initializer {
+        _initializePool("vETH Pool", "vETH", 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);
+        _initializeGoverned();
+        _initializeAddressLists(_addressListFactory);
         weth = TokenLike(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);
     }
 

@@ -2,34 +2,15 @@
 
 pragma solidity 0.8.3;
 
+import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "./Errors.sol";
 import "./PoolShareToken.sol";
 import "../interfaces/vesper/IStrategy.sol";
 import "../interfaces/bloq/IAddressListFactory.sol";
 
-abstract contract VTokenBase is PoolShareToken {
+abstract contract VTokenBase is Initializable, PoolShareToken {
     using SafeERC20 for IERC20;
 
-    struct StrategyConfig {
-        bool active;
-        uint256 interestFee; // Strategy fee
-        uint256 debtRate; //strategy can not borrow large amount in short durations. Can set big limit for trusted strategy
-        uint256 lastRebalance;
-        uint256 totalDebt; // Total outstanding debt strategy has
-        uint256 totalLoss; // Total loss that strategy has realized
-        uint256 totalProfit; // Total gain that strategy has realized
-        uint256 debtRatio; // % of asset allocation
-    }
-
-    mapping(address => StrategyConfig) public strategy;
-    uint256 public totalDebtRatio; // this will keep some buffer amount in pool
-    uint256 public totalDebt;
-    address[] public strategies;
-    address[] public withdrawQueue;
-
-    IAddressList public keepers;
-    IAddressList public maintainers;
-    address internal constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     event StrategyAdded(address indexed strategy, uint256 interestFee, uint256 debtRatio, uint256 debtRate);
     event StrategyMigrated(
         address indexed oldStrategy,
@@ -50,44 +31,36 @@ abstract contract VTokenBase is PoolShareToken {
         uint256 creditLine
     );
 
-    constructor(
-        string memory name,
-        string memory symbol,
-        address _token // solhint-disable-next-line no-empty-blocks
-    ) PoolShareToken(name, symbol, _token) {}
+    /**
+     * @notice Create feeWhitelist, keeper and maintainer list
+     * @dev Add caller into the keeper and maintainer list
+     * @dev This function will be used as part of initializer
+     * @param _addressListFactory To support same code in eth side chain, user _addressListFactory as param
+     * ethereum - 0xded8217De022706A191eE7Ee0Dc9df1185Fb5dA3
+     * polygon - 0xD10D5696A350D65A9AA15FE8B258caB4ab1bF291
+     */
+    function _initializeAddressLists(address _addressListFactory) internal {
+        require(address(keepers) == address(0), Errors.ALREADY_INITIALIZED);
+        IAddressListFactory _factory = IAddressListFactory(_addressListFactory);
+        feeWhitelist = _factory.createList();
+        keepers = _factory.createList();
+        maintainers = _factory.createList();
+        // List creator can do job of keeper and maintainer.
+        IAddressList(keepers).add(_msgSender());
+        IAddressList(maintainers).add(_msgSender());
+    }
 
     modifier onlyKeeper() {
-        require(keepers.contains(_msgSender()), "not-a-keeper");
+        require(IAddressList(keepers).contains(_msgSender()), "not-a-keeper");
         _;
     }
 
     modifier onlyMaintainer() {
-        require(maintainers.contains(_msgSender()), "not-a-maintainer");
+        require(IAddressList(maintainers).contains(_msgSender()), "not-a-maintainer");
         _;
     }
 
     ////////////////////////////// Only Governor //////////////////////////////
-
-    /**
-     * @notice Create keeper and maintainer list
-     * @dev Create lists and add governor into the list.
-     * NOTE: Any function with onlyKeeper and onlyMaintainer modifier will not work until this function is called.
-     * NOTE: Due to gas constraint this function cannot be called in constructor.
-     * @param _addressListFactory To support same code in eth side chain, user _addressListFactory as param
-     * ethereum- 0xded8217De022706A191eE7Ee0Dc9df1185Fb5dA3
-     * polygon-0xD10D5696A350D65A9AA15FE8B258caB4ab1bF291
-     */
-    function init(address _addressListFactory) external onlyGovernor {
-        require(address(keepers) == address(0), Errors.ALREADY_INITIALIZED);
-        IAddressListFactory _factory = IAddressListFactory(_addressListFactory);
-        IAddressList _feeWhitelist = IAddressList(_factory.createList());
-        feeWhitelist = _feeWhitelist;
-        keepers = IAddressList(_factory.createList());
-        maintainers = IAddressList(_factory.createList());
-        // List creator i.e. governor can do job of keeper and maintainer.
-        keepers.add(governor);
-        maintainers.add(governor);
-    }
 
     /// @dev Add strategy
     function addStrategy(
@@ -144,10 +117,7 @@ abstract contract VTokenBase is PoolShareToken {
                 debtRate: strategy[_old].debtRate,
                 lastRebalance: strategy[_old].lastRebalance
             });
-        strategy[_old].debtRatio = 0;
-        strategy[_old].totalDebt = 0;
-        strategy[_old].debtRate = 0;
-        strategy[_old].active = false;
+        delete strategy[_old];
         strategy[_new] = _newStrategy;
 
         IStrategy(_old).migrate(_new);
@@ -210,6 +180,38 @@ abstract contract VTokenBase is PoolShareToken {
         require(_interestFee <= MAX_BPS, Errors.FEE_LIMIT_REACHED);
         strategy[_strategy].interestFee = _interestFee;
         emit UpdatedInterestFee(_strategy, _interestFee);
+    }
+
+    /**
+     * @notice Update fee collector address for this pool
+     * @param _newFeeCollector new fee collector address
+     */
+    function updateFeeCollector(address _newFeeCollector) external onlyGovernor {
+        require(_newFeeCollector != address(0), Errors.INPUT_ADDRESS_IS_ZERO);
+        emit UpdatedFeeCollector(feeCollector, _newFeeCollector);
+        feeCollector = _newFeeCollector;
+    }
+
+    /**
+     * @notice Update pool rewards address for this pool
+     * @param _newPoolRewards new pool rewards address
+     */
+    function updatePoolRewards(address _newPoolRewards) external onlyGovernor {
+        require(_newPoolRewards != address(0), Errors.INPUT_ADDRESS_IS_ZERO);
+        emit UpdatedPoolRewards(poolRewards, _newPoolRewards);
+        poolRewards = _newPoolRewards;
+    }
+
+    /**
+     * @notice Update withdraw fee for this pool
+     * @dev Format: 1500 = 15% fee, 100 = 1%
+     * @param _newWithdrawFee new withdraw fee
+     */
+    function updateWithdrawFee(uint256 _newWithdrawFee) external onlyGovernor {
+        require(feeCollector != address(0), Errors.FEE_COLLECTOR_NOT_SET);
+        require(_newWithdrawFee <= MAX_BPS, Errors.FEE_LIMIT_REACHED);
+        emit UpdatedWithdrawFee(withdrawFee, _newWithdrawFee);
+        withdrawFee = _newWithdrawFee;
     }
 
     ///////////////////////////// Only Keeper ///////////////////////////////
