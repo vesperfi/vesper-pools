@@ -67,12 +67,10 @@ describe('vDAI Pool with Crv3PoolStrategy', function () {
     it('Should calculate fees properly and reflect those in share price', async function () {
       await deposit(pool, collateralToken, 20, user1)
       await strategy.rebalance()
-      await strategy.rebalance()
       const price1 = await pool.pricePerShare()
       // Time travel to generate earning
       await timeTravel(30*24*60*60)
       await deposit(pool, collateralToken, 20, user2)
-      await strategy.rebalance()
       await strategy.rebalance()
       const price2 = await pool.pricePerShare()
       expect(price2).to.be.gt(price1, 'Share value should increase (1)')
@@ -80,7 +78,6 @@ describe('vDAI Pool with Crv3PoolStrategy', function () {
       await timeTravel(30*24*60*60)
       await deposit(pool, collateralToken, 20, user3)
       await timeTravel(30*24*60*60)
-      await strategy.rebalance()
       await strategy.rebalance()
       const price3 = await pool.pricePerShare()
       expect(price3).to.be.gt(price2, 'Share value should increase (2)')

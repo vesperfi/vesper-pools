@@ -19,7 +19,6 @@ abstract contract Crv3PoolStrategy is Crv3PoolMgr, Strategy {
     uint256 public immutable collIdx;
     uint256 public usdRate;
     uint256 public usdRateTimestamp;
-    uint256 private depositBuffer;
 
     uint256 public depositSlippage = 500; // 10000 is 100%
     event UpdatedDepositSlippage(uint256 oldSlippage, uint256 newSlippage);
@@ -68,7 +67,6 @@ abstract contract Crv3PoolStrategy is Crv3PoolMgr, Strategy {
         return (0, false);
     }
 
-    // WILL THIS WORK?
     // given the rates of 3 stablecoins compared with a common denominator
     // return the lowest divided by the highest
     function _getSafeUsdRate() internal returns (uint256) {
@@ -112,26 +110,21 @@ abstract contract Crv3PoolStrategy is Crv3PoolMgr, Strategy {
     }
 
     function _reinvest() internal override {
-        if (depositBuffer != 0) {
+        uint256 amt = collateralToken.balanceOf(address(this));
+        if (amt != 0) {
             uint256[3] memory depositAmounts;
-            depositAmounts[collIdx] = depositBuffer;
-            uint256 minLpAmount =
-                _estimateSlippage(
-                    (depositAmounts[collIdx] * 1e18) / _minimumLpPrice(_getSafeUsdRate()),
-                    depositSlippage
-                );
+            depositAmounts[collIdx] = amt;
+            uint256 minLpAmount = _estimateSlippage((amt * 1e18) / _minimumLpPrice(_getSafeUsdRate()), depositSlippage);
             THREEPOOL.add_liquidity(depositAmounts, minLpAmount);
             _stakeAllLpToGauge();
-            depositBuffer = 0;
         }
     }
 
     function _withdraw(uint256 _amount) internal override {
-        if (_amount < depositBuffer) {
-            depositBuffer -= _amount;
-        } else {
-            depositBuffer = 0;
-            _unstakeAndWithdrawAsCollateral(_amount - depositBuffer);
+        // This adds some gas but will save loss on exchange fees
+        uint256 balanceHere = collateralToken.balanceOf(address(this));
+        if (_amount > balanceHere) {
+            _unstakeAndWithdrawAsCollateral(_amount - balanceHere);
         }
         collateralToken.safeTransfer(pool, _amount);
     }
@@ -192,7 +185,12 @@ abstract contract Crv3PoolStrategy is Crv3PoolMgr, Strategy {
 
     function _realizeProfit(uint256 _totalDebt) internal override returns (uint256 _profit) {}
 
-    function _realizeLoss(uint256 _totalDebt) internal override returns (uint256 _loss) {}
+    function _realizeLoss(uint256 _totalDebt) internal view override returns (uint256 _loss) {
+        uint256 _collateralBalance = convertFrom18(estimateFeeImpact(getLpValue(totalLp())));
+        if (_collateralBalance < _totalDebt) {
+            _loss = _totalDebt - _collateralBalance;
+        }
+    }
 
     function _realizeGross(uint256 _totalDebt)
         internal
@@ -202,7 +200,6 @@ abstract contract Crv3PoolStrategy is Crv3PoolMgr, Strategy {
             uint256 _toUnstake
         )
     {
-        uint256 baseline = collateralToken.balanceOf(address(this));
         _claimRewardsAndConvertTo(address(collateralToken));
         uint256 _collateralBalance = convertFrom18(estimateFeeImpact(getLpValue(totalLp())));
         if (_collateralBalance > _totalDebt) {
@@ -211,7 +208,7 @@ abstract contract Crv3PoolStrategy is Crv3PoolMgr, Strategy {
             _loss = _totalDebt - _collateralBalance;
         }
 
-        _profit = collateralToken.balanceOf(address(this)) + _toUnstake - baseline;
+        _profit = collateralToken.balanceOf(address(this)) + _toUnstake;
         if (_profit > _loss) {
             _profit = _profit - _loss;
             _loss = 0;
@@ -240,9 +237,10 @@ abstract contract Crv3PoolStrategy is Crv3PoolMgr, Strategy {
     }
 
     function rebalance() external override onlyKeeper {
-        _reinvest();
         (uint256 _profit, uint256 _loss, uint256 _payback) = _generateReport();
         IVesperPool(pool).reportEarning(_profit, _loss, _payback);
-        depositBuffer = collateralToken.balanceOf(address(this));
+        _reinvest();
+        uint256 depositLoss = _realizeLoss(IVesperPool(pool).totalDebtOf(address(this)));
+        if (depositLoss > _loss) IVesperPool(pool).reportLoss(depositLoss - _loss);
     }
 }

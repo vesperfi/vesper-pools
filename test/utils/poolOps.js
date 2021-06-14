@@ -112,7 +112,7 @@ async function rebalanceStrategy(strategy) {
   if (strategy.type.includes('curve')) {
     // If curve, we should rebalance twice (just for tests, because depositing 
     // will be queued in first rebalance and take effect in second)
-    tx = await strategy.instance.rebalance()
+    // tx = await strategy.instance.rebalance()
   }
   return tx
 }
