@@ -4,7 +4,7 @@ const {expect} = require('chai')
 const {constants} = require('@openzeppelin/test-helpers')
 const {ethers} = require('hardhat')
 const {getUsers} = require('./utils/setupHelper')
-
+const addressListFactory = '0xded8217De022706A191eE7Ee0Dc9df1185Fb5dA3'
 /* eslint-disable mocha/max-top-level-suites */
 describe('Vesper Pool: Admin only function tests', function () {
   let pool
@@ -21,7 +21,7 @@ describe('Vesper Pool: Admin only function tests', function () {
   describe('Create keeper list', function () {
     it('Should create keeper list and add governor in list', async function () {
       expect(await pool.keepers()).to.equal(constants.ZERO_ADDRESS, 'List already exist')
-      await pool.init()
+      await pool.init(addressListFactory)
       const keeperList = await pool.keepers()
       expect(keeperList).to.not.equal(constants.ZERO_ADDRESS, 'List creation failed')
       const addressList = await ethers.getContractAt('IAddressList', keeperList)
@@ -29,16 +29,16 @@ describe('Vesper Pool: Admin only function tests', function () {
     })
 
     it('Should revert if list already created', async function () {
-      await pool.init()
+      await pool.init(addressListFactory)
       // Trying to create list again
-      await expect(pool.init()).to.be.revertedWith('12')
+      await expect(pool.init(addressListFactory)).to.be.revertedWith('12')
     })
   })
 
   describe('Update keeper list', function () {
     let keeperList, addressList
     beforeEach(async function () {
-      await pool.init()
+      await pool.init(addressListFactory)
       keeperList = await pool.keepers()
       addressList = await ethers.getContractAt('IAddressList', keeperList)
     })
@@ -76,7 +76,7 @@ describe('Vesper Pool: Admin only function tests', function () {
   describe('Keeper operations', function () {
     let keeperList
     beforeEach(async function () {
-      await pool.init()
+      await pool.init(addressListFactory)
       keeperList = await pool.keepers()
       await pool.addInList(keeperList, user1.address)      
     })
@@ -124,7 +124,7 @@ describe('Vesper Pool: Admin only function tests', function () {
   describe('Create maintainer list', function () {
     it('Should create maintainer list and add governor in list', async function () {
       expect(await pool.maintainers()).to.equal(constants.ZERO_ADDRESS, 'List already exist')
-      await pool.init()
+      await pool.init(addressListFactory)
       const maintainerList = await pool.maintainers()
       expect(maintainerList).to.not.equal(constants.ZERO_ADDRESS, 'List creation failed')
       const addressList = await ethers.getContractAt('IAddressList', maintainerList)
@@ -135,7 +135,7 @@ describe('Vesper Pool: Admin only function tests', function () {
   describe('Update maintainer list', function () {
     let addressList, maintainersList, keeperList
     beforeEach(async function () {
-      await pool.init()
+      await pool.init(addressListFactory)
       keeperList = await pool.keepers()
       await pool.addInList(keeperList, user1.address)
       maintainersList = await pool.maintainers()

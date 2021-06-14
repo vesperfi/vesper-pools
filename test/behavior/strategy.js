@@ -1,4 +1,3 @@
-
 'use strict'
 
 const {ethers} = require('hardhat')
@@ -14,7 +13,7 @@ const swapper = require('../utils/tokenSwapper')
 const {deposit, rebalanceStrategy} = require('../utils/poolOps')
 const {advanceBlock} = require('../utils/time')
 const StrategyType = require('../utils/strategyTypes')
-
+const addressListFactory = '0xded8217De022706A191eE7Ee0Dc9df1185Fb5dA3'
 function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
   let owner, user1, user2, user3, user4, user5, strategy, pool, feeCollector, collateralToken
 
@@ -22,10 +21,10 @@ function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
     [StrategyType.AAVE]: shouldBehaveLikeAaveStrategy,
     [StrategyType.COMPOUND]: shouldBehaveLikeCompoundStrategy,
     [StrategyType.AAVE_MAKER]: shouldBehaveLikeMakerStrategy,
-    [StrategyType.COMPOUND_MAKER]: shouldBehaveLikeMakerStrategy,    
-    [StrategyType.CREAM]: shouldBehaveLikeCreamStrategy
+    [StrategyType.COMPOUND_MAKER]: shouldBehaveLikeMakerStrategy,
+    [StrategyType.CREAM]: shouldBehaveLikeCreamStrategy,
   }
-  
+
   const metAddress = '0xa3d58c4e56fedcae3a7c43a725aee9a71f0ece4e'
   const shouldBehaveLikeSpecificStrategy = behaviors[type]
 
@@ -40,11 +39,13 @@ function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
     })
     describe('Initialize strategy', function () {
       it('Should not re-initialize strategy', async function () {
-        await expect(strategy.init()).to.be.revertedWith('keeper-list-already-created')
+        await expect(strategy.init(addressListFactory)).to.be.revertedWith('keeper-list-already-created')
       })
 
       it('Should not re-initialize without governor role', async function () {
-        await expect(strategy.connect(user2.signer).init()).to.be.revertedWith('caller-is-not-the-governor')
+        await expect(strategy.connect(user2.signer).init(addressListFactory)).to.be.revertedWith(
+          'caller-is-not-the-governor'
+        )
       })
     })
 

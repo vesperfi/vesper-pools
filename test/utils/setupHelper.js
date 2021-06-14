@@ -111,7 +111,11 @@ async function createVesperMakerStrategy(poolAddress, strategyName, vPool) {
   return strategyInstance
 }
 
-async function createStrategy(strategy, poolAddress, options = {}) {
+async function createStrategy(
+  strategy,
+  poolAddress,
+  options = {}
+) {
   const strategyType = strategy.type
   let instance
   if (strategyType === StrategyType.AAVE_MAKER || strategyType === StrategyType.COMPOUND_MAKER) {
@@ -121,10 +125,10 @@ async function createStrategy(strategy, poolAddress, options = {}) {
   } else {
     instance = await deployContract(strategy.name, [poolAddress, swapManager.address])
   }
-  await instance.init()
+  await instance.init(options.addressListFactory)
   await instance.approveToken()
   await instance.updateFeeCollector(strategy.feeCollector)
-  const strategyTokenAddress = await instance.token()  
+  const strategyTokenAddress = await instance.token()
   const strategyTokenName =
     strategyType === StrategyType.VESPER_MAKER ? IVesperPool : strategyType.includes('compound') ? CToken : TokenLike
 
@@ -146,6 +150,7 @@ async function createStrategy(strategy, poolAddress, options = {}) {
  *
  * @param {object} obj Test class object
  * @param {object} options optional parameters
+ * @param addressListFactory
  */
 async function createStrategies(obj, options) {
   const SWAP = await ethers.getContractFactory('SwapManager')
@@ -176,7 +181,7 @@ async function makeNewStrategy(oldStrategy, poolAddress, _options) {
     token: oldStrategy.token,
     type: oldStrategy.type,
   }
-  
+
   return newStrategy
 }
 
@@ -193,16 +198,18 @@ async function makeNewStrategy(oldStrategy, poolAddress, _options) {
  *
  * @param {object} obj Current calling object aka 'this'
  * @param {PoolData} poolData Data for pool setup
+ * @param addressListFactory
  */
-async function setupVPool(obj, poolData) {
+async function setupVPool(obj, poolData, addressListFactory = '0xded8217De022706A191eE7Ee0Dc9df1185Fb5dA3') {
   const {poolName, strategies, vPool, feeCollector} = poolData
   obj.strategies = strategies
   obj.feeCollector = feeCollector
 
   obj.pool = await deployContract(poolName)
-  await obj.pool.init()
+  await obj.pool.init(addressListFactory)
   const options = {
     vPool,
+    addressListFactory
   }
   await createStrategies(obj, options)
   await addStrategiesInPool(obj)
