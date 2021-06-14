@@ -9,7 +9,6 @@ import "./Errors.sol";
 import "../Governed.sol";
 import "../Pausable.sol";
 import "../interfaces/bloq/IAddressList.sol";
-import "../interfaces/bloq/IAddressListFactory.sol";
 import "../interfaces/vesper/IPoolRewards.sol";
 
 /// @title Holding pool share token
@@ -17,7 +16,7 @@ import "../interfaces/vesper/IPoolRewards.sol";
 abstract contract PoolShareToken is ERC20Permit, Pausable, ReentrancyGuard, Governed {
     using SafeERC20 for IERC20;
     IERC20 public immutable token;
-    IAddressList public immutable feeWhitelist;
+    IAddressList public feeWhitelist;
     IPoolRewards public poolRewards;
     uint256 public constant MAX_BPS = 10_000;
     address public feeCollector; // fee collector address
@@ -35,9 +34,6 @@ abstract contract PoolShareToken is ERC20Permit, Pausable, ReentrancyGuard, Gove
         address _token
     ) ERC20Permit(_name) ERC20(_name, _symbol) {
         token = IERC20(_token);
-        IAddressListFactory factory = IAddressListFactory(0xded8217De022706A191eE7Ee0Dc9df1185Fb5dA3);
-        IAddressList _feeWhitelist = IAddressList(factory.createList());
-        feeWhitelist = _feeWhitelist;
     }
 
     /**

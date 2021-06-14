@@ -5,6 +5,7 @@ pragma solidity 0.8.3;
 import "./Errors.sol";
 import "./PoolShareToken.sol";
 import "../interfaces/vesper/IStrategy.sol";
+import "../interfaces/bloq/IAddressListFactory.sol";
 
 abstract contract VTokenBase is PoolShareToken {
     using SafeERC20 for IERC20;
@@ -72,10 +73,15 @@ abstract contract VTokenBase is PoolShareToken {
      * @dev Create lists and add governor into the list.
      * NOTE: Any function with onlyKeeper and onlyMaintainer modifier will not work until this function is called.
      * NOTE: Due to gas constraint this function cannot be called in constructor.
+     * @param _addressListFactory To support same code in eth side chain, user _addressListFactory as param
+     * ethereum- 0xded8217De022706A191eE7Ee0Dc9df1185Fb5dA3
+     * polygon-0xD10D5696A350D65A9AA15FE8B258caB4ab1bF291
      */
-    function init() external onlyGovernor {
+    function init(address _addressListFactory) external onlyGovernor {
         require(address(keepers) == address(0), Errors.ALREADY_INITIALIZED);
-        IAddressListFactory _factory = IAddressListFactory(0xded8217De022706A191eE7Ee0Dc9df1185Fb5dA3);
+        IAddressListFactory _factory = IAddressListFactory(_addressListFactory);
+        IAddressList _feeWhitelist = IAddressList(_factory.createList());
+        feeWhitelist = _feeWhitelist;
         keepers = IAddressList(_factory.createList());
         maintainers = IAddressList(_factory.createList());
         // List creator i.e. governor can do job of keeper and maintainer.
