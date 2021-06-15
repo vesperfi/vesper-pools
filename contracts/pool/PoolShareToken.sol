@@ -5,6 +5,8 @@ pragma solidity 0.8.3;
 import "@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "./PoolERC20Permit.sol";
+import "./PoolStorage.sol";
 import "./Errors.sol";
 import "../Governed.sol";
 import "../Pausable.sol";
@@ -13,14 +15,9 @@ import "../interfaces/vesper/IPoolRewards.sol";
 
 /// @title Holding pool share token
 // solhint-disable no-empty-blocks
-abstract contract PoolShareToken is ERC20Permit, Pausable, ReentrancyGuard, Governed {
+abstract contract PoolShareToken is PoolStorageV1, PoolERC20Permit, Governed, Pausable, ReentrancyGuard {
     using SafeERC20 for IERC20;
-    IERC20 public immutable token;
-    IAddressList public feeWhitelist;
-    IPoolRewards public poolRewards;
     uint256 public constant MAX_BPS = 10_000;
-    address public feeCollector; // fee collector address
-    uint256 public withdrawFee; // withdraw fee for this pool
 
     event Deposit(address indexed owner, uint256 shares, uint256 amount);
     event Withdraw(address indexed owner, uint256 shares, uint256 amount);
@@ -28,44 +25,15 @@ abstract contract PoolShareToken is ERC20Permit, Pausable, ReentrancyGuard, Gove
     event UpdatedPoolRewards(address indexed previousPoolRewards, address indexed newPoolRewards);
     event UpdatedWithdrawFee(uint256 previousWithdrawFee, uint256 newWithdrawFee);
 
-    constructor(
+    /// @dev Idempotent initializable function
+    function _initializePool(
         string memory _name,
         string memory _symbol,
         address _token
-    ) ERC20Permit(_name) ERC20(_name, _symbol) {
+    ) internal {
+        _initializeERC20(_name, _symbol);
+        _initializePermit(_name);
         token = IERC20(_token);
-    }
-
-    /**
-     * @notice Update fee collector address for this pool
-     * @param _newFeeCollector new fee collector address
-     */
-    function updateFeeCollector(address _newFeeCollector) external onlyGovernor {
-        require(_newFeeCollector != address(0), Errors.INPUT_ADDRESS_IS_ZERO);
-        emit UpdatedFeeCollector(feeCollector, _newFeeCollector);
-        feeCollector = _newFeeCollector;
-    }
-
-    /**
-     * @notice Update pool rewards address for this pool
-     * @param _newPoolRewards new pool rewards address
-     */
-    function updatePoolRewards(address _newPoolRewards) external onlyGovernor {
-        require(_newPoolRewards != address(0), Errors.INPUT_ADDRESS_IS_ZERO);
-        emit UpdatedPoolRewards(address(poolRewards), _newPoolRewards);
-        poolRewards = IPoolRewards(_newPoolRewards);
-    }
-
-    /**
-     * @notice Update withdraw fee for this pool
-     * @dev Format: 1500 = 15% fee, 100 = 1%
-     * @param _newWithdrawFee new withdraw fee
-     */
-    function updateWithdrawFee(uint256 _newWithdrawFee) external onlyGovernor {
-        require(feeCollector != address(0), Errors.FEE_COLLECTOR_NOT_SET);
-        require(_newWithdrawFee <= MAX_BPS, Errors.FEE_LIMIT_REACHED);
-        emit UpdatedWithdrawFee(withdrawFee, _newWithdrawFee);
-        withdrawFee = _newWithdrawFee;
     }
 
     /**
@@ -112,10 +80,11 @@ abstract contract PoolShareToken is ERC20Permit, Pausable, ReentrancyGuard, Gove
      * @param _shares Pool shares. It will be in 18 decimals.
      */
     function whitelistedWithdraw(uint256 _shares) external virtual nonReentrant whenNotShutdown {
-        require(feeWhitelist.contains(_msgSender()), Errors.NOT_WHITELISTED_ADDRESS);
+        require(IAddressList(feeWhitelist).contains(_msgSender()), Errors.NOT_WHITELISTED_ADDRESS);
         _withdrawWithoutFee(_shares);
     }
 
+    // TODO we hit contract size limit. Uncomment below function once we solve size issue
     /**
      * @notice Transfer tokens to multiple recipient
      * @dev Address array and amount array are 1:1 and are in order.
@@ -123,13 +92,13 @@ abstract contract PoolShareToken is ERC20Permit, Pausable, ReentrancyGuard, Gove
      * @param _amounts array of token amounts
      * @return true/false
      */
-    function multiTransfer(address[] memory _recipients, uint256[] memory _amounts) external returns (bool) {
-        require(_recipients.length == _amounts.length, Errors.INPUT_LENGTH_MISMATCH);
-        for (uint256 i = 0; i < _recipients.length; i++) {
-            require(transfer(_recipients[i], _amounts[i]), Errors.MULTI_TRANSFER_FAILED);
-        }
-        return true;
-    }
+    // function multiTransfer(address[] memory _recipients, uint256[] memory _amounts) external returns (bool) {
+    //     require(_recipients.length == _amounts.length, Errors.INPUT_LENGTH_MISMATCH);
+    //     for (uint256 i = 0; i < _recipients.length; i++) {
+    //         require(transfer(_recipients[i], _amounts[i]), Errors.MULTI_TRANSFER_FAILED);
+    //     }
+    //     return true;
+    // }
 
     /**
      * @notice Get price per share
@@ -195,7 +164,7 @@ abstract contract PoolShareToken is ERC20Permit, Pausable, ReentrancyGuard, Gove
         address recipient,
         uint256 amount
     ) internal virtual override {
-        if (address(poolRewards) != address(0)) {
+        if (poolRewards != address(0)) {
             IPoolRewards(poolRewards).updateReward(sender);
             IPoolRewards(poolRewards).updateReward(recipient);
         }
@@ -215,7 +184,7 @@ abstract contract PoolShareToken is ERC20Permit, Pausable, ReentrancyGuard, Gove
 
     /// @notice claim rewards of account
     function _claimRewards(address _account) internal {
-        if (address(poolRewards) != address(0)) {
+        if (poolRewards != address(0)) {
             IPoolRewards(poolRewards).claimReward(_account);
         }
     }

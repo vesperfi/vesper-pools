@@ -14,7 +14,7 @@ const CToken = 'CToken'
 const TokenLike = 'TokenLikeTest'
 const CollateralManager = 'CollateralManager'
 
-let swapManager
+const swapManager = '0xC48ea9A2daA4d816e4c9333D6689C70070010174'
 
 /**
  * @typedef {object} User
@@ -74,11 +74,7 @@ async function createMakerStrategy(poolAddress, strategyName, options) {
   const collateralManager = options.collateralManager
     ? options.collateralManager
     : await deployContract(CollateralManager)
-  const strategyInstance = await deployContract(strategyName, [
-    poolAddress,
-    collateralManager.address,
-    swapManager.address,
-  ])
+  const strategyInstance = await deployContract(strategyName, [poolAddress, collateralManager.address, swapManager])
   if (!options.skipVault) {
     await strategyInstance.createVault()
   }
@@ -100,7 +96,7 @@ async function createVesperMakerStrategy(poolAddress, strategyName, vPool) {
   const strategyInstance = await deployContract(strategyName, [
     poolAddress,
     collateralManager.address,
-    swapManager.address,
+    swapManager,
     vPool.address,
   ])
   await strategyInstance.createVault()
@@ -111,11 +107,7 @@ async function createVesperMakerStrategy(poolAddress, strategyName, vPool) {
   return strategyInstance
 }
 
-async function createStrategy(
-  strategy,
-  poolAddress,
-  options = {}
-) {
+async function createStrategy(strategy, poolAddress, options = {}) {
   const strategyType = strategy.type
   let instance
   if (strategyType === StrategyType.AAVE_MAKER || strategyType === StrategyType.COMPOUND_MAKER) {
@@ -123,7 +115,7 @@ async function createStrategy(
   } else if (strategyType === StrategyType.VESPER_MAKER) {
     instance = await createVesperMakerStrategy(poolAddress, strategy.name, options.vPool)
   } else {
-    instance = await deployContract(strategy.name, [poolAddress, swapManager.address])
+    instance = await deployContract(strategy.name, [poolAddress, swapManager])
   }
   await instance.init(options.addressListFactory)
   await instance.approveToken()
@@ -150,12 +142,8 @@ async function createStrategy(
  *
  * @param {object} obj Test class object
  * @param {object} options optional parameters
- * @param addressListFactory
  */
 async function createStrategies(obj, options) {
-  const SWAP = await ethers.getContractFactory('SwapManager')
-  swapManager = await SWAP.deploy()
-  await swapManager.deployed()
   for (const strategy of obj.strategies) {
     const instance = await createStrategy(strategy, obj.pool.address, options)
     strategy.instance = instance
@@ -198,7 +186,7 @@ async function makeNewStrategy(oldStrategy, poolAddress, _options) {
  *
  * @param {object} obj Current calling object aka 'this'
  * @param {PoolData} poolData Data for pool setup
- * @param addressListFactory
+ * @param {string} addressListFactory factory address
  */
 async function setupVPool(obj, poolData, addressListFactory = '0xded8217De022706A191eE7Ee0Dc9df1185Fb5dA3') {
   const {poolName, strategies, vPool, feeCollector} = poolData
@@ -206,16 +194,18 @@ async function setupVPool(obj, poolData, addressListFactory = '0xded8217De022706
   obj.feeCollector = feeCollector
 
   obj.pool = await deployContract(poolName)
-  await obj.pool.init(addressListFactory)
+  await obj.pool.initialize(addressListFactory)
   const options = {
     vPool,
-    addressListFactory
+    addressListFactory,
   }
   await createStrategies(obj, options)
   await addStrategiesInPool(obj)
   await obj.pool.updateFeeCollector(feeCollector)
   const collateralTokenAddress = await obj.pool.token()
   obj.collateralToken = await ethers.getContractAt(TokenLike, collateralTokenAddress)
+
+  obj.swapManager = await ethers.getContractAt('ISwapManager', swapManager)
 }
 
 /**
@@ -243,4 +233,4 @@ async function getEvent(txnObj, contractInstance, eventName) {
   return decodedEvents.find(event => !!event)
 }
 
-module.exports = {deployContract, getUsers, setupVPool, getEvent, makeNewStrategy}
+module.exports = {deployContract, getUsers, setupVPool, getEvent, makeNewStrategy, createStrategy}

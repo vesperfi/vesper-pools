@@ -192,8 +192,9 @@ async function shouldBehaveLikePool(poolName, collateralName) {
       })
     })
 
-    describe(`Transfer ${poolName} pool`, function () {
-      
+    // TODO Below tests are skipped as multi transfer is removed from contract temporarily
+    // eslint-disable-next-line mocha/no-skipped-tests, mocha/no-setup-in-describe
+    describe.skip(`Multi transfer ${poolName} pool tokens`, function () {
       it('Should transfer to multiple recipients', async function () {
         await deposit(10, user1)
         const balanceBefore = await pool.balanceOf(user4.address)

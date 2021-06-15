@@ -2,6 +2,7 @@
 
 pragma solidity 0.8.3;
 
+import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
 
 /**
@@ -13,7 +14,7 @@ import "@openzeppelin/contracts/utils/Context.sol";
  * can later be changed with {transferGovernorship}.
  *
  */
-contract Governed is Context {
+contract Governed is Context, Initializable {
     address public governor;
     address private proposedGovernor;
 
@@ -23,6 +24,16 @@ contract Governed is Context {
      * @dev Initializes the contract setting the deployer as the initial governor.
      */
     constructor() {
+        address msgSender = _msgSender();
+        governor = msgSender;
+        emit UpdatedGovernor(address(0), msgSender);
+    }
+
+    /**
+     * @dev This will support initialization via proxy
+     * @dev Initializes the contract setting the initializer as the initial governor.
+     */
+    function _initializeGoverned() internal initializer {
         address msgSender = _msgSender();
         governor = msgSender;
         emit UpdatedGovernor(address(0), msgSender);
