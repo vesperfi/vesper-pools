@@ -3,10 +3,10 @@
 const {expect} = require('chai')
 const {ethers} = require('hardhat')
 const {getUsers, deployContract} = require('./utils/setupHelper')
+const VDAI = require('./utils/poolConfig').VDAI
 
 /* eslint-disable mocha/max-top-level-suites */
 describe('Vesper Pool: Admin only function tests', function () {
-  const poolName = 'VDAI'
   const addressListFactory = '0xded8217De022706A191eE7Ee0Dc9df1185Fb5dA3'
   let pool
   let user1, user2, user3, user4
@@ -14,8 +14,8 @@ describe('Vesper Pool: Admin only function tests', function () {
   beforeEach(async function () {
     const users = await getUsers()
     ;[, user1, user2, user3, user4] = users
-    pool = await deployContract(poolName)
-    await pool.initialize(addressListFactory)
+    pool = await deployContract(VDAI.contractName, VDAI.poolParams)
+    await pool.initialize(...VDAI.poolParams, addressListFactory)
   })
 
   describe('Update keeper list', function () {

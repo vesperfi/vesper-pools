@@ -43,12 +43,12 @@ async function getUsers() {
  * @param {any[]} [params] Constructor params
  * @returns {object} Contract instance
  */
-async function deployContract(name, params) {
+async function deployContract(name, params=[]) {
   const contractFactory = await ethers.getContractFactory(name)
-  if (params) {
-    return contractFactory.deploy(...params)
-  }
-  return contractFactory.deploy()
+  // if (params) {
+  //   return contractFactory.deploy(...params)
+  // }
+  return contractFactory.deploy(...params)
 }
 
 /**
@@ -175,7 +175,7 @@ async function makeNewStrategy(oldStrategy, poolAddress, _options) {
 
 /**
  * @typedef {object} PoolData
- * @property {string} poolName - Pool name
+ * @property {object} poolConfig - Pool config
  * @property {object []} strategies - Array of strategy configuration
  * @property {object} [vPool] - Optional. Vesper pool instance
  * @property {string} feeCollector - Fee collector address of pool
@@ -189,12 +189,12 @@ async function makeNewStrategy(oldStrategy, poolAddress, _options) {
  * @param {string} addressListFactory factory address
  */
 async function setupVPool(obj, poolData, addressListFactory = '0xded8217De022706A191eE7Ee0Dc9df1185Fb5dA3') {
-  const {poolName, strategies, vPool, feeCollector} = poolData
+  const {poolConfig, strategies, vPool, feeCollector} = poolData
   obj.strategies = strategies
   obj.feeCollector = feeCollector
 
-  obj.pool = await deployContract(poolName)
-  await obj.pool.initialize(addressListFactory)
+  obj.pool = await deployContract(poolConfig.contractName, poolConfig.poolParams)
+  await obj.pool.initialize(...poolConfig.poolParams, addressListFactory)
   const options = {
     vPool,
     addressListFactory,

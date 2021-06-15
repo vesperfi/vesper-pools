@@ -70,7 +70,9 @@ async function shouldBehaveLikeMultiPool(poolName) {
       })
     })
 
-    describe(`${poolName}: Remove strategy`, function () {
+    // TODO Below tests are skipped as removeStrategy() is removed from contract temporarily
+    // eslint-disable-next-line mocha/no-skipped-tests, mocha/no-setup-in-describe
+    describe.skip(`${poolName}: Remove strategy`, function () {
       beforeEach(async function () {
         await deposit(50, user1)
       })

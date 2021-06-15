@@ -2,9 +2,8 @@
 const {prepareConfig} = require('./config')
 const {shouldBehaveLikeStrategy} = require('../behavior/strategy')
 const StrategyType = require('../utils/strategyTypes')
-const {BigNumber: BN} = require('ethers')
-const DECIMAL18 = BN.from('1000000000000000000')
-const ONE_MILLION = DECIMAL18.mul('1000000')
+const {ethers} = require('hardhat')
+const ONE_MILLION = ethers.utils.parseEther('1000000')
 
 /* eslint-disable mocha/no-setup-in-describe */
 describe('vUSDC with aaveV1 and aave strategies', function () {

@@ -2,9 +2,9 @@
 
 const {getUsers, setupVPool} = require('../utils/setupHelper')
 const StrategyType = require('../utils/strategyTypes')
-const {BigNumber: BN} = require('ethers')
-const DECIMAL18 = BN.from('1000000000000000000')
-const ONE_MILLION = DECIMAL18.mul('1000000')
+const PoolConfig = require('../utils/poolConfig')
+const {ethers} = require('hardhat')
+const ONE_MILLION = ethers.utils.parseEther('1000000')
 
 function prepareConfig(_strategies) {
   const interestFee = '1500' // 15%
@@ -24,7 +24,7 @@ function prepareConfig(_strategies) {
     const users = await getUsers()
     this.users = users
     await setupVPool(this, {
-      poolName: 'VDAI',
+      poolConfig: PoolConfig.VDAI,
       feeCollector: users[7].address,
       strategies: strategies.map((item, i) => ({
         ...item,
