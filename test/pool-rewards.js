@@ -7,6 +7,7 @@ const time = require('./utils/time')
 const poolOps = require('./utils/poolOps')
 const {deployContract, getUsers, setupVPool} = require('./utils/setupHelper')
 const StrategyType = require('./utils/strategyTypes')
+const PoolConfig = require('./utils/poolConfig')
 
 const TOTAL_REWARD = ethers.utils.parseUnits('150000')
 const REWARD_DURATION = 30 * 24 * 60 * 60
@@ -29,7 +30,7 @@ describe('Rewards for VDAI Pool', function () {
     const users = await getUsers()
     ;[governor, user1, user2, user3] = users
     await setupVPool(this, {
-      poolName: 'VDAI',
+      poolConfig: PoolConfig.VDAI,
       feeCollector: users[7].address,
       strategies: strategies.map((item, i) => ({
         ...item,

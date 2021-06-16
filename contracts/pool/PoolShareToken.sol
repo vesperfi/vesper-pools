@@ -2,6 +2,7 @@
 
 pragma solidity 0.8.3;
 
+import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
@@ -15,7 +16,7 @@ import "../interfaces/vesper/IPoolRewards.sol";
 
 /// @title Holding pool share token
 // solhint-disable no-empty-blocks
-abstract contract PoolShareToken is PoolStorageV1, PoolERC20Permit, Governed, Pausable, ReentrancyGuard {
+abstract contract PoolShareToken is PoolStorageV1, Initializable, PoolERC20Permit, Governed, Pausable, ReentrancyGuard {
     using SafeERC20 for IERC20;
     uint256 public constant MAX_BPS = 10_000;
 
@@ -25,15 +26,28 @@ abstract contract PoolShareToken is PoolStorageV1, PoolERC20Permit, Governed, Pa
     event UpdatedPoolRewards(address indexed previousPoolRewards, address indexed newPoolRewards);
     event UpdatedWithdrawFee(uint256 previousWithdrawFee, uint256 newWithdrawFee);
 
-    /// @dev Idempotent initializable function
+    constructor(
+        string memory _name,
+        string memory _symbol,
+        address _token
+    ) PoolERC20(_name, _symbol) {
+        token = IERC20(_token);
+    }
+
+    /// @dev Equivalent to constructor for proxy. It can be called only once per proxy.
     function _initializePool(
         string memory _name,
         string memory _symbol,
         address _token
-    ) internal {
-        _initializeERC20(_name, _symbol);
+    ) internal initializer {
+        _setName(_name);
+        _setSymbol(_symbol);
         _initializePermit(_name);
         token = IERC20(_token);
+
+        // Assuming token supports 18 or less decimals
+        uint256 _decimals = IERC20Metadata(_token).decimals();
+        decimalConversionFactor = _decimals == 18 ? 1 : 10**(18 - _decimals);
     }
 
     /**
@@ -111,9 +125,9 @@ abstract contract PoolShareToken is PoolStorageV1, PoolERC20Permit, Governed, Pa
         return (totalValue() * 1e18) / totalSupply();
     }
 
-    /// @dev Convert from 18 decimals to token defined decimals. Default no conversion.
+    /// @dev Convert from 18 decimals to token defined decimals.
     function convertFrom18(uint256 _amount) public view virtual returns (uint256) {
-        return _amount;
+        return _amount / decimalConversionFactor;
     }
 
     /// @dev Returns the token stored in the pool. It will be in token defined decimals.

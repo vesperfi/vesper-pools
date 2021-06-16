@@ -2,25 +2,25 @@
 
 pragma solidity 0.8.3;
 
-import "./VTokenBase.sol";
+import "./VPoolBase.sol";
 import "../interfaces/token/IToken.sol";
 
-contract VETH is VTokenBase {
+//solhint-disable no-empty-blocks
+contract VETH is VPoolBase {
     string public constant VERSION = "3.0.0";
-    TokenLike public weth;
+    TokenLike public constant WETH = TokenLike(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);
     bool private withdrawInETH = false;
 
     // WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2
+    constructor() VPoolBase("vETH Pool", "vETH", 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2) {}
+
     function initialize(address _addressListFactory) external initializer {
-        _initializePool("vETH Pool", "vETH", 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);
-        _initializeGoverned();
-        _initializeAddressLists(_addressListFactory);
-        weth = TokenLike(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);
+        _initializeBase("vETH Pool", "vETH", 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2, _addressListFactory);
     }
 
     /// @dev Handle incoming ETH to the contract address.
     receive() external payable {
-        if (msg.sender != address(weth)) {
+        if (msg.sender != address(WETH)) {
             deposit();
         }
     }
@@ -38,7 +38,7 @@ contract VETH is VTokenBase {
      */
     function _afterBurning(uint256 _amount) internal override returns (uint256) {
         if (withdrawInETH) {
-            weth.withdraw(_amount);
+            WETH.withdraw(_amount);
             Address.sendValue(payable(_msgSender()), _amount);
         } else {
             super._afterBurning(_amount);
@@ -53,7 +53,7 @@ contract VETH is VTokenBase {
     function deposit() public payable whenNotPaused nonReentrant {
         uint256 _shares = _calculateShares(msg.value);
         // Wraps ETH in WETH
-        weth.deposit{value: msg.value}();
+        WETH.deposit{value: msg.value}();
         _mint(_msgSender(), _shares);
         emit Deposit(_msgSender(), _shares, msg.value);
     }

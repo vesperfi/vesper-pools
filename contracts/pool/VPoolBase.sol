@@ -2,13 +2,12 @@
 
 pragma solidity 0.8.3;
 
-import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "./Errors.sol";
 import "./PoolShareToken.sol";
 import "../interfaces/vesper/IStrategy.sol";
 import "../interfaces/bloq/IAddressListFactory.sol";
 
-abstract contract VTokenBase is Initializable, PoolShareToken {
+abstract contract VPoolBase is PoolShareToken {
     using SafeERC20 for IERC20;
 
     event StrategyAdded(address indexed strategy, uint256 interestFee, uint256 debtRatio, uint256 debtRate);
@@ -30,6 +29,24 @@ abstract contract VTokenBase is Initializable, PoolShareToken {
         uint256 poolDebt,
         uint256 creditLine
     );
+
+    constructor(
+        string memory _name,
+        string memory _symbol,
+        address _token // solhint-disable-next-line no-empty-blocks
+    ) PoolShareToken(_name, _symbol, _token) {}
+
+    /// @dev Equivalent to constructor for proxy. It can be called only once per proxy.
+    function _initializeBase(
+        string memory _name,
+        string memory _symbol,
+        address _token,
+        address _addressListFactory
+    ) internal initializer {
+        _initializePool(_name, _symbol, _token);
+        _initializeGoverned();
+        _initializeAddressLists(_addressListFactory);
+    }
 
     /**
      * @notice Create feeWhitelist, keeper and maintainer list
@@ -145,30 +162,31 @@ abstract contract VTokenBase is Initializable, PoolShareToken {
         );
     }
 
+    // TODO we hit contract size limit. Uncomment below function once we solve size issue
     /**
      * @dev Revoke and remove strategy from array. Update withdraw queue.
      * Withdraw queue order should not change after remove.
      * Strategy can be removed only after it has paid all debt.
      * Use migrate strategy if debt is not paid and want to upgrade strategy.
      */
-    function removeStrategy(uint256 _index) external onlyGovernor {
-        address _strategy = strategies[_index];
-        require(strategy[_strategy].active, Errors.STRATEGY_IS_NOT_ACTIVE);
-        require(strategy[_strategy].totalDebt == 0, Errors.TOTAL_DEBT_IS_NOT_ZERO);
-        delete strategy[_strategy];
-        strategies[_index] = strategies[strategies.length - 1];
-        strategies.pop();
-        address[] memory _withdrawQueue = new address[](strategies.length);
-        uint256 j;
-        // After above update, withdrawQueue.length > strategies.length
-        for (uint256 i = 0; i < withdrawQueue.length; i++) {
-            if (withdrawQueue[i] != _strategy) {
-                _withdrawQueue[j] = withdrawQueue[i];
-                j++;
-            }
-        }
-        withdrawQueue = _withdrawQueue;
-    }
+    // function removeStrategy(uint256 _index) external onlyGovernor {
+    //     address _strategy = strategies[_index];
+    //     require(strategy[_strategy].active, Errors.STRATEGY_IS_NOT_ACTIVE);
+    //     require(strategy[_strategy].totalDebt == 0, Errors.TOTAL_DEBT_IS_NOT_ZERO);
+    //     delete strategy[_strategy];
+    //     strategies[_index] = strategies[strategies.length - 1];
+    //     strategies.pop();
+    //     address[] memory _withdrawQueue = new address[](strategies.length);
+    //     uint256 j;
+    //     // After above update, withdrawQueue.length > strategies.length
+    //     for (uint256 i = 0; i < withdrawQueue.length; i++) {
+    //         if (withdrawQueue[i] != _strategy) {
+    //             _withdrawQueue[j] = withdrawQueue[i];
+    //             j++;
+    //         }
+    //     }
+    //     withdrawQueue = _withdrawQueue;
+    // }
 
     /**
      * @notice Update interest fee of strategy

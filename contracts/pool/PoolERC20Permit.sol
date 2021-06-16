@@ -27,7 +27,6 @@ abstract contract PoolERC20Permit is PoolERC20, IERC20Permit {
     /**
      * @dev Initializes the domain separator using the `name` parameter, and setting `version` to `"1"`.
      * It's a good idea to use the same `name` that is defined as the ERC20 token name.
-     * @dev Not using initializer here as it is idempotent
      */
     function _initializePermit(string memory name_) internal {
         _HASHED_NAME = keccak256(bytes(name_));

@@ -30,8 +30,8 @@ contract Governed is Context, Initializable {
     }
 
     /**
-     * @dev This will support initialization via proxy
-     * @dev Initializes the contract setting the initializer as the initial governor.
+     * @dev If inheriting child is using proxy then child contract can use
+     * _initializeGoverned() function to initialization this contract
      */
     function _initializeGoverned() internal initializer {
         address msgSender = _msgSender();

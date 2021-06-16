@@ -18,8 +18,10 @@ abstract contract PoolERC20 is Context, IERC20, IERC20Metadata {
     string private _name;
     string private _symbol;
 
-    /// @dev Not using initializer here as it is idempotent
-    function _initializeERC20(string memory name_, string memory symbol_) internal {
+    /**
+     * @dev Sets the values for {name} and {symbol}.
+     */
+    constructor(string memory name_, string memory symbol_) {
         _name = name_;
         _symbol = symbol_;
     }

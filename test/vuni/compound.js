@@ -6,9 +6,10 @@ const {shouldMigrateStrategies} = require('../behavior/strategy-migration')
 const {shouldBehaveLikeStrategy} = require('../behavior/strategy')
 const {getUsers, setupVPool} = require('../utils/setupHelper')
 const StrategyType = require('../utils/strategyTypes')
-const {BigNumber: BN} = require('ethers')
-const DECIMAL18 = BN.from('1000000000000000000')
-const ONE_MILLION = DECIMAL18.mul('1000000')
+const PoolConfig = require('../utils/poolConfig')
+const {ethers} = require('hardhat')
+const ONE_MILLION = ethers.utils.parseEther('1000000')
+
 /* eslint-disable mocha/no-setup-in-describe */
 describe('vUNI Pool', function () {
   const interestFee = '1500' // 15%
@@ -28,7 +29,7 @@ describe('vUNI Pool', function () {
     const users = await getUsers()
     this.users = users
     await setupVPool(this, {
-      poolName: 'VUNI',
+      poolConfig: PoolConfig.VUNI,
       feeCollector: users[7].address,
       strategies: strategies.map((item, i) => ({
         ...item,

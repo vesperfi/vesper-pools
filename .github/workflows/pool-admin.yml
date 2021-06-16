@@ -23,3 +23,6 @@ jobs:
 
       - name: Running tests for Vesper Pool Admin
         run: npm test "test/vesper-pool-admin.js"
+
+      - name: Running tests for Vesper Pool Proxy upgrade
+        run: npm test "test/vesper-pool-proxy.js"

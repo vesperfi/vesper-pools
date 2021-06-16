@@ -22,4 +22,4 @@ jobs:
         run: npm install
 
       - name: Running tests for vLINK with CREAM
-        run: npm test "test/cream/vlink-cream.js"
+        run: npm test "test/vlink/cream.js"

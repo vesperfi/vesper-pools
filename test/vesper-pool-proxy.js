@@ -5,10 +5,12 @@ const {ethers} = require('hardhat')
 const poolOps = require('./utils/poolOps')
 const {deployContract, getUsers, createStrategy} = require('./utils/setupHelper')
 const StrategyType = require('./utils/strategyTypes')
+const VDAI = require('./utils/poolConfig').VDAI
 
 /* eslint-disable mocha/no-setup-in-describe */
 describe('Vesper Pool: proxy', function () {
-  const poolName = 'VDAI'
+  const poolName = VDAI.contractName
+  const poolParams = VDAI.poolParams
   const addressListFactory = '0xded8217De022706A191eE7Ee0Dc9df1185Fb5dA3'
   let pool, strategy, collateralToken
   let proxy, proxyAdmin
@@ -23,10 +25,13 @@ describe('Vesper Pool: proxy', function () {
   beforeEach(async function () {
     const users = await getUsers()
     ;[governor, user1, user2, user3, user4] = users
-    pool = await deployContract(poolName)
+    pool = await deployContract(poolName, poolParams)
     // Deploy proxy admin
     proxyAdmin = await deployContract('ProxyAdmin', [])
-    const initData = pool.interface.encodeFunctionData('initialize', [addressListFactory])
+    const initData = pool.interface.encodeFunctionData('initialize', [
+      ...poolParams,
+      addressListFactory,
+    ])
     // deploy proxy with logic implementation
     proxy = await deployContract('TransparentUpgradeableProxy', [pool.address, proxyAdmin.address, initData])
     // Get implementation from proxy
@@ -48,7 +53,7 @@ describe('Vesper Pool: proxy', function () {
       const oldPoolImpl = await proxyAdmin.getProxyImplementation(proxy.address)
       const oldPool = pool.address
       // Deploy new pool
-      const newPool = await deployContract(poolName)
+      const newPool = await deployContract(poolName, poolParams)
       // Upgrade proxy
       await proxyAdmin.connect(governor.signer).upgrade(proxy.address, newPool.address)
       pool = await ethers.getContractAt(poolName, proxy.address)
