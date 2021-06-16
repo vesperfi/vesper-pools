@@ -16,13 +16,8 @@
       "rules": {
         "mocha/no-top-level-hooks": "off",
         "mocha/no-hooks-for-single-case": "off",
-        "mocha/no-exports":"off"
-      }
-    },
-    {
-      "files": ["migrations/*.js"],
-      "globals": {
-        "artifacts": "readonly"
+        "mocha/no-exports":"off",
+        "mocha/no-setup-in-describe":"off"
       }
     },
     {

@@ -5,7 +5,6 @@ const StrategyType = require('../utils/strategyTypes')
 const {ethers} = require('hardhat')
 const ONE_MILLION = ethers.utils.parseEther('1000000')
 
-/* eslint-disable mocha/no-setup-in-describe */
 describe('vUSDC with aaveV1 and aave strategies', function () {
   const _interestFee = '1500' // 15%
   const _strategies = [

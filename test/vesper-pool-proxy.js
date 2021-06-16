@@ -7,7 +7,6 @@ const {deployContract, getUsers, createStrategy} = require('./utils/setupHelper'
 const StrategyType = require('./utils/strategyTypes')
 const VDAI = require('./utils/poolConfig').VDAI
 
-/* eslint-disable mocha/no-setup-in-describe */
 describe('Vesper Pool: proxy', function () {
   const poolName = VDAI.contractName
   const poolParams = VDAI.poolParams

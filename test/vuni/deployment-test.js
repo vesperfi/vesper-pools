@@ -9,7 +9,7 @@ const {ethers, deployments} = require('hardhat')
 const tag = 'VUNI-v3.0'
 const poolName = 'VUNI'
 const strategyName = 'CompoundStrategyUNI'
-/* eslint-disable mocha/no-setup-in-describe */
+
 describe('vUNI Pool', function () {
   const interestFee = '1500' // 15%
   const feeCollector = '0x223809E09ec28C28219769C3FF05c790c213152C'

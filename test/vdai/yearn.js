@@ -5,7 +5,6 @@ const {prepareConfig} = require('./config')
 const {shouldBehaveLikePool} = require('../behavior/vesper-pool')
 const StrategyType = require('../utils/strategyTypes')
 
-/* eslint-disable mocha/no-setup-in-describe */
 describe('vDAI Pool', function () {
   const interestFee = '1500' // 15%
   const strategies = [
