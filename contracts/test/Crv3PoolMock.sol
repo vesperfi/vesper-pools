@@ -2,10 +2,14 @@
 
 pragma solidity 0.8.3;
 
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../strategies/curve/Crv3PoolMgr.sol";
 
 contract Crv3PoolMock is Crv3PoolMgr {
     /* solhint-disable */
+    using SafeERC20 for IERC20;
+
     constructor() Crv3PoolMgr() {}
 
     /* solhint-enable */
@@ -46,7 +50,19 @@ contract Crv3PoolMock is Crv3PoolMgr {
         _claimCrv();
     }
 
-    function setCheckpoint() external {
-        _setCheckpoint();
+    // if using this contract on its own.
+    function approveLpForGauge() external {
+        IERC20(crvLp).safeApprove(crvGauge, 0);
+        IERC20(crvLp).safeApprove(crvGauge, type(uint256).max);
+    }
+
+    // if using this contract on its own.
+    function approveTokenForPool(address _token) external {
+        IERC20(_token).safeApprove(crvPool, 0);
+        IERC20(_token).safeApprove(crvPool, type(uint256).max);
+    }
+
+    function minimumLpPrice(uint256 _safeRate) external view returns (uint256) {
+        return _minimumLpPrice(_safeRate);
     }
 }

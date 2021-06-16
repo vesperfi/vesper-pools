@@ -10,6 +10,8 @@ const WETH_ADDRESS = '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2'
 const DAI = '0x6b175474e89094c44da98b954eedeac495271d0f'
 const StrategyType = require('../utils/strategyTypes')
 
+const SWAP = '0xC48ea9A2daA4d816e4c9333D6689C70070010174'
+
 async function executeIfExist(fn) {
   if (typeof fn === 'function') {
     await fn()
@@ -107,6 +109,11 @@ async function rebalanceStrategy(strategy) {
     // TODO: do it recursive
     await s.rebalance()
   }
+  if (strategy.type.includes('curve')) {
+    // If curve, we should rebalance twice (just for tests, because depositing 
+    // will be queued in first rebalance and take effect in second)
+    // tx = await strategy.instance.rebalance()
+  }
   return tx
 }
 
@@ -125,11 +132,13 @@ async function rebalance(strategies) {
 }
 
 async function timeTravel(seconds = 6 * 60 * 60, blocks = 25, strategyType = '', underlayStrategy = '') {
-  const timeTravelFn = async function () {
+  const swapManager = await ethers.getContractAt('ISwapManager', SWAP)
+  const timeTravelFn = async function() {
     await provider.send('evm_increaseTime', [seconds])
     await provider.send('evm_mine')
+    await swapManager['updateOracles()']()
   }
-  const blockMineFn = async function () {
+  const blockMineFn = async function() {
     for (let i = 0; i < blocks; i++) {
       await provider.send('evm_mine')
     }
@@ -152,4 +161,18 @@ async function totalDebtOfAllStrategy(strategies, pool) {
   return totalDebt
 }
 
-module.exports = {deposit, rebalance, rebalanceStrategy, totalDebtOfAllStrategy, executeIfExist, timeTravel}
+async function reset() {
+  // eslint-disable-next-line
+  console.log('Resetting Network...')
+  await provider.send(
+    'hardhat_reset',
+    [{
+      forking: {
+        jsonRpcUrl: process.env.NODE_URL,
+        blockNumber: process.env.BLOCK_NUMBER ? parseInt(process.env.BLOCK_NUMBER) : undefined
+      }
+    }]
+  )
+}
+
+module.exports = {deposit, rebalance, rebalanceStrategy, totalDebtOfAllStrategy, executeIfExist, timeTravel, reset}

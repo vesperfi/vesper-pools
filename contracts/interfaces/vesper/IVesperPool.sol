@@ -32,6 +32,8 @@ interface IVesperPool is IERC20 {
         uint256 _payback
     ) external;
 
+    function reportLoss(uint256 _loss) external;
+
     function resetApproval() external;
 
     function sweepERC20(address _fromToken) external;

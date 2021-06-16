@@ -139,7 +139,7 @@ abstract contract Strategy is IStrategy, Context {
     /**
      * @dev Rebalance profit, loss and investment of this strategy
      */
-    function rebalance() external override onlyKeeper {
+    function rebalance() external virtual override onlyKeeper {
         (uint256 _profit, uint256 _loss, uint256 _payback) = _generateReport();
         IVesperPool(pool).reportEarning(_profit, _loss, _payback);
         _reinvest();

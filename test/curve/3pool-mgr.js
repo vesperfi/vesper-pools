@@ -38,8 +38,9 @@ describe('Crv3PoolMgr', function() {
     const owner = (await ethers.getSigners())[0]
     const PM = await ethers.getContractFactory('Crv3PoolMock')
     poolManager = await PM.deploy()
+    await poolManager.deployed()
     // 10 ETH for DAI
-    await swapEthForToken(10, DAI, owner, poolManager.address)
+    await swapEthForToken(10, DAI, { signer: owner }, poolManager.address)
     daiToken = await ethers.getContractAt('IERC20', DAI)
     lpToken = await ethers.getContractAt('IERC20', THREECRV)
     gaugeToken = await ethers.getContractAt('IERC20', GAUGE)
@@ -51,30 +52,6 @@ describe('Crv3PoolMgr', function() {
 
   beforeEach(async function() {
     await getBalances()
-  })
-
-  describe('Get DAI price from LINK oracle', function() {
-    it('Should get a price', async function() {
-      const tx = await poolManager.getExternalPrice(0)
-      expect(tx.price).to.be.gt(0)
-      expect(tx.decimals).to.be.gt(0)
-    })
-
-    it('Should get the minimum price', async function() {
-      const tx = await poolManager.getMinExternalPrice()
-      expect(tx.price).to.be.gt(0)
-      expect(tx.decimals).to.be.gt(0)
-    })
-
-    it('Should get all prices', async function() {
-      const tx = await poolManager.getAllExternalPrices()
-      expect(tx.prices.length).to.equal(tx.decimals.length)
-    })
-
-    it('Should get a valid min LP prices', async function() {
-      const price = await poolManager.minimumLpPrice()
-      expect(price).to.be.gt(0)
-    })
   })
 
   describe('depositToCRVPool', function() {
@@ -109,7 +86,7 @@ describe('Crv3PoolMgr', function() {
       const lpAmt = await poolManager.calcWithdrawLpAs(usdcNeeded, 1)
       expect(lpAmt.lpToWithdraw).to.be.gt(0)
       expect(lpAmt.unstakeAmt).to.be.equal(0)
-      const rate = await poolManager.minimumLpPrice()
+      const rate = await poolManager.minimumLpPrice(ethers.BigNumber.from('1000000000000000000'))
       const minAmt = await poolManager.estimateFeeImpact(convertFrom18(lpAmt.lpToWithdraw.mul(rate).div(DECIMAL)))
       await poolManager.withdrawAsFromCrvPool(lpAmt.lpToWithdraw, minAmt, 1)
       const newUSDCBalance = await usdcToken.balanceOf(poolManager.address)
@@ -120,7 +97,6 @@ describe('Crv3PoolMgr', function() {
       await poolManager.stakeAllLpToGauge()
       const daiNeeded = lpBalance.div(ethers.BigNumber.from(2))
       const lpAmt = await poolManager.calcWithdrawLpAs(daiNeeded, 0)
-      console.log(daiNeeded.toString())
       expect(lpAmt.lpToWithdraw).to.be.gt(0)
       expect(lpAmt.lpToWithdraw).to.be.lt(daiNeeded)
       expect(lpAmt.unstakeAmt).to.be.gt(0)
@@ -128,7 +104,6 @@ describe('Crv3PoolMgr', function() {
       await poolManager.withdrawAsFromCrvPool(lpAmt.lpToWithdraw, 0, 0)
       const newDAIBalance = await daiToken.balanceOf(poolManager.address)
       const withdrawn = newDAIBalance.sub(daiBalance)
-      console.log(withdrawn.toString())
       expect(withdrawn).to.be.gte(daiNeeded, 'wrong amount withdrawn')
       await poolManager.unstakeAllLpFromGauge()
     })

@@ -43,7 +43,7 @@ function shouldBehaveLikeMakerStrategy(strategyIndex) {
       vaultNum = await strategy.instance.vaultNum()
       // Decimal will be used for amount conversion
       collateralDecimal = await this.collateralToken.decimals()
-      swapManager = await deployContract('SwapManager')
+      swapManager = this.swapManager
     })
 
     describe('Resurface', function () {

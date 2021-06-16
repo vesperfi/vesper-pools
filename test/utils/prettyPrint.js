@@ -7,5 +7,6 @@ module.exports = function (data) {
             object[key] = value.toString()
         }
     })
+    // eslint-disable-next-line
     console.log(object)
 }

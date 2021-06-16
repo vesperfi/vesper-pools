@@ -20,45 +20,15 @@ contract Crv3PoolMgr is CrvPoolMgrBase {
         0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48, // USDC
         0xdAC17F958D2ee523a2206206994597C13D831ec7 // USDT
     ];
-    address[3] public PRICE_FEEDS = [
-        0xAed0c38402a5d19df6E4c03F4E2DceD6e29c1ee9, // DAI-USD
-        0x8fFfFfd4AfB6115b954Bd326cbe7B4BA576818f6, // USDC-USD
-        0x3E7d1eAB13ad0104d2750B8863b489D65364e32D // USDT-USD
-    ];
+    uint256[3] public DECIMALS = [18, 6, 6];
 
     /* solhint-enable */
 
     // solhint-disable-next-line no-empty-blocks
     constructor() CrvPoolMgrBase(address(THREEPOOL), THREECRV, GAUGE) {}
 
-    function getExternalPrice(uint256 i) public view returns (int256 price, uint8 decimals) {
-        IAggregatorV3 priceFeed = IAggregatorV3(PRICE_FEEDS[i]);
-        // There's other data here we may want to use to validate the oracle (timestamp esp.)
-        (, price, , , ) = priceFeed.latestRoundData();
-        // Note, these are all 8 for the three contracts we're getting, so we could skip this call
-        decimals = 8;
-    }
-
-    function getMinExternalPrice() public view returns (int256 price, uint8 decimals) {
-        for (uint256 i = 0; i < COINS.length; i++) {
-            (int256 tp, uint8 td) = getExternalPrice(i);
-            if ((price == 0) || (tp < price)) {
-                price = tp;
-                decimals = td;
-            }
-        }
-        require(price != 0, "Unsafe - no price from oracle");
-    }
-
-    function getAllExternalPrices() public view returns (int256[3] memory prices, uint8[3] memory decimals) {
-        for (uint256 i = 0; i < COINS.length; i++) {
-            (prices[i], decimals[i]) = getExternalPrice(i);
-        }
-    }
-
-    function minimumLpPrice() public view returns (uint256) {
-        (int256 minPrice, uint8 minDec) = getMinExternalPrice();
-        return (THREEPOOL.get_virtual_price() * uint256(minPrice)) / (10**uint256(minDec));
+    function _minimumLpPrice(uint256 _safeRate) internal view returns (uint256) {
+        return ((THREEPOOL.get_virtual_price() * _safeRate) / 1e18);
     }
 
     function get3PoolBalances(uint256 _lpAmount) public view returns (uint256[3] memory balances) {
@@ -115,11 +85,21 @@ contract Crv3PoolMgr is CrvPoolMgrBase {
         return (_lpAmount != 0) ? THREEPOOL.calc_withdraw_one_coin(_lpAmount, SafeCast.toInt128(int256(i))) : 0;
     }
 
+    // While this is inaccurate in terms of slippage, this gives us the
+    // best estimate (least manipulatable value) to calculate share price
+    function getLpValue(uint256 _lpAmount) public view returns (uint256) {
+        return (_lpAmount != 0) ? (THREEPOOL.get_virtual_price() * _lpAmount) / 1e18 : 0;
+    }
+
     function estimateFeeImpact(uint256 _amount) public view returns (uint256) {
         return (_amount * (uint256(1e10) - estimatedFees())) / (uint256(1e10));
     }
 
     function estimatedFees() public view returns (uint256) {
-        return THREEPOOL.fee() * 3;
+        return (THREEPOOL.fee() * 4);
+    }
+
+    function setCheckpoint() external {
+        _setCheckpoint();
     }
 }
