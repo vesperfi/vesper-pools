@@ -1,18 +1,16 @@
 'use strict'
 
-const {shouldBehaveLikePool} = require('../behavior/vesper-pool')
-const {shouldBehaveLikeStrategy} = require('../behavior/strategy')
 const {getUsers, setupVPool} = require('../utils/setupHelper')
 const StrategyType = require('../utils/strategyTypes')
-const {BigNumber: BN} = require('ethers')
-const DECIMAL18 = BN.from('1000000000000000000')
-const ONE_MILLION = DECIMAL18.mul('1000000')
-/* eslint-disable mocha/no-setup-in-describe */
-describe('vUSDC Pool', function () {
+const PoolConfig = require('../utils/poolConfig')
+const {ethers} = require('hardhat')
+const ONE_MILLION = ethers.utils.parseEther('1000000')
+
+function prepareConfig(_strategies) {
   const interestFee = '1500' // 15%
-  const strategies = [
+  const strategies = _strategies || [
     {
-      name: 'CreamStrategyUSDC',
+      name: 'CreamStrategyLINK',
       type: StrategyType.CREAM,
       config: {interestFee, debtRatio: 9000, debtRate: ONE_MILLION}
     }
@@ -21,7 +19,7 @@ describe('vUSDC Pool', function () {
     const users = await getUsers()
     this.users = users
     await setupVPool(this, {
-      poolName: 'VUSDC',
+      poolConfig: PoolConfig.VLINK,
       feeCollector: users[7].address,
       strategies: strategies.map((item, i) => ({
         ...item,
@@ -29,7 +27,7 @@ describe('vUSDC Pool', function () {
       })),
     })
   })
-  shouldBehaveLikePool('vUSDC', 'USDC')
-  shouldBehaveLikeStrategy(0, strategies[0].type, strategies[0].name)
-  
-})
+  return strategies
+}
+
+module.exports = {prepareConfig}
