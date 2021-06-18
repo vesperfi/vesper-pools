@@ -203,7 +203,7 @@ async function shouldBehaveLikePool(poolName, collateralName) {
     })
 
     // TODO Below tests are skipped as multi transfer is removed from contract temporarily
-    // eslint-disable-next-line mocha/no-skipped-tests, mocha/no-setup-in-describe
+    // eslint-disable-next-line mocha/no-skipped-tests
     describe.skip(`Multi transfer ${poolName} pool tokens`, function () {
       it('Should transfer to multiple recipients', async function () {
         await deposit(10, user1)
@@ -294,7 +294,6 @@ async function shouldBehaveLikePool(poolName, collateralName) {
     })
 
     describe(`Withdraw fee in ${poolName} pool`, function () {
-      // eslint-disable-next-line mocha/no-setup-in-describe
       const fee = BN.from(2000) // 20%
       beforeEach(async function () {
         await deposit(10, user2)

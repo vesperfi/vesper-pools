@@ -11,7 +11,7 @@ const poolName = 'VUSDT'
 const strategyName = 'CompoundStrategyUSDT'
 // TODO: prepare for multi strategies.
 // TODO: add more sanity tests
-/* eslint-disable mocha/no-setup-in-describe */
+
 describe('vUSDT Pool', function () {
   const interestFee = '1500' // 15%
   const feeCollector = '0x223809E09ec28C28219769C3FF05c790c213152C'

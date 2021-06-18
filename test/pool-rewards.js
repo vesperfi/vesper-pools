@@ -11,7 +11,7 @@ const PoolConfig = require('./utils/poolConfig')
 
 const TOTAL_REWARD = ethers.utils.parseUnits('150000')
 const REWARD_DURATION = 30 * 24 * 60 * 60
-/* eslint-disable mocha/no-setup-in-describe */
+
 describe('Rewards for VDAI Pool', function () {
   let vdai, dai, vsp, poolRewards, poolRewardsImpl
   let governor, user1, user2, user3

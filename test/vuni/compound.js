@@ -10,7 +10,6 @@ const PoolConfig = require('../utils/poolConfig')
 const {ethers} = require('hardhat')
 const ONE_MILLION = ethers.utils.parseEther('1000000')
 
-/* eslint-disable mocha/no-setup-in-describe */
 describe('vUNI Pool', function () {
   const interestFee = '1500' // 15%
   const strategies = [

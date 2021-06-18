@@ -2,31 +2,26 @@
 
 /* eslint-disable no-console */
 const {expect} = require('chai')
-const hre = require('hardhat')
-const ethers = hre.ethers
-
+const {ethers} = require('hardhat')
 const {shouldBehaveLikePool} = require('../behavior/vesper-pool')
 const {shouldBehaveLikeStrategy} = require('../behavior/strategy')
 const {deposit, timeTravel, reset} = require('../utils/poolOps')
 const {swapEthForToken} = require('../utils/tokenSwapper')
 const StrategyType = require('../utils/strategyTypes')
+const PoolConfig = require('../utils/poolConfig')
 const {setupVPool, getUsers} = require('../utils/setupHelper')
 
-const DECIMAL18 = ethers.BigNumber.from('1000000000000000000')
-const ONE_MILLION = DECIMAL18.mul('1000000')
+const ONE_MILLION = ethers.utils.parseEther('1000000')
 const USDC = '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'
 
 const THREE_POOL = '0xbEbc44782C7dB0a1A60Cb6fe97d0b483032FF1C7'
 
-  /* eslint-disable mocha/no-setup-in-describe */
-
 describe('vDAI Pool with Crv3PoolStrategy', function () {
   let pool, collateralToken, feeCollector, strategy, user1, user2, user3, user4, feeAcct, swapManager, threePool
 
-  before(async function() {
+  before(async function () {
     const users = await getUsers()
     this.users = users
-
     ;[, user1, user2, user3, user4] = users
     feeAcct = users[9]
     threePool = await ethers.getContractAt('IStableSwap3Pool', THREE_POOL)
@@ -37,7 +32,7 @@ describe('vDAI Pool with Crv3PoolStrategy', function () {
     const strategyConfig = {interestFee, debtRatio: 10000, debtRate: ONE_MILLION}
 
     await setupVPool(this, {
-      poolName: 'VDAI',
+      poolConfig: PoolConfig.VDAI,
       feeCollector: feeAcct.address,
       strategies: [
         {name: 'Crv3PoolStrategyDAI', type: StrategyType.CURVE, config: strategyConfig, feeCollector: feeAcct.address},
@@ -54,31 +49,31 @@ describe('vDAI Pool with Crv3PoolStrategy', function () {
     await swapManager['updateOracles()']()
   })
 
-  describe('Pool Tests', function() {
+  describe('Pool Tests', function () {
     shouldBehaveLikePool('vDai', 'DAI')
   })
 
-  describe('Strategy Tests', function() {
+  describe('Strategy Tests', function () {
     after(reset)
     shouldBehaveLikeStrategy(0, StrategyType.CURVE, 'Crv3PoolStrategyDAI')
   })
 
-  describe('Crv3PoolStrategy: DAI Functionality', function() {
+  describe('Crv3PoolStrategy: DAI Functionality', function () {
     afterEach(reset)
     it('Should calculate fees properly and reflect those in share price', async function () {
       await deposit(pool, collateralToken, 20, user1)
       await strategy.rebalance()
       const price1 = await pool.pricePerShare()
       // Time travel to generate earning
-      await timeTravel(30*24*60*60)
+      await timeTravel(30 * 24 * 60 * 60)
       await deposit(pool, collateralToken, 20, user2)
       await strategy.rebalance()
       const price2 = await pool.pricePerShare()
       expect(price2).to.be.gt(price1, 'Share value should increase (1)')
       // Time travel to generate earning
-      await timeTravel(30*24*60*60)
+      await timeTravel(30 * 24 * 60 * 60)
       await deposit(pool, collateralToken, 20, user3)
-      await timeTravel(30*24*60*60)
+      await timeTravel(30 * 24 * 60 * 60)
       await strategy.rebalance()
       const price3 = await pool.pricePerShare()
       expect(price3).to.be.gt(price2, 'Share value should increase (2)')
@@ -91,7 +86,7 @@ describe('vDAI Pool with Crv3PoolStrategy', function () {
       await deposit(pool, collateralToken, 200, feeAcct)
       const price1 = await pool.pricePerShare()
 
-      await timeTravel(30*24*60*60)
+      await timeTravel(30 * 24 * 60 * 60)
       await strategy.rebalance()
 
       const price2 = await pool.pricePerShare()
@@ -102,7 +97,7 @@ describe('vDAI Pool with Crv3PoolStrategy', function () {
 
     // This doesnt actually test anything, it just makes it easy to estimate APY
     // eslint-disable-next-line
-    xit('Crv3PoolStrategy: DAI APY', async function() {
+    xit('Crv3PoolStrategy: DAI APY', async function () {
       await swapEthForToken(200, USDC, user4)
       const usdcToken = await ethers.getContractAt('IERC20', USDC)
       usdcToken.connect(user4.signer).approve(THREE_POOL, ONE_MILLION)
@@ -114,16 +109,17 @@ describe('vDAI Pool with Crv3PoolStrategy', function () {
       // 1 rebalance(s) / day over 30 days
       console.log('Calculating ~%APY using 1 Rebalance / Day for 30 Days')
       for (let i = 0; i < 30; i++) {
-          await threePool.connect(user4.signer)
-            .exchange(1, 0, ethers.BigNumber.from('10000000000'), ethers.BigNumber.from('1'))
-          const tx = await strategy.rebalance()
-          const receipt = await ethers.provider.getTransactionReceipt(tx.hash)
-          gasUsed = gasUsed.add(receipt.gasUsed)
-          await timeTravel(24*60*60)
-          console.log(`Day ${i+1}: ${receipt.gasUsed}`)
+        await threePool
+          .connect(user4.signer)
+          .exchange(1, 0, ethers.BigNumber.from('10000000000'), ethers.BigNumber.from('1'))
+        const tx = await strategy.rebalance()
+        const receipt = await ethers.provider.getTransactionReceipt(tx.hash)
+        gasUsed = gasUsed.add(receipt.gasUsed)
+        await timeTravel(24 * 60 * 60)
+        console.log(`Day ${i + 1}: ${receipt.gasUsed}`)
       }
       const finPPS = await pool.pricePerShare()
-      const percentIncrease = (finPPS.sub(initPPS)).mul(ethers.BigNumber.from(120000)).div(initPPS).toNumber()
+      const percentIncrease = finPPS.sub(initPPS).mul(ethers.BigNumber.from(120000)).div(initPPS).toNumber()
       const readablePI = percentIncrease / 100
       const feeBal = await pool.balanceOf(feeCollector)
       console.log(feeBal.toString())
