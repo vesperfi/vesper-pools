@@ -7,16 +7,13 @@ const mcdEthJoin = '0x2F0b23f53734252Bda2277357e97e1517d6B042A'
 const mcdWbtcJoin = '0xBF72Da2Bd84c5170618Fbe5914B0ECA9638d5eb5'
 const mcdLinkJoin = '0xdFccAf8fDbD2F4805C174f856a317765B49E4a50'
 const gemJoins = [mcdEthJoin, mcdWbtcJoin, mcdLinkJoin]
-
-const SWAP = '0xC48ea9A2daA4d816e4c9333D6689C70070010174'
+const swapManager = '0xC48ea9A2daA4d816e4c9333D6689C70070010174'
 
 // Contract names
 const IVesperPool = 'IVesperPoolTest'
 const CToken = 'CToken'
 const TokenLike = 'TokenLikeTest'
 const CollateralManager = 'CollateralManager'
-
-const swapManager = '0xC48ea9A2daA4d816e4c9333D6689C70070010174'
 
 /**
  * @typedef {object} User
@@ -45,11 +42,8 @@ async function getUsers() {
  * @param {any[]} [params] Constructor params
  * @returns {object} Contract instance
  */
-async function deployContract(name, params=[]) {
+async function deployContract(name, params = []) {
   const contractFactory = await ethers.getContractFactory(name)
-  // if (params) {
-  //   return contractFactory.deploy(...params)
-  // }
   return contractFactory.deploy(...params)
 }
 
