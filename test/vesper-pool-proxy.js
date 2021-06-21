@@ -38,7 +38,7 @@ describe('Vesper Pool: proxy', function () {
     collateralToken = await ethers.getContractAt('ERC20', await pool.token())
     strategyConfig.feeCollector = user4.address
     strategy = await createStrategy(strategyConfig, pool.address, {addressListFactory})
-    pool.addStrategy(strategy.address, ...Object.values(strategyConfig.config))
+    await pool.addStrategy(strategy.address, ...Object.values(strategyConfig.config))
   })
 
   context('Proxy upgrade', function () {

@@ -33,4 +33,6 @@ contract PoolStorageV1 {
     mapping(address => StrategyConfig) public strategy; // Strategy address to its configuration
 
     uint256 public decimalConversionFactor; // It can be used in converting value to/from 18 decimals
+
+    bool internal withdrawInETH; // This flag will be used by VETH pool as switch to withdraw ETH or WETH
 }
