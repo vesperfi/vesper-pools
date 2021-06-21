@@ -5,7 +5,7 @@ const {deposit: _deposit, timeTravel, rebalance, rebalanceStrategy} = require('.
 const {expect} = require('chai')
 
 async function shouldMigrateStrategies(poolName) {
-  let pool, strategies, collateralToken
+  let pool, strategies, collateralToken, accountant
   let user1, user2, user3, gov
   const options = {skipVault: true, addressListFactory: '0xded8217De022706A191eE7Ee0Dc9df1185Fb5dA3'}
 
@@ -77,12 +77,10 @@ async function shouldMigrateStrategies(poolName) {
   async function assertTotalDebt(newStrategy) {
     await deposit(40, user2)
     await rebalanceStrategy(newStrategy)
-    let strategyParams = await pool.strategy(newStrategy.instance.address)
-    const totalDebtBefore = strategyParams.totalDebt
+    const totalDebtBefore = await pool.totalDebtOf(newStrategy.instance.address)
     await deposit(50, user2)
     await rebalanceStrategy(newStrategy)
-    strategyParams = await pool.strategy(newStrategy.instance.address)
-    const totalDebtAfter = strategyParams.totalDebt
+    const totalDebtAfter = await pool.totalDebtOf(newStrategy.instance.address)
     expect(totalDebtAfter).to.be.gt(totalDebtBefore, `Total debt of strategy in ${poolName} is wrong`)
   }
 
@@ -92,7 +90,7 @@ async function shouldMigrateStrategies(poolName) {
     await timeTravel()
     await rebalanceStrategy(newStrategy)
     const strategyParams = await pool.strategy(newStrategy.instance.address)
-    const totalProfit = strategyParams.totalProfit
+    const totalProfit = strategyParams._totalProfit
     expect(totalProfit).to.be.gt(0, `Total debt of strategy in ${poolName} is wrong`)
   }
 
@@ -109,10 +107,11 @@ async function shouldMigrateStrategies(poolName) {
     beforeEach(async function () {
       ;[gov, user1, user2, user3] = this.users
       pool = this.pool
+      accountant = this.accountant
       strategies = this.strategies
       collateralToken = this.collateralToken
-      await pool.connect(gov.signer).updateDebtRatio(strategies[0].instance.address, 4800)
-      await pool.connect(gov.signer).updateDebtRatio(strategies[1].instance.address, 4500)
+      await accountant.connect(gov.signer).updateDebtRatio(strategies[0].instance.address, 4800)
+      await accountant.connect(gov.signer).updateDebtRatio(strategies[1].instance.address, 4500)
     })
 
     describe(`${poolName}: Should migrate from one strategy to another one`, function () {

@@ -16,7 +16,7 @@ abstract contract VesperMakerStrategy is MakerStrategy {
         address _vPool,
         bytes32 _collateralType
     ) MakerStrategy(_pool, _cm, _swapManager, _vPool, _collateralType) {
-        require(IVesperPool(_vPool).token() == DAI, "not-a-valid-dai-pool");
+        require(address(IVesperPool(_vPool).token()) == DAI, "not-a-valid-dai-pool");
     }
 
     function _approveToken(uint256 _amount) internal override {

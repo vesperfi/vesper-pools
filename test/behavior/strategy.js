@@ -16,7 +16,8 @@ const {advanceBlock} = require('../utils/time')
 const StrategyType = require('../utils/strategyTypes')
 const addressListFactory = '0xded8217De022706A191eE7Ee0Dc9df1185Fb5dA3'
 function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
-  let owner, user1, user2, user3, user4, user5, strategy, pool, feeCollector, collateralToken
+  let strategy, pool, feeCollector, collateralToken, accountant
+  let owner, user1, user2, user3, user4, user5
 
   const behaviors = {
     [StrategyType.AAVE]: shouldBehaveLikeAaveStrategy,
@@ -36,6 +37,7 @@ function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
       ;[owner, user1, user2, user3, user4, user5] = users
       strategy = this.strategies[strategyIndex].instance
       pool = this.pool
+      accountant = this.accountant
       collateralToken = this.collateralToken
       feeCollector = this.strategies[strategyIndex].feeCollector
     })
@@ -160,7 +162,7 @@ function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
 
       it('Should have same total value and total debt without rebalance', async function () {
         await deposit(pool, collateralToken, 1, user1)
-        const totalDebtBefore = (await pool.strategy(strategy.address)).totalDebt
+        const totalDebtBefore = (await pool.totalDebtOf(strategy.address))
         expect(await strategy.totalValue()).to.be.equal(totalDebtBefore, 'Total value should be same as total debt')
       })
 
@@ -168,7 +170,7 @@ function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
         await rebalanceStrategy(this.strategies[strategyIndex]) // rebalance to handle under water
         await deposit(pool, collateralToken, 1, user1)
         const totalValueBefore = await strategy.totalValue()
-        const totalDebtBefore = (await pool.strategy(strategy.address)).totalDebt
+        const totalDebtBefore = (await pool.totalDebtOf(strategy.address))
         expect(totalValueBefore).to.be.equal(totalDebtBefore, 'Total value should be same as total debt')
         await strategy.rebalance()
         await advanceBlock(50)
@@ -181,7 +183,7 @@ function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
         await strategy.rebalance()
         await advanceBlock(50)
         const txnObj = await strategy.rebalance()
-        const event = await getEvent(txnObj, pool, 'EarningReported')
+        const event = await getEvent(txnObj, accountant, 'EarningReported')
         expect(event.profit).to.be.gt(0, 'Should have some profit')
         expect(event.loss).to.be.gte(0, 'Should have some loss')
         expect(event.profit).to.be.gt(event.loss, 'Should have profit > loss')

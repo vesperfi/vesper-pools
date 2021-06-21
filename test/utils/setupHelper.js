@@ -52,9 +52,9 @@ async function deployContract(name, params = []) {
  *
  * @param {object} obj Updated test class object
  */
-async function addStrategiesInPool(obj) {
+async function addStrategies(obj) {
   for (const strategy of obj.strategies) {
-    await obj.pool.addStrategy(strategy.instance.address, ...Object.values(strategy.config))
+    await obj.accountant.addStrategy(strategy.instance.address, ...Object.values(strategy.config))
   }
 }
 
@@ -189,14 +189,18 @@ async function setupVPool(obj, poolData, addressListFactory = '0xded8217De022706
   obj.strategies = strategies
   obj.feeCollector = feeCollector
 
+
   obj.pool = await deployContract(poolConfig.contractName, poolConfig.poolParams)
-  await obj.pool.initialize(...poolConfig.poolParams, addressListFactory)
+  obj.accountant = await deployContract('PoolAccountant')
+  await obj.accountant.init(obj.pool.address)
+  await obj.pool.initialize(...poolConfig.poolParams, obj.accountant.address, addressListFactory)
+  
   const options = {
     vPool,
     addressListFactory,
   }
   await createStrategies(obj, options)
-  await addStrategiesInPool(obj)
+  await addStrategies(obj)
   await obj.pool.updateFeeCollector(feeCollector)
   const collateralTokenAddress = await obj.pool.token()
   obj.collateralToken = await ethers.getContractAt(TokenLike, collateralTokenAddress)

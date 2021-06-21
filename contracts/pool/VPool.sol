@@ -18,8 +18,9 @@ contract VPool is VPoolBase {
         string memory _name,
         string memory _symbol,
         address _token,
+        address _poolAccountant,
         address _addressListFactory
     ) public initializer {
-        _initializeBase(_name, _symbol, _token, _addressListFactory);
+        _initializeBase(_name, _symbol, _token, _poolAccountant, _addressListFactory);
     }
 }
