@@ -203,10 +203,8 @@ abstract contract MakerStrategy is Strategy {
     }
 
     function _resurface() internal virtual {
-        uint256 _daiBalance = _getDaiBalance();
-        uint256 _daiDebt = cm.getVaultDebt(address(this));
-        require(_daiDebt > _daiBalance, "pool-is-above-water");
-        uint256 _daiNeeded = _daiDebt - _daiBalance;
+        require(isUnderwater(), "pool-is-above-water");
+        uint256 _daiNeeded = cm.getVaultDebt(address(this)) - _getDaiBalance();
         (address[] memory _path, uint256 _collateralNeeded, uint256 rIdx) =
             swapManager.bestInputFixedOutput(address(collateralToken), DAI, _daiNeeded);
         if (_collateralNeeded != 0) {
@@ -216,7 +214,7 @@ abstract contract MakerStrategy is Strategy {
                 1,
                 _path,
                 address(this),
-                block.timestamp + 30
+                block.timestamp
             );
             cm.payback(IERC20(DAI).balanceOf(address(this)));
         }
