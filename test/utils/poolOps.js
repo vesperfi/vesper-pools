@@ -155,8 +155,8 @@ async function timeTravel(seconds = 6 * 60 * 60, blocks = 25, strategyType = '',
 async function totalDebtOfAllStrategy(strategies, pool) {
   let totalDebt = BigNumber.from(0)
   for (const strategy of strategies) {
-    const strategyParams = await pool.strategy(strategy.instance.address)
-    totalDebt = totalDebt.add(strategyParams.totalDebt)
+    const strategyTotalDebt = await pool.totalDebtOf(strategy.instance.address)
+    totalDebt = totalDebt.add(strategyTotalDebt)
   }
   return totalDebt
 }

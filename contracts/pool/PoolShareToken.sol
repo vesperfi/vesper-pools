@@ -15,15 +15,12 @@ import "../interfaces/vesper/IPoolRewards.sol";
 
 /// @title Holding pool share token
 // solhint-disable no-empty-blocks
-abstract contract PoolShareToken is PoolStorageV1, Initializable, PoolERC20Permit, Governed, Pausable, ReentrancyGuard {
+abstract contract PoolShareToken is Initializable, PoolStorageV1, PoolERC20Permit, Governed, Pausable, ReentrancyGuard {
     using SafeERC20 for IERC20;
     uint256 public constant MAX_BPS = 10_000;
 
     event Deposit(address indexed owner, uint256 shares, uint256 amount);
     event Withdraw(address indexed owner, uint256 shares, uint256 amount);
-    event UpdatedFeeCollector(address indexed previousFeeCollector, address indexed newFeeCollector);
-    event UpdatedPoolRewards(address indexed previousPoolRewards, address indexed newPoolRewards);
-    event UpdatedWithdrawFee(uint256 previousWithdrawFee, uint256 newWithdrawFee);
 
     constructor(
         string memory _name,
@@ -97,7 +94,6 @@ abstract contract PoolShareToken is PoolStorageV1, Initializable, PoolERC20Permi
         _withdrawWithoutFee(_shares);
     }
 
-    // TODO we hit contract size limit. Uncomment below function once we solve size issue
     /**
      * @notice Transfer tokens to multiple recipient
      * @dev Address array and amount array are 1:1 and are in order.
@@ -105,13 +101,13 @@ abstract contract PoolShareToken is PoolStorageV1, Initializable, PoolERC20Permi
      * @param _amounts array of token amounts
      * @return true/false
      */
-    // function multiTransfer(address[] memory _recipients, uint256[] memory _amounts) external returns (bool) {
-    //     require(_recipients.length == _amounts.length, Errors.INPUT_LENGTH_MISMATCH);
-    //     for (uint256 i = 0; i < _recipients.length; i++) {
-    //         require(transfer(_recipients[i], _amounts[i]), Errors.MULTI_TRANSFER_FAILED);
-    //     }
-    //     return true;
-    // }
+    function multiTransfer(address[] memory _recipients, uint256[] memory _amounts) external returns (bool) {
+        require(_recipients.length == _amounts.length, Errors.INPUT_LENGTH_MISMATCH);
+        for (uint256 i = 0; i < _recipients.length; i++) {
+            require(transfer(_recipients[i], _amounts[i]), Errors.MULTI_TRANSFER_FAILED);
+        }
+        return true;
+    }
 
     /**
      * @notice Get price per share

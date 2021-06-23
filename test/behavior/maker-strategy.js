@@ -8,7 +8,7 @@ const {getUsers, deployContract, getEvent} = require('../utils/setupHelper')
 const DECIMAL18 = BN.from('1000000000000000000')
 
 function shouldBehaveLikeMakerStrategy(strategyIndex) {
-  let pool, strategy, token
+  let pool, strategy, token, accountant
   let collateralToken, collateralDecimal, isUnderwater, cm, vaultNum, strategyName, swapManager
   let gov, user1, user2
 
@@ -34,6 +34,7 @@ function shouldBehaveLikeMakerStrategy(strategyIndex) {
     beforeEach(async function () {
       ;[gov, user1, user2] = await getUsers()
       pool = this.pool
+      accountant = this.accountant
       strategy = this.strategies[strategyIndex]
       strategyName = this.strategies[strategyIndex].name
       collateralToken = this.collateralToken
@@ -215,7 +216,7 @@ function shouldBehaveLikeMakerStrategy(strategyIndex) {
         await timeTravel()
         await updateRate()
         const txnObj = await rebalanceStrategy(strategy)
-        const event = await getEvent(txnObj, pool, 'EarningReported')
+        const event = await getEvent(txnObj, accountant, 'EarningReported')
         const tokenBalanceAfter = await token.balanceOf(strategy.instance.address)
         expect(event.profit).to.be.gt(0, 'Should have some profit')
         expect(event.loss).to.be.equal(0, 'Should have no loss')

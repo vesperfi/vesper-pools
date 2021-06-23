@@ -22,7 +22,7 @@ const DECIMAL18 = BN.from('1000000000000000000')
 const MAX_BPS = BN.from('10000')
 
 async function shouldBehaveLikePool(poolName, collateralName) {
-  let pool, strategies, collateralToken, collateralDecimal, feeCollector
+  let pool, strategies, collateralToken, collateralDecimal, feeCollector,accountant
   let user1, user2, user3, user4
 
   async function deposit(amount, depositor) {
@@ -44,6 +44,7 @@ async function shouldBehaveLikePool(poolName, collateralName) {
       ;[, user1, user2, user3, user4] = this.users
       // This setup helps in not typing 'this' all the time
       pool = this.pool
+      accountant = this.accountant
       strategies = this.strategies
       collateralToken = this.collateralToken
       // Decimal will be used for amount conversion
@@ -85,7 +86,7 @@ async function shouldBehaveLikePool(poolName, collateralName) {
           await rebalanceStrategy(strategy)
           await executeIfExist(strategy.token.exchangeRateCurrent)
           const strategyParams = await pool.strategy(strategy.instance.address)
-          if (strategyParams.debtRatio.gt(0)) {
+          if (strategyParams._debtRatio.gt(0)) {
             const receiptTokenBalance = await strategy.token.balanceOf(strategy.instance.address)
             expect(receiptTokenBalance).to.be.gt(0, 'receipt token balance of strategy is wrong')
           }
@@ -202,9 +203,7 @@ async function shouldBehaveLikePool(poolName, collateralName) {
       })
     })
 
-    // TODO Below tests are skipped as multi transfer is removed from contract temporarily
-    // eslint-disable-next-line mocha/no-skipped-tests
-    describe.skip(`Multi transfer ${poolName} pool tokens`, function () {
+    describe(`Multi transfer ${poolName} pool tokens`, function () {
       it('Should transfer to multiple recipients', async function () {
         await deposit(10, user1)
         const balanceBefore = await pool.balanceOf(user4.address)
@@ -372,7 +371,7 @@ async function shouldBehaveLikePool(poolName, collateralName) {
       })
 
       it('Should rebalance when interest fee is zero', async function () {
-        await pool.updateInterestFee(strategies[0].instance.address, '0')
+        await accountant.updateInterestFee(strategies[0].instance.address, '0')
         await rebalance(strategies)
         // Time travel to generate earning
         await timeTravel()
@@ -427,12 +426,10 @@ async function shouldBehaveLikePool(poolName, collateralName) {
       it('Strategy should receive more amount when new deposit happen', async function () {
         await deposit(75, user2)
         await rebalance(strategies)
-        let strategyParams = await pool.strategy(strategies[0].instance.address)
-        const totalDebtBefore = strategyParams.totalDebt
+        const totalDebtBefore = await pool.totalDebtOf(strategies[0].instance.address)
         await deposit(50, user2)
         await rebalance(strategies)
-        strategyParams = await pool.strategy(strategies[0].instance.address)
-        const totalDebtAfter = strategyParams.totalDebt
+        const totalDebtAfter = await pool.totalDebtOf(strategies[0].instance.address)
         expect(totalDebtAfter).to.be.gt(totalDebtBefore, `Total debt of strategy in ${poolName} is wrong`)
       })
 
@@ -490,7 +487,7 @@ async function shouldBehaveLikePool(poolName, collateralName) {
         await timeTravel()
         await rebalance(strategies)
         const strategyParams = await pool.strategy(strategies[0].instance.address)
-        const totalProfit = strategyParams.totalProfit
+        const totalProfit = strategyParams._totalProfit
         expect(totalProfit).to.be.gt(0, `Total debt of strategy in ${poolName} is wrong`)
       })
     })
@@ -532,17 +529,17 @@ async function shouldBehaveLikePool(poolName, collateralName) {
         await deposit(60, user2)
         await rebalance(strategies)
         await deposit(40, user1)
-        await pool.updateDebtRate(strategies[0].instance.address, 20000)
+        await accountant.updateDebtRate(strategies[0].instance.address, 20000)
         const strategyParams = await pool.strategy(strategies[0].instance.address)
         const blockNumber = await ethers.provider.getBlockNumber()
-        let expectedLimit = BN.from(blockNumber).sub(strategyParams.lastRebalance).mul(strategyParams.debtRate)
+        let expectedLimit = BN.from(blockNumber).sub(strategyParams._lastRebalance).mul(strategyParams._debtRate)
         const creditLimit = await pool.availableCreditLimit(strategies[0].instance.address)
         expect(creditLimit).to.almost.equal(expectedLimit, `Credit limit of strategy in ${poolName} is wrong`)
-        const debtBefore = strategyParams.totalDebt
+        const debtBefore = strategyParams._totalDebt
         await strategies[0].instance.rebalance()
         // add limit of one more block
-        expectedLimit = expectedLimit.add(strategyParams.debtRate)
-        const debtAfter = (await pool.strategy(strategies[0].instance.address)).totalDebt
+        expectedLimit = expectedLimit.add(strategyParams._debtRate)
+        const debtAfter = (await pool.totalDebtOf(strategies[0].instance.address))
         // Due to rounding some dust, 10000 wei, might left in case of Yearn strategy
         expect(Math.abs(debtAfter.sub(debtBefore).sub(expectedLimit))).to.lte(
           dust,

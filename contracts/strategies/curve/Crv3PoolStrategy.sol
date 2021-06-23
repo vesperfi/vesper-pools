@@ -31,7 +31,7 @@ abstract contract Crv3PoolStrategy is Crv3PoolMgr, Strategy {
         uint256 _collateralIdx
     ) Strategy(_pool, _swapManager, THREECRV) Crv3PoolMgr() {
         require(_collateralIdx < COINS.length, "Invalid collateral for 3Pool");
-        require(COIN_ADDRS[_collateralIdx] == IVesperPool(_pool).token(), "Collateral does not match");
+        require(COIN_ADDRS[_collateralIdx] == address(IVesperPool(_pool).token()), "Collateral does not match");
         reservedToken[THREECRV] = true;
         reservedToken[CRV] = true;
         collIdx = _collateralIdx;

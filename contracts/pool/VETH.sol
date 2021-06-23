@@ -13,8 +13,14 @@ contract VETH is VPoolBase {
     // WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2
     constructor() VPoolBase("vETH Pool", "vETH", 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2) {}
 
-    function initialize(address _addressListFactory) external initializer {
-        _initializeBase("vETH Pool", "vETH", 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2, _addressListFactory);
+    function initialize(address _poolAccountant, address _addressListFactory) external initializer {
+        _initializeBase(
+            "vETH Pool",
+            "vETH",
+            0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2,
+            _poolAccountant,
+            _addressListFactory
+        );
     }
 
     /// @dev Handle incoming ETH to the contract address.

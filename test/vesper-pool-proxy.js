@@ -24,21 +24,34 @@ describe('Vesper Pool: proxy', function () {
   beforeEach(async function () {
     const users = await getUsers()
     ;[governor, user1, user2, user3, user4] = users
+    let accountant = await deployContract('PoolAccountant')
     pool = await deployContract(poolName, poolParams)
     // Deploy proxy admin
     proxyAdmin = await deployContract('ProxyAdmin', [])
+    // deploy accountant proxy with logic implementation
+    const accountantProxy = await deployContract('TransparentUpgradeableProxy', [
+      accountant.address,
+      proxyAdmin.address,
+      [],
+    ])
+    accountant = await ethers.getContractAt('PoolAccountant', accountantProxy.address)
+
     const initData = pool.interface.encodeFunctionData('initialize', [
       ...poolParams,
+      accountantProxy.address,
       addressListFactory,
     ])
-    // deploy proxy with logic implementation
+    // deploy pool proxy with logic implementation
     proxy = await deployContract('TransparentUpgradeableProxy', [pool.address, proxyAdmin.address, initData])
     // Get implementation from proxy
     pool = await ethers.getContractAt(poolName, proxy.address)
+    // Init accountant proxy with pool proxy address
+    await accountant.init(pool.address)
+
     collateralToken = await ethers.getContractAt('ERC20', await pool.token())
     strategyConfig.feeCollector = user4.address
     strategy = await createStrategy(strategyConfig, pool.address, {addressListFactory})
-    await pool.addStrategy(strategy.address, ...Object.values(strategyConfig.config))
+    await accountant.addStrategy(strategy.address, ...Object.values(strategyConfig.config))
   })
 
   context('Proxy upgrade', function () {

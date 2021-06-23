@@ -2,15 +2,12 @@
 
 pragma solidity 0.8.3;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "../bloq/IAddressList.sol";
 
 interface IVesperPool is IERC20 {
     function deposit() external payable;
 
     function deposit(uint256 _share) external;
-
-    function governor() external returns (address);
-
-    function keepers() external returns (address);
 
     function multiTransfer(address[] memory _recipients, uint256[] memory _amounts) external returns (bool);
 
@@ -44,11 +41,19 @@ interface IVesperPool is IERC20 {
 
     function whitelistedWithdraw(uint256 _amount) external;
 
+    function governor() external view returns (address);
+
+    function keepers() external view returns (IAddressList);
+
+    function maintainers() external view returns (IAddressList);
+
     function feeCollector() external view returns (address);
 
     function pricePerShare() external view returns (uint256);
 
-    function token() external view returns (address);
+    function stopEverything() external view returns (bool);
+
+    function token() external view returns (IERC20);
 
     function tokensHere() external view returns (uint256);
 
