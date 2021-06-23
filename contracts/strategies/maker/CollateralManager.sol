@@ -287,7 +287,7 @@ contract CollateralManager is ICollateralManager, DSMath, ReentrancyGuard, Gover
         require(_vaultNum != 0, "invalid-vault-number");
         (collateralLocked, daiDebt, collateralUsdRate, collateralRatio, minimumDebt) = getVaultInfo(_vaultOwner);
 
-        GemJoinLike _gemJoin = GemJoinLike(mcdGemJoin[collateralType[vaultNum[_vaultOwner]]]);
+        GemJoinLike _gemJoin = GemJoinLike(mcdGemJoin[collateralType[_vaultNum]]);
         uint256 _amount18 = convertTo18(_gemJoin.dec(), _amount);
         require(_amount18 <= collateralLocked, "insufficient-collateral-locked");
         collateralLocked = collateralLocked - _amount18;

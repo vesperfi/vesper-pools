@@ -234,7 +234,7 @@ abstract contract Strategy is IStrategy, Context {
                 _minAmountOut,
                 path,
                 address(this),
-                block.timestamp + 30
+                block.timestamp
             );
         }
     }
