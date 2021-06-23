@@ -51,7 +51,7 @@
     "ethers": "^5.2.0",
     "hardhat": "^2.3.0",
     "hardhat-contract-sizer": "^2.0.3",
-    "hardhat-deploy": "0.7.9",
+    "hardhat-deploy": "0.8.8",
     "hardhat-gas-reporter": "^1.0.4",
     "hardhat-log-remover": "^2.0.1",
     "husky": "^6.0.0",
