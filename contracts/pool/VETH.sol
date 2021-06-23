@@ -56,6 +56,7 @@ contract VETH is VPoolBase {
      * on the value of pool's share.
      */
     function deposit() public payable whenNotPaused nonReentrant {
+        _claimRewards(_msgSender());
         uint256 _shares = _calculateShares(msg.value);
         // Wraps ETH in WETH
         WETH.deposit{value: msg.value}();

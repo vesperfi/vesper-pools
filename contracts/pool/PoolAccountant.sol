@@ -30,10 +30,11 @@ contract PoolAccountantStorageV1 {
     mapping(address => StrategyConfig) public strategy; // Strategy address to its configuration
 }
 
+/// @title Accountant for Vesper pools which keep records of strategies.
 contract PoolAccountant is Initializable, PoolAccountantStorageV1, Context {
     using SafeERC20 for IERC20;
-    // TODO define this either in pool or in here
     uint256 public constant MAX_BPS = 10_000;
+
     event EarningReported(
         address indexed strategy,
         uint256 profit,
@@ -56,7 +57,8 @@ contract PoolAccountant is Initializable, PoolAccountantStorageV1, Context {
 
     /**
      * @dev This init function meant to be called after proxy deployment.
-     * @dev DO NOT CALL it with upgrade
+     * @dev DO NOT CALL it with proxy deploy
+     * @param _pool Address of Vesper pool proxy
      */
     function init(address _pool) public initializer {
         pool = _pool;
@@ -84,7 +86,14 @@ contract PoolAccountant is Initializable, PoolAccountantStorageV1, Context {
 
     ////////////////////////////// Only Governor //////////////////////////////
 
-    /// @dev Add strategy
+    /**
+     * @notice Add strategy. Once strategy is added it can call rebalance and
+     * borrow fund from pool and invest that fund in provider/lender.
+     * @param _strategy Strategy address
+     * @param _interestFee Fee on earnings from this strategy
+     * @param _debtRatio Pool fund allocation to this strategy
+     * @param _debtRate Debt rate per block
+     */
     function addStrategy(
         address _strategy,
         uint256 _interestFee,
