@@ -1,5 +1,5 @@
 {
-  "version": "3.0.2",
+  "version": "3.0.3",
   "networks": {
     "mainnet": {
       "VUSDC": {
@@ -11,18 +11,17 @@
         ]
       },
       "VUNI": {
-        "pool": "0xf858a354AD255D21e17C56f8F2b10Ed67dfb40aE",
-        "strategy": [
-          {
-            "CompoundStrategyUNI": "0x09c78EB6A65CbF17a589A387A6752316A65b4D3f"
+        "pool": {
+          "proxy": "0x7E198A1934FffFf394E942D5BDc44C43dD5C5DD7",
+          "implementation": "0xB7cEC2ECAc026DbD2B7C6705Fd2967F59C6d27bF",
+          "poolAccountant": {
+            "proxy": "0x45abA68af23dE6dE7dC8963e97E4F6f68De5e94E",
+            "implementation": "0xd87b3B807757B42dBCDd81eF2dbc16e7C025b421"
           }
-        ]
-      },
-      "VUSDT": {
-        "pool": "0x95c0b30C6276e67Ae95127aF458573a63113BdFF",
+        },
         "strategy": [
           {
-            "CompoundStrategyUNI": "0x8940FB7cB17e9CD5B595be45E8872a397b6da619"
+            "CompoundStrategyUNI": "0xd1327DaD5e8a94085e8702EaCC7412D69f31D2b6"
           }
         ]
       }
