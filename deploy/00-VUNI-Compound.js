@@ -5,7 +5,7 @@ const Address = require('../helper/ethereum/address')
 
 const PoolAccountant = 'PoolAccountant'
 const strategyName = 'CompoundStrategyUNI'
-const version = 'v3.1'
+
 const {BigNumber} = require('ethers')
 const DECIMAL18 = BigNumber.from('1000000000000000000')
 const ONE_MILLION = DECIMAL18.mul('1000000')
@@ -15,9 +15,9 @@ const config = {
   debtRatio: '9500',
   debtRate: ONE_MILLION.toString(),
 }
-let someId
-module.exports = async function ({getNamedAccounts, deployments}) {
-  const {deploy, execute} = deployments
+
+const deployFunction = async function ({getNamedAccounts, deployments}) {
+  const {deploy, execute, read} = deployments
   const {deployer} = await getNamedAccounts()
 
   // Deploy PoolAccountant. This call will deploy ProxyAdmin, proxy and PoolAccountant
@@ -45,11 +45,12 @@ module.exports = async function ({getNamedAccounts, deployments}) {
         },
       },
     },
-    
   })
 
   // Initialize PoolAccountant with pool proxy address
-  await execute(PoolAccountant, {from: deployer, log: true}, 'init', poolProxy.address)
+  if ((await read(PoolAccountant, {}, 'pool')) === Address.ZERO) {
+    await execute(PoolAccountant, {from: deployer, log: true}, 'init', poolProxy.address)
+  }
 
   // Deploy strategy for pool
   const vUNIStrategy = await deploy(strategyName, {
@@ -73,6 +74,11 @@ module.exports = async function ({getNamedAccounts, deployments}) {
     config.debtRate
   )
   // TODO: add withdraw fee
+
+  // Prepare id of deployment, next deployment will be triggered if id is changed
+  const poolVersion = await read(VUNI.contractName, {}, 'VERSION')
+  const poolAccountantVersion = await read(PoolAccountant, {}, 'VERSION')
+  deployFunction.id = `${VUNI.poolParams[1]}-v${poolVersion}_${poolAccountantVersion}`
   return true
 }
-module.exports.id = version
+module.exports = deployFunction

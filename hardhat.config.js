@@ -28,7 +28,7 @@ module.exports = {
       chainId: 1,
       gas: 6700000,
       gasPrice,
-    },
+    }
   },
   paths: {
     deployments: 'deployments',
