@@ -183,7 +183,9 @@ function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
       it('Should generate EarningReported event', async function () {
         await rebalanceStrategy(this.strategies[strategyIndex]) // rebalance to handle under water
         await deposit(pool, collateralToken, 50, user2) // deposit 50 ETH to generate some profit
-        const txnObj =await strategy.rebalance()
+        await strategy.rebalance()
+        await advanceBlock(50)
+        const txnObj = await rebalanceStrategy(this.strategies[strategyIndex])
         const event = await getEvent(txnObj, accountant, 'EarningReported')
         expect(event.poolDebt).to.be.equal(event.strategyDebt, 'Should have same strategyDebt and poolDebt')
       })
