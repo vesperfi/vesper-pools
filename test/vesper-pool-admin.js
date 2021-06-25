@@ -1,14 +1,15 @@
 'use strict'
 
 const {expect} = require('chai')
-const {ethers} = require('hardhat')
+const hre = require('hardhat')
+const ethers = hre.ethers
 const {getUsers, deployContract, createStrategy} = require('./utils/setupHelper')
-const Address = require('./utils/address')
+const addressListFactory = hre.address.ADDRESS_LIST_FACTORY
+const Address = require('../helper/ethereum/address')
 const StrategyType = require('./utils/strategyTypes')
-const VDAI = require('./utils/poolConfig').VDAI
+const VDAI = require('../helper/ethereum/poolConfig').VDAI
 
 describe('Vesper Pool: Admin only function tests', function () {
-  const addressListFactory = '0xded8217De022706A191eE7Ee0Dc9df1185Fb5dA3'
   const oneMillion = ethers.utils.parseEther('1000000')
   let pool, strategy, accountant
   let user1, user2, user3, user4

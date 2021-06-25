@@ -105,8 +105,10 @@ async function shouldBehaveLikeMultiPool(poolName) {
 
       it('Should not disturb the withdraw queue order', async function () {
         await rebalance(strategies)
+        const hre = require('hardhat')
         const newStrategy = await makeNewStrategy(strategies[0], pool.address, {
-          addressListFactory: '0xded8217De022706A191eE7Ee0Dc9df1185Fb5dA3',
+          addressListFactory: hre.address.ADDRESS_LIST_FACTORY,
+          swapManager: hre.address.SWAP_MANAGER,
         })
         await Promise.all([
           accountant.connect(gov.signer).updateDebtRatio(strategies[0].instance.address, 3000),

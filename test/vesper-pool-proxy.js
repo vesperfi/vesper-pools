@@ -1,16 +1,17 @@
 'use strict'
 
 const {expect} = require('chai')
-const {ethers} = require('hardhat')
+const hre = require('hardhat')
+const ethers = hre.ethers
 const poolOps = require('./utils/poolOps')
 const {deployContract, getUsers, createStrategy} = require('./utils/setupHelper')
 const StrategyType = require('./utils/strategyTypes')
-const VDAI = require('./utils/poolConfig').VDAI
+const addressListFactory = hre.address.ADDRESS_LIST_FACTORY
+const VDAI = require('../helper/ethereum/poolConfig').VDAI
 
 describe('Vesper Pool: proxy', function () {
   const poolName = VDAI.contractName
   const poolParams = VDAI.poolParams
-  const addressListFactory = '0xded8217De022706A191eE7Ee0Dc9df1185Fb5dA3'
   let pool, strategy, collateralToken
   let proxy, proxyAdmin
   let governor, user1, user2, user3, user4
