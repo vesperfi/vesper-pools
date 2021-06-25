@@ -24,6 +24,21 @@
             "CompoundStrategyUNI": "0xd1327DaD5e8a94085e8702EaCC7412D69f31D2b6"
           }
         ]
+      },
+      "VUSDT": {
+        "pool": {
+          "proxy": "0x05B143213BC0Bb7e6BB5A9AfD9cA10dF3cC8B4B6",
+          "implementation": "0xaD680B77a8d0bb66e6a0000028168aB147F440B5",
+          "poolAccountant": {
+            "proxy": "0x0879F1821E0b41913Ba6fDbd691A11675cE89542",
+            "implementation": "0x64a76D3e194BF36C28B0974a5dEdDE41cA3619b5"
+          }
+        },
+        "strategy": [
+          {
+            "CompoundStrategyUSDT": "0x72A411E5491b379c324666f7c04d80D6f6C07cda"
+          }
+        ]
       }
     }
   }
