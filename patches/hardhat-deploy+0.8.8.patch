@@ -1,46 +1,13 @@
 diff --git a/node_modules/hardhat-deploy/dist/src/helpers.js b/node_modules/hardhat-deploy/dist/src/helpers.js
-index d767d62..f6abf6f 100644
+index d767d62..1d50273 100644
 --- a/node_modules/hardhat-deploy/dist/src/helpers.js
 +++ b/node_modules/hardhat-deploy/dist/src/helpers.js
-@@ -336,6 +336,10 @@ function addHelpers(deploymentManager, partialExtension, network, getArtifact, s
-         if (options.log || hardwareWallet) {
-             print(`: deployed at ${deployment.address} with ${receipt === null || receipt === void 0 ? void 0 : receipt.gasUsed} gas\n`);
+@@ -597,7 +597,7 @@ function addHelpers(deploymentManager, partialExtension, network, getArtifact, s
          }
-+        if(hardwareWallet){
-+            const __eth = await ethersSigner._eth
-+            await __eth.transport.device.close()
-+        }
-         return Object.assign(Object.assign({}, deployment), { address, newlyDeployed: true });
-     }
-     async function deterministic(name, options) {
-@@ -424,7 +428,7 @@ function addHelpers(deploymentManager, partialExtension, network, getArtifact, s
-                 transaction = await provider.getTransaction(deployment.transactionHash);
-             }
-             if (transaction) {
--                const { ethersSigner } = await getFrom(options.from);
-+                const { ethersSigner, hardwareWallet } = await getFrom(options.from);
-                 const { artifact } = await getArtifactFromOptions(name, options);
-                 const abi = artifact.abi;
-                 const byteCode = linkLibraries(artifact, options.libraries);
-@@ -433,6 +437,10 @@ function addHelpers(deploymentManager, partialExtension, network, getArtifact, s
-                 const newData = (_a = newTransaction.data) === null || _a === void 0 ? void 0 : _a.toString();
-                 if (transaction.data !== newData) {
-                     return { differences: true, address: deployment.address };
-+		}
-+                if(hardwareWallet){
-+                    const __eth = await ethersSigner._eth
-+                    await __eth.transport.device.close()
-                 }
-                 return { differences: false, address: deployment.address };
-             }
-@@ -1334,6 +1342,10 @@ data: ${data}
-         if (options.log || hardwareWallet) {
-             print(`: performed with ${receipt.gasUsed} gas\n`);
-         }
-+        if(hardwareWallet){
-+            const __eth = await ethersSigner._eth
-+            await __eth.transport.device.close()
-+        }
-         return receipt;
-     }
-     // TODO ?
+         const proxyName = name + '_Proxy';
+         const { address: owner } = getProxyOwner(options);
+-        const { address: from } = getFrom(options.from);
++        // const { address: from } = getFrom(options.from);
+         const implementationArgs = options.args ? [...options.args] : [];
+         // --- Implementation Deployment ---
+         const implementationName = name + '_Implementation';

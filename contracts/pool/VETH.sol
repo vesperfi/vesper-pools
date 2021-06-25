@@ -7,7 +7,7 @@ import "../interfaces/token/IToken.sol";
 
 //solhint-disable no-empty-blocks
 contract VETH is VPoolBase {
-    string public constant VERSION = "3.0.0";
+    string public constant VERSION = "3.0.3";
     TokenLike public constant WETH = TokenLike(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);
 
     // WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2
