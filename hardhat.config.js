@@ -15,6 +15,10 @@ module.exports = {
   networks: {
     localhost: {
       saveDeployments: true,
+      forking: {
+        url: process.env.NODE_URL,
+        blockNumber: process.env.BLOCK_NUMBER ? parseInt(process.env.BLOCK_NUMBER) : undefined,
+      }
     },
     hardhat: {
       forking: {
