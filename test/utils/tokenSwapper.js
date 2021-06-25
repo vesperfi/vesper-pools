@@ -4,8 +4,12 @@ const {expect} = require('chai')
 const {ethers} = require('hardhat')
 const {BigNumber} = require('ethers')
 const DECIMAL = BigNumber.from('1000000000000000000')
-const uniswapAddress = '0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D'
-const WETH = '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2'
+let address = require('../../helper/ethereum/address')
+if (process.env.CHAIN === 'polygon') {
+  address =require('../../helper/polygon/address')
+}
+const SUSHI_ROUTER = address.SUSHI_ROUTER
+const NATIVE_TOKEN = address.NATIVE_TOKEN
 /**
  * Swap ETH into given token
  *
@@ -18,9 +22,9 @@ const WETH = '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2'
 async function swapEthForToken(ethAmount, toToken, caller, receiver) {
   const toAddress = receiver || caller.address
   const amountIn = BigNumber.from(ethAmount).mul(DECIMAL).toString()
-  const uni = await ethers.getContractAt('IUniswapRouterTest', uniswapAddress)
+  const uni = await ethers.getContractAt('IUniswapRouterTest', SUSHI_ROUTER)
   const block = await ethers.provider.getBlock()
-  const path = [WETH, toToken]
+  const path = [NATIVE_TOKEN, toToken]
   const token = await ethers.getContractAt('ERC20', toToken)
   await uni.connect(caller.signer).swapExactETHForTokens(1, path, toAddress, block.timestamp + 60, {value: amountIn})
   const tokenBalance = await token.balanceOf(toAddress)

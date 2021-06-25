@@ -10,7 +10,7 @@ const WETH_ADDRESS = '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2'
 const DAI = '0x6b175474e89094c44da98b954eedeac495271d0f'
 const StrategyType = require('../utils/strategyTypes')
 
-const SWAP = '0xC48ea9A2daA4d816e4c9333D6689C70070010174'
+const SWAP_MANAGER = hre.address.SWAP_MANAGER
 
 async function executeIfExist(fn) {
   if (typeof fn === 'function') {
@@ -132,7 +132,7 @@ async function rebalance(strategies) {
 }
 
 async function timeTravel(seconds = 6 * 60 * 60, blocks = 25, strategyType = '', underlayStrategy = '') {
-  const swapManager = await ethers.getContractAt('ISwapManager', SWAP)
+  const swapManager = await ethers.getContractAt('ISwapManager', SWAP_MANAGER)
   const timeTravelFn = async function() {
     await provider.send('evm_increaseTime', [seconds])
     await provider.send('evm_mine')

@@ -5,7 +5,11 @@ const {getUsers} = require('../utils/setupHelper')
 const {deposit} = require('../utils/poolOps')
 const time = require('../utils/time')
 const {constants} = require('@openzeppelin/test-helpers')
-const metAddress = '0xa3d58c4e56fedcae3a7c43a725aee9a71f0ece4e'
+let ANY_ERC20 = require('../../helper/ethereum/address').ANY_ERC20
+if (process.env.CHAIN === 'polygon') {
+  ANY_ERC20 =require('../../helper/polygon/address').ANY_ERC20
+}
+
 const aaveLendingPoolAddressesProvider = '0xB53C1a33016B2DC2fF3653530bfF1848a515c8c5'
 
 // Aave strategy specific tests
@@ -47,14 +51,14 @@ function shouldBehaveLikeAaveStrategy(strategyIndex) {
     })
 
     it('Should revert when update address provider is called from non governor', async function () {
-      await expect(strategy.connect(user1.signer).updateAddressesProvider(metAddress)).to.be.revertedWith(
+      await expect(strategy.connect(user1.signer).updateAddressesProvider(ANY_ERC20)).to.be.revertedWith(
         'caller-is-not-the-governor'
       )
-      await expect(strategy.connect(owner.signer).updateAddressesProvider(metAddress)).to.be.reverted
+      await expect(strategy.connect(owner.signer).updateAddressesProvider(ANY_ERC20)).to.be.reverted
     })
 
     it('Should revert when provider address is not correct', async function () {
-      await expect(strategy.connect(owner.signer).updateAddressesProvider(metAddress)).to.be.reverted
+      await expect(strategy.connect(owner.signer).updateAddressesProvider(ANY_ERC20)).to.be.reverted
       await expect(strategy.connect(owner.signer).updateAddressesProvider(constants.ZERO_ADDRESS)).to.be.revertedWith(
         'provider-address-is-zero'
       )

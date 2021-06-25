@@ -1,6 +1,7 @@
 'use strict'
 
-const {ethers} = require('hardhat')
+const hre = require('hardhat')
+const ethers = hre.ethers
 const {expect} = require('chai')
 const {constants} = require('@openzeppelin/test-helpers')
 const {getUsers, getEvent} = require('../utils/setupHelper')
@@ -9,12 +10,11 @@ const {shouldBehaveLikeCompoundStrategy} = require('../behavior/compound-strateg
 const {shouldBehaveLikeMakerStrategy} = require('../behavior/maker-strategy')
 const {shouldBehaveLikeCreamStrategy} = require('../behavior/cream-strategy')
 const {shouldBehaveLikeCurveStrategy} = require('../behavior/crv-strategy')
-
 const swapper = require('../utils/tokenSwapper')
 const {deposit, rebalanceStrategy} = require('../utils/poolOps')
 const {advanceBlock} = require('../utils/time')
 const StrategyType = require('../utils/strategyTypes')
-const addressListFactory = '0xded8217De022706A191eE7Ee0Dc9df1185Fb5dA3'
+const addressListFactory = hre.address.ADDRESS_LIST_FACTORY
 function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
   let strategy, pool, feeCollector, collateralToken, accountant
   let owner, user1, user2, user3, user4, user5
@@ -28,7 +28,7 @@ function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
     [StrategyType.CURVE]: shouldBehaveLikeCurveStrategy,
   }
 
-  const metAddress = '0xa3d58c4e56fedcae3a7c43a725aee9a71f0ece4e'
+  const ANY_ERC20 = hre.address.ANY_ERC20
   const shouldBehaveLikeSpecificStrategy = behaviors[type]
 
   describe(`${strategyName} Strategy common behaviour tests`, function () {
@@ -55,10 +55,10 @@ function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
 
     describe('Swap token', function () {
       it('Should sweep erc20 token', async function () {
-        const token = await ethers.getContractAt('ERC20', metAddress)
+        const token = await ethers.getContractAt('ERC20', ANY_ERC20)
 
-        const tokenBalance = await swapper.swapEthForToken(1, metAddress, user1, strategy.address)
-        await strategy.sweepERC20(metAddress)
+        const tokenBalance = await swapper.swapEthForToken(1, ANY_ERC20, user1, strategy.address)
+        await strategy.sweepERC20(ANY_ERC20)
 
         const metBalanceFeeCollector = await token.balanceOf(feeCollector)
         expect(metBalanceFeeCollector).to.be.equal(tokenBalance, 'ERC20 token balance is wrong')
@@ -138,7 +138,7 @@ function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
 
     describe('New strategy migration', function () {
       it('Should revert if caller is not vesper pool', async function () {
-        await expect(strategy.migrate(metAddress)).to.be.revertedWith('caller-is-not-vesper-pool')
+        await expect(strategy.migrate(ANY_ERC20)).to.be.revertedWith('caller-is-not-vesper-pool')
       })
     })
 
@@ -162,7 +162,7 @@ function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
 
       it('Should have same total value and total debt without rebalance', async function () {
         await deposit(pool, collateralToken, 1, user1)
-        const totalDebtBefore = (await pool.totalDebtOf(strategy.address))
+        const totalDebtBefore = await pool.totalDebtOf(strategy.address)
         expect(await strategy.totalValue()).to.be.equal(totalDebtBefore, 'Total value should be same as total debt')
       })
 
@@ -170,7 +170,7 @@ function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
         await rebalanceStrategy(this.strategies[strategyIndex]) // rebalance to handle under water
         await deposit(pool, collateralToken, 1, user1)
         const totalValueBefore = await strategy.totalValue()
-        const totalDebtBefore = (await pool.totalDebtOf(strategy.address))
+        const totalDebtBefore = await pool.totalDebtOf(strategy.address)
         expect(totalValueBefore).to.be.equal(totalDebtBefore, 'Total value should be same as total debt')
         await strategy.rebalance()
         await advanceBlock(50)
@@ -187,7 +187,7 @@ function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
         expect(event.profit).to.be.gt(0, 'Should have some profit')
         expect(event.loss).to.be.gte(0, 'Should have some loss')
         expect(event.profit).to.be.gt(event.loss, 'Should have profit > loss')
-        if(this.strategies[strategyIndex].type !== StrategyType.CURVE) {
+        if (this.strategies[strategyIndex].type !== StrategyType.CURVE) {
           expect(event.payback).to.be.equal(0, 'Should have 0 payback')
         }
         expect(event.poolDebt).to.be.equal(event.strategyDebt, 'Should have same strategyDebt and poolDebt')
@@ -208,7 +208,7 @@ function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
         expect(await strategy.isReservedToken(pool.token())).to.be.equal(false, 'Pool token is not reserved')
       })
       it('Should not get other tokens as reserve token', async function () {
-        expect(await strategy.isReservedToken(metAddress)).to.be.equal(false, 'Other token is not reserved')
+        expect(await strategy.isReservedToken(ANY_ERC20)).to.be.equal(false, 'Other token is not reserved')
       })
     })
 

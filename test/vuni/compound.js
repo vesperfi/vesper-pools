@@ -6,7 +6,7 @@ const {shouldMigrateStrategies} = require('../behavior/strategy-migration')
 const {shouldBehaveLikeStrategy} = require('../behavior/strategy')
 const {getUsers, setupVPool} = require('../utils/setupHelper')
 const StrategyType = require('../utils/strategyTypes')
-const PoolConfig = require('../utils/poolConfig')
+const PoolConfig = require('../../helper/ethereum/poolConfig')
 const {ethers} = require('hardhat')
 const ONE_MILLION = ethers.utils.parseEther('1000000')
 

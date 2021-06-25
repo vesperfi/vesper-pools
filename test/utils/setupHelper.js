@@ -1,20 +1,24 @@
 'use strict'
 
-const {ethers} = require('hardhat')
+const hre = require('hardhat')
+const ethers = hre.ethers
 const StrategyType = require('../utils/strategyTypes')
 
 const mcdEthJoin = '0x2F0b23f53734252Bda2277357e97e1517d6B042A'
 const mcdWbtcJoin = '0xBF72Da2Bd84c5170618Fbe5914B0ECA9638d5eb5'
 const mcdLinkJoin = '0xdFccAf8fDbD2F4805C174f856a317765B49E4a50'
 const gemJoins = [mcdEthJoin, mcdWbtcJoin, mcdLinkJoin]
-const swapManager = '0xC48ea9A2daA4d816e4c9333D6689C70070010174'
 
 // Contract names
 const IVesperPool = 'IVesperPoolTest'
 const CToken = 'CToken'
 const TokenLike = 'TokenLikeTest'
 const CollateralManager = 'CollateralManager'
-
+let address = require('../../helper/ethereum/address')
+if (process.env.CHAIN === 'polygon') {
+  address =require('../../helper/polygon/address')
+}
+hre.address = address
 /**
  * @typedef {object} User
  * @property {any} signer - ethers.js signer instance of user
@@ -70,7 +74,11 @@ async function createMakerStrategy(poolAddress, strategyName, options) {
   const collateralManager = options.collateralManager
     ? options.collateralManager
     : await deployContract(CollateralManager)
-  const strategyInstance = await deployContract(strategyName, [poolAddress, collateralManager.address, swapManager])
+  const strategyInstance = await deployContract(strategyName, [
+    poolAddress,
+    collateralManager.address,
+    address.SWAP_MANAGER,
+  ])
   if (!options.skipVault) {
     await strategyInstance.createVault()
   }
@@ -84,22 +92,23 @@ async function createMakerStrategy(poolAddress, strategyName, options) {
  *
  * @param {object} poolAddress pool address
  * @param {object} strategyName Strategy name
+ * @param options
  * @param {object} vPool Vesper pool instance
  * @returns {object} Strategy instance
  */
-async function createVesperMakerStrategy(poolAddress, strategyName, vPool) {
+async function createVesperMakerStrategy(poolAddress, strategyName, options) {
   const collateralManager = await deployContract(CollateralManager)
   const strategyInstance = await deployContract(strategyName, [
     poolAddress,
     collateralManager.address,
-    swapManager,
-    vPool.address,
+    address.SWAP_MANAGER,
+    options.vPool.address,
   ])
   await strategyInstance.createVault()
   strategyInstance.collateralManager = collateralManager
   await Promise.all([strategyInstance.updateBalancingFactor(300, 250), collateralManager.addGemJoin(gemJoins)])
-  const feeList = await vPool.feeWhitelist()
-  await vPool.addInList(feeList, strategyInstance.address)
+  const feeList = await options.vPool.feeWhitelist()
+  await options.vPool.addInList(feeList, strategyInstance.address)
   return strategyInstance
 }
 
@@ -109,11 +118,11 @@ async function createStrategy(strategy, poolAddress, options = {}) {
   if (strategyType === StrategyType.AAVE_MAKER || strategyType === StrategyType.COMPOUND_MAKER) {
     instance = await createMakerStrategy(poolAddress, strategy.name, options)
   } else if (strategyType === StrategyType.VESPER_MAKER) {
-    instance = await createVesperMakerStrategy(poolAddress, strategy.name, options.vPool)
+    instance = await createVesperMakerStrategy(poolAddress, strategy.name, options)
   } else {
-    instance = await deployContract(strategy.name, [poolAddress, swapManager])
+    instance = await deployContract(strategy.name, [poolAddress, address.SWAP_MANAGER])
   }
-  await instance.init(options.addressListFactory)
+  await instance.init(address.ADDRESS_LIST_FACTORY)
   await instance.approveToken()
   await instance.updateFeeCollector(strategy.feeCollector)
   const strategyTokenAddress = await instance.token()
@@ -183,21 +192,19 @@ async function makeNewStrategy(oldStrategy, poolAddress, _options) {
  * @param {object} obj Current calling object aka 'this'
  * @param {PoolData} poolData Data for pool setup
  * @param {string} addressListFactory factory address
+ * @param {string} swapManager .
  */
-async function setupVPool(obj, poolData, addressListFactory = '0xded8217De022706A191eE7Ee0Dc9df1185Fb5dA3') {
+async function setupVPool(obj, poolData) {
   const {poolConfig, strategies, vPool, feeCollector} = poolData
   obj.strategies = strategies
   obj.feeCollector = feeCollector
-
-
   obj.pool = await deployContract(poolConfig.contractName, poolConfig.poolParams)
   obj.accountant = await deployContract('PoolAccountant')
-  await obj.accountant.init(obj.pool.address)
-  await obj.pool.initialize(...poolConfig.poolParams, obj.accountant.address, addressListFactory)
   
+  await obj.accountant.init(obj.pool.address)
+  await obj.pool.initialize(...poolConfig.poolParams, obj.accountant.address, address.ADDRESS_LIST_FACTORY)
   const options = {
     vPool,
-    addressListFactory,
   }
   await createStrategies(obj, options)
   await addStrategies(obj)
@@ -205,7 +212,7 @@ async function setupVPool(obj, poolData, addressListFactory = '0xded8217De022706
   const collateralTokenAddress = await obj.pool.token()
   obj.collateralToken = await ethers.getContractAt(TokenLike, collateralTokenAddress)
 
-  obj.swapManager = await ethers.getContractAt('ISwapManager', swapManager)
+  obj.swapManager = await ethers.getContractAt('ISwapManager', address.SWAP_MANAGER)
 }
 
 /**
