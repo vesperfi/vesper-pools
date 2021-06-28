@@ -1,0 +1,49 @@
+{
+  "version": "3.0.4",
+  "networks": {
+    "mainnet": {
+      "VUSDC": {
+        "pool": "0x777A7850251b7A301cfA1E7b1d8a9c4a9C49Cf85",
+        "strategy": [
+          {
+            "AaveStrategyUSDC": "0x856678bA7e5E57642b71af14425af4cBe9830F0f"
+          }
+        ]
+      },
+      "VUNI": {
+        "pool": {
+          "proxy": "0x7E198A1934FffFf394E942D5BDc44C43dD5C5DD7",
+          "implementation": "0xDA92F9beEB3aEeE9aC0c7F8A67CCb03F0742cF04",
+          "poolAccountant": {
+            "proxy": "0x45abA68af23dE6dE7dC8963e97E4F6f68De5e94E",
+            "implementation": "0xd87b3B807757B42dBCDd81eF2dbc16e7C025b421"
+          }
+        },
+        "poolRewards": {
+          "proxy": "0xF9fBc8021bd0F849C393aa0e3D5E304EB5CC064C",
+          "implementation": "0x4a7Ce5Db8fa84E7aff6ad6E234C6C6b515951d5c"
+        },
+        "strategy": [
+          {
+            "CompoundStrategyUNI": "0xd1327DaD5e8a94085e8702EaCC7412D69f31D2b6"
+          }
+        ]
+      },
+      "VUSDT": {
+        "pool": {
+          "proxy": "0x05B143213BC0Bb7e6BB5A9AfD9cA10dF3cC8B4B6",
+          "implementation": "0xaD680B77a8d0bb66e6a0000028168aB147F440B5",
+          "poolAccountant": {
+            "proxy": "0x0879F1821E0b41913Ba6fDbd691A11675cE89542",
+            "implementation": "0x64a76D3e194BF36C28B0974a5dEdDE41cA3619b5"
+          }
+        },
+        "strategy": [
+          {
+            "CompoundStrategyUSDT": "0x72A411E5491b379c324666f7c04d80D6f6C07cda"
+          }
+        ]
+      }
+    }
+  }
+}
