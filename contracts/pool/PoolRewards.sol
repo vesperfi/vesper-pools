@@ -67,20 +67,19 @@ contract PoolRewards is Initializable, IPoolRewards, PoolRewardsStorage, Reentra
         require(msg.sender == IVesperPool(pool).governor(), "not-authorized");
         require(address(rewardToken) != address(0), "rewards-token-not-set");
         require(_rewardDuration > 0, "incorrect-reward-duration");
-        rewardDuration = _rewardDuration;
         if (block.timestamp >= periodFinish) {
-            rewardRate = rewardAmount / rewardDuration;
+            rewardRate = rewardAmount / _rewardDuration;
         } else {
             uint256 remaining = periodFinish - block.timestamp;
             uint256 leftover = remaining * rewardRate;
-            rewardRate = (rewardAmount + leftover) / rewardDuration;
+            rewardRate = (rewardAmount + leftover) / _rewardDuration;
         }
 
         uint256 balance = IERC20(rewardToken).balanceOf(address(this));
-        require(rewardRate <= (balance / rewardDuration), "rewards-too-high");
-
+        require(rewardRate <= (balance / _rewardDuration), "rewards-too-high");
+        rewardDuration = _rewardDuration;
         lastUpdateTime = block.timestamp;
-        periodFinish = block.timestamp + rewardDuration;
+        periodFinish = block.timestamp + _rewardDuration;
         rewardEndTime = 0;
         emit RewardAdded(rewardAmount);
     }

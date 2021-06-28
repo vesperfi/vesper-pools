@@ -277,8 +277,10 @@ abstract contract VPoolBase is PoolShareToken {
         uint256 _amountNeeded = _amount;
         uint256 _totalAmountWithdrawn;
         address[] memory _withdrawQueue = getWithdrawQueue();
-        for (uint256 i; i < _withdrawQueue.length; i++) {
-            _debt = totalDebtOf(_withdrawQueue[i]);
+        uint256 _len = _withdrawQueue.length;
+        for (uint256 i; i < _len; i++) {
+            address _strategy = _withdrawQueue[i];
+            _debt = totalDebtOf(_strategy);
             if (_debt == 0) {
                 continue;
             }
@@ -288,13 +290,13 @@ abstract contract VPoolBase is PoolShareToken {
             }
             _balanceBefore = tokensHere();
             //solhint-disable no-empty-blocks
-            try IStrategy(_withdrawQueue[i]).withdraw(_amountNeeded) {} catch {
+            try IStrategy(_strategy).withdraw(_amountNeeded) {} catch {
                 continue;
             }
             _balanceAfter = tokensHere();
             _amountWithdrawn = _balanceAfter - _balanceBefore;
             // Adjusting totalDebt. Assuming that during next reportEarning(), strategy will report loss if amountWithdrawn < _amountNeeded
-            IPoolAccountant(poolAccountant).decreaseDebt(_withdrawQueue[i], _amountWithdrawn);
+            IPoolAccountant(poolAccountant).decreaseDebt(_strategy, _amountWithdrawn);
             _totalAmountWithdrawn += _amountWithdrawn;
             if (_totalAmountWithdrawn >= _amount) {
                 // withdraw done

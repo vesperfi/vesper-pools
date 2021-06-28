@@ -13,7 +13,6 @@ abstract contract MakerStrategy is Strategy {
     address internal constant DAI = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
     ICollateralManager public immutable cm;
     bytes32 public immutable collateralType;
-    uint256 public lastRebalanceBlock;
     uint256 public highWater;
     uint256 public lowWater;
     uint256 private constant WAT = 10**16;

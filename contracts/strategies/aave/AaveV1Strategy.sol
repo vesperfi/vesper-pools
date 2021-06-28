@@ -11,11 +11,10 @@ abstract contract AaveV1Strategy is Strategy {
 
     AaveAddressesProvider public aaveAddressesProvider =
         AaveAddressesProvider(0x24a42fD28C976A61Df5D00D0599C34c4f90748c8);
-    AavePool public aaveLendingPool;
-    AavePoolCore public aaveLendingPoolCore;
+    AavePool public immutable aaveLendingPool;
+    AavePoolCore public immutable aaveLendingPoolCore;
 
     AToken internal immutable aToken;
-    event UpdatedAddressesProvider(address _previousProvider, address _newProvider);
 
     constructor(
         address _pool,
@@ -26,27 +25,6 @@ abstract contract AaveV1Strategy is Strategy {
         aToken = AToken(_receiptToken);
         aaveLendingPool = AavePool(aaveAddressesProvider.getLendingPool());
         aaveLendingPoolCore = AavePoolCore(aaveAddressesProvider.getLendingPoolCore());
-    }
-
-    /**
-     * @notice Update address of Aave LendingPoolAddressesProvider
-     * @dev We will use new address to fetch lendingPool address and update that too.
-     * @dev Child contract should expose this function as external and onlyGovernor
-     */
-    function _updateAddressesProvider(address _newAddressesProvider) internal {
-        require(_newAddressesProvider != address(0), "provider-address-is-zero");
-        emit UpdatedAddressesProvider(address(aaveAddressesProvider), _newAddressesProvider);
-        aaveAddressesProvider = AaveAddressesProvider(_newAddressesProvider);
-        aaveLendingPool = AavePool(aaveAddressesProvider.getLendingPool());
-        aaveLendingPoolCore = AavePoolCore(aaveAddressesProvider.getLendingPoolCore());
-    }
-
-    /**
-     * @notice Update address of Aave LendingPoolAddressesProvider
-     * @dev We will use new address to fetch lendingPool address and update that too.
-     */
-    function updateAddressesProvider(address _newAddressesProvider) external onlyGovernor {
-        _updateAddressesProvider(_newAddressesProvider);
     }
 
     /**

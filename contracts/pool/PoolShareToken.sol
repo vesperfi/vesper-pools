@@ -43,7 +43,7 @@ abstract contract PoolShareToken is Initializable, PoolStorageV1, PoolERC20Permi
 
         // Assuming token supports 18 or less decimals
         uint256 _decimals = IERC20Metadata(_token).decimals();
-        decimalConversionFactor = _decimals == 18 ? 1 : 10**(18 - _decimals);
+        decimalConversionFactor = 10**(18 - _decimals);
     }
 
     /**
@@ -101,7 +101,7 @@ abstract contract PoolShareToken is Initializable, PoolStorageV1, PoolERC20Permi
      * @param _amounts array of token amounts
      * @return true/false
      */
-    function multiTransfer(address[] memory _recipients, uint256[] memory _amounts) external returns (bool) {
+    function multiTransfer(address[] calldata _recipients, uint256[] calldata _amounts) external returns (bool) {
         require(_recipients.length == _amounts.length, Errors.INPUT_LENGTH_MISMATCH);
         for (uint256 i = 0; i < _recipients.length; i++) {
             require(transfer(_recipients[i], _amounts[i]), Errors.MULTI_TRANSFER_FAILED);
