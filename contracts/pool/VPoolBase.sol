@@ -29,6 +29,8 @@ abstract contract VPoolBase is PoolShareToken {
         address _poolAccountant,
         address _addressListFactory
     ) internal initializer {
+        require(_poolAccountant != address(0), Errors.INPUT_ADDRESS_IS_ZERO);
+        require(_addressListFactory != address(0), Errors.INPUT_ADDRESS_IS_ZERO);
         _initializePool(_name, _symbol, _token);
         _initializeGoverned();
         _initializeAddressLists(_addressListFactory);
@@ -50,8 +52,8 @@ abstract contract VPoolBase is PoolShareToken {
         keepers = _factory.createList();
         maintainers = _factory.createList();
         // List creator can do job of keeper and maintainer.
-        IAddressList(keepers).add(_msgSender());
-        IAddressList(maintainers).add(_msgSender());
+        require(IAddressList(keepers).add(_msgSender()), Errors.ADD_IN_LIST_FAILED);
+        require(IAddressList(maintainers).add(_msgSender()), Errors.ADD_IN_LIST_FAILED);
     }
 
     modifier onlyKeeper() {
