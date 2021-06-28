@@ -29,14 +29,6 @@ abstract contract AaveMakerStrategy is MakerStrategy, AaveCore {
         _unstakeAave();
     }
 
-    /**
-     * @notice Update address of Aave LendingPoolAddressesProvider
-     * @dev We will use new address to fetch lendingPool address and update that too.
-     */
-    function updateAddressesProvider(address _newAddressesProvider) external onlyGovernor {
-        _updateAddressesProvider(_newAddressesProvider);
-    }
-
     /// @dev Check whether given token is reserved or not. Reserved tokens are not allowed to sweep.
     function isReservedToken(address _token) public view virtual override returns (bool) {
         return _isReservedToken(_token);

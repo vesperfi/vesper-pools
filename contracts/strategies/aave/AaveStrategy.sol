@@ -29,14 +29,6 @@ abstract contract AaveStrategy is Strategy, AaveCore {
     }
 
     /**
-     * @notice Update address of Aave LendingPoolAddressesProvider
-     * @dev We will use new address to fetch lendingPool address and update that too.
-     */
-    function updateAddressesProvider(address _newAddressesProvider) external onlyGovernor {
-        _updateAddressesProvider(_newAddressesProvider);
-    }
-
-    /**
      * @notice Report total value
      * @dev aToken and collateral are 1:1 and Aave and StakedAave are 1:1
      */

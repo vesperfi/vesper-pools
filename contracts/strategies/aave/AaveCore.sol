@@ -12,13 +12,12 @@ abstract contract AaveCore {
 
     AaveLendingPoolAddressesProvider public aaveAddressesProvider =
         AaveLendingPoolAddressesProvider(0xB53C1a33016B2DC2fF3653530bfF1848a515c8c5);
-    AaveLendingPool public aaveLendingPool;
-    AaveProtocolDataProvider public aaveProtocolDataProvider;
-    AaveIncentivesController public aaveIncentivesController;
+    AaveLendingPool public immutable aaveLendingPool;
+    AaveProtocolDataProvider public immutable aaveProtocolDataProvider;
+    AaveIncentivesController public immutable aaveIncentivesController;
 
     AToken internal immutable aToken;
     bytes32 private constant AAVE_PROVIDER_ID = 0x0100000000000000000000000000000000000000000000000000000000000000;
-    event UpdatedAddressesProvider(address _previousProvider, address _newProvider);
 
     constructor(address _receiptToken) {
         require(_receiptToken != address(0), "aToken-address-is-zero");
@@ -52,20 +51,6 @@ abstract contract AaveCore {
      */
     function _unstakeAave() internal {
         stkAAVE.redeem(address(this), type(uint256).max);
-    }
-
-    /**
-     * @notice Update address of Aave LendingPoolAddressesProvider
-     * @dev We will use new address to fetch lendingPool address and update that too.
-     * @dev Child contract should expose this function as external and onlyGovernor
-     */
-    function _updateAddressesProvider(address _newAddressesProvider) internal {
-        require(_newAddressesProvider != address(0), "provider-address-is-zero");
-        require(address(aaveAddressesProvider) != _newAddressesProvider, "same-addresses-provider");
-        emit UpdatedAddressesProvider(address(aaveAddressesProvider), _newAddressesProvider);
-        aaveAddressesProvider = AaveLendingPoolAddressesProvider(_newAddressesProvider);
-        aaveLendingPool = AaveLendingPool(aaveAddressesProvider.getLendingPool());
-        aaveProtocolDataProvider = AaveProtocolDataProvider(aaveAddressesProvider.getAddress(AAVE_PROVIDER_ID));
     }
 
     ///////////////////////////////////////////////////////////////////////////
