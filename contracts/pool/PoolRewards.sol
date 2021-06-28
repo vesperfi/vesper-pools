@@ -26,9 +26,6 @@ contract PoolRewardsStorage {
     /// Current reward rate
     uint256 public rewardRate;
 
-    /// Reward end time
-    uint256 public rewardEndTime;
-
     /// Duration of current reward distribution
     uint256 public rewardDuration;
 
@@ -45,7 +42,7 @@ contract PoolRewardsStorage {
     mapping(address => uint256) public rewards;
 }
 
-contract PoolRewards is Initializable, IPoolRewards, PoolRewardsStorage, ReentrancyGuard {
+contract PoolRewards is Initializable, IPoolRewards, ReentrancyGuard, PoolRewardsStorage {
     using SafeERC20 for IERC20;
 
     /**
@@ -54,6 +51,8 @@ contract PoolRewards is Initializable, IPoolRewards, PoolRewardsStorage, Reentra
      * @param _rewardToken VSP token address
      */
     function initialize(address _pool, address _rewardToken) public initializer {
+        require(_pool != address(0), "pool-address-is-zero");
+        require(_rewardToken != address(0), "rewardToken-address-is-zero");
         pool = _pool;
         rewardToken = _rewardToken;
     }
@@ -80,7 +79,6 @@ contract PoolRewards is Initializable, IPoolRewards, PoolRewardsStorage, Reentra
         rewardDuration = _rewardDuration;
         lastUpdateTime = block.timestamp;
         periodFinish = block.timestamp + _rewardDuration;
-        rewardEndTime = 0;
         emit RewardAdded(rewardAmount);
     }
 
@@ -96,39 +94,10 @@ contract PoolRewards is Initializable, IPoolRewards, PoolRewardsStorage, Reentra
     }
 
     /**
-     * @notice Updated reward end time.
-     * Time at which reward will be ended and governor can withdraw remaining tokens
-     */
-    function updateRewardEndTime() external override {
-        require(msg.sender == IVesperPool(pool).governor(), "not-authorized");
-        // Make sure current reward period is over
-        uint256 _periodFinish = block.timestamp > periodFinish ? block.timestamp : periodFinish;
-        uint256 _rewardEndTime = _periodFinish + GRACE_PERIOD;
-        emit UpdatedRewardEndTime(rewardEndTime, _rewardEndTime);
-        rewardEndTime = _rewardEndTime;
-    }
-
-    /**
-     * @notice Withdraw remaining tokens
-     * Once reward end time is passed governor can withdraw remaining tokens.
-     * @dev rewardRate will be updated to 0
-     * @param _toAddress Address where governor want to withdraw tokens
-     */
-    function withdrawRemaining(address _toAddress) external override {
-        require(msg.sender == IVesperPool(pool).governor(), "not-authorized");
-        require(rewardEndTime != 0 && block.timestamp > rewardEndTime, "rewards-still-active");
-        uint256 _remaining = IERC20(rewardToken).balanceOf(address(this));
-        IERC20(rewardToken).safeTransfer(_toAddress, _remaining);
-        rewardRate = 0;
-        lastUpdateTime = block.timestamp;
-        emit RewardEnded(_toAddress, _remaining);
-    }
-
-    /**
      * @dev Updated reward for given account. Only Pool can call
      */
     function updateReward(address _account) external override {
-        require(msg.sender == pool, "Only pool can update reward");
+        require(msg.sender == pool, "only-pool-can-update-reward");
         _updateReward(_account);
     }
 

@@ -1,4 +1,4 @@
-name: Vesper Pool Admin test
+name: VPool Admin, Proxy and Rewards test
 on: [pull_request]
 
 jobs:
@@ -26,3 +26,6 @@ jobs:
 
       - name: Running tests for Vesper Pool Proxy upgrade
         run: npm test "test/vesper-pool-proxy.js"
+
+      - name: Running tests for Vesper PoolRewards
+        run: npm test "test/pool-rewards.js"
