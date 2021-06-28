@@ -42,16 +42,6 @@ contract Crv3PoolMgr is CrvPoolMgrBase {
         }
     }
 
-    function _depositToCrvPool(
-        uint256 _daiAmount,
-        uint256 _usdcAmount,
-        uint256 _usdtAmount
-    ) internal {
-        uint256[3] memory depositAmounts = [_daiAmount, _usdcAmount, _usdtAmount];
-        // using 1 for min_mint_amount, but we may want to improve this logic
-        THREEPOOL.add_liquidity(depositAmounts, 1);
-    }
-
     function _withdrawAsFromCrvPool(
         uint256 _lpAmount,
         uint256 _minAmt,

@@ -116,7 +116,9 @@ abstract contract Crv3PoolStrategy is Crv3PoolMgr, Strategy {
         if (amt != 0) {
             uint256[3] memory depositAmounts;
             depositAmounts[collIdx] = amt;
-            uint256 minLpAmount = _estimateSlippage((amt * 1e18) / _minimumLpPrice(_getSafeUsdRate()), depositSlippage);
+            uint256 minLpAmount =
+                _estimateSlippage((amt * 1e18) / _minimumLpPrice(_getSafeUsdRate()), depositSlippage) *
+                    10**(18 - DECIMALS[collIdx]);
             // solhint-disable-next-line no-empty-blocks
             try THREEPOOL.add_liquidity(depositAmounts, minLpAmount) {} catch Error(string memory reason) {
                 depositError = true;

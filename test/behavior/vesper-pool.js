@@ -176,7 +176,7 @@ async function shouldBehaveLikePool(poolName, collateralName) {
         const dust = DECIMAL18.div(BN.from(100)) // Dust is less than 1e16
         await rebalance(strategies)
         // Some strategies can report a loss if they don't have time to earn anything
-        await timeTravel(30 * 24 * 60 * 60)
+        await timeTravel(60 * 24 * 60 * 60)
         await rebalance(strategies)
 
         let o = await pool.balanceOf(user1.address)
@@ -275,15 +275,15 @@ async function shouldBehaveLikePool(poolName, collateralName) {
         const value1 = await pool.totalValue()
         await rebalance(strategies)
         // Time travel to generate earning
-        await timeTravel(30 * 24 * 60 * 60)
+        await timeTravel(60 * 24 * 60 * 60)
         await rebalance(strategies)
         await rebalance(strategies)
         const value2 = await pool.totalValue()
         expect(value2).to.be.gt(value1, `${poolName} Pool value should increase`)
         // Time travel to generate earning
-        await timeTravel(30 * 24 * 60 * 60)
+        await timeTravel(60 * 24 * 60 * 60)
         await deposit(20, user3)
-        await timeTravel(30 * 24 * 60 * 60)
+        await timeTravel(60 * 24 * 60 * 60)
         await rebalance(strategies)
         const value3 = await pool.totalValue()
         expect(value3).to.be.gt(value2, `${poolName} Pool value should increase`)
