@@ -160,16 +160,4 @@ describe('Crv3PoolMgr', function() {
       expect(availableRewards).to.be.equal(0)
     })
   })
-
-  describe('getPoolBalances', function() {
-    it('Should get balances', async function() {
-      await poolManager.stakeAllLpToGauge()
-      const tlp = await poolManager.totalLp()
-      const bal = await poolManager.get3PoolBalances(tlp)
-      expect(tlp).to.be.gt(0, 'Total LP is wrong')
-      for (let i=0; i < bal.length; i++) {
-        expect(bal[i]).to.be.gt(0, `Balance of coin ${i} is wrong`)
-      }
-    })
-  })
 })

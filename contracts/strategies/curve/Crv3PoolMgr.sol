@@ -11,16 +11,17 @@ contract Crv3PoolMgr is CrvPoolMgrBase {
     IStableSwap3Pool public constant THREEPOOL = IStableSwap3Pool(0xbEbc44782C7dB0a1A60Cb6fe97d0b483032FF1C7);
     address public constant THREECRV = 0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490;
     address public constant GAUGE = 0xbFcF63294aD7105dEa65aA58F8AE5BE2D9d0952A;
+    uint256 public constant N = 3;
 
     /* solhint-disable var-name-mixedcase */
-    string[3] public COINS = ["DAI", "USDC", "USDT"];
+    string[N] public COINS = ["DAI", "USDC", "USDT"];
 
-    address[3] public COIN_ADDRS = [
+    address[N] public COIN_ADDRS = [
         0x6B175474E89094C44Da98b954EedeAC495271d0F, // DAI
         0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48, // USDC
         0xdAC17F958D2ee523a2206206994597C13D831ec7 // USDT
     ];
-    uint256[3] public DECIMALS = [18, 6, 6];
+    uint256[N] public DECIMALS = [18, 6, 6];
 
     /* solhint-enable */
 
@@ -29,17 +30,6 @@ contract Crv3PoolMgr is CrvPoolMgrBase {
 
     function _minimumLpPrice(uint256 _safeRate) internal view returns (uint256) {
         return ((THREEPOOL.get_virtual_price() * _safeRate) / 1e18);
-    }
-
-    function get3PoolBalances(uint256 _lpAmount) public view returns (uint256[3] memory balances) {
-        // the balance of a given coin is equal to our share of the lp supply,
-        // times the underlying balance, less the pool withdrawal fee
-        for (uint256 i = 0; i < COINS.length; i++) {
-            balances[i] =
-                (((THREEPOOL.balances(i) * _lpAmount) / (IERC20(crvLp).totalSupply())) *
-                    (uint256(1e10) - THREEPOOL.fee())) /
-                uint256(1e10);
-        }
     }
 
     function _withdrawAsFromCrvPool(
