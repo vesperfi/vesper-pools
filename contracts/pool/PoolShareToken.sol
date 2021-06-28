@@ -15,18 +15,20 @@ import "../interfaces/vesper/IPoolRewards.sol";
 
 /// @title Holding pool share token
 // solhint-disable no-empty-blocks
-abstract contract PoolShareToken is Initializable, PoolStorageV1, PoolERC20Permit, Governed, Pausable, ReentrancyGuard {
+abstract contract PoolShareToken is Initializable, PoolERC20Permit, Governed, Pausable, ReentrancyGuard, PoolStorageV1 {
     using SafeERC20 for IERC20;
     uint256 public constant MAX_BPS = 10_000;
 
     event Deposit(address indexed owner, uint256 shares, uint256 amount);
     event Withdraw(address indexed owner, uint256 shares, uint256 amount);
 
+    // We are using constructor to initialize implementation with basic details
     constructor(
         string memory _name,
         string memory _symbol,
         address _token
     ) PoolERC20(_name, _symbol) {
+        // 0x0 is acceptable as has no effect on functionality
         token = IERC20(_token);
     }
 
@@ -36,6 +38,7 @@ abstract contract PoolShareToken is Initializable, PoolStorageV1, PoolERC20Permi
         string memory _symbol,
         address _token
     ) internal initializer {
+        require(_token != address(0), Errors.INPUT_ADDRESS_IS_ZERO);
         _setName(_name);
         _setSymbol(_symbol);
         _initializePermit(_name);

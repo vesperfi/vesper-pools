@@ -63,6 +63,7 @@ contract PoolAccountant is Initializable, PoolAccountantStorageV1, Context {
      * @param _pool Address of Vesper pool proxy
      */
     function init(address _pool) public initializer {
+        require(_pool != address(0), Errors.INPUT_ADDRESS_IS_ZERO);
         pool = _pool;
     }
 
