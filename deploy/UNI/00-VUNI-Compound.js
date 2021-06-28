@@ -1,18 +1,18 @@
 'use strict'
 
-const VUSDT = require('../helper/ethereum/poolConfig').VUSDT
-const Address = require('../helper/ethereum/address')
+const VUNI = require('../../helper/ethereum/poolConfig').VUNI
+const Address = require('../../helper/ethereum/address')
 
 const PoolAccountant = 'PoolAccountant'
-const strategyName = 'CompoundStrategyUSDT'
+const strategyName = 'CompoundStrategyUNI'
 
 const {BigNumber} = require('ethers')
-const DECIMAL6 = BigNumber.from('1000000')
-const ONE_MILLION = DECIMAL6.mul('1000000')
+const DECIMAL18 = BigNumber.from('1000000000000000000')
+const ONE_MILLION = DECIMAL18.mul('1000000')
 const config = {
   feeCollector: Address.FEE_COLLECTOR,
   interestFee: '1500',
-  debtRatio: '600',
+  debtRatio: '9500',
   debtRate: ONE_MILLION.toString(),
 }
 
@@ -30,10 +30,10 @@ const deployFunction = async function ({getNamedAccounts, deployments}) {
   })
 
   // Deploy Pool. This call will use ProxyAdmin. It will deploy proxy and Pool and also initialize pool
-  const poolProxy = await deploy(VUSDT.contractName, {
+  const poolProxy = await deploy(VUNI.contractName, {
     from: deployer,
     log: true,
-    args: VUSDT.poolParams, // Constructor args
+    args: VUNI.poolParams, // Constructor args
     // proxy deployment
     proxy: {
       proxyContract: 'OpenZeppelinTransparentProxy',
@@ -41,7 +41,7 @@ const deployFunction = async function ({getNamedAccounts, deployments}) {
       execute: {
         init: {
           methodName: 'initialize',
-          args: [...VUSDT.poolParams, accountantProxy.address, Address.ADDRESS_LIST_FACTORY],
+          args: [...VUNI.poolParams, accountantProxy.address, Address.ADDRESS_LIST_FACTORY],
         },
       },
     },
@@ -53,7 +53,7 @@ const deployFunction = async function ({getNamedAccounts, deployments}) {
   }
 
   // Deploy strategy for pool
-  const vUSDTStrategy = await deploy(strategyName, {
+  const vUNIStrategy = await deploy(strategyName, {
     from: deployer,
     log: true,
     args: [poolProxy.address, Address.SWAP_MANAGER],
@@ -68,7 +68,7 @@ const deployFunction = async function ({getNamedAccounts, deployments}) {
     PoolAccountant,
     {from: deployer, log: true},
     'addStrategy',
-    vUSDTStrategy.address,
+    vUNIStrategy.address,
     config.interestFee,
     config.debtRatio,
     config.debtRate
@@ -76,9 +76,9 @@ const deployFunction = async function ({getNamedAccounts, deployments}) {
   // TODO: add withdraw fee
 
   // Prepare id of deployment, next deployment will be triggered if id is changed
-  const poolVersion = await read(VUSDT.contractName, {}, 'VERSION')
+  const poolVersion = await read(VUNI.contractName, {}, 'VERSION')
   const poolAccountantVersion = await read(PoolAccountant, {}, 'VERSION')
-  deployFunction.id = `${VUSDT.poolParams[1]}-v${poolVersion}_${poolAccountantVersion}`
+  deployFunction.id = `${VUNI.poolParams[1]}-v${poolVersion}_${poolAccountantVersion}`
   return true
 }
 module.exports = deployFunction
