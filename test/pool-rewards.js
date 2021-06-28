@@ -72,34 +72,6 @@ describe('Rewards for VDAI Pool', function () {
       const tx = poolRewards.connect(governor.signer).notifyRewardAmount(TOTAL_REWARD, REWARD_DURATION)
       await expect(tx).to.be.revertedWith('rewards-too-high')
     })
-
-    it('updateRewardEnd:: Should revert if non governor calls', async function () {
-      const tx = poolRewards.connect(user2.signer).updateRewardEndTime()
-      await expect(tx).to.be.revertedWith('not-authorized')
-    })
-
-    it('updateRewardEnd:: Should allow governor to update end time', async function () {
-      const tx = poolRewards.connect(governor.signer).updateRewardEndTime()
-      await expect(tx).to.emit(poolRewards, 'UpdatedRewardEndTime')
-      expect(await poolRewards.rewardEndTime()).to.be.gt(0, 'End time update failed')
-    })
-
-    it('withdrawRemaining:: Should revert if non governor calls', async function () {
-      const tx = poolRewards.connect(user2.signer).withdrawRemaining(user2.address)
-      await expect(tx).to.be.revertedWith('not-authorized')
-    })
-
-    it('withdrawRemaining:: Should revert if rewards still active', async function () {
-      const tx = poolRewards.connect(governor.signer).withdrawRemaining(user2.address)
-      await expect(tx).to.be.revertedWith('rewards-still-active')
-    })
-
-    it('withdrawRemaining:: Should withdraw remaining rewards', async function () {
-      await poolRewards.connect(governor.signer).updateRewardEndTime()
-      await time.increase(31 * 24 * 60 * 60)
-      const tx = poolRewards.connect(governor.signer).withdrawRemaining(user2.address)
-      await expect(tx).to.emit(poolRewards, 'RewardEnded').withArgs(user2.address, 0)
-    })
   })
 
   describe('Reward claim', function () {
