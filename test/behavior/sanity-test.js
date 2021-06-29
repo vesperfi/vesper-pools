@@ -98,11 +98,11 @@ async function shouldDoSanityTest(poolName, collateralName) {
         const tdBefore = await pool.totalDebt()
         await deposit(10, user1)
         for(const strategy of strategies) {
-          strategy.instance.connect(gov.signer).rebalance()
+          await strategy.instance.connect(gov.signer).rebalance()
         }
         await time.increase(3 * 24 * 60 * 60)
         for(const strategy of strategies) {
-          strategy.instance.connect(gov.signer).rebalance()
+          await strategy.instance.connect(gov.signer).rebalance()
         }
         return Promise.all([pool.totalValue(), pool.totalDebt(), pool.balanceOf(user1.address)]).then(function ([
           tvAfter,

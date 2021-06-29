@@ -2,6 +2,28 @@
   "version": "3.0.4",
   "networks": {
     "mainnet": {
+      "VDAI": {
+        "pool": {
+          "proxy": "0x8b3C8626cbfaA71d44bd76C1304214f4858E3639",
+          "implementation": "0x4b8A425d305128b93cEc3f7dBE13f93DCbD807Fe",
+          "poolAccountant": {
+            "proxy": "0x11E21cf12AF6A2188fC37265b6a02DAc27Cc80eD",
+            "implementation": "0x042565D8C21f82a936031816f390FFf3d2760213"
+          }
+        },
+        "poolRewards": {
+          "proxy": "0xB8208c3192D75Cf8C8463E5ABeE802556DC8906d",
+          "implementation": "0x4A539836Db582deD710b3DD974Ae017dDBBD5486"
+        },
+        "strategies": [
+          {
+            "YearnStrategyDAI": "0xEbF13ad8F570ee9C6d6Af18859444f806f6057B8"
+          },
+          {
+            "Crv3PoolStrategyDAI": "0x0C712Fa5BA0DC3FC46caBEf2D373c4F9f5e29cE3"
+          }
+        ]
+      },
       "VUSDC": {
         "pool": "0x777A7850251b7A301cfA1E7b1d8a9c4a9C49Cf85",
         "strategy": [
