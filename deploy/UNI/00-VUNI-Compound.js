@@ -2,7 +2,7 @@
 
 const VUNI = require('../../helper/ethereum/poolConfig').VUNI
 const Address = require('../../helper/ethereum/address')
-
+const vsp = '0x1b40183EFB4Dd766f11bDa7A7c3AD8982e998421'
 const PoolAccountant = 'PoolAccountant'
 const strategyName = 'CompoundStrategyUNI'
 
@@ -14,6 +14,7 @@ const config = {
   interestFee: '1500',
   debtRatio: '9500',
   debtRate: ONE_MILLION.toString(),
+  withdrawFee: 60
 }
 
 const deployFunction = async function ({getNamedAccounts, deployments}) {
@@ -73,7 +74,27 @@ const deployFunction = async function ({getNamedAccounts, deployments}) {
     config.debtRatio,
     config.debtRate
   )
-  // TODO: add withdraw fee
+
+  await execute(VUNI.contractName, {from: deployer, log: true}, 'updateFeeCollector', config.feeCollector)
+  await execute(VUNI.contractName, {from: deployer, log: true}, 'updateWithdrawFee', config.withdrawFee)
+  
+  const rewardsProxy = await deploy('PoolRewards', {
+    from: deployer,
+    log: true,
+    // proxy deployment
+    proxy: {
+      proxyContract: 'OpenZeppelinTransparentProxy',
+      viaAdminContract: 'DefaultProxyAdmin',
+      execute: {
+        init: {
+          methodName: 'initialize',
+          args: [poolProxy.address, vsp],
+        },
+      },
+    },
+  })
+
+  await execute(VUNI.contractName, {from: deployer, log: true}, 'updatePoolRewards', rewardsProxy.address)
 
   // Prepare id of deployment, next deployment will be triggered if id is changed
   const poolVersion = await read(VUNI.contractName, {}, 'VERSION')

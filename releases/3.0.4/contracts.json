@@ -12,37 +12,41 @@
       },
       "VUNI": {
         "pool": {
-          "proxy": "0x7E198A1934FffFf394E942D5BDc44C43dD5C5DD7",
-          "implementation": "0xDA92F9beEB3aEeE9aC0c7F8A67CCb03F0742cF04",
+          "proxy": "0xfF43C327410F960261057ba1DA787eD78B42c257",
+          "implementation": "0x7f0088F5a7b8d29936c1119a6446Ea90F69d5c0f",
           "poolAccountant": {
-            "proxy": "0x45abA68af23dE6dE7dC8963e97E4F6f68De5e94E",
-            "implementation": "0xd87b3B807757B42dBCDd81eF2dbc16e7C025b421"
+            "proxy": "0xA17f64B7d3222D538cE0bF137199AeD373a6088c",
+            "implementation": "0xC88A0a80FA38a828BC697B92A8cB4eA50A93c4B6"
           }
         },
         "poolRewards": {
-          "proxy": "0xF9fBc8021bd0F849C393aa0e3D5E304EB5CC064C",
-          "implementation": "0x4a7Ce5Db8fa84E7aff6ad6E234C6C6b515951d5c"
+          "proxy": "0x17eff816ef9646481C8baC6a50b3c9A67f4D417B",
+          "implementation": "0xe2751fD3FA863be8Bf924296Edb4386618acb121"
         },
         "strategy": [
           {
-            "CompoundStrategyUNI": "0xd1327DaD5e8a94085e8702EaCC7412D69f31D2b6"
+            "CompoundStrategyUNI": "0xdb0950c877Db658E17a8120E89b4f2Ffc4Dd6e05"
           }
         ]
       },
       "VUSDT": {
         "pool": {
-          "proxy": "0x05B143213BC0Bb7e6BB5A9AfD9cA10dF3cC8B4B6",
-          "implementation": "0xaD680B77a8d0bb66e6a0000028168aB147F440B5",
+          "proxy": "0xBA680a906d8f624a5F11fba54D3C672f09F26e47",
+          "implementation": "0x4Da20A6eBF1E2740aedB432471bEDD91A7Bbcf29",
           "poolAccountant": {
-            "proxy": "0x0879F1821E0b41913Ba6fDbd691A11675cE89542",
-            "implementation": "0x64a76D3e194BF36C28B0974a5dEdDE41cA3619b5"
+            "proxy": "0x7C6226A0a3d6E87BB79a301c74004Bd0240e639e",
+            "implementation": "0xdD36620d7B94E001C3beD7fF51320c2DF31117B4"
           }
         },
         "strategy": [
           {
-            "CompoundStrategyUSDT": "0x72A411E5491b379c324666f7c04d80D6f6C07cda"
+            "CompoundStrategyUSDT": "0x07E5247687ba0235dC3400736c3B6B7607Bd7D8E"
           }
-        ]
+        ],
+        "poolRewards": {
+          "proxy": "0xa7205492c0a35A1EBBaAbe25956391012DA0BFAA",
+          "implementation": "0xc1fe9a02fd9caA37Dc3704297aFa0d8501D17749"
+        }
       }
     }
   }
