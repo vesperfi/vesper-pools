@@ -8,7 +8,7 @@ import "../../interfaces/vesper/IVesperPool.sol";
 import "../Strategy.sol";
 import "./Crv3PoolMgr.sol";
 
-/// @title This strategy will deposit collateral token in Compound and earn interest.
+/// @title This strategy will deposit collateral token in Curve 3Pool and earn interest.
 abstract contract Crv3PoolStrategy is Crv3PoolMgr, Strategy {
     using SafeERC20 for IERC20;
 
@@ -47,7 +47,7 @@ abstract contract Crv3PoolStrategy is Crv3PoolMgr, Strategy {
 
     function _setupOracles() internal {
         oracles.push(swapManager.createOrUpdateOracle(CRV, WETH, ORACLE_PERIOD, 0));
-        for (uint256 i = 0; i < COIN_ADDRS.length; i++) {
+        for (uint256 i = 0; i < N; i++) {
             oracles.push(swapManager.createOrUpdateOracle(COIN_ADDRS[i], WETH, ORACLE_PERIOD, 0));
         }
     }
@@ -76,7 +76,7 @@ abstract contract Crv3PoolStrategy is Crv3PoolMgr, Strategy {
         // otherwise, calculate a rate and store it.
         uint256 lowest;
         uint256 highest;
-        for (uint256 i = 0; i < COIN_ADDRS.length; i++) {
+        for (uint256 i = 0; i < N; i++) {
             // get the rate for $1
             (uint256 rate, bool isValid) = _consultOracle(COIN_ADDRS[i], WETH, 10**DECIMALS[i]);
             if (isValid) {
@@ -137,15 +137,15 @@ abstract contract Crv3PoolStrategy is Crv3PoolMgr, Strategy {
         collateralToken.safeTransfer(pool, _amount);
     }
 
-    function _unstakeAndWithdrawAsCollateral(uint256 _amount) internal returns (uint256) {
+    function _unstakeAndWithdrawAsCollateral(uint256 _amount) internal returns (uint256 toWithdraw) {
         if (_amount == 0) return 0;
-        (uint256 lpToWithdraw, uint256 unstakeAmt) = calcWithdrawLpAs(_amount, collIdx);
+        uint256 i = collIdx;
+        (uint256 lpToWithdraw, uint256 unstakeAmt) = calcWithdrawLpAs(_amount, i);
         _unstakeLpFromGauge(unstakeAmt);
         uint256 minAmtOut = (convertFrom18(_minimumLpPrice(_getSafeUsdRate())) * lpToWithdraw) / 1e18;
-        _withdrawAsFromCrvPool(lpToWithdraw, minAmtOut, collIdx);
-        uint256 toWithdraw = collateralToken.balanceOf(address(this));
+        _withdrawAsFromCrvPool(lpToWithdraw, minAmtOut, i);
+        toWithdraw = collateralToken.balanceOf(address(this));
         if (toWithdraw > _amount) toWithdraw = _amount;
-        return toWithdraw;
     }
 
     /**
