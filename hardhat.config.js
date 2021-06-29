@@ -8,8 +8,6 @@ require('hardhat-gas-reporter')
 require('hardhat-contract-sizer')
 require('dotenv').config()
 
-const gasPrice = 55000000000
-
 module.exports = {
   defaultNetwork: 'hardhat',
   networks: {
@@ -30,8 +28,7 @@ module.exports = {
     mainnet: {
       url: process.env.NODE_URL,
       chainId: 1,
-      gas: 6700000,
-      gasPrice,
+      gas: 6700000
     }
   },
   paths: {
