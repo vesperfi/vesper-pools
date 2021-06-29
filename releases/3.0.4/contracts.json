@@ -23,7 +23,7 @@
           "proxy": "0x17eff816ef9646481C8baC6a50b3c9A67f4D417B",
           "implementation": "0xe2751fD3FA863be8Bf924296Edb4386618acb121"
         },
-        "strategy": [
+        "strategies": [
           {
             "CompoundStrategyUNI": "0xdb0950c877Db658E17a8120E89b4f2Ffc4Dd6e05"
           }
@@ -38,7 +38,7 @@
             "implementation": "0xdD36620d7B94E001C3beD7fF51320c2DF31117B4"
           }
         },
-        "strategy": [
+        "strategies": [
           {
             "CompoundStrategyUSDT": "0x07E5247687ba0235dC3400736c3B6B7607Bd7D8E"
           }
