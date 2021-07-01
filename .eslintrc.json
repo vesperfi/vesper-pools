@@ -16,15 +16,18 @@
       "rules": {
         "mocha/no-top-level-hooks": "off",
         "mocha/no-hooks-for-single-case": "off",
-        "mocha/no-exports":"off",
-        "mocha/no-setup-in-describe":"off"
+        "mocha/no-exports": "off",
+        "mocha/no-setup-in-describe": "off"
       }
     },
     {
-      "files": ["hardhat*"],
+      "files": ["hardhat*", "tasks/*"],
       "globals": {
-        "ethers":false,
-        "task":false
+        "ethers": false,
+        "hre": false,
+        "run": false,
+        "task": false,
+        "types": false
       }
     }
   ],
