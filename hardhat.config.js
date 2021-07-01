@@ -5,18 +5,18 @@ require('solidity-coverage')
 require('hardhat-deploy')
 require('hardhat-log-remover')
 require('hardhat-gas-reporter')
-require('hardhat-contract-sizer')
 require('dotenv').config()
+require('./tasks/deploy-pool')
+
+if (process.env.RUN_CONTRACT_SIZER === 'true') {
+  require('hardhat-contract-sizer')
+}
 
 module.exports = {
   defaultNetwork: 'hardhat',
   networks: {
     localhost: {
       saveDeployments: true,
-      forking: {
-        url: process.env.NODE_URL,
-        blockNumber: process.env.BLOCK_NUMBER ? parseInt(process.env.BLOCK_NUMBER) : undefined,
-      }
     },
     hardhat: {
       forking: {
@@ -28,8 +28,7 @@ module.exports = {
     mainnet: {
       url: process.env.NODE_URL,
       chainId: 1,
-      gas: 6700000
-    }
+    },
   },
   paths: {
     deployments: 'deployments',
@@ -40,6 +39,9 @@ module.exports = {
   contractSizer: {
     alphaSort: true,
     runOnCompile: true,
+  },
+  gasReporter: {
+    enabled: process.env.REPORT_GAS === 'true',
   },
   solidity: {
     version: '0.8.3',
