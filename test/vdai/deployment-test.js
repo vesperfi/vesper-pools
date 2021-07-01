@@ -6,8 +6,8 @@ const {BigNumber: BN} = require('ethers')
 const DECIMAL18 = BN.from('1000000000000000000')
 const ONE_MILLION = DECIMAL18.mul('1000000')
 const {ethers} = require('hardhat')
-const poolConfig = require('../../helper/ethereum/poolConfig').VUNI
-describe('vUNI Pool', function () {
+const poolConfig = require('../../helper/ethereum/poolConfig').VDAI
+describe('VDAI Pool', function () {
   const interestFee = '1500' // 15%
   const feeCollector = '0x223809E09ec28C28219769C3FF05c790c213152C'
 
@@ -38,5 +38,5 @@ describe('vUNI Pool', function () {
     this.collateralToken = await ethers.getContractAt('TokenLikeTest', collateralTokenAddress)
   })
 
-  shouldDoSanityTest('vUNI', 'UNI')
+  shouldDoSanityTest('vDAI', 'DAI')
 })
