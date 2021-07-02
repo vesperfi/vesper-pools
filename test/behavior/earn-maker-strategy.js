@@ -3,13 +3,13 @@
 const {deposit, executeIfExist, timeTravel, rebalanceStrategy} = require('../utils/poolOps')
 const {expect} = require('chai')
 const {ethers} = require('hardhat')
-const {getUsers, getEvent} = require('../utils/setupHelper')
+const {getUsers, deployContract} = require('../utils/setupHelper')
+const Address = require('../../helper/ethereum/address')
 const {shouldValidateMakerCommonBehaviour} = require('./maker-common')
-
-function shouldBehaveLikeMakerStrategy(strategyIndex) {
-  let pool, strategy, token, accountant
+async function shouldBehaveLikeEarnMakerStrategy(strategyIndex) {
+  let pool, strategy
   let collateralToken, cm
-  let user1, user2
+  let user1, user2, earnDrip
 
   async function updateRate() {
     await executeIfExist(strategy.instance.token.exchangeRateCurrent)
@@ -23,11 +23,23 @@ function shouldBehaveLikeMakerStrategy(strategyIndex) {
     beforeEach(async function () {
       ;[user1, user2] = await getUsers()
       pool = this.pool
-      accountant = this.accountant
       strategy = this.strategies[strategyIndex]
       collateralToken = this.collateralToken
-      token = this.strategies[strategyIndex].token
       cm = strategy.instance.collateralManager
+      // Decimal will be used for amount conversion
+      const vesperEarnDripImpl = await deployContract('VesperEarnDrip', [])
+      // Deploy proxy admin
+      const proxyAdmin = await deployContract('ProxyAdmin', [])
+      const initData = vesperEarnDripImpl.interface.encodeFunctionData('initialize', [pool.address, Address.DAI])
+      // deploy proxy with logic implementation
+      const proxy = await deployContract('TransparentUpgradeableProxy', [
+        vesperEarnDripImpl.address,
+        proxyAdmin.address,
+        initData,
+      ])
+      // Get implementation from proxy
+      earnDrip = await ethers.getContractAt('VesperEarnDrip', proxy.address)
+      await pool.updatePoolRewards(proxy.address)
     })
 
     describe('Earning scenario', function () {
@@ -36,65 +48,48 @@ function shouldBehaveLikeMakerStrategy(strategyIndex) {
         await rebalanceStrategy(strategy)
       })
 
-      it('Should increase pool token on rebalance', async function () {
-        const tokensHere = await pool.tokensHere()
-        // Time travel trigger some earning
-        await timeTravel()
-        await executeIfExist(token.exchangeRateCurrent)
-        await rebalanceStrategy(strategy)
-
-        const tokensHereAfter = await pool.tokensHere()
-        expect(tokensHereAfter).to.be.gt(tokensHere, 'Collateral token in pool should increase')
-      })
-
       describe('Interest fee calculation via Jug Drip', function () {
         it('Should earn interest fee', async function () {
-          const feeBalanceBefore = await pool.balanceOf(strategy.instance.address)
-          const totalSupplyBefore = await pool.totalSupply()
+          const dai = await ethers.getContractAt('ERC20', Address.DAI)
+          const fc = await strategy.instance.feeCollector()
+          const feeBalanceBefore = await dai.balanceOf(fc)
           await deposit(pool, collateralToken, 50, user2)
-
-          await rebalanceStrategy(strategy)
-          await timeTravel()
-          await updateRate()
-
-          const feeBalanceAfter = await pool.balanceOf(strategy.instance.address)
+          await strategy.instance.rebalance()
+          await timeTravel(5 * 24 * 60 * 60, 'compound')
+          await strategy.instance.rebalance()
+          const feeBalanceAfter = await dai.balanceOf(fc)
           expect(feeBalanceAfter).to.be.gt(feeBalanceBefore, 'Fee should increase')
-
-          const totalSupplyAfter = await pool.totalSupply()
-          expect(totalSupplyAfter).to.be.gt(totalSupplyBefore, 'Total supply should increase')
         })
       })
 
       it('Should increase dai balance on rebalance', async function () {
         await deposit(pool, collateralToken, 40, user2)
-        await rebalanceStrategy(strategy)
-        const tokenBalanceBefore = await token.balanceOf(strategy.instance.address)
-        await timeTravel()
-        await updateRate()
-        const txnObj = await rebalanceStrategy(strategy)
-        const event = await getEvent(txnObj, accountant, 'EarningReported')
-        const tokenBalanceAfter = await token.balanceOf(strategy.instance.address)
-        expect(event.profit).to.be.gt(0, 'Should have some profit')
-        expect(event.loss).to.be.equal(0, 'Should have no loss')
+        await strategy.instance.rebalance()
+        const dai = await ethers.getContractAt('ERC20', Address.DAI)
+        const tokenBalanceBefore = await dai.balanceOf(earnDrip.address)
+        await timeTravel(10 * 24 * 60 * 60, 'compound')
+        await strategy.instance.rebalance()
+        const tokenBalanceAfter = await dai.balanceOf(earnDrip.address)
         expect(tokenBalanceAfter).to.be.gt(tokenBalanceBefore, 'Should increase dai balance in aave maker strategy')
+        await timeTravel()
+        const withdrawAmount = await pool.balanceOf(user2.address)
+        await pool.connect(user2.signer).withdrawETH(withdrawAmount)
+        const earnedDai = await dai.balanceOf(user2.address)
+        expect(earnedDai).to.be.gt(0, 'No dai earned')
       })
 
       it('Should increase vault debt on rebalance', async function () {
         await deposit(pool, collateralToken, 50, user2)
-        await rebalanceStrategy(strategy)
+        await strategy.instance.rebalance()
         const daiDebtBefore = await cm.getVaultDebt(strategy.instance.address)
         await timeTravel()
         await updateRate()
-        await rebalanceStrategy(strategy)
+        await strategy.instance.rebalance()
         const daiDebtAfter = await cm.getVaultDebt(strategy.instance.address)
         expect(daiDebtAfter).to.be.gt(daiDebtBefore, 'Should increase vault debt on rebalance')
-      })
-
-      it('Should report loss in rebalance in underwater situation', async function () {
-        // TODO
       })
     })
   })
 }
 
-module.exports = {shouldBehaveLikeMakerStrategy}
+module.exports = {shouldBehaveLikeEarnMakerStrategy}
