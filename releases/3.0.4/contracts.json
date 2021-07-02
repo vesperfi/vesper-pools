@@ -2,7 +2,7 @@
   "version": "3.0.4",
   "networks": {
     "mainnet": {
-      "VDAI": {
+      "vdai": {
         "pool": {
           "proxy": "0x8b3C8626cbfaA71d44bd76C1304214f4858E3639",
           "implementation": "0x4b8A425d305128b93cEc3f7dBE13f93DCbD807Fe",
@@ -15,24 +15,12 @@
           "proxy": "0xB8208c3192D75Cf8C8463E5ABeE802556DC8906d",
           "implementation": "0x4A539836Db582deD710b3DD974Ae017dDBBD5486"
         },
-        "strategies": [
-          {
-            "YearnStrategyDAI": "0xEbF13ad8F570ee9C6d6Af18859444f806f6057B8"
-          },
-          {
-            "Crv3PoolStrategyDAI": "0x0C712Fa5BA0DC3FC46caBEf2D373c4F9f5e29cE3"
-          }
-        ]
+        "strategies": {
+          "Crv3PoolStrategyDAI": "0x0C712Fa5BA0DC3FC46caBEf2D373c4F9f5e29cE3",
+          "YearnStrategyDAI": "0xEbF13ad8F570ee9C6d6Af18859444f806f6057B8"
+        }
       },
-      "VUSDC": {
-        "pool": "0x777A7850251b7A301cfA1E7b1d8a9c4a9C49Cf85",
-        "strategy": [
-          {
-            "AaveStrategyUSDC": "0x856678bA7e5E57642b71af14425af4cBe9830F0f"
-          }
-        ]
-      },
-      "VUNI": {
+      "vuni": {
         "pool": {
           "proxy": "0xfF43C327410F960261057ba1DA787eD78B42c257",
           "implementation": "0x7f0088F5a7b8d29936c1119a6446Ea90F69d5c0f",
@@ -45,13 +33,17 @@
           "proxy": "0x17eff816ef9646481C8baC6a50b3c9A67f4D417B",
           "implementation": "0xe2751fD3FA863be8Bf924296Edb4386618acb121"
         },
-        "strategies": [
-          {
-            "CompoundStrategyUNI": "0xdb0950c877Db658E17a8120E89b4f2Ffc4Dd6e05"
-          }
-        ]
+        "strategies": {
+          "CompoundStrategyUNI": "0xdb0950c877Db658E17a8120E89b4f2Ffc4Dd6e05"
+        }
       },
-      "VUSDT": {
+      "vusdc": {
+        "pool": "0x777A7850251b7A301cfA1E7b1d8a9c4a9C49Cf85",
+        "strategy": {
+          "AaveStrategyUSDC": "0x856678bA7e5E57642b71af14425af4cBe9830F0f"
+        }
+      },
+      "vusdt": {
         "pool": {
           "proxy": "0xBA680a906d8f624a5F11fba54D3C672f09F26e47",
           "implementation": "0x4Da20A6eBF1E2740aedB432471bEDD91A7Bbcf29",
@@ -60,14 +52,12 @@
             "implementation": "0xdD36620d7B94E001C3beD7fF51320c2DF31117B4"
           }
         },
-        "strategies": [
-          {
-            "CompoundStrategyUSDT": "0x07E5247687ba0235dC3400736c3B6B7607Bd7D8E"
-          }
-        ],
         "poolRewards": {
           "proxy": "0xa7205492c0a35A1EBBaAbe25956391012DA0BFAA",
           "implementation": "0xc1fe9a02fd9caA37Dc3704297aFa0d8501D17749"
+        },
+        "strategies": {
+          "CompoundStrategyUSDT": "0x07E5247687ba0235dC3400736c3B6B7607Bd7D8E"
         }
       }
     }

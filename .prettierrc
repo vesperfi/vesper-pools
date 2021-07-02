@@ -5,6 +5,7 @@
       "files": [
         "test/*.js",
         "test/**/*.js",
+        "tasks/*.js",
         "*.js"
       ],
       "options": {
