@@ -6,6 +6,7 @@ require('hardhat-deploy')
 require('hardhat-log-remover')
 require('hardhat-gas-reporter')
 require('dotenv').config()
+require('./tasks/create-release')
 require('./tasks/deploy-pool')
 
 if (process.env.RUN_CONTRACT_SIZER === 'true') {

@@ -6,7 +6,7 @@ const vsp = '0x1b40183EFB4Dd766f11bDa7A7c3AD8982e998421'
 const PoolAccountant = 'PoolAccountant'
 const strategyName = 'CompoundStrategyUNI'
 
-const { BigNumber } = require('ethers')
+const {BigNumber} = require('ethers')
 const DECIMAL18 = BigNumber.from('1000000000000000000')
 const ONE_MILLION = DECIMAL18.mul('1000000')
 const config = {
@@ -14,12 +14,12 @@ const config = {
   interestFee: '1500',
   debtRatio: '9500',
   debtRate: ONE_MILLION.toString(),
-  withdrawFee: 60
+  withdrawFee: 60,
 }
 
-const deployFunction = async function ({ getNamedAccounts, deployments }) {
-  const { deploy, execute, read } = deployments
-  const { deployer } = await getNamedAccounts()
+const deployFunction = async function ({getNamedAccounts, deployments}) {
+  const {deploy, execute, read} = deployments
+  const {deployer} = await getNamedAccounts()
 
   // Deploy PoolAccountant. This call will deploy ProxyAdmin, proxy and PoolAccountant
   const accountantProxy = await deploy(PoolAccountant, {
@@ -50,7 +50,7 @@ const deployFunction = async function ({ getNamedAccounts, deployments }) {
 
   // Initialize PoolAccountant with pool proxy address
   if ((await read(PoolAccountant, {}, 'pool')) === Address.ZERO) {
-    await execute(PoolAccountant, { from: deployer, log: true }, 'init', poolProxy.address)
+    await execute(PoolAccountant, {from: deployer, log: true}, 'init', poolProxy.address)
   }
 
   // Deploy strategy for pool
@@ -60,14 +60,14 @@ const deployFunction = async function ({ getNamedAccounts, deployments }) {
     args: [poolProxy.address, Address.SWAP_MANAGER],
   })
 
-  await execute(strategyName, { from: deployer, log: true }, 'init', Address.ADDRESS_LIST_FACTORY)
-  await execute(strategyName, { from: deployer, log: true }, 'approveToken')
-  await execute(strategyName, { from: deployer, log: true }, 'updateFeeCollector', config.feeCollector)
+  await execute(strategyName, {from: deployer, log: true}, 'init', Address.ADDRESS_LIST_FACTORY)
+  await execute(strategyName, {from: deployer, log: true}, 'approveToken')
+  await execute(strategyName, {from: deployer, log: true}, 'updateFeeCollector', config.feeCollector)
 
   // Add strategy in pool accountant
   await execute(
     PoolAccountant,
-    { from: deployer, log: true },
+    {from: deployer, log: true},
     'addStrategy',
     vUNIStrategy.address,
     config.interestFee,
@@ -75,8 +75,8 @@ const deployFunction = async function ({ getNamedAccounts, deployments }) {
     config.debtRate
   )
 
-  await execute(VUNI.contractName, { from: deployer, log: true }, 'updateFeeCollector', config.feeCollector)
-  await execute(VUNI.contractName, { from: deployer, log: true }, 'updateWithdrawFee', config.withdrawFee)
+  await execute(VUNI.contractName, {from: deployer, log: true}, 'updateFeeCollector', config.feeCollector)
+  await execute(VUNI.contractName, {from: deployer, log: true}, 'updateWithdrawFee', config.withdrawFee)
 
   const rewardsProxy = await deploy('PoolRewards', {
     from: deployer,
@@ -94,7 +94,7 @@ const deployFunction = async function ({ getNamedAccounts, deployments }) {
     },
   })
 
-  await execute(VUNI.contractName, { from: deployer, log: true }, 'updatePoolRewards', rewardsProxy.address)
+  await execute(VUNI.contractName, {from: deployer, log: true}, 'updatePoolRewards', rewardsProxy.address)
 
   // Prepare id of deployment, next deployment will be triggered if id is changed
   const poolVersion = await read(VUNI.contractName, {}, 'VERSION')
