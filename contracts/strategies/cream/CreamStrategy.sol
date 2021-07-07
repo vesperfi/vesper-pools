@@ -31,8 +31,8 @@ abstract contract CreamStrategy is CompoundStrategy {
 
     /// @notice Approve all required tokens
     function _approveToken(uint256 _amount) internal override {
-        collateralToken.approve(pool, _amount);
-        collateralToken.approve(address(cToken), _amount);
+        collateralToken.safeApprove(pool, _amount);
+        collateralToken.safeApprove(address(cToken), _amount);
     }
 
     // solhint-disable-next-line
