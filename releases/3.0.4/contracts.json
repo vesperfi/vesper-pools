@@ -2,24 +2,7 @@
   "version": "3.0.4",
   "networks": {
     "mainnet": {
-      "vdai": {
-        "pool": {
-          "proxy": "0x8b3C8626cbfaA71d44bd76C1304214f4858E3639",
-          "implementation": "0x4b8A425d305128b93cEc3f7dBE13f93DCbD807Fe",
-          "poolAccountant": {
-            "proxy": "0x11E21cf12AF6A2188fC37265b6a02DAc27Cc80eD",
-            "implementation": "0x042565D8C21f82a936031816f390FFf3d2760213"
-          }
-        },
-        "poolRewards": {
-          "proxy": "0xB8208c3192D75Cf8C8463E5ABeE802556DC8906d",
-          "implementation": "0x4A539836Db582deD710b3DD974Ae017dDBBD5486"
-        },
-        "strategies": {
-          "Crv3PoolStrategyDAI": "0x0C712Fa5BA0DC3FC46caBEf2D373c4F9f5e29cE3",
-          "YearnStrategyDAI": "0xEbF13ad8F570ee9C6d6Af18859444f806f6057B8"
-        }
-      },
+      "defaultProxyAdmin": "0x19A02f3512BdF78114B3c50f7d22a34b1B2798cA",
       "vuni": {
         "pool": {
           "proxy": "0xfF43C327410F960261057ba1DA787eD78B42c257",
@@ -58,6 +41,24 @@
         },
         "strategies": {
           "CompoundStrategyUSDT": "0x07E5247687ba0235dC3400736c3B6B7607Bd7D8E"
+        }
+      },
+      "vadai": {
+        "pool": {
+          "proxy": "0x0538C8bAc84E95A9dF8aC10Aad17DbE81b9E36ee",
+          "implementation": "0x479DFA0612Ea457235CdeEFcDea4E3FF072778ca",
+          "poolAccountant": {
+            "proxy": "0x2337c59180357cE1d771Da2B2dF56A91e7c442c0",
+            "implementation": "0x804Cd69439608985439fBb559D1B5109907bC7eD"
+          }
+        },
+        "poolRewards": {
+          "proxy": "0x4279cc1ACe3C89eea54fA49df11ee46E34c01106",
+          "implementation": "0xE82cEC55C0aD923195a523a6953a0dAD432E7A9f"
+        },
+        "strategies": {
+          "Crv3PoolStrategyDAI": "0x656636A157F29bA5008F398FA83A350f1be1dB6f",
+          "YearnStrategyDAI": "0xcc17e24559757Eb161017626c2C85f884Cdab267"
         }
       }
     }
