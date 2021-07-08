@@ -335,6 +335,8 @@ contract PoolAccountant is Initializable, PoolAccountantStorageV1, Context {
      * @param _decreaseBy Amount by which strategy debt will be decreased
      */
     function decreaseDebt(address _strategy, uint256 _decreaseBy) external onlyPool {
+        // A strategy may send more than its debt. This should never fail
+        _decreaseBy = _min(strategy[_strategy].totalDebt, _decreaseBy);
         strategy[_strategy].totalDebt -= _decreaseBy;
         totalDebt -= _decreaseBy;
     }
