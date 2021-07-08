@@ -24,6 +24,7 @@ abstract contract MakerStrategy is Strategy {
         address _receiptToken,
         bytes32 _collateralType
     ) Strategy(_pool, _swapManager, _receiptToken) {
+        require(_cm != address(0), "cm-address-is-zero");
         collateralType = _collateralType;
         cm = ICollateralManager(_cm);
     }
@@ -216,6 +217,7 @@ abstract contract MakerStrategy is Strategy {
                 block.timestamp
             );
             cm.payback(IERC20(DAI).balanceOf(address(this)));
+            IVesperPool(pool).reportLoss(_daiNeeded);
         }
     }
 
