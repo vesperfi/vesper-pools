@@ -61,11 +61,15 @@ contract PoolRewards is Initializable, IPoolRewards, ReentrancyGuard, PoolReward
      * @dev Notify that reward is added.
      * Also updates reward rate and reward earning period.
      */
-    function notifyRewardAmount(uint256 rewardAmount, uint256 _rewardDuration) external override {
-        _updateReward(address(0));
+    function notifyRewardAmount(uint256 rewardAmount, uint256 _rewardDuration) external virtual override {
         require(msg.sender == IVesperPool(pool).governor(), "not-authorized");
+        _notifyRewardAmount(rewardAmount, _rewardDuration);
+    }
+
+    function _notifyRewardAmount(uint256 rewardAmount, uint256 _rewardDuration) internal virtual {
         require(address(rewardToken) != address(0), "rewards-token-not-set");
         require(_rewardDuration > 0, "incorrect-reward-duration");
+        _updateReward(address(0));
         if (block.timestamp >= periodFinish) {
             rewardRate = rewardAmount / _rewardDuration;
         } else {

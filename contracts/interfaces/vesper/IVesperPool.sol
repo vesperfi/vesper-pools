@@ -23,6 +23,8 @@ interface IVesperPool is IERC20 {
         bytes32
     ) external;
 
+    function poolRewards() external returns (address);
+
     function reportEarning(
         uint256 _profit,
         uint256 _loss,
@@ -50,6 +52,20 @@ interface IVesperPool is IERC20 {
     function feeCollector() external view returns (address);
 
     function pricePerShare() external view returns (uint256);
+
+    function strategy(address _strategy)
+        external
+        view
+        returns (
+            bool _active,
+            uint256 _interestFee,
+            uint256 _debtRate,
+            uint256 _lastRebalance,
+            uint256 _totalDebt,
+            uint256 _totalLoss,
+            uint256 _totalProfit,
+            uint256 _debtRatio
+        );
 
     function stopEverything() external view returns (bool);
 

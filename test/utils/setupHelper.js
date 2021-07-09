@@ -4,10 +4,11 @@ const hre = require('hardhat')
 const ethers = hre.ethers
 const StrategyType = require('../utils/strategyTypes')
 
-const mcdEthJoin = '0x2F0b23f53734252Bda2277357e97e1517d6B042A'
+const mcdEthAJoin = '0x2F0b23f53734252Bda2277357e97e1517d6B042A'
+const mcdEthCJoin = '0xF04a5cC80B1E94C69B48f5ee68a08CD2F09A7c3E'
 const mcdWbtcJoin = '0xBF72Da2Bd84c5170618Fbe5914B0ECA9638d5eb5'
 const mcdLinkJoin = '0xdFccAf8fDbD2F4805C174f856a317765B49E4a50'
-const gemJoins = [mcdEthJoin, mcdWbtcJoin, mcdLinkJoin]
+const gemJoins = [mcdEthAJoin, mcdWbtcJoin, mcdLinkJoin, mcdEthCJoin]
 
 // Contract names
 const IVesperPool = 'IVesperPoolTest'
@@ -115,7 +116,11 @@ async function createVesperMakerStrategy(poolAddress, strategyName, options) {
 async function createStrategy(strategy, poolAddress, options = {}) {
   const strategyType = strategy.type
   let instance
-  if (strategyType === StrategyType.AAVE_MAKER || strategyType === StrategyType.COMPOUND_MAKER) {
+  if (
+    strategyType === StrategyType.EARN_MAKER ||
+    strategyType === StrategyType.AAVE_MAKER ||
+    strategyType === StrategyType.COMPOUND_MAKER
+  ) {
     instance = await createMakerStrategy(poolAddress, strategy.name, options)
   } else if (strategyType === StrategyType.VESPER_MAKER) {
     instance = await createVesperMakerStrategy(poolAddress, strategy.name, options)
