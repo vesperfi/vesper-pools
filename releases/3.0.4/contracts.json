@@ -61,6 +61,22 @@
           "YearnStrategyDAI": "0xcc17e24559757Eb161017626c2C85f884Cdab267"
         }
       }
+    },
+    "polygon": {
+      "defaultProxyAdmin": "0x768159FF4086dF9214e1dd62778A53F210609200",
+      "vusdc": {
+        "pool": {
+          "proxy": "0xF8ea0eE6818C6CF798a1b208139f6b56563F6067",
+          "implementation": "0x75317F66593E7FE4DbdC5828D386351c8A242210",
+          "poolAccountant": {
+            "proxy": "0x334fA95235Ff746AD8f7CD93C9dD4021D14cABD7",
+            "implementation": "0xB2109e9b7365Bfe6d6A1192D4A52fb23De85386F"
+          }
+        },
+        "strategies": {
+          "AaveStrategyPolygonUSDC": "0x961575De98664eFD828a6AEa0f9cC8A5CD840494"
+        }
+      }
     }
   }
 }
