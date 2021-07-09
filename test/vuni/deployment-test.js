@@ -12,18 +12,17 @@ describe('vUNI Pool', function () {
   const feeCollector = '0x223809E09ec28C28219769C3FF05c790c213152C'
 
   beforeEach(async function () {
-    const poolName = poolConfig.poolParams[1].toUpperCase()
+    const poolName = poolConfig.poolParams[1].toLowerCase()
     this.pool = await ethers.getContractAt(poolConfig.contractName, contracts[poolName].pool.proxy)
-    const _strategies = contracts[poolName].strategies
+    const _strategies = Object.keys(contracts[poolName].strategies)
     this.strategies = []
     for (const _strategy of _strategies) {
-      const strategyName = Object.keys(_strategy)[0]
-      const strategyAddress = Object.values(_strategy)[0]
-      const instance = await ethers.getContractAt(strategyName, strategyAddress)
+      const address = contracts[poolName].strategies[_strategy]
+      const instance = await ethers.getContractAt(_strategy, address)
       const strat = {
         instance,
         feeCollector,
-        name: strategyName,
+        name: _strategy,
         config: {interestFee, debtRatio: 9500, debtRate: ONE_MILLION},
       }
       const strategyTokenAddress = await instance.token()
