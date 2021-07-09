@@ -41,4 +41,29 @@ Coverage for one file
 ```
 npm run coverage -- --testfiles "<<filename>>"
 ```
+## Deploy
 
+Deployment will be done via custom `hardhat task deploy-pool` which behind the scene uses deploy scripts created using `hardhat-deploy`
+### Usage
+* Help
+   ```bash
+   npx hardhat help deploy-pool
+   ```
+* Deploy VDAI pool
+  ```bash
+   npm run deploy -- --pool VDAI --network localhost
+   or
+   npx hardhat deploy-pool --pool VDAI --network localhost
+  ```
+
+* Deploy VDAI pool with release (preferred)
+  
+  ```bash
+   npm run deploy -- --pool VDAI --network localhost --release 3.0.5
+  ```
+  > It will create `contracts.json` file at `/releases/3.0.5`
+
+* Passing any `hardhat-deploy` param
+  ```bash
+   npm run deploy -- --pool VDAI --network localhost --release 3.0.5 -- deploy-params '{"tags": "VDAI", gasprice: "25000000000"}'
+  ```

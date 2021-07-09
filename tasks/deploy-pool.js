@@ -7,15 +7,36 @@ const fs = require('fs')
 /* eslint-disable no-param-reassign */
 task('deploy-pool', 'Deploy vesper pool')
   .addParam('pool', 'Vesper pool name')
-  .addOptionalParam('release', 'Vesper release semantic version, i.e 1.2.3')
-  .addOptionalParam('tags', 'tag of deploy scripts to execute, separated by commas. Default to pool name')
-  .setAction(async function ({pool, release, tags}) {
-    if (!tags) {
-      tags = pool
+  .addOptionalParam('release', 'Vesper release semantic version. It will create release file under /releases directory')
+  .addOptionalParam(
+    'deployParams',
+    `any param passed inside deployParams object will be passed to hardhat-deploy
+  -----------------------------------------------------------------------------------------
+  deploy-scripts      override deploy script folder path 
+  export              export current network deployments 
+  export-all          export all deployments into one file 
+  gasprice            gas price to use for transactions 
+  no-compile          disable pre compilation 
+  no-impersonation    do not impersonate unknown accounts 
+  reset               whether to delete deployments files first 
+  silent              whether to remove log 
+  tags                specify which deploy script to execute via tags, separated by commas 
+  watch               redeploy on every change of contract or deploy script 
+  write               whether to write deployments to file
+  -----------------------------------------------------------------------------------------
+  `
+  )
+  .setAction(async function ({pool, release, deployParams = {}}) {
+    if (typeof deployParams === 'string') {
+      deployParams = JSON.parse(deployParams)
+    }
+
+    if (!deployParams.tags) {
+      deployParams.tags = pool
     }
     const network = hre.network.name
     const networkDir = `./deployments/${network}`
-    console.log(`Deploying ${pool} on ${network} with tags ${tags}`)
+    console.log(`Deploying ${pool} on ${network} with deployParams`, deployParams)
     pool = pool.toLowerCase()
     const poolDir = `${networkDir}/${pool}`
 
@@ -27,11 +48,8 @@ task('deploy-pool', 'Deploy vesper pool')
       await copy(poolDir, networkDir, {filter: copyFilter})
     }
 
-    try {
-      await run('deploy', {tags})
-    } catch (e) {
-      console.log('Error while deploying', tags, e)
-    }
+    await run('deploy', {...deployParams})
+
     // Copy files from network directory to pool specific directory after deployment
     // Note: This operation will overwrite files. Anything start with dot(.) will not be copied
     await copy(networkDir, poolDir, {overwrite: true, filter: copyFilter})
