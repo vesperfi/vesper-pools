@@ -35,7 +35,7 @@ module.exports = {
       url: process.env.NODE_URL,
       chainId: 137,
       gas: 11700000,
-      accounts: [process.env.PRIVATE_KEY]
+      // accounts: [process.env.PRIVATE_KEY]
     }
   },
   paths: {
