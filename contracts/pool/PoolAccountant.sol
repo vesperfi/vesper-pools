@@ -34,7 +34,7 @@ contract PoolAccountantStorageV1 {
 contract PoolAccountant is Initializable, PoolAccountantStorageV1, Context {
     using SafeERC20 for IERC20;
 
-    string public constant VERSION = "3.0.4";
+    string public constant VERSION = "3.0.5";
     uint256 public constant MAX_BPS = 10_000;
 
     event EarningReported(
@@ -135,6 +135,7 @@ contract PoolAccountant is Initializable, PoolAccountantStorageV1, Context {
         address _strategy = strategies[_index];
         require(strategy[_strategy].active, Errors.STRATEGY_IS_NOT_ACTIVE);
         require(strategy[_strategy].totalDebt == 0, Errors.TOTAL_DEBT_IS_NOT_ZERO);
+        totalDebtRatio = totalDebtRatio - strategy[_strategy].debtRatio;
         delete strategy[_strategy];
         strategies[_index] = strategies[strategies.length - 1];
         strategies.pop();
