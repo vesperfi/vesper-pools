@@ -7,7 +7,7 @@ import "./EarnAaveMakerStrategy.sol";
 //solhint-disable no-empty-blocks
 contract EarnAaveMakerStrategyETH is EarnAaveMakerStrategy {
     string public constant NAME = "Earn-Aave-Maker-Strategy-ETH";
-    string public constant VERSION = "3.0.0";
+    string public constant VERSION = "3.0.5";
 
     // aDAI = 0x028171bCA77440897B824Ca71D1c56caC55b68A3
     constructor(

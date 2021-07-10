@@ -11,12 +11,19 @@ contract VETH is VPoolBase {
     TokenLike public constant WETH = TokenLike(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);
 
     // WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2
-    constructor() VPoolBase("vETH Pool", "vETH", 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2) {}
+    constructor(string memory _name, string memory _symbol)
+        VPoolBase(_name, _symbol, 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2)
+    {}
 
-    function initialize(address _poolAccountant, address _addressListFactory) external initializer {
+    function initialize(
+        string memory _name,
+        string memory _symbol,
+        address _poolAccountant,
+        address _addressListFactory
+    ) external initializer {
         _initializeBase(
-            "vETH Pool",
-            "vETH",
+            _name,
+            _symbol,
             0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2,
             _poolAccountant,
             _addressListFactory

@@ -11,6 +11,11 @@ function getPoolData(data) {
       proxy: data.VPool,
       implementation: data.VPool_Implementation,
     }
+  } else if (data.VETH) {
+    root.pool = {
+      proxy: data.VETH,
+      implementation: data.VETH_Implementation,
+    }
   }
   if (data.PoolAccountant) {
     // Accountant is part of pool
