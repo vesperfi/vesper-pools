@@ -2,6 +2,7 @@
 const StrategyType = {
   AAVE: 'aave',
   AAVE_V1:'aaveV1',
+  ALPHA_LEND:'alphaLend',
   COMPOUND: 'compound',
   AAVE_MAKER: 'aaveMaker',
   COMPOUND_MAKER: 'compoundMaker',

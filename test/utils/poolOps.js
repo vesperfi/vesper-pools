@@ -96,6 +96,10 @@ async function rebalanceStrategy(strategy) {
     if (strategy.type.includes('yearn')) {
       await harvestYearn(strategy)
     }
+    if (strategy.type.includes('alpha')) {
+      // Alpha SafeBox has a cToken - this method calls exchangeRateCurrent on the cToken
+      await strategy.instance.updateTokenRate()
+    }
     tx = await strategy.instance.rebalance()
   } catch (error) {
     // ignore under water error and give one more try.
@@ -108,11 +112,6 @@ async function rebalanceStrategy(strategy) {
     s = await ethers.getContractAt('IStrategy', s)
     // TODO: do it recursive
     await s.rebalance()
-  }
-  if (strategy.type.includes('curve')) {
-    // If curve, we should rebalance twice (just for tests, because depositing 
-    // will be queued in first rebalance and take effect in second)
-    // tx = await strategy.instance.rebalance()
   }
   return tx
 }

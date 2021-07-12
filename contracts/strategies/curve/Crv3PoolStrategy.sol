@@ -187,10 +187,6 @@ abstract contract Crv3PoolStrategy is Crv3PoolMgr, Strategy {
         if (_payback > _excessDebt) _payback = _excessDebt;
     }
 
-    function _liquidate(uint256 _excessDebt) internal override returns (uint256 _payback) {}
-
-    function _realizeProfit(uint256 _totalDebt) internal override returns (uint256 _profit) {}
-
     function _realizeLoss(uint256 _totalDebt) internal view override returns (uint256 _loss) {
         uint256 _collateralBalance = convertFrom18(estimateFeeImpact(getLpValue(totalLp())));
         if (_collateralBalance < _totalDebt) {
@@ -252,4 +248,11 @@ abstract contract Crv3PoolStrategy is Crv3PoolMgr, Strategy {
             if (depositLoss > _loss) IVesperPool(pool).reportLoss(depositLoss - _loss);
         }
     }
+
+    // Unused
+    /* solhint-disable no-empty-blocks */
+
+    function _liquidate(uint256 _excessDebt) internal override returns (uint256 _payback) {}
+
+    function _realizeProfit(uint256 _totalDebt) internal override returns (uint256 _profit) {}
 }

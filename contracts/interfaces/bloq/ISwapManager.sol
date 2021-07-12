@@ -2,6 +2,8 @@
 
 pragma solidity 0.8.3;
 
+/* solhint-disable func-name-mixedcase */
+
 import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
 
 interface ISwapManager {
