@@ -66,7 +66,7 @@ contract PoolRewards is Initializable, IPoolRewards, ReentrancyGuard, PoolReward
         _notifyRewardAmount(rewardAmount, _rewardDuration);
     }
 
-    function _notifyRewardAmount(uint256 rewardAmount, uint256 _rewardDuration) internal virtual {
+    function _notifyRewardAmount(uint256 rewardAmount, uint256 _rewardDuration) internal {
         require(address(rewardToken) != address(0), "rewards-token-not-set");
         require(_rewardDuration > 0, "incorrect-reward-duration");
         _updateReward(address(0));

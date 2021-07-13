@@ -45,7 +45,7 @@ task('deploy-pool', 'Deploy vesper pool')
 
     // Copy files from pool directory to network directory for deployment
     if (fs.existsSync(poolDir)) {
-      await copy(poolDir, networkDir, {filter: copyFilter})
+      await copy(poolDir, networkDir, {overwrite: true, filter: copyFilter})
     }
 
     await run('deploy', {...deployParams})

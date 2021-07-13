@@ -24,7 +24,7 @@ function prepareConfig(_strategies) {
     const users = await getUsers()
     this.users = users
     await setupVPool(this, {
-      poolConfig: PoolConfig.VETH,
+      poolConfig: PoolConfig.VETHEarn,
       feeCollector: users[7].address,
       strategies: strategies.map((item, i) => ({
         ...item,

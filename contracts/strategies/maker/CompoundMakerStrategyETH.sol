@@ -15,5 +15,5 @@ contract CompoundMakerStrategyETH is CompoundMakerStrategy {
         address _pool,
         address _cm,
         address _swapManager
-    ) CompoundMakerStrategy(_pool, _cm, _swapManager, 0x5d3a536E4D6DbD6114cc1Ead35777bAB948E3643, "ETH-A") {}
+    ) CompoundMakerStrategy(_pool, _cm, _swapManager, 0x5d3a536E4D6DbD6114cc1Ead35777bAB948E3643, "ETH-C") {}
 }
