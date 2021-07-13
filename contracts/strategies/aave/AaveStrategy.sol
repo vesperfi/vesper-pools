@@ -30,18 +30,14 @@ abstract contract AaveStrategy is Strategy, AaveCore {
 
     /**
      * @notice Report total value
-     * @dev aToken and collateral are 1:1 and Aave and StakedAave are 1:1
+     * @dev aToken and collateral are 1:1
      */
     function totalValue() external view virtual override returns (uint256) {
-        address[] memory _assets = new address[](1);
-        _assets[0] = address(aToken);
-        // Get current StakedAave rewards from controller
-        uint256 _totalAave = aaveIncentivesController.getRewardsBalance(_assets, address(this));
-        // StakedAave balance here
-        _totalAave += stkAAVE.balanceOf(address(this));
-        // Aave rewards by staking Aave in StakedAave contract
-        _totalAave += stkAAVE.getTotalRewardsBalance(address(this));
-
+        uint256 _totalAave = _totalAave();
+        if (_totalAave == 0) {
+            // As there is no AAVE balance return aToken balance as totalValue.
+            return aToken.balanceOf(address(this));
+        }
         // Get collateral value of total aave rewards
         (, uint256 _aaveAsCollateral, ) = swapManager.bestOutputFixedInput(AAVE, address(collateralToken), _totalAave);
         // Total value = aave as collateral + aToken balance

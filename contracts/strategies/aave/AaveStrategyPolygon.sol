@@ -25,7 +25,10 @@ abstract contract AaveStrategyPolygon is Strategy {
     ) Strategy(_pool, _swapManager, _receiptToken) {
         require(_receiptToken != address(0), "aToken-address-is-zero");
         aToken = AToken(_receiptToken);
-        aaveIncentivesController = AaveIncentivesController(AToken(_receiptToken).getIncentivesController());
+        // If there is no incentive then below call will fail
+        try AToken(_receiptToken).getIncentivesController() {
+            aaveIncentivesController = AaveIncentivesController(AToken(_receiptToken).getIncentivesController());
+        } catch {} //solhint-disable no-empty-blocks
         aaveLendingPool = AaveLendingPool(aaveAddressesProvider.getLendingPool());
         aaveProtocolDataProvider = AaveProtocolDataProvider(aaveAddressesProvider.getAddress(AAVE_PROVIDER_ID));
     }
@@ -35,6 +38,10 @@ abstract contract AaveStrategyPolygon is Strategy {
      * @dev aToken and collateral are 1:1
      */
     function totalValue() external view virtual override returns (uint256) {
+        if (address(aaveIncentivesController) == address(0)) {
+            // As there is no incentive return aToken balance as totalValue
+            return aToken.balanceOf(address(this));
+        }
         address[] memory _assets = new address[](1);
         _assets[0] = address(aToken);
         uint256 _rewardAccrued = aaveIncentivesController.getRewardsBalance(_assets, address(this));
@@ -91,8 +98,12 @@ abstract contract AaveStrategyPolygon is Strategy {
 
     /**
      * @notice Claim rewards from Aave incentive controller
+     * @dev Return 0 if collateral has no incentive
      */
     function _claimRewards() internal returns (uint256) {
+        if (address(aaveIncentivesController) == address(0)) {
+            return 0;
+        }
         address[] memory _assets = new address[](1);
         _assets[0] = address(aToken);
         aaveIncentivesController.claimRewards(_assets, type(uint256).max, address(this));
