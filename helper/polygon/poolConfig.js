@@ -4,8 +4,10 @@ const Address = require('./address')
 
 const PoolConfig = {
   VDAI: {contractName: 'VPool', poolParams: ['vDAI Pool', 'vDAI', Address.DAI]},
-  VETH: {contractName: 'VETH', poolParams: []},
-  VUSDC: {contractName: 'VPool', poolParams: ['vUSDC Pool', 'vUSDC', Address.USDC]}
+  VUSDC: {contractName: 'VPool', poolParams: ['vUSDC Pool', 'vUSDC', Address.USDC]},
+  VUSDT: {contractName: 'VPool', poolParams: ['vUSDT Pool', 'vUSDT', Address.USDT]},
+  VWETH: {contractName: 'VPool', poolParams: ['vWETH Pool', 'vWETH', Address.WETH]},
+  VWBTC: {contractName: 'VPool', poolParams: ['vWETH Pool', 'vWETH', Address.WBTC]},
 }
 
 module.exports = Object.freeze(PoolConfig)
