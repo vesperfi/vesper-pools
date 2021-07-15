@@ -9,21 +9,21 @@ const DECIMAL18 = BN.from('1000000000000000000')
 const ONE_MILLION = DECIMAL18.mul('1000000')
 
 /* eslint-disable mocha/no-setup-in-describe */
-describe('vDAI Pool', function () {
+describe('vWBTC Pool', function () {
   const interestFee = '1500'
   const strategies = [
     {
-      name: 'AaveStrategyPolygonDAI',
+      name: 'AaveStrategyPolygonWBTC',
       type: StrategyType.AAVE,
       config: { interestFee, debtRatio: 4000, debtRate: ONE_MILLION },
     },
     {
-      name: 'AaveStrategyPolygonDAI',
+      name: 'AaveStrategyPolygonWBTC',
       type: StrategyType.AAVE,
       config: { interestFee, debtRatio: 4000, debtRate: ONE_MILLION },
     }
   ]
   prepareConfig(strategies)
-  shouldBehaveLikePool('vDai', 'DAI')
-  shouldBehaveLikeMultiPool('vDai')
+  shouldBehaveLikePool('vWBTC', 'WBTC')
+  shouldBehaveLikeMultiPool('vWBTC')
 })
