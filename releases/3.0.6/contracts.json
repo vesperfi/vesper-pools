@@ -57,6 +57,7 @@
           "implementation": "0xc1fe9a02fd9caA37Dc3704297aFa0d8501D17749"
         },
         "strategies": {
+          "AaveStrategyUSDT": "0x4c9d61AdB5d8b7B554fa3d1056C65dAAB1158963",
           "CompoundStrategyUSDT": "0x07E5247687ba0235dC3400736c3B6B7607Bd7D8E"
         }
       },
