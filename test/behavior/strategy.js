@@ -13,7 +13,7 @@ const {shouldBehaveLikeCurveStrategy} = require('../behavior/crv-strategy')
 const {shouldBehaveLikeEarnMakerStrategy} = require('../behavior/earn-maker-strategy')
 
 const swapper = require('../utils/tokenSwapper')
-const {deposit, rebalanceStrategy} = require('../utils/poolOps')
+const {deposit, rebalanceStrategy, reset} = require('../utils/poolOps')
 const {advanceBlock} = require('../utils/time')
 const StrategyType = require('../utils/strategyTypes')
 const addressListFactory = hre.address.ADDRESS_LIST_FACTORY
@@ -178,6 +178,7 @@ function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
         await strategy.rebalance()
         await advanceBlock(50)
         expect(await strategy.totalValue()).to.be.gt(totalValueBefore, 'Total value should increase')
+        await reset()
       })
 
       it('Should generate EarningReported event', async function () {

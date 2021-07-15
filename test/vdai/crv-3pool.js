@@ -17,7 +17,7 @@ const USDC = '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'
 const THREE_POOL = '0xbEbc44782C7dB0a1A60Cb6fe97d0b483032FF1C7'
 
 describe('vDAI Pool with Crv3PoolStrategy', function () {
-  let pool, collateralToken, feeCollector, strategy, user1, user2, user3, user4, feeAcct, swapManager, threePool
+  let pool, collateralToken, feeCollector, strategy, user1, user2, user3, user4, feeAcct, threePool
 
   before(async function () {
     const users = await getUsers()
@@ -43,10 +43,8 @@ describe('vDAI Pool with Crv3PoolStrategy', function () {
     collateralToken = this.collateralToken
     strategy = this.strategies[0].instance
     feeCollector = this.feeCollector
-    swapManager = this.swapManager
 
     timeTravel(3600)
-    await swapManager['updateOracles()']()
   })
 
   describe('Pool Tests', function () {
@@ -77,22 +75,6 @@ describe('vDAI Pool with Crv3PoolStrategy', function () {
       await strategy.rebalance()
       const price3 = await pool.pricePerShare()
       expect(price3).to.be.gt(price2, 'Share value should increase (2)')
-    })
-
-    it('Should fail to deposit when there is slippage, but maintain funds', async function () {
-      await deposit(pool, collateralToken, 200, user1)
-      await deposit(pool, collateralToken, 200, user2)
-      await deposit(pool, collateralToken, 200, user3)
-      await deposit(pool, collateralToken, 200, feeAcct)
-      const price1 = await pool.pricePerShare()
-
-      await timeTravel(30 * 24 * 60 * 60)
-      await strategy.rebalance()
-
-      const price2 = await pool.pricePerShare()
-      expect(price2).to.be.equal(price1, 'Share value should not increase')
-      const bal = await collateralToken.balanceOf(strategy.address)
-      expect(bal).to.be.gt(0)
     })
 
     // This doesnt actually test anything, it just makes it easy to estimate APY

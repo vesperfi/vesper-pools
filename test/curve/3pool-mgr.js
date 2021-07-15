@@ -87,7 +87,7 @@ describe('Crv3PoolMgr', function() {
       expect(lpAmt.lpToWithdraw).to.be.gt(0)
       expect(lpAmt.unstakeAmt).to.be.equal(0)
       const rate = await poolManager.minimumLpPrice(ethers.BigNumber.from('1000000000000000000'))
-      const minAmt = await poolManager.estimateFeeImpact(convertFrom18(lpAmt.lpToWithdraw.mul(rate).div(DECIMAL)))
+      const minAmt = convertFrom18(lpAmt.lpToWithdraw.mul(rate).div(DECIMAL)).mul(9990).div(10000)
       await poolManager.withdrawAsFromCrvPool(lpAmt.lpToWithdraw, minAmt, 1)
       const newUSDCBalance = await usdcToken.balanceOf(poolManager.address)
       expect(newUSDCBalance).to.be.gte(usdcNeeded, 'wrong amount withdrawn')

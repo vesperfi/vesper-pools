@@ -22,7 +22,11 @@ abstract contract AaveCore {
     constructor(address _receiptToken) {
         require(_receiptToken != address(0), "aToken-address-is-zero");
         aToken = AToken(_receiptToken);
-        aaveIncentivesController = AaveIncentivesController(AToken(_receiptToken).getIncentivesController());
+        // If there is no AAVE incentive then below call will fail
+        try AToken(_receiptToken).getIncentivesController() {
+            aaveIncentivesController = AaveIncentivesController(AToken(_receiptToken).getIncentivesController());
+        } catch {} //solhint-disable no-empty-blocks
+
         aaveLendingPool = AaveLendingPool(aaveAddressesProvider.getLendingPool());
         aaveProtocolDataProvider = AaveProtocolDataProvider(aaveAddressesProvider.getAddress(AAVE_PROVIDER_ID));
     }
@@ -86,8 +90,12 @@ abstract contract AaveCore {
      * @notice Claim Aave. Also unstake all Aave if favorable condition exits or start cooldown.
      * @dev If we unstake all Aave, we can't start cooldown because it requires StakedAave balance.
      * @dev DO NOT convert 'if else' to 2 'if's as we are reading cooldown state once to save gas.
+     * @dev Not all collateral token has aave incentive
      */
     function _claimAave() internal returns (uint256) {
+        if (address(aaveIncentivesController) == address(0)) {
+            return 0;
+        }
         (uint256 _cooldownStart, uint256 _cooldownEnd, uint256 _unstakeEnd) = cooldownData();
         if (_cooldownStart == 0 || block.timestamp > _unstakeEnd) {
             // claim stkAave when its first rebalance or unstake period passed.
@@ -172,6 +180,26 @@ abstract contract AaveCore {
     /// @dev Check whether given token is reserved or not. Reserved tokens are not allowed to sweep.
     function _isReservedToken(address _token) internal view returns (bool) {
         return _token == address(aToken) || _token == AAVE || _token == address(stkAAVE);
+    }
+
+    /**
+     * @notice Return total AAVE incentive allocated to this address
+     * @dev Aave and StakedAave are 1:1
+     * @dev Not all collateral token has aave incentive
+     */
+    function _totalAave() internal view returns (uint256) {
+        if (address(aaveIncentivesController) == address(0)) {
+            return 0;
+        }
+        address[] memory _assets = new address[](1);
+        _assets[0] = address(aToken);
+        // TotalAave = Get current StakedAave rewards from controller +
+        //             StakedAave balance here +
+        //             Aave rewards by staking Aave in StakedAave contract
+        return
+            aaveIncentivesController.getRewardsBalance(_assets, address(this)) +
+            stkAAVE.balanceOf(address(this)) +
+            stkAAVE.getTotalRewardsBalance(address(this));
     }
 
     /// @notice Returns minimum of 2 given numbers

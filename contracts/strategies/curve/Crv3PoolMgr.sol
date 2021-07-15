@@ -5,7 +5,6 @@ pragma solidity 0.8.3;
 import "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import "./CrvPoolMgrBase.sol";
 import "../../interfaces/curve/IStableSwap3Pool.sol";
-import "../../interfaces/chainlink/IAggregatorV3.sol";
 
 contract Crv3PoolMgr is CrvPoolMgrBase {
     IStableSwap3Pool public constant THREEPOOL = IStableSwap3Pool(0xbEbc44782C7dB0a1A60Cb6fe97d0b483032FF1C7);
@@ -69,14 +68,6 @@ contract Crv3PoolMgr is CrvPoolMgrBase {
     // best estimate (least manipulatable value) to calculate share price
     function getLpValue(uint256 _lpAmount) public view returns (uint256) {
         return (_lpAmount != 0) ? (THREEPOOL.get_virtual_price() * _lpAmount) / 1e18 : 0;
-    }
-
-    function estimateFeeImpact(uint256 _amount) public view returns (uint256) {
-        return (_amount * (uint256(1e10) - estimatedFees())) / (uint256(1e10));
-    }
-
-    function estimatedFees() public view returns (uint256) {
-        return (THREEPOOL.fee() * 4);
     }
 
     function setCheckpoint() external {
