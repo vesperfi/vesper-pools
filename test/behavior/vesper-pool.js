@@ -275,15 +275,15 @@ async function shouldBehaveLikePool(poolName, collateralName) {
         const value1 = await pool.totalValue()
         await rebalance(strategies)
         // Time travel to generate earning
-        await timeTravel(60 * 24 * 60 * 60)
+        await timeTravel(30 * 24 * 60 * 60)
         await rebalance(strategies)
         await rebalance(strategies)
         const value2 = await pool.totalValue()
         expect(value2).to.be.gt(value1, `${poolName} Pool value should increase`)
         // Time travel to generate earning
-        await timeTravel(60 * 24 * 60 * 60)
+        await timeTravel(30 * 24 * 60 * 60)
         await deposit(20, user3)
-        await timeTravel(60 * 24 * 60 * 60)
+        await timeTravel(30 * 24 * 60 * 60)
         await rebalance(strategies)
         const value3 = await pool.totalValue()
         expect(value3).to.be.gt(value2, `${poolName} Pool value should increase`)
@@ -483,7 +483,7 @@ async function shouldBehaveLikePool(poolName, collateralName) {
       it('Pool record correct value of profit and loss', async function () {
         await deposit(70, user2)
         await rebalance(strategies)
-        await timeTravel()
+        await timeTravel(50)
         await rebalance(strategies)
         const strategyParams = await pool.strategy(strategies[0].instance.address)
         const totalProfit = strategyParams._totalProfit

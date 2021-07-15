@@ -16,13 +16,21 @@ abstract contract Crv3PoolStrategy is Crv3PoolMgr, Strategy {
     address[] private oracles;
 
     uint256 public constant ORACLE_PERIOD = 3600; // 1h
+    uint256 public constant ORACLE_ROUTER = 0; // Uniswap V2
     uint256 public immutable collIdx;
     uint256 public usdRate;
     uint256 public usdRateTimestamp;
     bool public depositError;
 
-    uint256 public depositSlippage = 500; // 10000 is 100%
-    event UpdatedDepositSlippage(uint256 oldSlippage, uint256 newSlippage);
+    uint256 public swapSlippage = 100; // 10000 is 100%; 100 is 1%
+    uint256 public crvSlippage = 10; // 10000 is 100%; 10 is 0.1%
+
+    event UpdatedSlippage(
+        uint256 oldSwapSlippage,
+        uint256 newSwapSlippage,
+        uint256 oldCrvSlippage,
+        uint256 newCrvSlippage
+    );
     event DepositFailed(string reason);
 
     constructor(
@@ -38,21 +46,36 @@ abstract contract Crv3PoolStrategy is Crv3PoolMgr, Strategy {
         _setupOracles();
     }
 
-    function updateDepositSlippage(uint256 _newSlippage) external onlyGovernor {
-        require(_newSlippage != depositSlippage, "same-slippage");
-        require(_newSlippage < 10000, "invalid-slippage-value");
-        emit UpdatedDepositSlippage(depositSlippage, _newSlippage);
-        depositSlippage = _newSlippage;
+    function updateSlippage(uint256 _newSwapSlippage, uint256 _newCrvSlippage) external onlyGovernor {
+        require(_newSwapSlippage < 10000 && _newCrvSlippage < 10000, "invalid-slippage-value");
+        emit UpdatedSlippage(swapSlippage, _newSwapSlippage, crvSlippage, _newCrvSlippage);
+        swapSlippage = _newSwapSlippage;
+        crvSlippage - _newCrvSlippage;
     }
 
-    function _setupOracles() internal {
-        oracles.push(swapManager.createOrUpdateOracle(CRV, WETH, ORACLE_PERIOD, 0));
+    /// @dev Check whether given token is reserved or not. Reserved tokens are not allowed to sweep.
+    function isReservedToken(address _token) public view override returns (bool) {
+        return reservedToken[_token];
+    }
+
+    /**
+     * @notice Calculate total value of asset under management
+     * @dev Report total value in collateral token
+     */
+    function totalValue() external view override returns (uint256 _value) {
+        _value =
+            collateralToken.balanceOf(address(this)) +
+            convertFrom18(_calcAmtOutAfterSlippage(getLpValue(totalLp()), crvSlippage));
+    }
+
+    function _setupOracles() internal override {
+        oracles.push(swapManager.createOrUpdateOracle(CRV, WETH, ORACLE_PERIOD, ORACLE_ROUTER));
         for (uint256 i = 0; i < N; i++) {
-            oracles.push(swapManager.createOrUpdateOracle(COIN_ADDRS[i], WETH, ORACLE_PERIOD, 0));
+            oracles.push(swapManager.createOrUpdateOracle(COIN_ADDRS[i], WETH, ORACLE_PERIOD, ORACLE_ROUTER));
         }
     }
 
-    function _estimateSlippage(uint256 _amount, uint256 _slippage) internal pure returns (uint256) {
+    function _calcAmtOutAfterSlippage(uint256 _amount, uint256 _slippage) internal pure returns (uint256) {
         return (_amount * (10000 - _slippage)) / (10000);
     }
 
@@ -62,7 +85,7 @@ abstract contract Crv3PoolStrategy is Crv3PoolMgr, Strategy {
         uint256 _amt
     ) internal returns (uint256, bool) {
         // from, to, amountIn, period, router
-        (uint256 rate, uint256 lastUpdate, ) = swapManager.consult(_from, _to, _amt, ORACLE_PERIOD, 0);
+        (uint256 rate, uint256 lastUpdate, ) = swapManager.consult(_from, _to, _amt, ORACLE_PERIOD, ORACLE_ROUTER);
         // We're looking at a TWAP ORACLE with a 1 hr Period that has been updated within the last hour
         if ((lastUpdate > (block.timestamp - ORACLE_PERIOD)) && (rate != 0)) return (rate, true);
         return (0, false);
@@ -96,11 +119,6 @@ abstract contract Crv3PoolStrategy is Crv3PoolMgr, Strategy {
         return usdRate;
     }
 
-    /// @dev Check whether given token is reserved or not. Reserved tokens are not allowed to sweep.
-    function isReservedToken(address _token) public view override returns (bool) {
-        return reservedToken[_token];
-    }
-
     function _approveToken(uint256 _amount) internal override {
         collateralToken.safeApprove(pool, _amount);
         collateralToken.safeApprove(crvPool, _amount);
@@ -113,19 +131,26 @@ abstract contract Crv3PoolStrategy is Crv3PoolMgr, Strategy {
     function _reinvest() internal override {
         depositError = false;
         uint256 amt = collateralToken.balanceOf(address(this));
+        depositError = !_depositToCurve(amt);
+        _stakeAllLpToGauge();
+    }
+
+    function _depositToCurve(uint256 amt) internal returns (bool) {
         if (amt != 0) {
             uint256[3] memory depositAmounts;
             depositAmounts[collIdx] = amt;
+            uint256 expectedOut =
+                _calcAmtOutAfterSlippage(THREEPOOL.calc_token_amount(depositAmounts, true), crvSlippage);
             uint256 minLpAmount =
-                _estimateSlippage((amt * 1e18) / _minimumLpPrice(_getSafeUsdRate()), depositSlippage) *
-                    10**(18 - DECIMALS[collIdx]);
+                ((amt * _getSafeUsdRate()) / THREEPOOL.get_virtual_price()) * 10**(18 - DECIMALS[collIdx]);
+            if (expectedOut > minLpAmount) minLpAmount = expectedOut;
             // solhint-disable-next-line no-empty-blocks
             try THREEPOOL.add_liquidity(depositAmounts, minLpAmount) {} catch Error(string memory reason) {
-                depositError = true;
                 emit DepositFailed(reason);
+                return false;
             }
-            _stakeAllLpToGauge();
         }
+        return true;
     }
 
     function _withdraw(uint256 _amount) internal override {
@@ -142,18 +167,13 @@ abstract contract Crv3PoolStrategy is Crv3PoolMgr, Strategy {
         uint256 i = collIdx;
         (uint256 lpToWithdraw, uint256 unstakeAmt) = calcWithdrawLpAs(_amount, i);
         _unstakeLpFromGauge(unstakeAmt);
-        uint256 minAmtOut = (convertFrom18(_minimumLpPrice(_getSafeUsdRate())) * lpToWithdraw) / 1e18;
+        uint256 minAmtOut =
+            convertFrom18(
+                (lpToWithdraw * _calcAmtOutAfterSlippage(_minimumLpPrice(_getSafeUsdRate()), crvSlippage)) / 1e18
+            );
         _withdrawAsFromCrvPool(lpToWithdraw, minAmtOut, i);
         toWithdraw = collateralToken.balanceOf(address(this));
         if (toWithdraw > _amount) toWithdraw = _amount;
-    }
-
-    /**
-     * @notice Calculate total value of asset under management
-     * @dev Report total value in collateral token
-     */
-    function totalValue() external view override returns (uint256 _value) {
-        _value = collateralToken.balanceOf(address(this)) + getLpValue(totalLp());
     }
 
     /**
@@ -170,7 +190,11 @@ abstract contract Crv3PoolStrategy is Crv3PoolMgr, Strategy {
         _claimCrv();
         uint256 amt = IERC20(CRV).balanceOf(address(this));
         if (amt != 0) {
-            _safeSwap(CRV, _toToken, amt, 1);
+            (uint256 minWethOut, bool isValid) = _consultOracle(CRV, WETH, amt);
+            (uint256 minAmtOut, bool isValidTwo) = _consultOracle(WETH, address(collateralToken), minWethOut);
+            require(isValid, "stale-crv-oracle");
+            require(isValidTwo, "stale-collateral-oracle");
+            _safeSwap(CRV, _toToken, amt, _calcAmtOutAfterSlippage(minAmtOut, swapSlippage));
         }
     }
 
@@ -180,7 +204,6 @@ abstract contract Crv3PoolStrategy is Crv3PoolMgr, Strategy {
      * @param _extra additional amount to unstake and withdraw, in collateral token
      * @return _payback amount in collateral token. Usually it is equal to excess debt.
      */
-
     function _liquidate(uint256 _excessDebt, uint256 _extra) internal returns (uint256 _payback) {
         _payback = _unstakeAndWithdrawAsCollateral(_excessDebt + _extra);
         // we dont want to return a value greater than we need to
@@ -188,7 +211,7 @@ abstract contract Crv3PoolStrategy is Crv3PoolMgr, Strategy {
     }
 
     function _realizeLoss(uint256 _totalDebt) internal view override returns (uint256 _loss) {
-        uint256 _collateralBalance = convertFrom18(estimateFeeImpact(getLpValue(totalLp())));
+        uint256 _collateralBalance = convertFrom18(_calcAmtOutAfterSlippage(getLpValue(totalLp()), crvSlippage));
         if (_collateralBalance < _totalDebt) {
             _loss = _totalDebt - _collateralBalance;
         }
@@ -204,21 +227,24 @@ abstract contract Crv3PoolStrategy is Crv3PoolMgr, Strategy {
     {
         uint256 baseline = collateralToken.balanceOf(address(this));
         _claimRewardsAndConvertTo(address(collateralToken));
-        uint256 _collateralBalance = convertFrom18(estimateFeeImpact(getLpValue(totalLp())));
+        uint256 newBalance = collateralToken.balanceOf(address(this));
+        _profit = newBalance - baseline;
+
+        uint256 _collateralBalance =
+            baseline + convertFrom18(_calcAmtOutAfterSlippage(getLpValue(totalLp()), crvSlippage));
         if (_collateralBalance > _totalDebt) {
-            _toUnstake = _collateralBalance - _totalDebt;
+            _profit += _collateralBalance - _totalDebt;
         } else {
             _loss = _totalDebt - _collateralBalance;
         }
 
-        _profit = collateralToken.balanceOf(address(this)) + _toUnstake - baseline;
         if (_profit > _loss) {
             _profit = _profit - _loss;
             _loss = 0;
+            if (_profit > newBalance) _toUnstake = _profit - newBalance;
         } else {
             _loss = _loss - _profit;
             _profit = 0;
-            _toUnstake = 0;
         }
     }
 

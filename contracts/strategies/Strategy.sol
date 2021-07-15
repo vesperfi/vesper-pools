@@ -128,6 +128,10 @@ abstract contract Strategy is IStrategy, Context {
         _approveToken(MAX_UINT_VALUE);
     }
 
+    function setupOracles() external onlyKeeper {
+        _setupOracles();
+    }
+
     /**
      * @dev Withdraw collateral token from lending pool.
      * @param _amount Amount of collateral token
@@ -239,13 +243,21 @@ abstract contract Strategy is IStrategy, Context {
         }
     }
 
+    // These methods can be implemented by the inheriring strategy.
+    /* solhint-disable no-empty-blocks */
+    function _claimRewardsAndConvertTo(address _toToken) internal virtual {}
+
+    /**
+     * @notice Set up any oracles that are needed for this strategy.
+     */
+    function _setupOracles() internal virtual {}
+
+    /* solhint-enable */
+
+    // These methods must be implemented by the inheriting strategy
     function _withdraw(uint256 _amount) internal virtual;
 
     function _approveToken(uint256 _amount) internal virtual;
-
-    // Some strategies may not have rewards hence they do not need this function.
-    //solhint-disable-next-line no-empty-blocks
-    function _claimRewardsAndConvertTo(address _toToken) internal virtual {}
 
     /**
      * @notice Withdraw collateral to payback excess debt in pool.
