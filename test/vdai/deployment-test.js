@@ -1,10 +1,11 @@
 'use strict'
 const {shouldDoSanityTest} = require('../behavior/sanity-test')
 const {getUsers} = require('../utils/setupHelper')
-const contracts = require('../../releases/3.0.4/contracts.json').networks.mainnet
+const contracts = require('../../releases/3.0.7/contracts.json').networks.mainnet
 const {BigNumber: BN} = require('ethers')
 const DECIMAL18 = BN.from('1000000000000000000')
 const ONE_MILLION = DECIMAL18.mul('1000000')
+const {timeTravel} = require('../utils/poolOps')
 const {ethers} = require('hardhat')
 const poolConfig = require('../../helper/ethereum/poolConfig').VADAI
 describe('VADAI Pool', function () {
@@ -36,6 +37,6 @@ describe('VADAI Pool', function () {
     const collateralTokenAddress = await this.pool.token()
     this.collateralToken = await ethers.getContractAt('TokenLikeTest', collateralTokenAddress)
   })
-
+  timeTravel(3600)
   shouldDoSanityTest('vDAI', 'DAI')
 })
