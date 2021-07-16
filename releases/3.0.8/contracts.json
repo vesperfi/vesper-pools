@@ -1,0 +1,154 @@
+{
+  "version": "3.0.8",
+  "networks": {
+    "mainnet": {
+      "defaultProxyAdmin": "0x19A02f3512BdF78114B3c50f7d22a34b1B2798cA",
+      "collateralManager": "0xaBC64889601F01e7B26277Ef8756250d6ABf8c18",
+      "vuni": {
+        "pool": {
+          "proxy": "0xfF43C327410F960261057ba1DA787eD78B42c257",
+          "implementation": "0x7f0088F5a7b8d29936c1119a6446Ea90F69d5c0f",
+          "poolAccountant": {
+            "proxy": "0xA17f64B7d3222D538cE0bF137199AeD373a6088c",
+            "implementation": "0xC5BdbaD3fb77F8Cf95F2888FB78d3cceCc8E5A04"
+          }
+        },
+        "poolRewards": {
+          "proxy": "0x17eff816ef9646481C8baC6a50b3c9A67f4D417B",
+          "implementation": "0xe2751fD3FA863be8Bf924296Edb4386618acb121"
+        },
+        "strategies": {
+          "CompoundStrategyUNI": "0xdb0950c877Db658E17a8120E89b4f2Ffc4Dd6e05"
+        }
+      },
+      "vusdc": {
+        "pool": "0x777A7850251b7A301cfA1E7b1d8a9c4a9C49Cf85",
+        "strategy": {
+          "AaveStrategyUSDC": "0x856678bA7e5E57642b71af14425af4cBe9830F0f"
+        }
+      },
+      "vusdt": {
+        "pool": {
+          "proxy": "0xBA680a906d8f624a5F11fba54D3C672f09F26e47",
+          "implementation": "0x4Da20A6eBF1E2740aedB432471bEDD91A7Bbcf29",
+          "poolAccountant": {
+            "proxy": "0x7C6226A0a3d6E87BB79a301c74004Bd0240e639e",
+            "implementation": "0xD01062212c30475FFDdfb86bF63932727CB1DE7c"
+          }
+        },
+        "poolRewards": {
+          "proxy": "0xa7205492c0a35A1EBBaAbe25956391012DA0BFAA",
+          "implementation": "0xc1fe9a02fd9caA37Dc3704297aFa0d8501D17749"
+        },
+        "strategies": {
+          "AaveStrategyUSDT": "0x4c9d61AdB5d8b7B554fa3d1056C65dAAB1158963",
+          "CompoundStrategyUSDT": "0x07E5247687ba0235dC3400736c3B6B7607Bd7D8E"
+        }
+      },
+      "vadai": {
+        "pool": {
+          "proxy": "0x0538C8bAc84E95A9dF8aC10Aad17DbE81b9E36ee",
+          "implementation": "0x479DFA0612Ea457235CdeEFcDea4E3FF072778ca",
+          "poolAccountant": {
+            "proxy": "0x2337c59180357cE1d771Da2B2dF56A91e7c442c0",
+            "implementation": "0x762fF5490e6f4836FeD3399207094c46B720380d"
+          }
+        },
+        "poolRewards": {
+          "proxy": "0x4279cc1ACe3C89eea54fA49df11ee46E34c01106",
+          "implementation": "0xE82cEC55C0aD923195a523a6953a0dAD432E7A9f"
+        },
+        "strategies": {
+          "Crv3PoolStrategyDAI": "0xD11E6772A430c45C7B64927069AF37fa9ab3bE75",
+          "YearnStrategyDAI": "0xcc17e24559757Eb161017626c2C85f884Cdab267"
+        }
+      },
+      "veeth-dai": {
+        "pool": {
+          "proxy": "0xA89566489E932a2d334b9eFF7884Feb21a07d2B3",
+          "implementation": "0x804F330F9f55623A50BEFdf4a18812a532c82EA3",
+          "poolAccountant": {
+            "proxy": "0xfb7fa759Fb93e56e1dCd2f0Cd7098369c624eB44",
+            "implementation": "0x8Ad5b311a7d9111BCC3E92811cd23dcE9Ba62E0a"
+          }
+        },
+        "poolRewards": {
+          "proxy": "0xeA6c376D019119230B69F5AA9d59507B9b564791",
+          "implementation": "0x7b07296561d0Ea40dd6fFC5C19A934796A829eef"
+        },
+        "strategies": {
+          "EarnCompoundMakerStrategyETH": "0xeE99cc7b1914b50F04CB5db8Cf3523A1C55e8A52"
+        }
+      }
+    },
+    "polygon": {
+      "defaultProxyAdmin": "0x768159FF4086dF9214e1dd62778A53F210609200",
+      "vusdc": {
+        "pool": {
+          "proxy": "0xF8ea0eE6818C6CF798a1b208139f6b56563F6067",
+          "implementation": "0x75317F66593E7FE4DbdC5828D386351c8A242210",
+          "poolAccountant": {
+            "proxy": "0x334fA95235Ff746AD8f7CD93C9dD4021D14cABD7",
+            "implementation": "0xB2109e9b7365Bfe6d6A1192D4A52fb23De85386F"
+          }
+        },
+        "strategies": {
+          "AaveStrategyPolygonUSDC": "0x961575De98664eFD828a6AEa0f9cC8A5CD840494"
+        }
+      },
+      "vdai": {
+        "pool": {
+          "proxy": "0x0701bfE50Ca516140E047Ea53388DD6B8f3DB557",
+          "implementation": "0xdA7A7808CF1a2310F541576CF322eef26165e48D",
+          "poolAccountant": {
+            "proxy": "0x27F981D6e31c03308a68E0Cf7642babC005690dc",
+            "implementation": "0x7e5791C5406d10743812b36F8179C0B52C629eF3"
+          }
+        },
+        "strategies": {
+          "AaveStrategyPolygonDAI": "0x4a4A54e2F8bCAFDbE426f4c45Ec9F9E64f411101"
+        }
+      },
+      "vusdt": {
+        "pool": {
+          "proxy": "0xa1Bea64E941f61f84857D77708f7F9D2f23ea964",
+          "implementation": "0x83a07161020402808a4965e9641004697325A94c",
+          "poolAccountant": {
+            "proxy": "0x8d82c689A7e8a2129D5e2daeFcf857B3727a0C12",
+            "implementation": "0x4fACB0a93659868b4E236d50C86c9C761Dc5820C"
+          }
+        },
+        "strategies": {
+          "AaveStrategyPolygonDAI": "0x11930e2838952908bfe7F6Ea9de5A551d759377E",
+          "AaveStrategyPolygonUSDT": "0x0dAD703327d3f117b7355d77dad230A0d44d7D90"
+        }
+      },
+      "vweth": {
+        "pool": {
+          "proxy": "0xD66FDcA0b120427C90C0318a454b37B88a3Aa40F",
+          "implementation": "0x27Cd87c39F4D6D00Fd4c36cF210927D266fC95d4",
+          "poolAccountant": {
+            "proxy": "0x97F0E53A61943d8a74978A256fF008B66B639920",
+            "implementation": "0x8047426f02f3937aF51C508d4770Ae003BA1989C"
+          }
+        },
+        "strategies": {
+          "AaveStrategyPolygonWETH": "0x95d10DD75756671F866a09dc9F61F9286c7e1D7D"
+        }
+      },
+      "vwbtc": {
+        "pool": {
+          "proxy": "0x36366EA27B777622017d3583060ee64BB49eDbE5",
+          "implementation": "0x693c78cA4C7B061EadF65AB3e6c12448Af2b6Cfb",
+          "poolAccountant": {
+            "proxy": "0x7d1e43F34DbaB8468bF617baCb00B0B561eee6Be",
+            "implementation": "0xc4C851409BAAD9b1d52861Ec032F0EbF4d87B88c"
+          }
+        },
+        "strategies": {
+          "AaveStrategyPolygonWBTC": "0xB79D6c3A7C0740eAe4daDa70B50B35A3640D1eaF"
+        }
+      }
+    }
+  }
+}
