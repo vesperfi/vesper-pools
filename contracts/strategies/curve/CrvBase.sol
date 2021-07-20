@@ -4,13 +4,15 @@ pragma solidity 0.8.3;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import "../../interfaces/curve/IStableSwap.sol";
 import "../../interfaces/curve/ILiquidityGaugeV2.sol";
 import "../../interfaces/curve/ITokenMinter.sol";
 
-abstract contract CrvPoolMgrBase {
+abstract contract CrvBase {
     using SafeERC20 for IERC20;
 
-    address public immutable crvPool;
+    IStableSwapUnderlying public immutable crvPool;
     address public immutable crvLp;
     address public immutable crvGauge;
     address public constant CRV_MINTER = 0xd061D61a4d941c39E5453435B6345Dc261C2fcE0;
@@ -25,9 +27,60 @@ abstract contract CrvPoolMgrBase {
         require(_lp != address(0x0), "CRVMgr: invalid lp token");
         require(_gauge != address(0x0), "CRVMgr: invalid gauge");
 
-        crvPool = _pool;
+        crvPool = IStableSwapUnderlying(_pool);
         crvLp = _lp;
         crvGauge = _gauge;
+        _init(_pool);
+    }
+
+    // must be implemented downstream
+    function _init(address _pool) internal virtual;
+
+    function _minimumLpPrice(uint256 _safeRate) internal view returns (uint256) {
+        return ((crvPool.get_virtual_price() * _safeRate) / 1e18);
+    }
+
+    function _withdrawAsFromCrvPool(
+        uint256 _lpAmount,
+        uint256 _minAmt,
+        uint256 i
+    ) internal virtual {
+        crvPool.remove_liquidity_one_coin(_lpAmount, SafeCast.toInt128(int256(i)), _minAmt);
+    }
+
+    function _withdrawAllAs(uint256 i) internal virtual {
+        uint256 lpAmt = IERC20(crvLp).balanceOf(address(this));
+        if (lpAmt != 0) {
+            crvPool.remove_liquidity_one_coin(lpAmt, SafeCast.toInt128(int256(i)), 0);
+        }
+    }
+
+    function calcWithdrawLpAs(uint256 _amtNeeded, uint256 i)
+        public
+        view
+        returns (uint256 lpToWithdraw, uint256 unstakeAmt)
+    {
+        uint256 lp = IERC20(crvLp).balanceOf(address(this));
+        uint256 tlp = lp + IERC20(crvGauge).balanceOf(address(this));
+        lpToWithdraw = (_amtNeeded * tlp) / getLpValueAs(tlp, i);
+        lpToWithdraw = (lpToWithdraw > tlp) ? tlp : lpToWithdraw;
+        if (lpToWithdraw > lp) {
+            unstakeAmt = lpToWithdraw - lp;
+        }
+    }
+
+    function getLpValueAs(uint256 _lpAmount, uint256 i) public view virtual returns (uint256) {
+        return (_lpAmount != 0) ? crvPool.calc_withdraw_one_coin(_lpAmount, SafeCast.toInt128(int256(i))) : 0;
+    }
+
+    // While this is inaccurate in terms of slippage, this gives us the
+    // best estimate (least manipulatable value) to calculate share price
+    function getLpValue(uint256 _lpAmount) public view returns (uint256) {
+        return (_lpAmount != 0) ? (crvPool.get_virtual_price() * _lpAmount) / 1e18 : 0;
+    }
+
+    function setCheckpoint() external {
+        _setCheckpoint();
     }
 
     // requires that gauge has approval for lp token
