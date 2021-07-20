@@ -11,6 +11,7 @@ const {shouldBehaveLikeMakerStrategy} = require('../behavior/maker-strategy')
 const {shouldBehaveLikeCreamStrategy} = require('../behavior/cream-strategy')
 const {shouldBehaveLikeCurveStrategy} = require('../behavior/crv-strategy')
 const {shouldBehaveLikeEarnMakerStrategy} = require('../behavior/earn-maker-strategy')
+const {shouldBehaveLikeRariFuseStrategy} = require('./rari-fuse-strategy')
 
 const swapper = require('../utils/tokenSwapper')
 const {deposit, rebalanceStrategy, reset} = require('../utils/poolOps')
@@ -29,6 +30,7 @@ function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
     [StrategyType.CREAM]: shouldBehaveLikeCreamStrategy,
     [StrategyType.CURVE]: shouldBehaveLikeCurveStrategy,
     [StrategyType.EARN_MAKER]: shouldBehaveLikeEarnMakerStrategy,
+    [StrategyType.RARI_FUSE]: shouldBehaveLikeRariFuseStrategy,
   }
 
   const ANY_ERC20 = hre.address.ANY_ERC20

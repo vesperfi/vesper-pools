@@ -9,7 +9,7 @@ import "../../interfaces/compound/ICompound.sol";
 abstract contract CompoundStrategy is Strategy {
     using SafeERC20 for IERC20;
 
-    CToken internal immutable cToken;
+    CToken internal cToken;
     address internal constant COMP = 0xc00e94Cb662C3520282E6f5717214004A7f26888;
     Comptroller internal constant COMPTROLLER = Comptroller(0x3d9819210A31b4961b30EF54bE2aeD79B9c9Cd3B);
 
