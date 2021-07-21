@@ -88,6 +88,7 @@
         },
         "strategies": {
           "AaveStrategyUNI": "0xe3eCC89D37E90edFfE6380Dc26fDBcCbd6f95435",
+          "CompoundMakerStrategyUNI": "0xA1CcDa3c0b94f3CA7eE44DCc2Bd9e414f7167669",
           "CompoundStrategyUNI": "0xdb0950c877Db658E17a8120E89b4f2Ffc4Dd6e05"
         }
       },

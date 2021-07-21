@@ -8,7 +8,8 @@ const mcdEthAJoin = '0x2F0b23f53734252Bda2277357e97e1517d6B042A'
 const mcdEthCJoin = '0xF04a5cC80B1E94C69B48f5ee68a08CD2F09A7c3E'
 const mcdWbtcJoin = '0xBF72Da2Bd84c5170618Fbe5914B0ECA9638d5eb5'
 const mcdLinkJoin = '0xdFccAf8fDbD2F4805C174f856a317765B49E4a50'
-const gemJoins = [mcdEthAJoin, mcdWbtcJoin, mcdLinkJoin, mcdEthCJoin]
+const mcdUniAJoin = '0x3BC3A58b4FC1CbE7e98bB4aB7c99535e8bA9b8F1'
+const gemJoins = [mcdEthAJoin, mcdWbtcJoin, mcdLinkJoin, mcdEthCJoin, mcdUniAJoin]
 
 // Contract names
 const IVesperPool = 'IVesperPoolTest'
