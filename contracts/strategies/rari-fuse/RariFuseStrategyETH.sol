@@ -24,7 +24,7 @@ contract RariFuseStrategyETH is RariFuseStrategy {
         require(msg.sender == address(cToken) || msg.sender == WETH, "not-allowed-to-send-ether");
     }
 
-    function setPool(uint256 _newPoolId) external override onlyKeeper {
+    function migrateFusePool(uint256 _newPoolId) external override onlyKeeper {
         address _newCToken = _cTokenByUnderlying(_newPoolId, address(0));
         require(address(cToken) != _newCToken, "same-fuse-pool");
         require(cToken.redeem(cToken.balanceOf(address(this))) == 0, "withdraw-from-fuse-pool-failed");

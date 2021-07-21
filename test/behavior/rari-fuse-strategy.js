@@ -26,7 +26,7 @@ function shouldBehaveLikeRariFuseStrategy(strategyIndex) {
       const receiptTokenBefore = await strategy.instance.receiptToken()
 
       // Rari Fuse Strategy: Keeper switches from current Pool id to Pool #7 
-      await strategy.instance.setPool(7)
+      await strategy.instance.migrateFusePool(7)
 
       await rebalanceStrategy(strategy)
 
@@ -41,7 +41,14 @@ function shouldBehaveLikeRariFuseStrategy(strategyIndex) {
       await deposit(pool, collateralToken, 10, user1)
       await rebalanceStrategy(strategy)
  
-      expect(strategy.instance.setPool(18)).to.be.revertedWith('same-fuse-pool')
+      expect(strategy.instance.migrateFusePool(18)).to.be.revertedWith('same-fuse-pool')
+
+    })
+    it('Should fail switching to a wrong Rari Fuse Pool', async function () {
+      await deposit(pool, collateralToken, 10, user1)
+      await rebalanceStrategy(strategy)
+ 
+      expect(strategy.instance.migrateFusePool(999)).to.be.revertedWith('')
 
     })
   })

@@ -12,7 +12,7 @@ abstract contract RariFuseStrategy is CompoundStrategy {
 
     address private constant FUSE_POOL_DIRECTORY = 0x835482FE0532f169024d5E9410199369aAD5C77E;
 
-    event FusePoolChanged(uint256 newFusePoolId, address oldCToken, address newCToken);
+    event FusePoolChanged(uint256 indexed newFusePoolId, address indexed oldCToken, address indexed newCToken);
 
     // solhint-disable no-empty-blocks
     constructor(
@@ -36,7 +36,7 @@ abstract contract RariFuseStrategy is CompoundStrategy {
      * @dev Redeems cTokens from current fuse pool and mints cTokens of new Fuse Pool
      * @param _newPoolId Fuse Pool ID
      */
-    function setPool(uint256 _newPoolId) external virtual onlyKeeper {
+    function migrateFusePool(uint256 _newPoolId) external virtual onlyGovernor {
         address _newCToken = _cTokenByUnderlying(_newPoolId, address(collateralToken));
         require(address(cToken) != _newCToken, "same-fuse-pool");
         require(cToken.redeem(cToken.balanceOf(address(this))) == 0, "withdraw-from-fuse-pool-failed");
@@ -65,12 +65,6 @@ abstract contract RariFuseStrategy is CompoundStrategy {
         return _cToken;
     }
 
-    /// @notice Approve all required tokens
-    function _approveToken(uint256 _amount) internal override {
-        collateralToken.safeApprove(pool, _amount);
-        collateralToken.safeApprove(address(cToken), _amount);
-    }
-
     // solhint-disable-next-line
     function _beforeMigration(address _newStrategy) internal override {}
 
@@ -78,13 +72,10 @@ abstract contract RariFuseStrategy is CompoundStrategy {
      * @notice Calculate earning and withdraw it from Rari Fuse
      * @dev If somehow we got some collateral token in strategy then we want to
      *  include those in profit. That's why we used 'return' outside 'if' condition.
-     *  Since there aren't token rewards here, we call accrueInterst
-     *  to make sure we get the maximum accrued interest on rebalance
      * @param _totalDebt Total collateral debt of this strategy
      * @return profit in collateral token
      */
     function _realizeProfit(uint256 _totalDebt) internal override returns (uint256) {
-        cToken.accrueInterest();
         uint256 _collateralBalance = _convertToCollateral(cToken.balanceOf(address(this)));
 
         if (_collateralBalance > _totalDebt) {
