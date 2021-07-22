@@ -4,7 +4,7 @@
 const {ethers} = require('hardhat')
 const {shouldBehaveLikePool} = require('../behavior/vesper-pool')
 const {shouldBehaveLikeStrategy} = require('../behavior/strategy')
-const {timeTravel, reset} = require('../utils/poolOps')
+const {reset} = require('../utils/poolOps')
 const StrategyType = require('../utils/strategyTypes')
 const PoolConfig = require('../../helper/ethereum/poolConfig')
 const {setupVPool, getUsers} = require('../utils/setupHelper')
@@ -31,8 +31,6 @@ describe('vDAI Pool with CrvA3PoolStrategy', function () {
         {name: 'CrvA3PoolStrategyDAI', type: StrategyType.CURVE, config: strategyConfig, feeCollector: feeAcct.address},
       ],
     })
-    await this.strategies[0].instance.setupOracles()
-    timeTravel(3600)
   })
 
   describe('Pool Tests', function () {

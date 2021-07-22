@@ -13,10 +13,7 @@ abstract contract Crv3PoolStrategyBase is Crv3x, Strategy {
     using SafeERC20 for IERC20;
 
     mapping(address => bool) internal reservedToken;
-    address[] internal oracles;
 
-    uint256 public constant ORACLE_PERIOD = 3600; // 1h
-    uint256 public constant ORACLE_ROUTER = 0; // Uniswap V2
     address public immutable threePool;
     address internal immutable threeCrv;
     address internal immutable gauge;
@@ -26,15 +23,10 @@ abstract contract Crv3PoolStrategyBase is Crv3x, Strategy {
     uint256 public usdRateTimestamp;
     bool public depositError;
 
-    uint256 public swapSlippage = 100; // 10000 is 100%; 100 is 1%
     uint256 public crvSlippage = 10; // 10000 is 100%; 10 is 0.1%
 
-    event UpdatedSlippage(
-        uint256 oldSwapSlippage,
-        uint256 newSwapSlippage,
-        uint256 oldCrvSlippage,
-        uint256 newCrvSlippage
-    );
+    event UpdatedCrvSlippage(uint256 oldCrvSlippage, uint256 newCrvSlippage);
+
     event DepositFailed(string reason);
 
     constructor(
@@ -57,10 +49,9 @@ abstract contract Crv3PoolStrategyBase is Crv3x, Strategy {
         collIdx = _collateralIdx;
     }
 
-    function updateSlippage(uint256 _newSwapSlippage, uint256 _newCrvSlippage) external onlyGovernor {
-        require(_newSwapSlippage < 10000 && _newCrvSlippage < 10000, "invalid-slippage-value");
-        emit UpdatedSlippage(swapSlippage, _newSwapSlippage, crvSlippage, _newCrvSlippage);
-        swapSlippage = _newSwapSlippage;
+    function updateCrvSlippage(uint256 _newCrvSlippage) external onlyGovernor {
+        require(_newCrvSlippage < 10000, "invalid-slippage-value");
+        emit UpdatedCrvSlippage(crvSlippage, _newCrvSlippage);
         crvSlippage - _newCrvSlippage;
     }
 
@@ -80,40 +71,22 @@ abstract contract Crv3PoolStrategyBase is Crv3x, Strategy {
     }
 
     function _setupOracles() internal virtual override {
-        oracles.push(swapManager.createOrUpdateOracle(CRV, WETH, ORACLE_PERIOD, ORACLE_ROUTER));
+        swapManager.createOrUpdateOracle(CRV, WETH, oraclePeriod, oracleRouterIdx);
         for (uint256 i = 0; i < N; i++) {
-            oracles.push(
-                swapManager.createOrUpdateOracle(
-                    IStableSwap3xUnderlying(threePool).coins(i),
-                    WETH,
-                    ORACLE_PERIOD,
-                    ORACLE_ROUTER
-                )
+            swapManager.createOrUpdateOracle(
+                IStableSwap3xUnderlying(threePool).coins(i),
+                WETH,
+                oraclePeriod,
+                oracleRouterIdx
             );
         }
-    }
-
-    function _calcAmtOutAfterSlippage(uint256 _amount, uint256 _slippage) internal pure returns (uint256) {
-        return (_amount * (10000 - _slippage)) / (10000);
-    }
-
-    function _consultOracle(
-        address _from,
-        address _to,
-        uint256 _amt
-    ) internal returns (uint256, bool) {
-        // from, to, amountIn, period, router
-        (uint256 rate, uint256 lastUpdate, ) = swapManager.consult(_from, _to, _amt, ORACLE_PERIOD, ORACLE_ROUTER);
-        // We're looking at a TWAP ORACLE with a 1 hr Period that has been updated within the last hour
-        if ((lastUpdate > (block.timestamp - ORACLE_PERIOD)) && (rate != 0)) return (rate, true);
-        return (0, false);
     }
 
     // given the rates of 3 stablecoins compared with a common denominator
     // return the lowest divided by the highest
     function _getSafeUsdRate() internal returns (uint256) {
         // use a stored rate if we've looked it up recently
-        if (usdRateTimestamp > block.timestamp - ORACLE_PERIOD && usdRate != 0) return usdRate;
+        if (usdRateTimestamp > block.timestamp - oraclePeriod && usdRate != 0) return usdRate;
         // otherwise, calculate a rate and store it.
         uint256 lowest;
         uint256 highest;
@@ -213,11 +186,13 @@ abstract contract Crv3PoolStrategyBase is Crv3x, Strategy {
         _claimCrv();
         uint256 amt = IERC20(CRV).balanceOf(address(this));
         if (amt != 0) {
-            (uint256 minWethOut, bool isValid) = _consultOracle(CRV, WETH, amt);
-            (uint256 minAmtOut, bool isValidTwo) = _consultOracle(WETH, address(collateralToken), minWethOut);
-            require(isValid, "stale-crv-oracle");
-            require(isValidTwo, "stale-collateral-oracle");
-            _safeSwap(CRV, _toToken, amt, _calcAmtOutAfterSlippage(minAmtOut, swapSlippage));
+            address[] memory path = new address[](3);
+            path[0] = CRV;
+            path[1] = WETH;
+            path[2] = _toToken;
+            uint256 minAmtOut =
+                (swapSlippage != 10000) ? _calcAmtOutAfterSlippage(_getOracleRate(path, amt), swapSlippage) : 1;
+            _safeSwap(CRV, _toToken, amt, minAmtOut);
         }
     }
 

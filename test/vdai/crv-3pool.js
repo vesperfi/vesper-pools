@@ -42,10 +42,7 @@ describe('vDAI Pool with Crv3PoolStrategy', function () {
     pool = this.pool
     collateralToken = this.collateralToken
     strategy = this.strategies[0].instance
-    await strategy.setupOracles()
     feeCollector = this.feeCollector
-
-    timeTravel(3600)
   })
 
   describe('Pool Tests', function () {
