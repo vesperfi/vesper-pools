@@ -4,13 +4,16 @@ pragma solidity 0.8.3;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "../strategies/curve/Crv3PoolMgr.sol";
+import "../strategies/curve/Crv3x.sol";
 
-contract Crv3PoolMock is Crv3PoolMgr {
+contract Crv3PoolMock is Crv3x {
     /* solhint-disable */
     using SafeERC20 for IERC20;
+    address public constant THREEPOOL = 0xbEbc44782C7dB0a1A60Cb6fe97d0b483032FF1C7;
+    address private constant THREECRV = 0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490;
+    address private constant GAUGE = 0xbFcF63294aD7105dEa65aA58F8AE5BE2D9d0952A;
 
-    constructor() Crv3PoolMgr() {}
+    constructor() Crv3x(THREEPOOL, THREECRV, GAUGE) {}
 
     /* solhint-enable */
 
@@ -21,7 +24,7 @@ contract Crv3PoolMock is Crv3PoolMgr {
     ) internal {
         uint256[3] memory depositAmounts = [_daiAmount, _usdcAmount, _usdtAmount];
         // using 1 for min_mint_amount, but we may want to improve this logic
-        THREEPOOL.add_liquidity(depositAmounts, 1);
+        IStableSwap3xUnderlying(address(crvPool)).add_liquidity(depositAmounts, 1);
     }
 
     function depositToCrvPool(
@@ -68,8 +71,8 @@ contract Crv3PoolMock is Crv3PoolMgr {
 
     // if using this contract on its own.
     function approveTokenForPool(address _token) external {
-        IERC20(_token).safeApprove(crvPool, 0);
-        IERC20(_token).safeApprove(crvPool, type(uint256).max);
+        IERC20(_token).safeApprove(address(crvPool), 0);
+        IERC20(_token).safeApprove(address(crvPool), type(uint256).max);
     }
 
     function minimumLpPrice(uint256 _safeRate) external view returns (uint256) {

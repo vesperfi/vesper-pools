@@ -6,17 +6,21 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../../interfaces/vesper/IVesperPool.sol";
 import "../Strategy.sol";
-import "./Crv3PoolMgr.sol";
+import "./Crv3x.sol";
 
 /// @title This strategy will deposit collateral token in Curve 3Pool and earn interest.
-abstract contract Crv3PoolStrategy is Crv3PoolMgr, Strategy {
+abstract contract Crv3PoolStrategyBase is Crv3x, Strategy {
     using SafeERC20 for IERC20;
 
-    mapping(address => bool) private reservedToken;
-    address[] private oracles;
+    mapping(address => bool) internal reservedToken;
+    address[] internal oracles;
 
     uint256 public constant ORACLE_PERIOD = 3600; // 1h
     uint256 public constant ORACLE_ROUTER = 0; // Uniswap V2
+    address public immutable threePool;
+    address internal immutable threeCrv;
+    address internal immutable gauge;
+
     uint256 public immutable collIdx;
     uint256 public usdRate;
     uint256 public usdRateTimestamp;
@@ -35,15 +39,22 @@ abstract contract Crv3PoolStrategy is Crv3PoolMgr, Strategy {
 
     constructor(
         address _pool,
+        address _threePool,
+        address _threeCrv,
+        address _gauge,
         address _swapManager,
         uint256 _collateralIdx
-    ) Strategy(_pool, _swapManager, THREECRV) Crv3PoolMgr() {
-        require(_collateralIdx < COINS.length, "Invalid collateral for 3Pool");
-        require(COIN_ADDRS[_collateralIdx] == address(IVesperPool(_pool).token()), "Collateral does not match");
-        reservedToken[THREECRV] = true;
+    )
+        Crv3x(_threePool, _threeCrv, _gauge) // 3Pool Manager
+        Strategy(_pool, _swapManager, _threeCrv)
+    {
+        require(_collateralIdx < N, "invalid-collateral");
+        threePool = _threePool;
+        threeCrv = _threeCrv;
+        gauge = _gauge;
+        reservedToken[_threeCrv] = true;
         reservedToken[CRV] = true;
         collIdx = _collateralIdx;
-        _setupOracles();
     }
 
     function updateSlippage(uint256 _newSwapSlippage, uint256 _newCrvSlippage) external onlyGovernor {
@@ -68,10 +79,17 @@ abstract contract Crv3PoolStrategy is Crv3PoolMgr, Strategy {
             convertFrom18(_calcAmtOutAfterSlippage(getLpValue(totalLp()), crvSlippage));
     }
 
-    function _setupOracles() internal override {
+    function _setupOracles() internal virtual override {
         oracles.push(swapManager.createOrUpdateOracle(CRV, WETH, ORACLE_PERIOD, ORACLE_ROUTER));
         for (uint256 i = 0; i < N; i++) {
-            oracles.push(swapManager.createOrUpdateOracle(COIN_ADDRS[i], WETH, ORACLE_PERIOD, ORACLE_ROUTER));
+            oracles.push(
+                swapManager.createOrUpdateOracle(
+                    IStableSwap3xUnderlying(threePool).coins(i),
+                    WETH,
+                    ORACLE_PERIOD,
+                    ORACLE_ROUTER
+                )
+            );
         }
     }
 
@@ -101,7 +119,7 @@ abstract contract Crv3PoolStrategy is Crv3PoolMgr, Strategy {
         uint256 highest;
         for (uint256 i = 0; i < N; i++) {
             // get the rate for $1
-            (uint256 rate, bool isValid) = _consultOracle(COIN_ADDRS[i], WETH, 10**DECIMALS[i]);
+            (uint256 rate, bool isValid) = _consultOracle(coins[i], WETH, 10**coinDecimals[i]);
             if (isValid) {
                 if (lowest == 0 || rate < lowest) {
                     lowest = rate;
@@ -119,9 +137,9 @@ abstract contract Crv3PoolStrategy is Crv3PoolMgr, Strategy {
         return usdRate;
     }
 
-    function _approveToken(uint256 _amount) internal override {
+    function _approveToken(uint256 _amount) internal virtual override {
         collateralToken.safeApprove(pool, _amount);
-        collateralToken.safeApprove(crvPool, _amount);
+        collateralToken.safeApprove(address(crvPool), _amount);
         for (uint256 i = 0; i < swapManager.N_DEX(); i++) {
             IERC20(CRV).safeApprove(address(swapManager.ROUTERS(i)), _amount);
         }
@@ -135,17 +153,22 @@ abstract contract Crv3PoolStrategy is Crv3PoolMgr, Strategy {
         _stakeAllLpToGauge();
     }
 
-    function _depositToCurve(uint256 amt) internal returns (bool) {
+    function _depositToCurve(uint256 amt) internal virtual returns (bool) {
         if (amt != 0) {
             uint256[3] memory depositAmounts;
             depositAmounts[collIdx] = amt;
             uint256 expectedOut =
-                _calcAmtOutAfterSlippage(THREEPOOL.calc_token_amount(depositAmounts, true), crvSlippage);
+                _calcAmtOutAfterSlippage(
+                    IStableSwap3xUnderlying(address(crvPool)).calc_token_amount(depositAmounts, true),
+                    crvSlippage
+                );
             uint256 minLpAmount =
-                ((amt * _getSafeUsdRate()) / THREEPOOL.get_virtual_price()) * 10**(18 - DECIMALS[collIdx]);
+                ((amt * _getSafeUsdRate()) / crvPool.get_virtual_price()) * 10**(18 - coinDecimals[collIdx]);
             if (expectedOut > minLpAmount) minLpAmount = expectedOut;
             // solhint-disable-next-line no-empty-blocks
-            try THREEPOOL.add_liquidity(depositAmounts, minLpAmount) {} catch Error(string memory reason) {
+            try IStableSwap3xUnderlying(address(crvPool)).add_liquidity(depositAmounts, minLpAmount) {} catch Error(
+                string memory reason
+            ) {
                 emit DepositFailed(reason);
                 return false;
             }
@@ -186,7 +209,7 @@ abstract contract Crv3PoolStrategy is Crv3PoolMgr, Strategy {
         _unstakeAllLpFromGauge();
     }
 
-    function _claimRewardsAndConvertTo(address _toToken) internal override {
+    function _claimRewardsAndConvertTo(address _toToken) internal virtual override {
         _claimCrv();
         uint256 amt = IERC20(CRV).balanceOf(address(this));
         if (amt != 0) {

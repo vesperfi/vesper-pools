@@ -24,7 +24,7 @@ describe('vDAI Pool with Crv3PoolStrategy', function () {
     this.users = users
     ;[, user1, user2, user3, user4] = users
     feeAcct = users[9]
-    threePool = await ethers.getContractAt('IStableSwap3Pool', THREE_POOL)
+    threePool = await ethers.getContractAt('IStableSwap3x', THREE_POOL)
   })
 
   beforeEach(async function () {
@@ -42,6 +42,7 @@ describe('vDAI Pool with Crv3PoolStrategy', function () {
     pool = this.pool
     collateralToken = this.collateralToken
     strategy = this.strategies[0].instance
+    await strategy.setupOracles()
     feeCollector = this.feeCollector
 
     timeTravel(3600)
