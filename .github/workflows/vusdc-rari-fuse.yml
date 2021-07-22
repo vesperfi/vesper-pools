@@ -1,5 +1,12 @@
 name: vUSDC with Rari Fuse
-on: [pull_request]
+on:
+  pull_request:
+    paths:
+      - "test/vusdc/rari-fuse.js"
+      - "contracts/strategies/Strategy.sol"
+      - "contracts/strategies/compound/CompoundStrategy.sol"
+      - "contracts/strategies/rari-fuse/RariFuseStrategy.sol"
+      - "contracts/strategies/rari-fuse/RariFuseStrategyUSDC.sol"
 
 jobs:
   vusdc-rarifuse-strategy-test:

@@ -1,5 +1,9 @@
 name: vDAI Pool
-on: [pull_request]
+on:
+  pull_request:
+    paths:
+      - "test/vdai/*.js"
+      - "contracts/pool/*.sol"
 
 jobs:
   vdai-pool-test:

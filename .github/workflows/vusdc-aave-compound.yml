@@ -1,8 +1,17 @@
-name: vUSDC Strategies
-on: [pull_request]
+name: vUSDC with Aave Compound
+on:
+  pull_request:
+    paths:
+      - "test/vusdc/aave-compound.js"
+      - "contracts/strategies/Strategy.sol"
+      - "contracts/strategies/aave/AaveCore.sol"
+      - "contracts/strategies/aave/AaveStrategy.sol"
+      - "contracts/strategies/aave/AaveStrategyUSDC.sol"
+      - "contracts/strategies/compound/CompoundStrategy.sol"
+      - "contracts/strategies/compound/CompoundStrategyUSDC.sol"
 
 jobs:
-  vusdc-strategies-test:
+  vusdc-aave-compound-test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -23,6 +32,3 @@ jobs:
 
       - name: Running vUSDC with Aave and Compound
         run: npm test "test/vusdc/aave-compound.js"
-
-      - name: Running vUSDC AaveV1 and Aave 
-        run: npm test "test/vusdc/aaveV1-aave.js"

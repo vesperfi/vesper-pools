@@ -1,8 +1,12 @@
-name: vDAI Strategies
-on: [pull_request]
+name: vUNI Pool
+on:
+  pull_request:
+    paths:
+      - "test/vuni/*.js"
+      - "contracts/pool/*.sol"
 
 jobs:
-  vdai-strategies-test:
+  vuni-pool-test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -21,5 +25,5 @@ jobs:
       - name: Run npm install with node v${{ matrix.node }}
         run: npm install
 
-      - name: Running vDAI with Aave and Compound
-        run: npm test "test/vdai/aave-compound.js"
+      - name: Running vUNI Pool tests
+        run: npm test "test/vuni/pool.js"

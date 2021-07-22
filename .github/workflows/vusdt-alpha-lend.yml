@@ -1,5 +1,11 @@
 name: vUSDT with Alpha Lend
-on: [pull_request]
+on:
+  pull_request:
+    paths:
+      - "test/vusdt/alpha-lend.js"
+      - "contracts/strategies/Strategy.sol"
+      - "contracts/strategies/alpha/AlphaLendStrategy.sol"
+      - "contracts/strategies/alpha/AlphaLendStrategyUSDT.sol"
 
 jobs:
   vusdt-alphalend-strategy-test:

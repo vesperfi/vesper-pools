@@ -1,5 +1,9 @@
 name: vUSDC Pool
-on: [pull_request]
+on:
+  pull_request:
+    paths:
+      - "test/vusdc/*.js"
+      - "contracts/pool/*.sol"
 
 jobs:
   vusdc-pool-test:

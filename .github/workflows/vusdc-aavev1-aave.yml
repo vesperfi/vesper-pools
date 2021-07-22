@@ -1,14 +1,17 @@
-name: vLINK with Alpha Lend
+name: vUSDC with AaveV1 Aave
 on:
   pull_request:
     paths:
-      - "test/vlink/alpha-lend.js"
+      - "test/vusdc/aaveV1-aave.js"
       - "contracts/strategies/Strategy.sol"
-      - "contracts/strategies/alpha/AlphaLendStrategy.sol"
-      - "contracts/strategies/alpha/AlphaLendStrategyLINK.sol"
+      - "contracts/strategies/aave/AaveCore.sol"
+      - "contracts/strategies/aave/AaveStrategy.sol"
+      - "contracts/strategies/aave/AaveStrategyUSDC.sol"
+      - "contracts/strategies/aave/AaveV1Strategy.sol"
+      - "contracts/strategies/aave/AaveV1StrategyUSDC.sol"
 
 jobs:
-  vlink-alphalend-strategy-test:
+  vusdc-aaveV1-aave-test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -27,5 +30,5 @@ jobs:
       - name: Run npm install with node v${{ matrix.node }}
         run: npm install
 
-      - name: Running tests for vLINK with Alpha Lend
-        run: npm test "test/vlink/alpha-lend.js"
+      - name: Running vUSDC AaveV1 and Aave
+        run: npm test "test/vusdc/aaveV1-aave.js"
