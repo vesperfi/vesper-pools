@@ -98,6 +98,10 @@ async function rebalanceStrategy(strategy) {
       // Alpha SafeBox has a cToken - this method calls exchangeRateCurrent on the cToken
       await strategy.instance.updateTokenRate()
     }
+    if (strategy.type.includes('rariFuse')) {
+      const cToken = await ethers.getContractAt('CToken', strategy.token.address)
+      await cToken.accrueInterest()
+    }
     tx = await strategy.instance.rebalance()
   } catch (error) {
     // ignore under water error and give one more try.

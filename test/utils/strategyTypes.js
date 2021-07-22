@@ -11,6 +11,7 @@ const StrategyType = {
   CREAM: 'cream',
   YEARN: 'yearn',
   EARN_MAKER: 'earnMaker',
+  RARI_FUSE: 'rariFuse',
 }
 
 module.exports = Object.freeze(StrategyType)
