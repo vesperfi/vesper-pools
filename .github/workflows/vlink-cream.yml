@@ -1,5 +1,12 @@
 name: vLINK with CREAM
-on: [pull_request]
+on:
+  pull_request:
+    paths:
+      - "test/vlink/cream.js"
+      - "contracts/strategies/Strategy.sol"
+      - "contracts/strategies/compound/CompoundStrategy.sol"
+      - "contracts/strategies/cream/CreamStrategy.sol"
+      - "contracts/strategies/cream/CreamStrategyLINK.sol"
 
 jobs:
   vlink-cream-strategy-test:

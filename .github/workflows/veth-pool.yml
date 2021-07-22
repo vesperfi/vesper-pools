@@ -1,8 +1,12 @@
-name: vETH Strategies
-on: [pull_request]
+name: vETH Pool
+on:
+  pull_request:
+    paths:
+      - "test/veth/*.js"
+      - "contracts/pool/*.sol"
 
 jobs:
-  veth-strategies-test:
+  veth-pool-test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -21,5 +25,5 @@ jobs:
       - name: Run npm install with node v${{ matrix.node }}
         run: npm install
 
-      - name: Running vETH with Aave Maker and Compound Maker
-        run: npm test "test/veth/aave_maker-compound_maker.js"
+      - name: Running vETH Pool tests
+        run: npm test "test/veth/pool.js"

@@ -1,5 +1,14 @@
 name: vUSDC with Curve 3Pool
-on: [pull_request]
+on:
+  pull_request:
+    paths:
+      - "test/vusdc/crv-3pool.js"
+      - "contracts/strategies/Strategy.sol"
+      - "contracts/strategies/curve/CrvBase.sol"
+      - "contracts/strategies/curve/Crv3x.sol"
+      - "contracts/strategies/curve/Crv3PoolStrategyBase.sol"
+      - "contracts/strategies/curve/3Pool/Crv3PoolStrategy.sol"
+      - "contracts/strategies/curve/3Pool/Crv3PoolStrategyUSDC.sol"
 
 jobs:
   vusdc-curve3p-strategy-test:

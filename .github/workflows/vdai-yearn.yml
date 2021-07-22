@@ -1,8 +1,14 @@
 name: vDAI with Yearn
-on: [pull_request]
+on:
+  pull_request:
+    paths:
+      - "test/vdai/yearn.js"
+      - "contracts/strategies/Strategy.sol"
+      - "contracts/strategies/yearn/YearnStrategy.sol"
+      - "contracts/strategies/yearn/YearnStrategyDAI.sol"
 
 jobs:
-  vlink-cream-strategy-test:
+  vdai-yearn-strategy-test:
     runs-on: ubuntu-latest
     strategy:
       matrix:

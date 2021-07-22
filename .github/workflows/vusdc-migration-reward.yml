@@ -1,5 +1,15 @@
 name: vUSDC Strategies Migration and Reward
-on: [pull_request]
+on:
+  pull_request:
+    paths:
+      - "test/vusdc/migration.js"
+      - "test/vusdc/reward.js"
+      - "contracts/strategies/Strategy.sol"
+      - "contracts/strategies/aave/AaveCore.sol"
+      - "contracts/strategies/aave/AaveStrategy.sol"
+      - "contracts/strategies/aave/AaveStrategyUSDC.sol"
+      - "contracts/strategies/compound/CompoundStrategy.sol"
+      - "contracts/strategies/compound/CompoundStrategyUSDC.sol"
 
 jobs:
   vusdc-test:

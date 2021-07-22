@@ -1,5 +1,11 @@
 name: vETH with Alpha Lend
-on: [pull_request]
+on:
+  pull_request:
+    paths:
+      - "test/veth/alpha-lend.js"
+      - "contracts/strategies/Strategy.sol"
+      - "contracts/strategies/alpha/AlphaLendStrategy.sol"
+      - "contracts/strategies/alpha/AlphaLendStrategyETH.sol"
 
 jobs:
   veth-strategies-test:

@@ -1,14 +1,17 @@
-name: vLINK with Alpha Lend
+name: vDAI with Aave Compound
 on:
   pull_request:
     paths:
-      - "test/vlink/alpha-lend.js"
+      - "test/vdai/aave-compound.js"
       - "contracts/strategies/Strategy.sol"
-      - "contracts/strategies/alpha/AlphaLendStrategy.sol"
-      - "contracts/strategies/alpha/AlphaLendStrategyLINK.sol"
+      - "contracts/strategies/aave/AaveCore.sol"
+      - "contracts/strategies/aave/AaveStrategy.sol"
+      - "contracts/strategies/aave/AaveStrategyDAI.sol"
+      - "contracts/strategies/compound/CompoundStrategy.sol"
+      - "contracts/strategies/compound/CompoundStrategyDAI.sol"
 
 jobs:
-  vlink-alphalend-strategy-test:
+  vdai-aave-compound-test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -27,5 +30,5 @@ jobs:
       - name: Run npm install with node v${{ matrix.node }}
         run: npm install
 
-      - name: Running tests for vLINK with Alpha Lend
-        run: npm test "test/vlink/alpha-lend.js"
+      - name: Running vDAI with Aave and Compound
+        run: npm test "test/vdai/aave-compound.js"
