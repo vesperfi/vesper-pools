@@ -1,0 +1,34 @@
+name: vaDAI with Curve-Convex
+on:
+  pull_request:
+    paths:
+      - "test/vdai/crv-cvx-3pool.js"
+      - "contracts/strategies/Strategy.sol"
+      - "contracts/strategies/curve/CrvBase.sol"
+      - "contracts/strategies/curve/Crv3x.sol"
+      - "contracts/strategies/curve/Crv3PoolStrategyBase.sol"
+      - "contracts/strategies/convex/ConvexStrategy.sol"
+      - "contracts/strategies/convex/ConvexStrategyDAI.sol"
+
+jobs:
+  vusdt-cream-strategy-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: [12]
+    steps:
+      - uses: actions/checkout@v2.3.1
+        with:
+          submodules: true
+      - run: cat "${GITHUB_WORKSPACE}/.github/env.properties" >> $GITHUB_ENV
+
+      - name: Use Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node }}
+
+      - name: Run npm install with node v${{ matrix.node }}
+        run: npm install
+
+      - name: Running tests for vaDAI with Curve-Convex
+        run: npm test "test/vdai/crv-cvx-3pool.js"
