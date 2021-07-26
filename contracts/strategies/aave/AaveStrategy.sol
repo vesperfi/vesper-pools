@@ -14,9 +14,7 @@ abstract contract AaveStrategy is Strategy, AaveCore {
         address _pool,
         address _swapManager,
         address _receiptToken
-    ) Strategy(_pool, _swapManager, _receiptToken) AaveCore(_receiptToken) {
-        swapSlippage = 10000; // don't use oracles by default
-    }
+    ) Strategy(_pool, _swapManager, _receiptToken) AaveCore(_receiptToken) {}
 
     //solhint-enable
 

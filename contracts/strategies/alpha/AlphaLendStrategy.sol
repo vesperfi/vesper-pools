@@ -20,7 +20,6 @@ abstract contract AlphaLendStrategy is Strategy {
     ) Strategy(_pool, _swapManager, _safeBox) {
         safeBox = ISafeBox(_safeBox);
         ibDecimals = safeBox.decimals();
-        swapSlippage = 10000; // don't use oracles by default
         _setupCheck(_pool);
     }
 

@@ -22,7 +22,7 @@ abstract contract Strategy is IStrategy, Context {
 
     uint256 public oraclePeriod = 3600; // 1h
     uint256 public oracleRouterIdx = 0; // Uniswap V2
-    uint256 public swapSlippage = 100; // 10000 is 100%; 100 is 1%
+    uint256 public swapSlippage = 10000; // 100% Don't use oracles by default
 
     address internal constant ETH = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
     address internal constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
