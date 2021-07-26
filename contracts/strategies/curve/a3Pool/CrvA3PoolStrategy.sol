@@ -104,16 +104,14 @@ abstract contract CrvA3PoolStrategy is Crv3PoolStrategyBase {
     }
 
     function _setupOracles() internal override {
-        oracles.push(swapManager.createOrUpdateOracle(CRV, WETH, ORACLE_PERIOD, ORACLE_ROUTER));
-        oracles.push(swapManager.createOrUpdateOracle(AAVE, WETH, ORACLE_PERIOD, ORACLE_ROUTER));
+        swapManager.createOrUpdateOracle(CRV, WETH, oraclePeriod, oracleRouterIdx);
+        swapManager.createOrUpdateOracle(AAVE, WETH, oraclePeriod, oracleRouterIdx);
         for (uint256 i = 0; i < N; i++) {
-            oracles.push(
-                swapManager.createOrUpdateOracle(
-                    IStableSwap3xUnderlying(CRV_POOL).underlying_coins(i),
-                    WETH,
-                    ORACLE_PERIOD,
-                    ORACLE_ROUTER
-                )
+            swapManager.createOrUpdateOracle(
+                IStableSwap3xUnderlying(CRV_POOL).underlying_coins(i),
+                WETH,
+                oraclePeriod,
+                oracleRouterIdx
             );
         }
     }

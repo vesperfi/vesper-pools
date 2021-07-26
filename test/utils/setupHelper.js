@@ -2,6 +2,8 @@
 
 const hre = require('hardhat')
 const ethers = hre.ethers
+const provider = hre.waffle.provider
+
 const StrategyType = require('../utils/strategyTypes')
 
 const mcdEthAJoin = '0x2F0b23f53734252Bda2277357e97e1517d6B042A'
@@ -158,6 +160,8 @@ async function createStrategies(obj, options) {
   for (const strategy of obj.strategies) {
     const instance = await createStrategy(strategy, obj.pool.address, options)
     strategy.instance = instance
+    // This is now a required setup step
+    await strategy.instance.setupOracles()
   }
 }
 
@@ -217,8 +221,11 @@ async function setupVPool(obj, poolData) {
   await obj.pool.updateFeeCollector(feeCollector)
   const collateralTokenAddress = await obj.pool.token()
   obj.collateralToken = await ethers.getContractAt(TokenLike, collateralTokenAddress)
-
   obj.swapManager = await ethers.getContractAt('ISwapManager', address.SWAP_MANAGER)
+  
+  // Must wait an hour for oracles to be effective, unless they were created before the strategy
+  await provider.send('evm_increaseTime', [3600])
+  await provider.send('evm_mine')
 }
 
 /**

@@ -20,6 +20,7 @@ abstract contract CompoundStrategy is Strategy {
     ) Strategy(_pool, _swapManager, _receiptToken) {
         require(_receiptToken != address(0), "cToken-address-is-zero");
         cToken = CToken(_receiptToken);
+        swapSlippage = 10000; // disable oracles on reward swaps by default
     }
 
     /**
@@ -68,7 +69,14 @@ abstract contract CompoundStrategy is Strategy {
         _claimComp();
         uint256 _compAmount = IERC20(COMP).balanceOf(address(this));
         if (_compAmount != 0) {
-            _safeSwap(COMP, _toToken, _compAmount, 1);
+            uint256 minAmtOut =
+                (swapSlippage != 10000)
+                    ? _calcAmtOutAfterSlippage(
+                        _getOracleRate(_simpleOraclePath(COMP, _toToken), _compAmount),
+                        swapSlippage
+                    )
+                    : 1;
+            _safeSwap(COMP, _toToken, _compAmount, minAmtOut);
         }
     }
 
@@ -139,6 +147,13 @@ abstract contract CompoundStrategy is Strategy {
             _afterRedeem();
         }
         return _amount;
+    }
+
+    function _setupOracles() internal override {
+        swapManager.createOrUpdateOracle(COMP, WETH, oraclePeriod, oracleRouterIdx);
+        if (address(collateralToken) != WETH) {
+            swapManager.createOrUpdateOracle(WETH, address(collateralToken), oraclePeriod, oracleRouterIdx);
+        }
     }
 
     /**

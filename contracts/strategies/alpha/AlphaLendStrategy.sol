@@ -20,11 +20,19 @@ abstract contract AlphaLendStrategy is Strategy {
     ) Strategy(_pool, _swapManager, _safeBox) {
         safeBox = ISafeBox(_safeBox);
         ibDecimals = safeBox.decimals();
+        swapSlippage = 10000; // don't use oracles by default
         _setupCheck(_pool);
     }
 
     function _setupCheck(address _pool) internal view virtual {
         require(address(IVesperPool(_pool).token()) == address(safeBox.uToken()), "u-token-mismatch");
+    }
+
+    function _setupOracles() internal override {
+        swapManager.createOrUpdateOracle(ALPHA, WETH, oraclePeriod, oracleRouterIdx);
+        if (address(collateralToken) != WETH) {
+            swapManager.createOrUpdateOracle(WETH, address(collateralToken), oraclePeriod, oracleRouterIdx);
+        }
     }
 
     function claimUTokenReward(uint256 amount, bytes32[] memory proof) external virtual onlyKeeper {
@@ -61,7 +69,14 @@ abstract contract AlphaLendStrategy is Strategy {
     function _claimRewardsAndConvertTo(address _toToken) internal override {
         uint256 _alphaAmount = IERC20(ALPHA).balanceOf(address(this));
         if (_alphaAmount != 0) {
-            _safeSwap(ALPHA, _toToken, _alphaAmount, 1);
+            uint256 minAmtOut =
+                (swapSlippage != 10000)
+                    ? _calcAmtOutAfterSlippage(
+                        _getOracleRate(_simpleOraclePath(ALPHA, _toToken), _alphaAmount),
+                        swapSlippage
+                    )
+                    : 1;
+            _safeSwap(ALPHA, _toToken, _alphaAmount, minAmtOut);
         }
     }
 

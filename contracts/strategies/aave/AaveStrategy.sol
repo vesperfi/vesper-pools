@@ -14,7 +14,9 @@ abstract contract AaveStrategy is Strategy, AaveCore {
         address _pool,
         address _swapManager,
         address _receiptToken
-    ) Strategy(_pool, _swapManager, _receiptToken) AaveCore(_receiptToken) {}
+    ) Strategy(_pool, _swapManager, _receiptToken) AaveCore(_receiptToken) {
+        swapSlippage = 10000; // don't use oracles by default
+    }
 
     //solhint-enable
 
@@ -28,18 +30,26 @@ abstract contract AaveStrategy is Strategy, AaveCore {
         _unstakeAave();
     }
 
+    function _setupOracles() internal override {
+        swapManager.createOrUpdateOracle(AAVE, WETH, oraclePeriod, oracleRouterIdx);
+        if (address(collateralToken) != WETH) {
+            swapManager.createOrUpdateOracle(AAVE, address(collateralToken), oraclePeriod, oracleRouterIdx);
+        }
+    }
+
     /**
      * @notice Report total value
      * @dev aToken and collateral are 1:1
      */
     function totalValue() external view virtual override returns (uint256) {
-        uint256 _totalAave = _totalAave();
-        if (_totalAave == 0) {
+        uint256 _totalAaveAmt = _totalAave();
+        if (_totalAaveAmt == 0) {
             // As there is no AAVE balance return aToken balance as totalValue.
             return aToken.balanceOf(address(this));
         }
         // Get collateral value of total aave rewards
-        (, uint256 _aaveAsCollateral, ) = swapManager.bestOutputFixedInput(AAVE, address(collateralToken), _totalAave);
+        (, uint256 _aaveAsCollateral, ) =
+            swapManager.bestOutputFixedInput(AAVE, address(collateralToken), _totalAaveAmt);
         // Total value = aave as collateral + aToken balance
         return _aaveAsCollateral + aToken.balanceOf(address(this));
     }
@@ -72,7 +82,14 @@ abstract contract AaveStrategy is Strategy, AaveCore {
     function _claimRewardsAndConvertTo(address _toToken) internal override {
         uint256 _aaveAmount = _claimAave();
         if (_aaveAmount > 0) {
-            _safeSwap(AAVE, _toToken, _aaveAmount, 1);
+            uint256 minAmtOut =
+                (swapSlippage != 10000)
+                    ? _calcAmtOutAfterSlippage(
+                        _getOracleRate(_simpleOraclePath(AAVE, _toToken), _aaveAmount),
+                        swapSlippage
+                    )
+                    : 1;
+            _safeSwap(AAVE, _toToken, _aaveAmount, minAmtOut);
         }
     }
 
