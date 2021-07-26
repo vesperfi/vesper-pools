@@ -48,15 +48,15 @@ contract Crv3PoolMock is Crv3x {
     }
 
     function stakeAllLpToGauge() external {
-        _stakeAllLpToGauge();
+        _stakeAllLp();
     }
 
-    function unstakeAllLpFromGauge() external {
-        _unstakeAllLpFromGauge();
+    function unstakeAllLp() external {
+        _unstakeAllLp();
     }
 
-    function unstakeLpFromGauge(uint256 _amount) external {
-        _unstakeLpFromGauge(_amount);
+    function unstakeLp(uint256 _amount) external {
+        _unstakeLp(_amount);
     }
 
     function claimCrv() external {

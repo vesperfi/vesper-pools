@@ -123,7 +123,7 @@ abstract contract Crv3PoolStrategyBase is Crv3x, Strategy {
         depositError = false;
         uint256 amt = collateralToken.balanceOf(address(this));
         depositError = !_depositToCurve(amt);
-        _stakeAllLpToGauge();
+        _stakeAllLp();
     }
 
     function _depositToCurve(uint256 amt) internal virtual returns (bool) {
@@ -162,7 +162,7 @@ abstract contract Crv3PoolStrategyBase is Crv3x, Strategy {
         if (_amount == 0) return 0;
         uint256 i = collIdx;
         (uint256 lpToWithdraw, uint256 unstakeAmt) = calcWithdrawLpAs(_amount, i);
-        _unstakeLpFromGauge(unstakeAmt);
+        _unstakeLp(unstakeAmt);
         uint256 minAmtOut =
             convertFrom18(
                 (lpToWithdraw * _calcAmtOutAfterSlippage(_minimumLpPrice(_getSafeUsdRate()), crvSlippage)) / 1e18
@@ -179,7 +179,7 @@ abstract contract Crv3PoolStrategyBase is Crv3x, Strategy {
     function _beforeMigration(
         address /*_newStrategy*/
     ) internal override {
-        _unstakeAllLpFromGauge();
+        _unstakeAllLp();
     }
 
     function _claimRewardsAndConvertTo(address _toToken) internal virtual override {

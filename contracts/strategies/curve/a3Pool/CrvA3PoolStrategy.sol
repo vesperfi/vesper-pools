@@ -62,11 +62,15 @@ abstract contract CrvA3PoolStrategy is Crv3PoolStrategyBase {
         _claimStkAAVE();
         uint256 amtCrv = IERC20(CRV).balanceOf(address(this));
         if (amtCrv != 0) {
-            (uint256 minWethOut, bool isValid) = _consultOracle(CRV, WETH, amtCrv);
-            (uint256 minAmtOut, bool isValidTwo) = _consultOracle(WETH, _toToken, minWethOut);
-            require(isValid, "stale-crv-oracle");
-            require(isValidTwo, "stale-collateral-oracle");
-            _safeSwap(CRV, _toToken, amtCrv, _calcAmtOutAfterSlippage(minAmtOut, swapSlippage));
+            uint256 minAmtOut;
+            if (swapSlippage < 10000) {
+                (uint256 minWethOut, bool isValid) = _consultOracle(CRV, WETH, amtCrv);
+                (uint256 _minAmtOut, bool isValidTwo) = _consultOracle(WETH, _toToken, minWethOut);
+                require(isValid, "stale-crv-oracle");
+                require(isValidTwo, "stale-collateral-oracle");
+                minAmtOut = _calcAmtOutAfterSlippage(_minAmtOut, swapSlippage);
+            }
+            _safeSwap(CRV, _toToken, amtCrv, minAmtOut);
         }
         _claimAave();
         uint256 amtAave = IERC20(AAVE).balanceOf(address(this));

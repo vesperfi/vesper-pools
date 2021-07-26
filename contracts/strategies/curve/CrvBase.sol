@@ -61,7 +61,7 @@ abstract contract CrvBase {
         returns (uint256 lpToWithdraw, uint256 unstakeAmt)
     {
         uint256 lp = IERC20(crvLp).balanceOf(address(this));
-        uint256 tlp = lp + IERC20(crvGauge).balanceOf(address(this));
+        uint256 tlp = lp + totalStaked();
         lpToWithdraw = (_amtNeeded * tlp) / getLpValueAs(tlp, i);
         lpToWithdraw = (lpToWithdraw > tlp) ? tlp : lpToWithdraw;
         if (lpToWithdraw > lp) {
@@ -84,18 +84,18 @@ abstract contract CrvBase {
     }
 
     // requires that gauge has approval for lp token
-    function _stakeAllLpToGauge() internal {
+    function _stakeAllLp() internal virtual {
         uint256 balance = IERC20(crvLp).balanceOf(address(this));
         if (balance != 0) {
             ILiquidityGaugeV2(crvGauge).deposit(balance);
         }
     }
 
-    function _unstakeAllLpFromGauge() internal {
-        _unstakeLpFromGauge(IERC20(crvGauge).balanceOf(address(this)));
+    function _unstakeAllLp() internal virtual {
+        _unstakeLp(IERC20(crvGauge).balanceOf(address(this)));
     }
 
-    function _unstakeLpFromGauge(uint256 _amount) internal {
+    function _unstakeLp(uint256 _amount) internal virtual {
         if (_amount != 0) {
             ILiquidityGaugeV2(crvGauge).withdraw(_amount);
         }
@@ -116,7 +116,11 @@ abstract contract CrvBase {
             ITokenMinter(CRV_MINTER).minted(address(this), crvGauge);
     }
 
-    function totalLp() public view returns (uint256 total) {
+    function totalStaked() public view virtual returns (uint256 total) {
+        total = IERC20(crvGauge).balanceOf(address(this));
+    }
+
+    function totalLp() public view virtual returns (uint256 total) {
         total = IERC20(crvLp).balanceOf(address(this)) + IERC20(crvGauge).balanceOf(address(this));
     }
 }
