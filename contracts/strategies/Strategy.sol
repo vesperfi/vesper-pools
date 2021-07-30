@@ -42,7 +42,7 @@ abstract contract Strategy is IStrategy, Context {
         require(_swapManager != address(0), "sm-address-is-zero");
         swapManager = ISwapManager(_swapManager);
         pool = _pool;
-        collateralToken = IERC20(IVesperPool(_pool).token());
+        collateralToken = IVesperPool(_pool).token();
         receiptToken = _receiptToken;
     }
 
@@ -240,7 +240,7 @@ abstract contract Strategy is IStrategy, Context {
     }
 
     function _simpleOraclePath(address _from, address _to) internal pure returns (address[] memory path) {
-        if (_to == WETH) {
+        if (_from == WETH || _to == WETH) {
             path = new address[](2);
             path[0] = _from;
             path[1] = _to;
@@ -304,7 +304,7 @@ abstract contract Strategy is IStrategy, Context {
         }
     }
 
-    // These methods can be implemented by the inheriring strategy.
+    // These methods can be implemented by the inheriting strategy.
     /* solhint-disable no-empty-blocks */
     function _claimRewardsAndConvertTo(address _toToken) internal virtual {}
 
