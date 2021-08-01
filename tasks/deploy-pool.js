@@ -39,17 +39,38 @@ task('deploy-pool', 'Deploy vesper pool')
     console.log(`Deploying ${pool} on ${network} with deployParams`, deployParams)
     pool = pool.toLowerCase()
     const poolDir = `${networkDir}/${pool}`
+    const globalDir = `${networkDir}/global`
 
     try {
-      // Copy source directory, solcInputs. do not copy v(pool) directory and DefaultProxyAdmin.json
-      const copyFilter = ['*', 'solcInputs/*', '!v*', '!DefaultProxyAdmin.json']
-
       // Copy files from pool directory to network directory for deployment
       if (fs.existsSync(poolDir)) {
-        await copy(poolDir, networkDir, {overwrite: true, filter: copyFilter})
+        await copy(poolDir, networkDir, {
+          overwrite: true,
+          filter: ['*.json', 'solcInputs/*']
+        })
+      }
+
+      if (poolDir !== globalDir) {
+        // Only if not operating on the global pool
+        // Copy files from global directory to network directory for deployment
+        if (fs.existsSync(globalDir)) {
+          await copy(globalDir, networkDir, {
+            overwrite: true,
+            filter: ['*.json']
+          })
+        }
       }
 
       await run('deploy', {...deployParams})
+
+      let copyFilter = ['*.json', 'solcInputs/*', '!DefaultProxyAdmin.json']
+      if (poolDir !== globalDir) {
+        // Only if not operating on the global pool
+        // Do not copy global deployments into pool specific deployments
+        if (fs.existsSync(globalDir)) {
+          copyFilter = [...copyFilter, ...fs.readdirSync(globalDir).map(file => `!${file}`)]
+        }
+      }
 
       // Copy files from network directory to pool specific directory after deployment
       // Note: This operation will overwrite files. Anything start with dot(.) will not be copied
