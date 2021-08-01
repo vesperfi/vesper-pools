@@ -40,25 +40,27 @@ task('deploy-pool', 'Deploy vesper pool')
     pool = pool.toLowerCase()
     const poolDir = `${networkDir}/${pool}`
 
-    // Copy source directory, solcInputs. do not copy v(pool) directory and DefaultProxyAdmin.json
-    const copyFilter = ['*', 'solcInputs/*', '!v*', '!DefaultProxyAdmin.json']
+    try {
+      // Copy source directory, solcInputs. do not copy v(pool) directory and DefaultProxyAdmin.json
+      const copyFilter = ['*', 'solcInputs/*', '!v*', '!DefaultProxyAdmin.json']
 
-    // Copy files from pool directory to network directory for deployment
-    if (fs.existsSync(poolDir)) {
-      await copy(poolDir, networkDir, {overwrite: true, filter: copyFilter})
+      // Copy files from pool directory to network directory for deployment
+      if (fs.existsSync(poolDir)) {
+        await copy(poolDir, networkDir, {overwrite: true, filter: copyFilter})
+      }
+
+      await run('deploy', {...deployParams})
+
+      // Copy files from network directory to pool specific directory after deployment
+      // Note: This operation will overwrite files. Anything start with dot(.) will not be copied
+      await copy(networkDir, poolDir, {overwrite: true, filter: copyFilter})
+    } finally {
+      // Delete all json files except DefaultProxyAdmin.json. Also delete solcInputs directory
+      // Anything start with dot(.) will not be deleted
+      const deleteFilter = [`${networkDir}/*.json`, `${networkDir}/solcInputs`, `!${networkDir}/DefaultProxyAdmin.json`]
+      // Delete copied files from network directory
+      del.sync(deleteFilter)
     }
-
-    await run('deploy', {...deployParams})
-
-    // Copy files from network directory to pool specific directory after deployment
-    // Note: This operation will overwrite files. Anything start with dot(.) will not be copied
-    await copy(networkDir, poolDir, {overwrite: true, filter: copyFilter})
-
-    // Delete all json files except DefaultProxyAdmin.json. Also delete solcInputs directory
-    // Anything start with dot(.) will not be deleted
-    const deleteFilter = [`${networkDir}/*.json`, `${networkDir}/solcInputs`, `!${networkDir}/DefaultProxyAdmin.json`]
-    // Delete copied files from network directory
-    del.sync(deleteFilter)
 
     if (release) {
       await run('create-release', {pool, release})
