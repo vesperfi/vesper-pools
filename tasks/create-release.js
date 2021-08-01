@@ -31,6 +31,17 @@ function getPoolData(data) {
       implementation: data.PoolRewards_Implementation,
     }
   }
+
+  if (data.PoolAccountantUpgrader) {
+    root.PoolAccountantUpgrader = data.PoolAccountantUpgrader
+  }
+  if (data.PoolRewardsUpgrader) {
+    root.PoolRewardsUpgrader = data.PoolRewardsUpgrader
+  }
+  if (data.VPoolUpgrader) {
+    root.VPoolUpgrader = data.VPoolUpgrader
+  }
+
   const strategies = {}
   Object.entries(data).map(function ([key, value]) {
     if (key.includes('Strategy')) {

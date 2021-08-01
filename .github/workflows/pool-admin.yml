@@ -33,3 +33,6 @@ jobs:
 
       - name: Running tests for Vesper PoolRewards
         run: npm test "test/pool-rewards.js"
+
+      - name: Running tests for Vesper Pool Accountant Proxy upgrade
+        run: npm test "test/pool-accountant-proxy.js"
