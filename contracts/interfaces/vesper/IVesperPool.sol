@@ -53,6 +53,13 @@ interface IVesperPool is IERC20 {
 
     function pricePerShare() external view returns (uint256);
 
+    function targetPricePerShare() external view returns (uint256);
+
+    function amountForPriceIncrease(uint256 _fromPricePerShare, uint256 _toPricePerShare)
+        external
+        view
+        returns (uint256);
+
     function strategy(address _strategy)
         external
         view

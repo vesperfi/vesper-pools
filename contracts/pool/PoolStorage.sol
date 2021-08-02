@@ -16,4 +16,8 @@ contract PoolStorageV1 {
     uint256 public withdrawFee; // Withdraw fee for this pool
     uint256 public decimalConversionFactor; // It can be used in converting value to/from 18 decimals
     bool internal withdrawInETH; // This flag will be used by VETH pool as switch to withdraw ETH or WETH
+
+    uint256 public vfrTargetAPY;
+    uint256 public vfrStartTime;
+    uint256 public vfrInitialPricePerShare;
 }

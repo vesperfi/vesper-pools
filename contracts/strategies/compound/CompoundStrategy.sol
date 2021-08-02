@@ -4,6 +4,9 @@ pragma solidity 0.8.3;
 
 import "../Strategy.sol";
 import "../../interfaces/compound/ICompound.sol";
+import "../../interfaces/vesper/IVesperPool.sol";
+
+import "hardhat/console.sol";
 
 /// @title This strategy will deposit collateral token in Compound and earn interest.
 abstract contract CompoundStrategy is Strategy {
@@ -101,7 +104,17 @@ abstract contract CompoundStrategy is Strategy {
         if (_collateralBalance > _totalDebt) {
             _withdrawHere(_collateralBalance - _totalDebt);
         }
-        return collateralToken.balanceOf(address(this));
+
+        uint256 balance = collateralToken.balanceOf(address(this));
+        uint256 amountNeeded =
+            IVesperPool(pool).amountForPriceIncrease(
+                IVesperPool(pool).pricePerShare(),
+                IVesperPool(pool).targetPricePerShare()
+            );
+
+        console.log("balance = %s, amountNeeded = %s", balance, amountNeeded);
+
+        return balance > amountNeeded ? amountNeeded : balance;
     }
 
     /**
