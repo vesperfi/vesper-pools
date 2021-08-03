@@ -131,6 +131,7 @@
           "implementation": "0xE82cEC55C0aD923195a523a6953a0dAD432E7A9f"
         },
         "strategies": {
+          "ConvexStrategyDAI": "0x7fCE7Ed34b43f6Feef6adaBDce8C9670a27E4119",
           "Crv3PoolStrategyDAI": "0xD11E6772A430c45C7B64927069AF37fa9ab3bE75",
           "YearnStrategyDAI": "0xcc17e24559757Eb161017626c2C85f884Cdab267"
         }
