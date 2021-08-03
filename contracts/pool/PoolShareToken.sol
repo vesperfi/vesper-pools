@@ -49,19 +49,6 @@ abstract contract PoolShareToken is Initializable, PoolERC20Permit, Governed, Pa
         decimalConversionFactor = 10**(18 - _decimals);
     }
 
-    function startVFR(uint256 _apy) external {
-        vfrTargetAPY = _apy;
-        vfrStartTime = block.timestamp;
-        vfrInitialPricePerShare = pricePerShare();
-    }
-
-    function targetPricePerShare() external view returns (uint256) {
-        return
-            vfrInitialPricePerShare +
-            (vfrInitialPricePerShare * vfrTargetAPY * (block.timestamp - vfrStartTime)) /
-            (MAX_BPS * 365 * 24 * 3600);
-    }
-
     /**
      * @notice Deposit ERC20 tokens and receive pool shares depending on the current share price.
      * @param _amount ERC20 token amount.
@@ -134,16 +121,6 @@ abstract contract PoolShareToken is Initializable, PoolERC20Permit, Governed, Pa
             return convertFrom18(1e18);
         }
         return (totalValue() * 1e18) / totalSupply();
-    }
-
-    function amountForPriceIncrease(uint256 _fromPricePerShare, uint256 _toPricePerShare)
-        public
-        view
-        returns (uint256)
-    {
-        uint256 _fromTotalValue = (_fromPricePerShare * totalSupply()) / 1e18;
-        uint256 _toTotalValue = (_toPricePerShare * totalSupply()) / 1e18;
-        return _toTotalValue > _fromTotalValue ? _toTotalValue - _fromTotalValue : 0;
     }
 
     /// @dev Convert from 18 decimals to token defined decimals.
