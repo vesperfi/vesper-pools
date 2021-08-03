@@ -4,6 +4,8 @@ const VETH = require('../../helper/ethereum/poolConfig').VETHEarn
 const EarnAaveMakerStrategyETH = 'EarnAaveMakerStrategyETH'
 const Address = require('../../helper/ethereum/address')
 const PoolAccountant = 'PoolAccountant'
+const PoolAccountantUpgrader = 'PoolAccountantUpgrader'
+const DefaultProxyAdmin = 'DefaultProxyAdmin'
 const {BigNumber} = require('ethers')
 const DECIMAL18 = BigNumber.from('1000000000000000000')
 const ONE_MILLION = DECIMAL18.mul('1000000')
@@ -18,14 +20,53 @@ const deployFunction = async function ({getNamedAccounts, deployments}) {
   const {deploy, read, execute} = deployments
   const {deployer} = await getNamedAccounts()
 
-  // Deploy PoolAccountant. This call will deploy ProxyAdmin, proxy and PoolAccountant
-  await deploy(PoolAccountant, {
-    from: deployer,
-    log: true,
-    proxy: {
-      proxyContract: 'OpenZeppelinTransparentProxy',
-    },
-  })
+  const upgrader = await deployments.getOrNull(PoolAccountantUpgrader)
+  if (upgrader) {
+    // An upgrader is available, safe upgrade through it
+
+    // First, get the PoolAccountant proxy
+    const poolAccountant = await deployments.get(PoolAccountant)
+
+    // If we get a valid admin when checking through the default proxy admin,
+    // then we can be sure that the default proxy admin is the admin of the proxy
+    const admin = await read(DefaultProxyAdmin, 'getProxyAdmin', poolAccountant.address).catch(() => null)
+    if (admin) {
+      // Transfer proxy ownership to the upgrader
+      await execute(
+        DefaultProxyAdmin,
+        {from: deployer, log: true},
+        'changeProxyAdmin',
+        poolAccountant.address,
+        upgrader.address
+      )
+    }
+
+    // Deploy a new implementation
+    const newImplementation = await deploy(`${PoolAccountant}_Implementation`, {
+      contract: PoolAccountant,
+      from: deployer,
+      log: true
+    })
+
+    // Finally, trigger a safe upgrade via the upgrader
+    await execute(
+      PoolAccountantUpgrader,
+      {from: deployer, log: true},
+      'safeUpgrade',
+      poolAccountant.address,
+      newImplementation.address
+    )
+  } else {
+    // Otherwise, fallback to unsafe upgrade through the default proxy admin
+    await deploy(PoolAccountant, {
+      from: deployer,
+      log: true,
+      proxy: {
+        proxyContract: 'OpenZeppelinTransparentProxy',
+      },
+    })
+  }
+
   const poolProxy = await deployments.get('VETH')
   // Deploy strategy for pool
   const earnStratMaker = await deploy(EarnAaveMakerStrategyETH, {

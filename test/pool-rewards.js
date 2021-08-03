@@ -8,6 +8,7 @@ const poolOps = require('./utils/poolOps')
 const {deployContract, getUsers, setupVPool} = require('./utils/setupHelper')
 const StrategyType = require('./utils/strategyTypes')
 const PoolConfig = require('../helper/ethereum/poolConfig')
+const MULTICALL = require('../helper/ethereum/address').MULTICALL
 
 const TOTAL_REWARD = ethers.utils.parseUnits('150000')
 const REWARD_DURATION = 30 * 24 * 60 * 60
@@ -265,25 +266,54 @@ describe('Rewards for VDAI Pool', function () {
   })
 
   describe('Update proxy implementation', function () {
-    it('Should deploy new implementation and upgrade in proxy', async function () {
-      const implAddress = poolRewardsImpl.address
+    let proxyAddress
+
+    beforeEach(async function () {
+      // Give some rewards to be able to test storage after upgrading
       await vsp.connect(governor.signer).mint(poolRewards.address, TOTAL_REWARD)
       await poolRewards.connect(governor.signer).notifyRewardAmount(TOTAL_REWARD, REWARD_DURATION)
-      const rewardRate = await poolRewards.rewardRate()
-      expect(rewardRate).to.be.gt(0, 'Reward rate should be > 0')
 
       // Deploy new implementation
       poolRewardsImpl = await deployContract('PoolRewards', [])
-      expect(poolRewardsImpl.address !== implAddress, 'Impl address should be different').to.be.true
 
-      const proxyAddress = poolRewards.address
+      proxyAddress = poolRewards.address
+    })
+
+    it('Should upgrade in proxy directly', async function () {
+      const rewardRateBefore = await poolRewards.rewardRate()
+
       // Upgrade proxy to point to new implementation
       await proxyAdmin.connect(governor.signer).upgrade(proxy.address, poolRewardsImpl.address)
       poolRewards = await ethers.getContractAt('PoolRewards', proxy.address)
 
       expect(poolRewards.address === proxyAddress, 'Pool rewards proxy address should be same').to.be.true
       const rewardRateAfter = await poolRewards.rewardRate()
-      expect(rewardRateAfter).to.be.eq(rewardRate, 'Reward rate after proxy upgrade should be same as before')
+      expect(rewardRateAfter).to.be.eq(rewardRateBefore, 'Reward rate after proxy upgrade should be same as before')
+    })
+
+    describe('Upgrader', function () {
+      let upgrader
+
+      beforeEach(async function () {
+        // Deploy upgrader
+        upgrader = await deployContract('PoolRewardsUpgrader', [MULTICALL])
+
+        // Transfer proxy ownership to the upgrader
+        await proxyAdmin.connect(governor.signer).changeProxyAdmin(proxy.address, upgrader.address)
+      })
+
+      it('Should upgrade in proxy via upgrader', async function () {
+        // Trigger upgrade
+        await upgrader.connect(governor.signer).safeUpgrade(proxy.address, poolRewardsImpl.address)
+  
+        poolRewards = await ethers.getContractAt('PoolRewards', proxy.address)
+        expect(poolRewards.address === proxyAddress, 'Pool rewards proxy address should be same').to.be.true
+      })
+  
+      it('Should properly revert wrong upgrades via upgrader', async function () {
+        // Trigger upgrade
+        await expect(upgrader.connect(governor.signer).safeUpgrade(proxy.address, MULTICALL)).to.be.reverted
+      })
     })
   })
 })

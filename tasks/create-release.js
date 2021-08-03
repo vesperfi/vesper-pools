@@ -31,6 +31,7 @@ function getPoolData(data) {
       implementation: data.PoolRewards_Implementation,
     }
   }
+
   const strategies = {}
   Object.entries(data).map(function ([key, value]) {
     if (key.includes('Strategy')) {

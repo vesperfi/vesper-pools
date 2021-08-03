@@ -8,11 +8,12 @@ const {deployContract, getUsers, createStrategy} = require('./utils/setupHelper'
 const StrategyType = require('./utils/strategyTypes')
 const addressListFactory = hre.address.ADDRESS_LIST_FACTORY
 const VDAI = require('../helper/ethereum/poolConfig').VDAI
+const MULTICALL = require('../helper/ethereum/address').MULTICALL
 
 describe('Vesper Pool: proxy', function () {
   const poolName = VDAI.contractName
   const poolParams = VDAI.poolParams
-  let pool, strategy, collateralToken
+  let pool, poolImpl, strategy, collateralToken
   let proxy, proxyAdmin
   let governor, user1, user2, user3, user4
 
@@ -26,7 +27,7 @@ describe('Vesper Pool: proxy', function () {
     const users = await getUsers()
     ;[governor, user1, user2, user3, user4] = users
     let accountant = await deployContract('PoolAccountant')
-    pool = await deployContract(poolName, poolParams)
+    poolImpl = await deployContract(poolName, poolParams)
     // Deploy proxy admin
     proxyAdmin = await deployContract('ProxyAdmin', [])
     // deploy accountant proxy with logic implementation
@@ -37,13 +38,13 @@ describe('Vesper Pool: proxy', function () {
     ])
     accountant = await ethers.getContractAt('PoolAccountant', accountantProxy.address)
 
-    const initData = pool.interface.encodeFunctionData('initialize', [
+    const initData = poolImpl.interface.encodeFunctionData('initialize', [
       ...poolParams,
       accountantProxy.address,
       addressListFactory,
     ])
     // deploy pool proxy with logic implementation
-    proxy = await deployContract('TransparentUpgradeableProxy', [pool.address, proxyAdmin.address, initData])
+    proxy = await deployContract('TransparentUpgradeableProxy', [poolImpl.address, proxyAdmin.address, initData])
     // Get implementation from proxy
     pool = await ethers.getContractAt(poolName, proxy.address)
     // Init accountant proxy with pool proxy address
@@ -56,7 +57,7 @@ describe('Vesper Pool: proxy', function () {
   })
 
   context('Proxy upgrade', function () {
-    it('Should upgrade pool and still have keep storage', async function () {
+    it('Should upgrade pool directly and still have keep storage', async function () {
       await poolOps.deposit(pool, collateralToken, 10, user1)
       await poolOps.deposit(pool, collateralToken, 10, user2)
       const totalSupply1 = await pool.totalSupply()
@@ -90,6 +91,38 @@ describe('Vesper Pool: proxy', function () {
       expect(await pool.balanceOf(user1.address)).to.be.eq(0, 'user1 vBalance should be zero')
       expect(totalSupply4).to.be.lt(totalSupply3, 'Total supply should decrease at withdraw')
       expect(await pool.totalValue()).to.be.lt(totalValue, 'Total value should decrease at withdraw')
+    })
+
+    describe('Upgrader', function () {
+      let upgrader
+
+      beforeEach(async function () {
+        // Deploy upgrader
+        upgrader = await deployContract('VPoolUpgrader', [MULTICALL])
+
+        // Transfer proxy ownership to the upgrader
+        await proxyAdmin.connect(governor.signer).changeProxyAdmin(proxy.address, upgrader.address)
+      })
+
+      it('Should upgrade in proxy via upgrader', async function () {
+        const oldPoolImpl = await upgrader.getProxyImplementation(proxy.address)
+        const oldPool = pool.address
+        const newPool = await deployContract(poolName, poolParams)
+
+        // Trigger upgrade
+        await upgrader.connect(governor.signer).safeUpgrade(proxy.address, newPool.address)
+  
+        pool = await ethers.getContractAt(poolName, proxy.address)
+        expect(pool.address).to.be.eq(oldPool, 'Pool address via proxy should be same')
+
+        const newPoolImpl = await upgrader.getProxyImplementation(proxy.address)
+        expect(newPoolImpl !== oldPoolImpl, 'Implementation address should be different').to.be.true
+      })
+  
+      it('Should properly revert wrong upgrades via upgrader', async function () {
+        // Trigger upgrade
+        await expect(upgrader.connect(governor.signer).safeUpgrade(proxy.address, MULTICALL)).to.be.reverted
+      })
     })
   })
 })
