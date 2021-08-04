@@ -25,9 +25,10 @@ describe('VRF Compound strategy', function () {
   }
 
   async function withdrawAll(withdrawer) {
-    await pool
-      .connect(withdrawer.signer)
-      .withdraw(await pool.balanceOf(withdrawer.address))
+    const shares = await pool.balanceOf(withdrawer.address)
+    if (shares.gt(0)) {
+      await pool.connect(withdrawer.signer).withdraw(shares)
+    }
   }
 
   async function adjustDaiBalance(address, balance) {
@@ -108,16 +109,22 @@ describe('VRF Compound strategy', function () {
     }
   })
 
-  it('pool targets 5% APY and achieves 5% APY', async function () {
+  it('pool targets 5% APY and achieves 5% APY with withdraw', async function () {
     const depositors = [user1, user2, user3, user4, user5, user6, user7]
     const deposits = [5000, 20000, 1400, 3000, 5000, 4000, 1000]
-    const times = [0, 0, 0, 0, 0, 0, 0]
+    const depositTimes = [0, 0, 0, 0, 0, 0, 0]
+    const withdrawTimes = [0, 0, 0, 0, 0, 0, 0]
 
     await pool.startVFR(500)
     for (let i = 0; i < depositors.length; i++) {
       // Deposit
       await deposit(deposits[i], depositors[i])
-      times[i] = await ethers.provider.getBlock('latest').then(block => block.timestamp)
+      depositTimes[i] = await ethers.provider.getBlock('latest').then(block => block.timestamp)
+
+      if (i === 4) {
+        await withdrawAll(depositors[1])
+        withdrawTimes[1] = await ethers.provider.getBlock('latest').then(block => block.timestamp)
+      }
 
       // Wait for 5 days
       await timeTravel(5 * 24 * 3600)
@@ -146,8 +153,8 @@ describe('VRF Compound strategy', function () {
       const currentBalance = await collateralToken.balanceOf(depositors[i].address)
       const depositBalance = parseEther(deposits[i].toString())
 
-      const currentTime = await ethers.provider.getBlock('latest').then(block => block.timestamp)
-      const depositTime = times[i]
+      const currentTime = withdrawTimes[i] || await ethers.provider.getBlock('latest').then(block => block.timestamp)
+      const depositTime = depositTimes[i]
 
       const diff = currentBalance.sub(depositBalance)
       const apy = diff.mul(365 * 24 * 3600).mul('1000000000000000000').div(
@@ -254,4 +261,116 @@ describe('VRF Compound strategy', function () {
       console.log(`user${i} APY = ${ethers.utils.formatEther(apy)}`)
     }
   })
+
+  it('pool targets 5% APY and achieves 5% APY via inconsistent earnings with deposit window', async function () {
+    const depositors = [user1, user2, user3, user4, user5, user6, user7]
+    const deposits = [5000, 20000, 1400, 3000, 5000, 4000, 1000]
+    const depositTimes = [0, 0, 0, 0, 0, 0, 0]
+    const withdrawTimes = [0, 0, 0, 0, 0, 0, 0]
+
+    for (let i = 0; i < depositors.length; i++) {
+      // Deposit
+      await deposit(deposits[i], depositors[i])
+      depositTimes[i] = await ethers.provider.getBlock('latest').then(block => block.timestamp)
+    }
+
+    await pool.startVFR(500)
+    for (let i = 0; i < depositors.length; i++) {
+      // Wait for 5 days
+      await timeTravel(5 * 24 * 3600)
+
+      // Hack earning rewards by directly sending DAI to the strategy
+      const currentPPS = await pool.pricePerShare()
+      const realTargetPPS = await pool.targetPricePerShare()
+      const wantTargetPPS = await pool.targetPricePerShareForAPY((i + 1) * 100)
+      const realAmount = await pool.amountForPriceIncrease(currentPPS, realTargetPPS)
+      const wantAmount = await pool.amountForPriceIncrease(currentPPS, wantTargetPPS)
+      console.log(`current price per share: ${formatEther(currentPPS.toString())}`)
+      console.log(`target price per share: ${formatEther(realTargetPPS.toString())}`)
+      console.log(`amount to reach target price per share: ${formatEther(realAmount.toString())}`)
+      console.log(`amount earned: ${formatEther(wantAmount)}`)
+      await collateralToken.connect(daiGiver.signer).transfer(strategies[0].instance.address, wantAmount)
+
+      // Rebalance
+      await rebalance(strategies)
+
+      console.log('\n')
+    }
+
+    for (let i = 0; i < depositors.length; i++) {
+      await withdrawAll(depositors[i])
+
+      const currentBalance = await collateralToken.balanceOf(depositors[i].address)
+      const depositBalance = parseEther(deposits[i].toString())
+
+      const currentTime = withdrawTimes[i] || await ethers.provider.getBlock('latest').then(block => block.timestamp)
+      const depositTime = depositTimes[i]
+
+      const diff = currentBalance.sub(depositBalance)
+      const apy = diff.mul(365 * 24 * 3600).mul('1000000000000000000').div(
+        depositBalance.mul(currentTime - depositTime)
+      )
+      console.log(`user${i} APY = ${ethers.utils.formatEther(apy)}`)
+    }
+  })
+
+  it.only(
+    'pool targets 5% APY and achieves 5% APY via inconsistent earnings with deposit window and withdraw',
+    async function () {
+      const depositors = [user1, user2, user3, user4, user5, user6, user7]
+      const deposits = [5000, 20000, 1400, 3000, 5000, 4000, 1000]
+      const depositTimes = [0, 0, 0, 0, 0, 0, 0]
+      const withdrawTimes = [0, 0, 0, 0, 0, 0, 0]
+
+      for (let i = 0; i < depositors.length; i++) {
+        // Deposit
+        await deposit(deposits[i], depositors[i])
+        depositTimes[i] = await ethers.provider.getBlock('latest').then(block => block.timestamp)
+      }
+
+      await pool.startVFR(500)
+      for (let i = 0; i < depositors.length; i++) {
+        // Wait for 5 days
+        await timeTravel(5 * 24 * 3600)
+
+        if (i === 3) {
+          await withdrawAll(depositors[1])
+          withdrawTimes[1] = await ethers.provider.getBlock('latest').then(block => block.timestamp)
+        }
+
+        // Hack earning rewards by directly sending DAI to the strategy
+        const currentPPS = await pool.pricePerShare()
+        const realTargetPPS = await pool.targetPricePerShare()
+        const wantTargetPPS = await pool.targetPricePerShareForAPY((i + 1) * 100)
+        const realAmount = await pool.amountForPriceIncrease(currentPPS, realTargetPPS)
+        const wantAmount = await pool.amountForPriceIncrease(currentPPS, wantTargetPPS)
+        console.log(`current price per share: ${formatEther(currentPPS.toString())}`)
+        console.log(`target price per share: ${formatEther(realTargetPPS.toString())}`)
+        console.log(`amount to reach target price per share: ${formatEther(realAmount.toString())}`)
+        console.log(`amount earned: ${formatEther(wantAmount)}`)
+        await collateralToken.connect(daiGiver.signer).transfer(strategies[0].instance.address, wantAmount)
+
+        // Rebalance
+        await rebalance(strategies)
+
+        console.log('\n')
+      }
+
+      for (let i = 0; i < depositors.length; i++) {
+        await withdrawAll(depositors[i])
+
+        const currentBalance = await collateralToken.balanceOf(depositors[i].address)
+        const depositBalance = parseEther(deposits[i].toString())
+
+        const currentTime = withdrawTimes[i] || await ethers.provider.getBlock('latest').then(block => block.timestamp)
+        const depositTime = depositTimes[i]
+
+        const diff = currentBalance.sub(depositBalance)
+        const apy = diff.mul(365 * 24 * 3600).mul('1000000000000000000').div(
+          depositBalance.mul(currentTime - depositTime)
+        )
+        console.log(`user${i} APY = ${ethers.utils.formatEther(apy)}`)
+      }
+    }
+  )
 })
