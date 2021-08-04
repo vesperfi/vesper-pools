@@ -152,6 +152,23 @@
         "strategies": {
           "EarnCompoundMakerStrategyETH": "0xeE99cc7b1914b50F04CB5db8Cf3523A1C55e8A52"
         }
+      },
+      "vdai": {
+        "pool": {
+          "proxy": "0xB4eDcEFd59750144882170FCc52ffeD40BfD5f7d",
+          "implementation": "0x43Ef34f296AFe23B654bDA084de43CcbEC34F841",
+          "poolAccountant": {
+            "proxy": "0x13c88a2dA8E83BA6933fD3Aa51e008986B91b1Fd",
+            "implementation": "0x6Cf8b89103a83b9d739c33e3D91348eC4CBcEE2a"
+          }
+        },
+        "poolRewards": {
+          "proxy": "0x8a36F26FD4b94392Cc967037DdbD6Af5a2F6fBB7",
+          "implementation": "0x6d7746336DeF5Dd009CEe7cef9A0331495e64153"
+        },
+        "strategies": {
+          "CompoundStrategyDAI": "0x9ce483DBE7C810A7DE7fCB78e61cD13Cec4A0914"
+        }
       }
     }
   }
