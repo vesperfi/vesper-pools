@@ -314,7 +314,7 @@ describe('VRF Compound strategy', function () {
     }
   })
 
-  it.only(
+  it(
     'pool targets 5% APY and achieves 5% APY via inconsistent earnings with deposit window and withdraw',
     async function () {
       const depositors = [user1, user2, user3, user4, user5, user6, user7]
