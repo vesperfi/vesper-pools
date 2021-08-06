@@ -31,16 +31,16 @@ contract VFRPool is VPoolBase {
         _initializeBase(_name, _symbol, _token, _poolAccountant, _addressListFactory);
     }
 
-    function retarget(uint256 _apy) external onlyGovernor {
+    function retarget(uint256 _apy, uint256 _tolerance) external onlyGovernor {
         targetAPY = _apy;
         startTime = block.timestamp;
         initialPricePerShare = pricePerShare();
         lastRebalanceAPY = _apy;
         // Only allow deposits if at the last rebalance the pool's actual APY
-        // was not behind the target APY for more than 'tolerance'. The default
-        // is set here 1%, but probably a better way to set this is dynamically
-        // based on how long the pool has been running for.
-        tolerance = 1e16;
+        // was not behind the target APY for more than 'tolerance'. Probably
+        // a better way to set this is dynamically based on how long the pool
+        // has been running for.
+        tolerance = _tolerance;
     }
 
     function targetPricePerShare() public view returns (uint256) {
@@ -90,29 +90,5 @@ contract VFRPool is VPoolBase {
         super.reportEarning(_profit, _loss, _payback);
         // Update any needed parameters after every rebalance
         afterRebalance();
-    }
-
-    // This is only needed for testing purposes - will remove once testing is done
-    function amountForPriceIncrease(
-        address _strategy,
-        uint256 _fromPricePerShare,
-        uint256 _toPricePerShare
-    ) public view returns (uint256) {
-        if (_fromPricePerShare < _toPricePerShare) {
-            (, uint256 fee, , , , , , ) = IPoolAccountant(poolAccountant).strategy(_strategy);
-            uint256 _fromTotalValue = (_fromPricePerShare * totalSupply()) / 1e18;
-            uint256 _toTotalValue = (_toPricePerShare * totalSupply()) / 1e18;
-            uint256 amountWithoutFee = _toTotalValue - _fromTotalValue;
-            return (amountWithoutFee * MAX_BPS) / (MAX_BPS - fee);
-        }
-        return 0;
-    }
-
-    // This is only needed for testing purposes - will remove once testing is done
-    function targetPricePerShareForAPY(uint256 _apy) external view returns (uint256) {
-        return
-            initialPricePerShare +
-            (initialPricePerShare * _apy * (block.timestamp - startTime)) /
-            (1e18 * 365 * 24 * 3600);
     }
 }

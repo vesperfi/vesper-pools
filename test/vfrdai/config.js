@@ -3,7 +3,7 @@
 const {ethers} = require('hardhat')
 
 const PoolConfig = require('../../helper/ethereum/poolConfig')
-const {getUsers, setupVPool} = require('../utils/setupHelper')
+const {deployContract, getUsers, setupVPool} = require('../utils/setupHelper')
 const StrategyType = require('../utils/strategyTypes')
 
 const ONE_MILLION = ethers.utils.parseEther('1000000')
@@ -28,6 +28,11 @@ function prepareConfig(_strategies) {
         feeCollector: users[i + 8].address, // leave first 8 users for other testing
       })),
     })
+    const buffer = await deployContract('VFRBuffer', [this.pool.address])
+    this.buffer = buffer
+    for (const strategy of this.strategies) {
+      await strategy.instance.setBuffer(buffer.address)
+    }
   })
   return strategies
 }

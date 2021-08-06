@@ -30,8 +30,9 @@ abstract contract CompoundVFRStrategy is CompoundStrategy {
         }
 
         uint256 balance = collateralToken.balanceOf(address(this));
-        uint256 targetAmount = IVFRPool(pool).amountToReachTarget(address(this));
+        // If the buffer is not set, this will work exactly like a regular strategy
         if (buffer != address(0)) {
+            uint256 targetAmount = IVFRPool(pool).amountToReachTarget(address(this));
             if (balance >= targetAmount) {
                 collateralToken.transfer(buffer, balance - targetAmount);
                 balance = targetAmount;
