@@ -4,7 +4,6 @@ pragma solidity 0.8.3;
 
 import "../Strategy.sol";
 import "../../interfaces/compound/ICompound.sol";
-import "../../interfaces/vesper/IVesperPool.sol";
 
 /// @title This strategy will deposit collateral token in Compound and earn interest.
 abstract contract CompoundStrategy is Strategy {
