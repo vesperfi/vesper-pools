@@ -26,4 +26,4 @@ jobs:
         run: npm install
 
       - name: Running vfrDAI Pool tests
-        run: npm test "test/pool/pool.js"
+        run: npm test "test/vfrdai/pool.js"
