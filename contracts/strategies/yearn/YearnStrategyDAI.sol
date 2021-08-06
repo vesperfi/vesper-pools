@@ -10,8 +10,8 @@ contract YearnStrategyDAI is YearnStrategy {
     string public constant NAME = "Yearn-Strategy-DAI";
     string public constant VERSION = "3.0.0";
 
-    // yvDAI = 0x19D3364A399d251E894aC732651be8B0E4e85001
+    // yvDAI = 0xdA816459F1AB5631232FE5e97a05BBBb94970c95
     constructor(address _pool, address _swapManager)
-        YearnStrategy(_pool, _swapManager, 0x19D3364A399d251E894aC732651be8B0E4e85001)
+        YearnStrategy(_pool, _swapManager, 0xdA816459F1AB5631232FE5e97a05BBBb94970c95)
     {}
 }
