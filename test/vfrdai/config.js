@@ -12,7 +12,7 @@ function prepareConfig(_strategies) {
   const interestFee = '1500' // 15%
   const strategies = _strategies || [
     {
-      name: 'CompoundStrategyDAI',
+      name: 'CompoundVFRStrategyDAI',
       type: StrategyType.COMPOUND,
       config: {interestFee, debtRatio: 1000, debtRate: ONE_MILLION},
     },

@@ -102,14 +102,7 @@ abstract contract CompoundStrategy is Strategy {
         if (_collateralBalance > _totalDebt) {
             _withdrawHere(_collateralBalance - _totalDebt);
         }
-
-        uint256 balance = collateralToken.balanceOf(address(this));
-        uint256 amountNeeded =
-            IVesperPool(pool).amountForPriceIncrease(
-                IVesperPool(pool).pricePerShare(),
-                IVesperPool(pool).targetPricePerShare()
-            );
-        return balance > amountNeeded ? amountNeeded : balance;
+        return collateralToken.balanceOf(address(this));
     }
 
     /**

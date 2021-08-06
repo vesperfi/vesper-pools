@@ -202,7 +202,7 @@ abstract contract PoolShareToken is Initializable, PoolERC20Permit, Governed, Pa
     }
 
     /// @dev Deposit incoming token and mint pool token i.e. shares.
-    function _deposit(uint256 _amount) internal {
+    function _deposit(uint256 _amount) internal virtual {
         _claimRewards(_msgSender());
         uint256 _shares = _calculateShares(_amount);
         _beforeMinting(_amount);
