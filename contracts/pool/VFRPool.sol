@@ -32,6 +32,8 @@ contract VFRPool is VPoolBase {
     }
 
     function retarget(uint256 _apy, uint256 _tolerance) external onlyGovernor {
+        // eg. 100% APY -> 1 * 1e18 = 1e18
+        //     5% APY -> 0.05 * 1e18 = 5e16
         targetAPY = _apy;
         startTime = block.timestamp;
         initialPricePerShare = pricePerShare();
