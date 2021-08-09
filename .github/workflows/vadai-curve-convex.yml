@@ -11,7 +11,7 @@ on:
       - "contracts/strategies/convex/ConvexStrategyDAI.sol"
 
 jobs:
-  vusdt-cream-strategy-test:
+  vadai-curve-convex-test:
     runs-on: ubuntu-latest
     strategy:
       matrix:

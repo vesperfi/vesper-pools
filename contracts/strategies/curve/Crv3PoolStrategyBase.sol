@@ -64,10 +64,16 @@ abstract contract Crv3PoolStrategyBase is Crv3x, Strategy {
      * @notice Calculate total value of asset under management
      * @dev Report total value in collateral token
      */
-    function totalValue() external view override returns (uint256 _value) {
+    function totalValue() external view virtual override returns (uint256 _value) {
+        uint256 claimable = claimableRewards();
+        uint256 rewardAsCollateral;
+        if (claimable != 0) {
+            (, rewardAsCollateral, ) = swapManager.bestOutputFixedInput(CRV, address(collateralToken), claimable);
+        }
         _value =
             collateralToken.balanceOf(address(this)) +
-            convertFrom18(_calcAmtOutAfterSlippage(getLpValue(totalLp()), crvSlippage));
+            convertFrom18(_calcAmtOutAfterSlippage(getLpValue(totalLp()), crvSlippage)) +
+            rewardAsCollateral;
     }
 
     function _setupOracles() internal virtual override {
