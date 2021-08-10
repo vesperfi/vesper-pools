@@ -109,7 +109,7 @@ abstract contract CrvBase {
         ILiquidityGaugeV2(crvGauge).user_checkpoint(address(this));
     }
 
-    function claimableRewards() public view returns (uint256) {
+    function claimableRewards() public view virtual returns (uint256) {
         //Total Mintable - Previously minted
         return
             ILiquidityGaugeV2(crvGauge).integrate_fraction(address(this)) -

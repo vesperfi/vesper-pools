@@ -92,12 +92,16 @@ abstract contract ConvexStrategy is Crv3PoolStrategyBase {
             if (swapSlippage < 10000) {
                 (uint256 minWethOut, bool isValid) = _consultOracle(CVX, WETH, amt);
                 (uint256 _minAmtOut, bool isValidTwo) = _consultOracle(WETH, _toToken, minWethOut);
-                require(isValid, "stale-crv-oracle");
+                require(isValid, "stale-cvx-oracle");
                 require(isValidTwo, "stale-collateral-oracle");
                 minAmtOut = _calcAmtOutAfterSlippage(_minAmtOut, swapSlippage);
             }
             _safeSwap(CVX, _toToken, amt, minAmtOut);
         }
+    }
+
+    function claimableRewards() public view override returns (uint256 total) {
+        total = Rewards(cvxCrvRewards).earned(address(this));
     }
 
     function totalStaked() public view override returns (uint256 total) {
