@@ -8,19 +8,11 @@ import "../../../interfaces/vesper/IVFRPool.sol";
 
 // solhint-disable no-empty-blocks
 abstract contract CompoundVFRStrategy is CompoundStrategy {
-    // This should probably get passed in the constructor, but for now
-    // keepping it here so that setup scripts don't need to get updated
-    address public buffer;
-
     constructor(
         address _pool,
         address _swapManager,
         address _receiptToken
     ) CompoundStrategy(_pool, _swapManager, _receiptToken) {}
-
-    function setBuffer(address _buffer) external onlyGovernor {
-        buffer = _buffer;
-    }
 
     function _realizeProfit(uint256 _totalDebt) internal virtual override returns (uint256) {
         _claimRewardsAndConvertTo(address(collateralToken));
@@ -31,6 +23,7 @@ abstract contract CompoundVFRStrategy is CompoundStrategy {
 
         uint256 balance = collateralToken.balanceOf(address(this));
         // If the buffer is not set, this will work exactly like a regular strategy
+        address buffer = IVFRPool(pool).buffer();
         if (buffer != address(0)) {
             uint256 targetAmount = IVFRPool(pool).amountToReachTarget(address(this));
             if (balance >= targetAmount) {

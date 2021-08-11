@@ -14,7 +14,12 @@ function prepareConfig(_strategies) {
     {
       name: 'CompoundVFRStrategyDAI',
       type: StrategyType.COMPOUND,
-      config: {interestFee, debtRatio: 1000, debtRate: ONE_MILLION},
+      config: {interestFee, debtRatio: 5000, debtRate: ONE_MILLION},
+    },
+    {
+      name: 'CompoundVFRStrategyDAI',
+      type: StrategyType.COMPOUND,
+      config: {interestFee, debtRatio: 5000, debtRate: ONE_MILLION},
     },
   ]
   beforeEach(async function () {
@@ -30,9 +35,7 @@ function prepareConfig(_strategies) {
     })
     const buffer = await deployContract('VFRBuffer', [this.pool.address])
     this.buffer = buffer
-    for (const strategy of this.strategies) {
-      await strategy.instance.setBuffer(buffer.address)
-    }
+    this.pool.setBuffer(buffer.address)
   })
   return strategies
 }
