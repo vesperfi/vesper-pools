@@ -60,9 +60,12 @@ contract VFRPool is VPoolBase {
         uint256 profits;
         for (uint256 i = 0; i < strategies.length; i++) {
             (, uint256 fee, , , uint256 totalDebt, , , ) = IPoolAccountant(poolAccountant).strategy(strategies[i]);
-            uint256 totalProfits = IStrategy(strategies[i]).totalValue() - totalDebt;
-            uint256 actualProfits = totalProfits - (totalProfits * fee) / MAX_BPS;
-            profits += actualProfits;
+            uint256 totalValue = IStrategy(strategies[i]).totalValue();
+            if (totalValue > totalDebt) {
+                uint256 totalProfits = totalValue - totalDebt;
+                uint256 actualProfits = totalProfits - (totalProfits * fee) / MAX_BPS;
+                profits += actualProfits;
+            }
         }
 
         if (buffer != address(0)) {
