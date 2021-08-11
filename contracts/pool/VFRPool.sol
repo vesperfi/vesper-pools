@@ -69,8 +69,8 @@ contract VFRPool is VPoolBase {
         }
 
         if (buffer != address(0)) {
-            // This should take into account the an interest
-            // fee is taken from the amount in the buffer
+            // This should take into account that an interest fee is taken from the amount in the buffer
+            // (however, the interest fee depends on which strategy will request funds from the buffer)
             profits += token.balanceOf(buffer);
         }
 
