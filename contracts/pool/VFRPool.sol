@@ -15,6 +15,7 @@ contract VFRPool is VPoolBase {
 
     uint256 public predictedAPY;
     uint256 public tolerance;
+    bool public depositsHalted;
 
     address public buffer;
 
@@ -32,12 +33,19 @@ contract VFRPool is VPoolBase {
         address _addressListFactory
     ) public initializer {
         _initializeBase(_name, _symbol, _token, _poolAccountant, _addressListFactory);
+        depositsHalted = false;
     }
 
     function setBuffer(address _buffer) external onlyGovernor {
         require(_buffer != address(0), "buffer-address-is-zero");
         require(_buffer != buffer, "same-buffer-address");
         buffer = _buffer;
+    }
+
+    function setTolerance(uint256 _tolerance) external onlyGovernor {
+        require(_tolerance != 0, "tolerance-value-is-zero");
+        require(_tolerance != tolerance, "same-tolerance-value");
+        tolerance = _tolerance;
     }
 
     function retarget(uint256 _apy, uint256 _tolerance) external onlyGovernor {
@@ -63,7 +71,7 @@ contract VFRPool is VPoolBase {
             uint256 totalValue = IStrategy(strategies[i]).totalValue();
             if (totalValue > totalDebt) {
                 uint256 totalProfits = totalValue - totalDebt;
-                uint256 actualProfits = totalProfits - (totalProfits * fee) / MAX_BPS;
+                uint256 actualProfits = totalProfits - ((totalProfits * fee) / MAX_BPS);
                 profits += actualProfits;
             }
         }
@@ -91,6 +99,9 @@ contract VFRPool is VPoolBase {
         // available in the buffer, the strategies will make sure to never send more funds
         // to the pool than the amount needed to cover the target APY
         predictedAPY = predictedAPY > targetAPY ? targetAPY : predictedAPY;
+
+        // The predicted APY must be within the target APY by no more than the current tolerance
+        depositsHalted = targetAPY - predictedAPY > tolerance;
     }
 
     function targetPricePerShare() public view returns (uint256) {
@@ -114,9 +125,7 @@ contract VFRPool is VPoolBase {
     }
 
     function _deposit(uint256 _amount) internal override {
-        // We need to be either above target (by some small margin)
-        // or below target (by no more than the current tolerance)
-        require(predictedAPY >= targetAPY || (targetAPY - predictedAPY) <= tolerance, "pool-under-target");
+        require(!depositsHalted, "pool-under-target");
         super._deposit(_amount);
     }
 }
