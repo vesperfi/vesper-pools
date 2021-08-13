@@ -2,20 +2,21 @@
 
 const hre = require('hardhat')
 const ethers = hre.ethers
-const {expect} = require('chai')
-const {constants} = require('@openzeppelin/test-helpers')
-const {getUsers, getEvent} = require('../utils/setupHelper')
-const {shouldBehaveLikeAaveStrategy} = require('../behavior/aave-strategy')
-const {shouldBehaveLikeCompoundStrategy} = require('../behavior/compound-strategy')
-const {shouldBehaveLikeMakerStrategy} = require('../behavior/maker-strategy')
-const {shouldBehaveLikeCreamStrategy} = require('../behavior/cream-strategy')
-const {shouldBehaveLikeCurveStrategy} = require('../behavior/crv-strategy')
-const {shouldBehaveLikeEarnMakerStrategy} = require('../behavior/earn-maker-strategy')
-const {shouldBehaveLikeRariFuseStrategy} = require('./rari-fuse-strategy')
+const { expect } = require('chai')
+const { constants } = require('@openzeppelin/test-helpers')
+const { getUsers, getEvent } = require('../utils/setupHelper')
+const { shouldBehaveLikeAaveStrategy } = require('../behavior/aave-strategy')
+const { shouldBehaveLikeCompoundStrategy } = require('../behavior/compound-strategy')
+const { shouldBehaveLikeCompoundXYStrategy } = require('../behavior/compound-xy')
+const { shouldBehaveLikeMakerStrategy } = require('../behavior/maker-strategy')
+const { shouldBehaveLikeCreamStrategy } = require('../behavior/cream-strategy')
+const { shouldBehaveLikeCurveStrategy } = require('../behavior/crv-strategy')
+const { shouldBehaveLikeEarnMakerStrategy } = require('../behavior/earn-maker-strategy')
+const { shouldBehaveLikeRariFuseStrategy } = require('./rari-fuse-strategy')
 
 const swapper = require('../utils/tokenSwapper')
-const {deposit, rebalanceStrategy, reset} = require('../utils/poolOps')
-const {advanceBlock} = require('../utils/time')
+const { deposit, rebalanceStrategy, reset } = require('../utils/poolOps')
+const { advanceBlock } = require('../utils/time')
 const StrategyType = require('../utils/strategyTypes')
 const addressListFactory = hre.address.ADDRESS_LIST_FACTORY
 function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
@@ -27,6 +28,7 @@ function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
     [StrategyType.COMPOUND]: shouldBehaveLikeCompoundStrategy,
     [StrategyType.AAVE_MAKER]: shouldBehaveLikeMakerStrategy,
     [StrategyType.COMPOUND_MAKER]: shouldBehaveLikeMakerStrategy,
+    [StrategyType.COMPOUND_XY]: shouldBehaveLikeCompoundXYStrategy,
     [StrategyType.CREAM]: shouldBehaveLikeCreamStrategy,
     [StrategyType.CURVE]: shouldBehaveLikeCurveStrategy,
     [StrategyType.EARN_MAKER]: shouldBehaveLikeEarnMakerStrategy,
@@ -39,7 +41,7 @@ function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
   describe(`${strategyName} Strategy common behaviour tests`, function () {
     beforeEach(async function () {
       const users = await getUsers()
-      ;[owner, user1, user2, user3, user4, user5] = users
+        ;[owner, user1, user2, user3, user4, user5] = users
       strategy = this.strategies[strategyIndex].instance
       pool = this.pool
       accountant = this.accountant
@@ -204,9 +206,6 @@ function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
       it('Should get strategy token as reserve token', async function () {
         expect(await strategy.isReservedToken(strategy.token())).to.be.equal(true, 'Strategy token is reserved')
       })
-      it('Should not get pool token as reserve token', async function () {
-        expect(await strategy.isReservedToken(pool.token())).to.be.equal(false, 'Pool token is not reserved')
-      })
       it('Should not get other tokens as reserve token', async function () {
         expect(await strategy.isReservedToken(ANY_ERC20)).to.be.equal(false, 'Other token is not reserved')
       })
@@ -239,4 +238,4 @@ function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
   }
 }
 
-module.exports = {shouldBehaveLikeStrategy}
+module.exports = { shouldBehaveLikeStrategy }

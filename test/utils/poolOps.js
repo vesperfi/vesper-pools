@@ -3,8 +3,8 @@ const swapper = require('./tokenSwapper')
 const hre = require('hardhat')
 const ethers = hre.ethers
 const provider = hre.waffle.provider
-const {BigNumber} = require('ethers')
-const {depositTokenToAave, depositTokenToCompound} = require('./market')
+const { BigNumber } = require('ethers')
+const { depositTokenToAave, depositTokenToCompound } = require('./market')
 const DECIMAL = BigNumber.from('1000000000000000000')
 const WETH_ADDRESS = '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2'
 const DAI = '0x6b175474e89094c44da98b954eedeac495271d0f'
@@ -28,8 +28,12 @@ async function executeIfExist(fn) {
 async function deposit(pool, token, amount, depositor) {
   let depositAmount
   if (token.address === WETH_ADDRESS) {
-    await token.connect(depositor.signer).deposit({value: BigNumber.from(amount).mul(DECIMAL)})
-    depositAmount = await token.balanceOf(depositor.address)
+    const wethBalance = await token.balanceOf(depositor.address)
+    const requestedAmount = BigNumber.from(amount).mul(DECIMAL)
+    if (requestedAmount.gt(wethBalance)) {
+      await token.connect(depositor.signer).deposit({ value: requestedAmount.sub(wethBalance) })
+    }
+    depositAmount = requestedAmount
     await token.connect(depositor.signer).approve(pool.address, depositAmount)
     await pool.connect(depositor.signer)['deposit(uint256)'](depositAmount)
   } else {
@@ -68,14 +72,14 @@ async function bringAboveWater(strategy, amount) {
  *
  * @param {object} strategy - strategy object
  */
- async function harvestYearn(strategy) {
+async function harvestYearn(strategy) {
 
   const collateralTokenAddress = await strategy.instance.collateralToken()
   const vault = await strategy.instance.receiptToken()
 
   const signer = await ethers.provider.getSigner(strategy.signer)
 
-  await swapper.swapEthForToken(5, collateralTokenAddress,{ signer }, vault)
+  await swapper.swapEthForToken(5, collateralTokenAddress, { signer }, vault)
 
 }
 
@@ -133,11 +137,11 @@ async function rebalance(strategies) {
 }
 
 async function timeTravel(seconds = 6 * 60 * 60, blocks = 25, strategyType = '', underlayStrategy = '') {
-  const timeTravelFn = async function() {
+  const timeTravelFn = async function () {
     await provider.send('evm_increaseTime', [seconds])
     await provider.send('evm_mine')
   }
-  const blockMineFn = async function() {
+  const blockMineFn = async function () {
     for (let i = 0; i < blocks; i++) {
       await provider.send('evm_mine')
     }
@@ -174,4 +178,4 @@ async function reset() {
   )
 }
 
-module.exports = {deposit, rebalance, rebalanceStrategy, totalDebtOfAllStrategy, executeIfExist, timeTravel, reset}
+module.exports = { deposit, rebalance, rebalanceStrategy, totalDebtOfAllStrategy, executeIfExist, timeTravel, reset }
