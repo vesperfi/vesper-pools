@@ -165,7 +165,7 @@ abstract contract VPoolBase is PoolShareToken {
         uint256 _profit,
         uint256 _loss,
         uint256 _payback
-    ) external {
+    ) public virtual {
         (uint256 _actualPayback, uint256 _creditLine, uint256 _interestFee) =
             IPoolAccountant(poolAccountant).reportEarning(_msgSender(), _profit, _loss, _payback);
         uint256 _totalPayback = _profit + _actualPayback;
