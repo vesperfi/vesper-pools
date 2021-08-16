@@ -19,5 +19,7 @@ interface IStrategy {
 
     function totalValue() external view returns (uint256);
 
+    function totalValueCurrent() external returns (uint256);
+
     function pool() external view returns (address);
 }

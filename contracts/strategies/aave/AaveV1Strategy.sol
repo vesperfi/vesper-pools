@@ -31,7 +31,7 @@ abstract contract AaveV1Strategy is Strategy {
      * @notice Report total value
      * @dev aToken and collateral are 1:1 so total aTokens are totalValue
      */
-    function totalValue() external view virtual override returns (uint256) {
+    function totalValue() public view virtual override returns (uint256) {
         return aToken.balanceOf(address(this));
     }
 

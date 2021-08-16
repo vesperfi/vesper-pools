@@ -64,7 +64,7 @@ abstract contract Crv3PoolStrategyBase is Crv3x, Strategy {
      * @notice Calculate total value of asset under management
      * @dev Report total value in collateral token
      */
-    function totalValue() external view virtual override returns (uint256 _value) {
+    function totalValue() public view virtual override returns (uint256 _value) {
         uint256 claimable = claimableRewards();
         uint256 rewardAsCollateral;
         if (claimable != 0) {

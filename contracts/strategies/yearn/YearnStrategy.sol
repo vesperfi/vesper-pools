@@ -23,7 +23,7 @@ abstract contract YearnStrategy is Strategy {
      * @notice Calculate total value using underlying yToken
      * @dev Report total value in collateral token
      */
-    function totalValue() external view override returns (uint256 _totalValue) {
+    function totalValue() public view override returns (uint256 _totalValue) {
         _totalValue = _getCollateralBalance();
     }
 

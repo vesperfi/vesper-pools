@@ -4,10 +4,10 @@ pragma solidity 0.8.3;
 
 import "../CompoundStrategy.sol";
 import "../../../interfaces/vesper/IVFRBuffer.sol";
-import "../../../interfaces/vesper/IVFRPool.sol";
+import "../../../interfaces/vesper/IVFRStablePool.sol";
 
 // solhint-disable no-empty-blocks
-abstract contract CompoundVFRStrategy is CompoundStrategy {
+abstract contract CompoundStableStrategy is CompoundStrategy {
     constructor(
         address _pool,
         address _swapManager,
@@ -23,9 +23,9 @@ abstract contract CompoundVFRStrategy is CompoundStrategy {
 
         uint256 balance = collateralToken.balanceOf(address(this));
         // If the buffer is not set, this will work exactly like a regular strategy
-        address buffer = IVFRPool(pool).buffer();
+        address buffer = IVFRStablePool(pool).buffer();
         if (buffer != address(0)) {
-            uint256 targetAmount = IVFRPool(pool).amountToReachTarget(address(this));
+            uint256 targetAmount = IVFRStablePool(pool).amountToReachTarget(address(this));
             if (balance >= targetAmount) {
                 collateralToken.transfer(buffer, balance - targetAmount);
                 balance = targetAmount;

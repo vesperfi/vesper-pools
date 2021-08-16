@@ -39,7 +39,7 @@ abstract contract AaveStrategy is Strategy, AaveCore {
      * @notice Report total value
      * @dev aToken and collateral are 1:1
      */
-    function totalValue() external view virtual override returns (uint256) {
+    function totalValue() public view virtual override returns (uint256) {
         uint256 _totalAaveAmt = _totalAave();
         if (_totalAaveAmt == 0) {
             // As there is no AAVE balance return aToken balance as totalValue.

@@ -37,7 +37,7 @@ abstract contract AaveStrategyPolygon is Strategy {
      * @notice Report total value
      * @dev aToken and collateral are 1:1
      */
-    function totalValue() external view virtual override returns (uint256) {
+    function totalValue() public view virtual override returns (uint256) {
         if (address(aaveIncentivesController) == address(0)) {
             // As there is no incentive return aToken balance as totalValue
             return aToken.balanceOf(address(this));

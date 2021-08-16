@@ -2,7 +2,11 @@
 
 pragma solidity 0.8.3;
 
-interface IVFRPool {
+import "./IVesperPool.sol";
+
+interface IVFRStablePool is IVesperPool {
+    function targetAPY() external view returns (uint256);
+
     function buffer() external view returns (address);
 
     function targetPricePerShare() external view returns (uint256);
