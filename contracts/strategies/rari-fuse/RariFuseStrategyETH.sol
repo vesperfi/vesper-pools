@@ -9,7 +9,7 @@ import "../../interfaces/token/IToken.sol";
 /// @title Deposit ETH in a Rari Fuse Pool and earn interest.
 contract RariFuseStrategyETH is RariFuseStrategy {
     string public constant NAME = "RariFuse-Strategy-ETH";
-    string public constant VERSION = "3.0.0";
+    string public constant VERSION = "3.0.11";
 
     constructor(address _pool, address _swapManager)
         RariFuseStrategy(
