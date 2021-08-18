@@ -170,6 +170,19 @@
         "strategies": {
           "CompoundStrategyDAI": "0x9ce483DBE7C810A7DE7fCB78e61cD13Cec4A0914"
         }
+      },
+      "vaeth": {
+        "pool": {
+          "proxy": "0xd1C117319B3595fbc39b471AB1fd485629eb05F2",
+          "implementation": "0x8b6598026176217AC92a7e0d53a99c1C50F55FB3",
+          "poolAccountant": {
+            "proxy": "0xFe888E56CbE72868683844e4B5f93ce330f6556F",
+            "implementation": "0x57494b981cEc5F662468CAa6D274f82580439dde"
+          }
+        },
+        "strategies": {
+          "AlphaLendStrategyETH": "0xeCe0f32840280aD0069Dd89Ad97Ad6dF1bB0fF2A"
+        }
       }
     }
   }
