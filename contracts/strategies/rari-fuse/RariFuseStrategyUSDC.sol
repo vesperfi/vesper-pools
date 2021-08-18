@@ -8,7 +8,7 @@ import "./RariFuseStrategy.sol";
 /// @title Deposit USDC in a Rari Fuse Pool and earn interest.
 contract RariFuseStrategyUSDC is RariFuseStrategy {
     string public constant NAME = "RariFuse-Strategy-USDC";
-    string public constant VERSION = "3.0.0";
+    string public constant VERSION = "3.0.11";
 
     constructor(address _pool, address _swapManager)
         RariFuseStrategy(
