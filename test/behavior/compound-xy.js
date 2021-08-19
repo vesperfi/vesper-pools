@@ -56,12 +56,11 @@ function shouldBehaveLikeCompoundXYStrategy(strategyIndex) {
 
       await token.exchangeRateCurrent()
       await borrowCToken.exchangeRateCurrent()
-      const minBorrowLimit = await strategy.minBorrowLimit()
-      const maxBorrowLimit = await strategy.maxBorrowLimit()
+      const range = await strategy.borrowRatioRange()
       const borrowRatio = await strategy.currentBorrowRatio()
 
-      expect(borrowRatio).to.be.gte(minBorrowLimit, 'Borrow should be >= min borrow limit')
-      expect(borrowRatio).to.be.lte(maxBorrowLimit, 'Borrow should be <= max borrow limit')
+      expect(borrowRatio).to.be.gte(range._minBorrowRatio, 'Borrow should be >= min borrow ratio')
+      expect(borrowRatio).to.be.lte(range._maxBorrowRatio, 'Borrow should be <= max borrow ratio')
     })
 
     it('Should adjust borrow to keep it within defined limits', async function () {
@@ -80,12 +79,11 @@ function shouldBehaveLikeCompoundXYStrategy(strategyIndex) {
       await borrowCToken.exchangeRateCurrent()
       const borrowAfter = await borrowToken.balanceOf(strategy.address)
 
-      const minBorrowLimit = await strategy.minBorrowLimit()
-      const maxBorrowLimit = await strategy.maxBorrowLimit()
+      const range = await strategy.borrowRatioRange()
       const borrowRatio = await strategy.currentBorrowRatio()
 
-      expect(borrowRatio).to.be.gte(minBorrowLimit, 'Borrow should be >= min borrow limit')
-      expect(borrowRatio).to.be.lte(maxBorrowLimit, 'Borrow should be <= max borrow limit')
+      expect(borrowRatio).to.be.gte(range._minBorrowRatio, 'Borrow should be >= min borrow ratio')
+      expect(borrowRatio).to.be.lte(range._maxBorrowRatio, 'Borrow should be <= max borrow ratio')
       expect(borrowAfter).to.be.lt(borrowBefore, 'Borrow amount after withdraw should be less')
     })
 
@@ -124,11 +122,12 @@ function shouldBehaveLikeCompoundXYStrategy(strategyIndex) {
       await advanceBlock(100)
       await strategy.connect(governor.signer).updateBorrowLimit(7500, 8200)
       const newMinBorrowLimit = await strategy.minBorrowLimit()
+      const minBorrowRatio = (await strategy.borrowRatioRange())._minBorrowRatio
       await strategy.connect(governor.signer).rebalance()
       await token.exchangeRateCurrent()
       await borrowCToken.exchangeRateCurrent()
       const borrowRatio = await strategy.currentBorrowRatio()
-      expect(borrowRatio).to.be.gte(newMinBorrowLimit, 'Borrow should be >= min borrow limit')
+      expect(borrowRatio).to.be.gte(minBorrowRatio, 'Borrow should be >= min borrow ratio')
       expect(newMinBorrowLimit).to.be.eq(7500, 'Min borrow limit is wrong')
 
       let tx = strategy.connect(governor.signer).updateBorrowLimit(7500, 10001)
@@ -234,12 +233,17 @@ function shouldBehaveLikeCompoundXYStrategy(strategyIndex) {
       await strategy.connect(governor.signer).updateBorrowCToken(cUNIAddress)
       blockNumberStart = (await ethers.provider.getBlock()).number
       await strategy.connect(governor.signer).rebalance()
-      await advanceBlock(100)
-      await strategy.connect(governor.signer).rebalance()
-      pricePerShare = await pool.pricePerShare()
-      blockNumberEnd = (await ethers.provider.getBlock()).number
-      blockElapsed = blockNumberEnd - blockNumberStart
-      console.log('APY for UNI::', calculateAPY(pricePerShare, blockElapsed))
+
+      const isLossMaking = await strategy.callStatic.isLossMaking()
+      console.log('Is UNI loss making?', isLossMaking)
+      if (!isLossMaking) {
+        await advanceBlock(100)
+        await strategy.connect(governor.signer).rebalance()
+        pricePerShare = await pool.pricePerShare()
+        blockNumberEnd = (await ethers.provider.getBlock()).number
+        blockElapsed = blockNumberEnd - blockNumberStart
+        console.log('APY for UNI::', calculateAPY(pricePerShare, blockElapsed))
+      }
       /* eslint-enable no-console */
     })
   })
