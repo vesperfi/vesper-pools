@@ -1,0 +1,247 @@
+'use strict'
+
+const { expect } = require('chai')
+const { ethers } = require('hardhat')
+const { getUsers } = require('../utils/setupHelper')
+const { deposit } = require('../utils/poolOps')
+const { advanceBlock } = require('../utils/time')
+
+const cUNIAddress = '0x35A18000230DA775CAc24873d00Ff85BccdeD550'
+const cAAVEAddress = '0xe65cdB6479BaC1e22340E4E755fAE7E509EcD06c'
+const comptrollerAddress = '0x3d9819210A31b4961b30EF54bE2aeD79B9c9Cd3B'
+const compAddress = '0xc00e94Cb662C3520282E6f5717214004A7f26888'
+
+// Compound XY strategy specific tests
+function shouldBehaveLikeCompoundXYStrategy(strategyIndex) {
+  let strategy, pool, collateralToken, token
+  let borrowToken, borrowCToken
+  let governor, user1, user2
+
+
+  function calculateAPY(pricePerShare, blockElapsed) {
+    // APY calculation
+    const ETHER = ethers.utils.parseEther('1')
+    const ONE_YEAR = 60 * 60 * 24 * 365
+    const APY = pricePerShare.sub(ETHER).mul(ONE_YEAR).mul('100').div(blockElapsed * 14)
+    const apyInBasisPoints = APY.mul(100).div(ETHER).toNumber()
+    return apyInBasisPoints / 100
+  }
+
+  describe('CompoundXYStrategy specific tests', function () {
+    beforeEach(async function () {
+      const users = await getUsers()
+        ;[governor, user1, user2] = users
+      pool = this.pool
+      strategy = this.strategies[strategyIndex].instance
+      collateralToken = this.collateralToken
+      token = this.strategies[strategyIndex].token
+      borrowCToken = await ethers.getContractAt('CToken', await strategy.borrowCToken())
+      borrowToken = await ethers.getContractAt('ERC20', await strategy.borrowToken())
+    })
+
+    it('Should borrow tokens at rebalance', async function () {
+      await deposit(pool, collateralToken, 10, user1)
+      await strategy.connect(governor.signer).rebalance()
+      const cTokenBalance = await token.balanceOf(strategy.address)
+      const borrow = await borrowToken.balanceOf(strategy.address)
+      const currentBorrow = await borrowCToken.callStatic.borrowBalanceCurrent(strategy.address)
+      expect(cTokenBalance).to.be.gt('0', 'Supply CToken balance should be > 0')
+      expect(borrow).to.be.gt('0', 'Borrow token balance should be > 0')
+      expect(currentBorrow).to.be.gte(borrow, 'Current borrow should be >= borrow balance')
+    })
+
+    it('Should borrow within defined limits', async function () {
+      await deposit(pool, collateralToken, 10, user2)
+      await strategy.connect(governor.signer).rebalance()
+
+      await token.exchangeRateCurrent()
+      await borrowCToken.exchangeRateCurrent()
+      const minBorrowLimit = await strategy.minBorrowLimit()
+      const maxBorrowLimit = await strategy.maxBorrowLimit()
+      const borrowRatio = await strategy.currentBorrowRatio()
+
+      expect(borrowRatio).to.be.gte(minBorrowLimit, 'Borrow should be >= min borrow limit')
+      expect(borrowRatio).to.be.lte(maxBorrowLimit, 'Borrow should be <= max borrow limit')
+    })
+
+    it('Should adjust borrow to keep it within defined limits', async function () {
+      await deposit(pool, collateralToken, 100, user1)
+      await strategy.connect(governor.signer).rebalance()
+      await advanceBlock(100)
+
+      await token.exchangeRateCurrent()
+      await borrowCToken.exchangeRateCurrent()
+      const borrowBefore = await borrowToken.balanceOf(strategy.address)
+
+      const withdrawAmount = (await pool.balanceOf(user1.address)).div('2')
+      await pool.connect(user1.signer).withdraw(withdrawAmount)
+
+      await token.exchangeRateCurrent()
+      await borrowCToken.exchangeRateCurrent()
+      const borrowAfter = await borrowToken.balanceOf(strategy.address)
+
+      const minBorrowLimit = await strategy.minBorrowLimit()
+      const maxBorrowLimit = await strategy.maxBorrowLimit()
+      const borrowRatio = await strategy.currentBorrowRatio()
+
+      expect(borrowRatio).to.be.gte(minBorrowLimit, 'Borrow should be >= min borrow limit')
+      expect(borrowRatio).to.be.lte(maxBorrowLimit, 'Borrow should be <= max borrow limit')
+      expect(borrowAfter).to.be.lt(borrowBefore, 'Borrow amount after withdraw should be less')
+    })
+
+    it('Should repayAll and reset minBorrowLimit via governor', async function () {
+      await deposit(pool, collateralToken, 50, user2)
+      await strategy.connect(governor.signer).rebalance()
+      let borrowBalance = await borrowToken.balanceOf(strategy.address)
+      expect(borrowBalance).to.be.gt(0, 'Borrow token balance should be > 0')
+
+      await strategy.connect(governor.signer).repayAll()
+
+      borrowBalance = await borrowToken.balanceOf(strategy.address)
+      expect(borrowBalance).to.be.eq(0, 'Borrow token balance should be = 0')
+      const newMinBorrowLimit = await strategy.minBorrowLimit()
+      expect(newMinBorrowLimit).to.be.eq(0, 'minBorrowLimit should be 0')
+    })
+
+    it('Should update borrow CToken', async function () {
+      await deposit(pool, collateralToken, 50, user2)
+      await strategy.connect(governor.signer).rebalance()
+      let borrowBalance = await borrowToken.balanceOf(strategy.address)
+      expect(borrowBalance).to.be.gt(0, 'Borrow balance should be > 0')
+
+      await strategy.connect(governor.signer).updateBorrowCToken(cUNIAddress)
+      const newBorrowToken = await ethers.getContractAt('ERC20', await strategy.borrowToken())
+
+      borrowBalance = await borrowToken.balanceOf(strategy.address)
+      expect(borrowBalance).to.be.eq(0, 'Old borrow token balance should be = 0')
+      const newBorrowBalance = await newBorrowToken.balanceOf(strategy.address)
+      expect(newBorrowBalance).to.be.gt(0, 'New borrow token balance should be > 0')
+    })
+
+    it('Should update borrow limits', async function () {
+      await deposit(pool, collateralToken, 100, user1)
+      await strategy.connect(governor.signer).rebalance()
+      await advanceBlock(100)
+      await strategy.connect(governor.signer).updateBorrowLimit(7500, 8200)
+      const newMinBorrowLimit = await strategy.minBorrowLimit()
+      await strategy.connect(governor.signer).rebalance()
+      await token.exchangeRateCurrent()
+      await borrowCToken.exchangeRateCurrent()
+      const borrowRatio = await strategy.currentBorrowRatio()
+      expect(borrowRatio).to.be.gte(newMinBorrowLimit, 'Borrow should be >= min borrow limit')
+      expect(newMinBorrowLimit).to.be.eq(7500, 'Min borrow limit is wrong')
+
+      let tx = strategy.connect(governor.signer).updateBorrowLimit(7500, 10001)
+      await expect(tx).to.be.revertedWith('invalid-max-borrow-limit')
+
+      tx = strategy.connect(governor.signer).updateBorrowLimit(7500, 7000)
+      await expect(tx).to.be.revertedWith('max-should-be-higher-than-min')
+    })
+
+    it('Should rebalance when loss making', async function () {
+      await strategy.connect(governor.signer).updateBorrowCToken(cAAVEAddress)
+      borrowToken = await ethers.getContractAt('ERC20', await strategy.borrowToken())
+      await deposit(pool, collateralToken, 50, user2)
+      await strategy.connect(governor.signer).rebalance()
+      const borrowBalance = await borrowToken.balanceOf(strategy.address)
+      expect(borrowBalance).to.be.gt(0, 'Borrow balance should be > 0')
+
+      // Advance some blocks to generate interest on borrow
+      await advanceBlock(10)
+      expect(await strategy.callStatic.isLossMaking()).to.be.true
+      // Even though it is loss making strategy, let rebalance work
+      await strategy.connect(governor.signer).rebalance()
+    })
+
+    it('Should repay borrow if borrow limit set to 0', async function () {
+      await deposit(pool, collateralToken, 100, user1)
+      await strategy.connect(governor.signer).rebalance()
+      const borrowBefore = await borrowToken.balanceOf(strategy.address)
+      expect(borrowBefore).to.be.gt(0, 'Borrow amount should be > 0')
+      await strategy.connect(governor.signer).updateBorrowLimit(0, 8000)
+      await strategy.connect(governor.signer).rebalance()
+      const borrowAfter = await borrowToken.balanceOf(strategy.address)
+      expect(borrowAfter).to.be.eq(0, 'Borrow amount should be = 0')
+    })
+
+
+    it('Should get COMP token as reserve token', async function () {
+      expect(await strategy.isReservedToken(compAddress)).to.be.equal(true, 'COMP token is reserved')
+    })
+
+    it('Should claim COMP when rebalance is called', async function () {
+      const comptroller = await ethers.getContractAt('Comptroller', comptrollerAddress)
+      await deposit(pool, collateralToken, 10, user1)
+      await deposit(pool, collateralToken, 2, user2)
+      await strategy.connect(governor.signer).rebalance()
+      await token.exchangeRateCurrent()
+      await advanceBlock(100)
+
+      const withdrawAmount = await pool.balanceOf(user2.address)
+      // compAccrued is updated only when user do some activity. withdraw to trigger compAccrue update
+      await pool.connect(user2.signer).withdraw(withdrawAmount)
+      const compAccruedBefore = await comptroller.compAccrued(strategy.address)
+      expect(compAccruedBefore).to.be.gt(0, 'comp accrued should be > 0 before rebalance')
+      await strategy.connect(governor.signer).rebalance()
+      const compAccruedAfter = await comptroller.compAccrued(strategy.address)
+      expect(compAccruedAfter).to.be.equal(0, 'comp accrued should be 0 after rebalance')
+    })
+
+    it('Should liquidate COMP when claimed by external source', async function () {
+      const comptroller = await ethers.getContractAt('Comptroller', comptrollerAddress)
+      const comp = await ethers.getContractAt('ERC20', compAddress)
+      await deposit(pool, collateralToken, 10, user2)
+      await strategy.connect(governor.signer).rebalance()
+      await advanceBlock(100)
+      await comptroller.connect(user2.signer).claimComp(strategy.address, [token.address])
+      const afterClaim = await comp.balanceOf(strategy.address)
+      expect(afterClaim).to.be.gt('0', 'COMP balance should be > 0')
+      await token.exchangeRateCurrent()
+      await strategy.connect(governor.signer).rebalance()
+      const compBalance = await comp.balanceOf(strategy.address)
+      expect(compBalance).to.be.equal('0', 'COMP balance should be 0 on rebalance')
+    })
+
+    it('Should calculate current totalValue', async function () {
+      await deposit(pool, collateralToken, 10, user1)
+      await strategy.connect(governor.signer).rebalance()
+      await advanceBlock(100)
+      const totalValue = await strategy.callStatic.totalValueCurrent()
+      const totalDebt = await pool.totalDebt()
+      expect(totalValue).to.be.gt(totalDebt, 'loss making strategy')
+    })
+
+    it('Should calculate totalValue', async function () {
+      await deposit(pool, collateralToken, 10, user1)
+      await strategy.connect(governor.signer).rebalance()
+      await advanceBlock(100)
+      const totalValue = await strategy.totalValue()
+      expect(totalValue).to.be.gt(0, 'loss making strategy')
+    })
+
+    it('Should calculate APY', async function () {
+      /* eslint-disable no-console */
+      await deposit(pool, collateralToken, 10, user1)
+      let blockNumberStart = (await ethers.provider.getBlock()).number
+      await strategy.connect(governor.signer).rebalance()
+      await advanceBlock(100)
+      await strategy.connect(governor.signer).rebalance()
+      let pricePerShare = await pool.pricePerShare()
+      let blockNumberEnd = (await ethers.provider.getBlock()).number
+      let blockElapsed = blockNumberEnd - blockNumberStart
+      console.log('\nAPY for WBTC::', calculateAPY(pricePerShare, blockElapsed))
+      console.log('\nUpdating borrow token to UNI')
+      await strategy.connect(governor.signer).updateBorrowCToken(cUNIAddress)
+      blockNumberStart = (await ethers.provider.getBlock()).number
+      await strategy.connect(governor.signer).rebalance()
+      await advanceBlock(100)
+      await strategy.connect(governor.signer).rebalance()
+      pricePerShare = await pool.pricePerShare()
+      blockNumberEnd = (await ethers.provider.getBlock()).number
+      blockElapsed = blockNumberEnd - blockNumberStart
+      console.log('APY for UNI::', calculateAPY(pricePerShare, blockElapsed))
+      /* eslint-enable no-console */
+    })
+  })
+}
+module.exports = { shouldBehaveLikeCompoundXYStrategy }
