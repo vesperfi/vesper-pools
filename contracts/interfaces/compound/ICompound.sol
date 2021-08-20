@@ -43,6 +43,8 @@ interface CToken {
 
     function transfer(address user, uint256 amount) external returns (bool);
 
+    function getCash() external view returns (uint256);
+
     function transferFrom(
         address owner,
         address user,
