@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.3;
 
-import "./VPoolBase.sol";
+import "../VPoolBase.sol";
 
 // solhint-disable no-empty-blocks
 contract VFRPool is VPoolBase {

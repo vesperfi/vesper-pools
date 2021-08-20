@@ -4,9 +4,9 @@ pragma solidity 0.8.3;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import "../interfaces/vesper/IVFRCoveragePool.sol";
-import "../interfaces/vesper/IVFRStablePool.sol";
-import "../interfaces/vesper/IVesperPool.sol";
+import "../../interfaces/vesper/IVFRCoveragePool.sol";
+import "../../interfaces/vesper/IVFRStablePool.sol";
+import "../../interfaces/vesper/IVesperPool.sol";
 
 contract VFRBuffer {
     address public token;

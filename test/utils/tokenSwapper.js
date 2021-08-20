@@ -32,4 +32,16 @@ async function swapEthForToken(ethAmount, toToken, caller, receiver) {
   return tokenBalance
 }
 
-module.exports = {swapEthForToken}
+async function swapExactToken(amountIn, path, caller, receiver) {
+  const toAddress = receiver || caller.address
+  const tokenIn = await ethers.getContractAt('ERC20', path[0])
+  const tokenOut = await ethers.getContractAt('ERC20', path[path.length - 1])
+  const uni = await ethers.getContractAt('IUniswapRouterTest', SUSHI_ROUTER)
+  const block = await ethers.provider.getBlock()
+  await tokenIn.connect(caller.signer).approve(uni.address, amountIn)
+  await uni.connect(caller.signer).swapExactTokensForTokens(amountIn, 1, path, toAddress, block.timestamp + 60)
+  const amountOut = await tokenOut.balanceOf(toAddress)
+  return amountOut
+}
+
+module.exports = {swapEthForToken, swapExactToken}
