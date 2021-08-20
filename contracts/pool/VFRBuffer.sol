@@ -16,6 +16,8 @@ contract VFRBuffer {
     // able to cover the stable pool's target APY requirements
     uint256 public coverageTime;
 
+    event CoverageTimeUpdated(uint256 oldCoverageTime, uint256 newCoverageTime);
+
     constructor(
         address _stablePool,
         address _coveragePool,
@@ -48,7 +50,7 @@ contract VFRBuffer {
     }
 
     function request(uint256 _amount) public {
-        // Make sure the requester is a valid strategy (either a stable pool one or an coverage pool one)
+        // Make sure the requester is a valid strategy (either a stable pool one or a coverage pool one)
         (bool activeInStablePool, , , , , , , ) = IVFRStablePool(stablePool).strategy(msg.sender);
         (bool activeInCoveragePool, , , , , , , ) = IVFRCoveragePool(coveragePool).strategy(msg.sender);
         require(activeInStablePool || activeInCoveragePool, "invalid-strategy");
@@ -62,5 +64,11 @@ contract VFRBuffer {
         require(IVFRStablePool(stablePool).keepers().contains(msg.sender), "not-a-keeper");
         // Transfer any outstanding funds to the coverage pool
         IERC20(token).transfer(coveragePool, IERC20(token).balanceOf(address(this)));
+    }
+
+    function updateCoverageTime(uint256 _coverageTime) external {
+        require(IVFRStablePool(stablePool).keepers().contains(msg.sender), "not-a-keeper");
+        emit CoverageTimeUpdated(coverageTime, _coverageTime);
+        coverageTime = _coverageTime;
     }
 }
