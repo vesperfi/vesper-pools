@@ -8,36 +8,70 @@ const StrategyType = require('../utils/strategyTypes')
 
 const ONE_MILLION = ethers.utils.parseEther('1000000')
 
-function prepareConfig(_strategies) {
+function prepareConfig(_stableStrategies, _coverageStrategies) {
   const interestFee = '1500' // 15%
-  const strategies = _strategies || [
+
+  const stableStrategies = _stableStrategies || [
     {
-      name: 'CompoundVFRStrategyDAI',
+      name: 'CompoundStableStrategyDAI',
       type: StrategyType.COMPOUND,
       config: {interestFee, debtRatio: 5000, debtRate: ONE_MILLION},
     },
     {
-      name: 'CompoundVFRStrategyDAI',
+      name: 'CompoundStableStrategyDAI',
       type: StrategyType.COMPOUND,
       config: {interestFee, debtRatio: 5000, debtRate: ONE_MILLION},
     },
   ]
+
+  const coverageStrategies = _coverageStrategies || [
+    {
+      name: 'CompoundCoverageStrategyDAI',
+      type: StrategyType.COMPOUND,
+      config: {interestFee, debtRatio: 5000, debtRate: ONE_MILLION},
+    },
+    {
+      name: 'CompoundCoverageStrategyDAI',
+      type: StrategyType.COMPOUND,
+      config: {interestFee, debtRatio: 5000, debtRate: ONE_MILLION},
+    },
+  ]
+
   beforeEach(async function () {
     const users = await getUsers()
     this.users = users
-    await setupVPool(this, {
-      poolConfig: PoolConfig.VFRDAI,
+
+    this.stable = {}
+    await setupVPool(this.stable, {
+      poolConfig: PoolConfig.VFRStableDAI,
       feeCollector: users[7].address,
-      strategies: strategies.map((item, i) => ({
+      strategies: stableStrategies.map((item, i) => ({
         ...item,
-        feeCollector: users[i + 8].address, // leave first 8 users for other testing
+        // Leave first 8 users for other testing
+        feeCollector: users[i + 8].address,
       })),
     })
-    const buffer = await deployContract('VFRBuffer', [this.pool.address])
+
+    this.coverage = {}
+    await setupVPool(this.coverage, {
+      poolConfig: PoolConfig.VFRCoverageDAI,
+      feeCollector: users[7].address,
+      strategies: coverageStrategies.map((item, i) => ({
+        ...item,
+        // Leave first 8 users for other testing
+        feeCollector: users[i + 8].address,
+      })),
+    })
+
+    const buffer = await deployContract('VFRBuffer', [
+      this.stable.pool.address,
+      this.coverage.pool.address,
+      24 * 3600
+    ])
     this.buffer = buffer
-    this.pool.setBuffer(buffer.address)
+    this.stable.pool.setBuffer(buffer.address)
+    this.coverage.pool.setBuffer(buffer.address)
   })
-  return strategies
 }
 
 module.exports = {prepareConfig}

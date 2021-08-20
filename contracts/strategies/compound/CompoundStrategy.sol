@@ -27,8 +27,16 @@ abstract contract CompoundStrategy is Strategy {
      * @notice Calculate total value using COMP accrued and cToken
      * @dev Report total value in collateral token
      */
-    function totalValue() external view virtual override returns (uint256 _totalValue) {
-        uint256 _compAccrued = COMPTROLLER.compAccrued(address(this));
+    function totalValue() public view virtual override returns (uint256 _totalValue) {
+        _totalValue = _calculateTotalValue(COMPTROLLER.compAccrued(address(this)));
+    }
+
+    function totalValueCurrent() external override returns (uint256 _totalValue) {
+        _claimComp();
+        _totalValue = _calculateTotalValue(IERC20(COMP).balanceOf(address(this)));
+    }
+
+    function _calculateTotalValue(uint256 _compAccrued) internal view returns (uint256 _totalValue) {
         if (_compAccrued != 0) {
             (, _totalValue) = swapManager.bestPathFixedInput(COMP, address(collateralToken), _compAccrued, 0);
         }

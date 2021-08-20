@@ -27,7 +27,7 @@ abstract contract RariFuseStrategy is CompoundStrategy {
      * @notice Calculate total value using underlying token
      * @dev Report total value in collateral token
      */
-    function totalValue() external view override returns (uint256 _totalValue) {
+    function totalValue() public view override returns (uint256 _totalValue) {
         _totalValue = _convertToCollateral(cToken.balanceOf(address(this)));
     }
 

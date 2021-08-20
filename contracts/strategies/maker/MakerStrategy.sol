@@ -66,7 +66,7 @@ abstract contract MakerStrategy is Strategy {
      * @dev Make sure to return value in collateral token and in order to do that
      * we are using Uniswap to get collateral amount for earned DAI.
      */
-    function totalValue() external view virtual override returns (uint256 _totalValue) {
+    function totalValue() public view virtual override returns (uint256 _totalValue) {
         uint256 _daiBalance = _getDaiBalance();
         uint256 _debt = cm.getVaultDebt(address(this));
         if (_daiBalance > _debt) {

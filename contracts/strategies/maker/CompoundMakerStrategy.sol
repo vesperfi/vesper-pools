@@ -30,7 +30,16 @@ abstract contract CompoundMakerStrategy is MakerStrategy {
      * @dev Make sure to return value in collateral token.
      * @dev Total value = DAI earned + COMP earned + Collateral locked in Maker
      */
-    function totalValue() external view virtual override returns (uint256 _totalValue) {
+    function totalValue() public view virtual override returns (uint256 _totalValue) {
+        _totalValue = _calculateTotalValue(COMPTROLLER.compAccrued(address(this)));
+    }
+
+    function totalValueCurrent() public override returns (uint256 _totalValue) {
+        _claimComp();
+        _totalValue = _calculateTotalValue(IERC20(COMP).balanceOf(address(this)));
+    }
+
+    function _calculateTotalValue(uint256 _compAccrued) internal view returns (uint256 _totalValue) {
         uint256 _daiBalance = _getDaiBalance();
         uint256 _debt = cm.getVaultDebt(address(this));
         if (_daiBalance > _debt) {
@@ -38,7 +47,6 @@ abstract contract CompoundMakerStrategy is MakerStrategy {
             (, _totalValue) = swapManager.bestPathFixedInput(DAI, address(collateralToken), _daiEarned, 0);
         }
 
-        uint256 _compAccrued = COMPTROLLER.compAccrued(address(this));
         if (_compAccrued != 0) {
             (, uint256 _compAsCollateral) =
                 swapManager.bestPathFixedInput(COMP, address(collateralToken), _compAccrued, 0);
@@ -78,14 +86,17 @@ abstract contract CompoundMakerStrategy is MakerStrategy {
 
     /// @notice Claim rewardToken from lender and convert it into DAI
     function _claimRewardsAndConvertTo(address _toToken) internal override {
-        address[] memory _markets = new address[](1);
-        _markets[0] = address(cToken);
-        COMPTROLLER.claimComp(address(this), _markets);
-
+        _claimComp();
         uint256 _compAmount = IERC20(COMP).balanceOf(address(this));
         if (_compAmount > 0) {
             _safeSwap(COMP, _toToken, _compAmount, 1);
         }
+    }
+
+    function _claimComp() internal {
+        address[] memory _markets = new address[](1);
+        _markets[0] = address(cToken);
+        COMPTROLLER.claimComp(address(this), _markets);
     }
 
     function _depositDaiToLender(uint256 _amount) internal override {

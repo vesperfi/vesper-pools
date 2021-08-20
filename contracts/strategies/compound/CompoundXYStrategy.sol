@@ -100,7 +100,7 @@ abstract contract CompoundXYStrategy is Strategy {
      * @dev Report total value in collateral token
      * @dev Claimed COMP will stay in strategy until next rebalance
      */
-    function totalValueCurrent() external returns (uint256 _totalValue) {
+    function totalValueCurrent() external override returns (uint256 _totalValue) {
         _claimComp();
         uint256 _compAccrued = IERC20(COMP).balanceOf(address(this));
         supplyCToken.exchangeRateCurrent();
@@ -131,7 +131,7 @@ abstract contract CompoundXYStrategy is Strategy {
      * So compAccrued() will return stored COMP accrued amount, which is older
      * @dev For up to date value check totalValueCurrent()
      */
-    function totalValue() external view virtual override returns (uint256 _totalValue) {
+    function totalValue() public view virtual override returns (uint256 _totalValue) {
         uint256 _compAccrued = COMPTROLLER.compAccrued(address(this));
         _totalValue = _calculateTotalValue(_compAccrued);
     }

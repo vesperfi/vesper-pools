@@ -200,7 +200,15 @@ abstract contract Strategy is IStrategy, Context {
      * @notice Calculate total value of asset under management
      * @dev Report total value in collateral token
      */
-    function totalValue() external view virtual override returns (uint256 _value);
+    function totalValue() public view virtual override returns (uint256 _value);
+
+    /**
+     * @notice Calculate total value of asset under management (in real-time)
+     * @dev Report total value in collateral token
+     */
+    function totalValueCurrent() external virtual override returns (uint256) {
+        return totalValue();
+    }
 
     /// @notice Check whether given token is reserved or not. Reserved tokens are not allowed to sweep.
     function isReservedToken(address _token) public view virtual override returns (bool);
