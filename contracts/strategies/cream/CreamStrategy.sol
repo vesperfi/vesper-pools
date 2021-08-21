@@ -30,7 +30,7 @@ abstract contract CreamStrategy is CompoundStrategy {
     }
 
     /// @notice Approve all required tokens
-    function _approveToken(uint256 _amount) internal override {
+    function _approveToken(uint256 _amount) internal virtual override {
         collateralToken.safeApprove(pool, _amount);
         collateralToken.safeApprove(address(cToken), _amount);
     }
@@ -47,7 +47,7 @@ abstract contract CreamStrategy is CompoundStrategy {
      * @param _totalDebt Total collateral debt of this strategy
      * @return profit in collateral token
      */
-    function _realizeProfit(uint256 _totalDebt) internal override returns (uint256) {
+    function _realizeProfit(uint256 _totalDebt) internal virtual override returns (uint256) {
         cToken.accrueInterest();
         uint256 _collateralBalance = _convertToCollateral(cToken.balanceOf(address(this)));
 

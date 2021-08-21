@@ -12,6 +12,9 @@ const { shouldBehaveLikeMakerStrategy } = require('../behavior/maker-strategy')
 const { shouldBehaveLikeCreamStrategy } = require('../behavior/cream-strategy')
 const { shouldBehaveLikeCurveStrategy } = require('../behavior/crv-strategy')
 const { shouldBehaveLikeEarnMakerStrategy } = require('../behavior/earn-maker-strategy')
+const { shouldBehaveLikeEarnCompoundStrategy } = require('../behavior/earn-compound-strategy')
+const { shouldBehaveLikeEarnCreamStrategy } = require('../behavior/earn-cream-strategy')
+const { shouldBehaveLikeEarnAaveStrategy } = require('../behavior/earn-aave-strategy')
 const { shouldBehaveLikeRariFuseStrategy } = require('./rari-fuse-strategy')
 
 const swapper = require('../utils/tokenSwapper')
@@ -32,6 +35,9 @@ function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
     [StrategyType.CREAM]: shouldBehaveLikeCreamStrategy,
     [StrategyType.CURVE]: shouldBehaveLikeCurveStrategy,
     [StrategyType.EARN_MAKER]: shouldBehaveLikeEarnMakerStrategy,
+    [StrategyType.EARN_COMPOUND]: shouldBehaveLikeEarnCompoundStrategy,
+    [StrategyType.EARN_CREAM]: shouldBehaveLikeEarnCreamStrategy,
+    [StrategyType.EARN_AAVE]: shouldBehaveLikeEarnAaveStrategy,
     [StrategyType.RARI_FUSE]: shouldBehaveLikeRariFuseStrategy,
   }
 

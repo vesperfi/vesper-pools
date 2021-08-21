@@ -52,7 +52,7 @@ abstract contract AaveMakerStrategy is MakerStrategy, AaveCore {
     }
 
     /// @notice Claim Aave rewards and convert to _toToken.
-    function _claimRewardsAndConvertTo(address _toToken) internal override {
+    function _claimRewardsAndConvertTo(address _toToken) internal virtual override {
         uint256 _aaveAmount = _claimAave();
         if (_aaveAmount > 0) {
             _safeSwap(AAVE, _toToken, _aaveAmount, 1);

@@ -3,30 +3,28 @@
 pragma solidity 0.8.3;
 
 import "./MakerStrategy.sol";
-import "./Earn.sol";
+import "../Earn.sol";
 import "./AaveMakerStrategy.sol";
 import "../aave/AaveCore.sol";
 import "../../interfaces/vesper/IPoolRewards.sol";
 
 /// @dev This strategy will deposit collateral token in Maker, borrow Dai and
 /// deposit borrowed DAI in Aave to earn interest.
-abstract contract EarnAaveMakerStrategy is Earn, AaveMakerStrategy {
+abstract contract EarnAaveMakerStrategy is AaveMakerStrategy, Earn {
     //solhint-disable no-empty-blocks
     constructor(
         address _pool,
         address _cm,
         address _swapManager,
         address _receiptToken,
-        bytes32 _collateralType
-    ) AaveMakerStrategy(_pool, _cm, _swapManager, _receiptToken, _collateralType) {}
+        bytes32 _collateralType,
+        address _dripToken
+    ) AaveMakerStrategy(_pool, _cm, _swapManager, _receiptToken, _collateralType) Earn(_dripToken) {}
 
-    /**
-     * @notice Update update period of distribution of earning done in one rebalance
-     * @dev _dripPeriod in seconds
-     */
-    function updateDripPeriod(uint256 _dripPeriod) external onlyGovernor {
-        require(_dripPeriod != 0, "dripPeriod-zero");
-        dripPeriod = _dripPeriod;
+    //solhint-enable no-empty-blocks
+
+    function _claimRewardsAndConvertTo(address _toToken) internal override(Strategy, AaveMakerStrategy) {
+        AaveMakerStrategy._claimRewardsAndConvertTo(_toToken);
     }
 
     /**
@@ -38,10 +36,10 @@ abstract contract EarnAaveMakerStrategy is Earn, AaveMakerStrategy {
      */
     function _realizeProfit(
         uint256 /*_totalDebt*/
-    ) internal virtual override returns (uint256) {
-        _claimRewardsAndConvertTo(DAI);
+    ) internal virtual override(Strategy, MakerStrategy) returns (uint256) {
+        _claimRewardsAndConvertTo(dripToken);
         _rebalanceDaiInLender();
-        _forwardEarning(DAI, feeCollector, pool);
+        _forwardEarning(dripToken, feeCollector, pool);
         return collateralToken.balanceOf(address(this));
     }
 }

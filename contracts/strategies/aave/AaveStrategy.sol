@@ -28,7 +28,7 @@ abstract contract AaveStrategy is Strategy, AaveCore {
         _unstakeAave();
     }
 
-    function _setupOracles() internal override {
+    function _setupOracles() internal virtual override {
         swapManager.createOrUpdateOracle(AAVE, WETH, oraclePeriod, oracleRouterIdx);
         if (address(collateralToken) != WETH) {
             swapManager.createOrUpdateOracle(AAVE, address(collateralToken), oraclePeriod, oracleRouterIdx);
@@ -57,7 +57,7 @@ abstract contract AaveStrategy is Strategy, AaveCore {
     }
 
     /// @notice Large approval of token
-    function _approveToken(uint256 _amount) internal override {
+    function _approveToken(uint256 _amount) internal virtual override {
         collateralToken.safeApprove(pool, _amount);
         collateralToken.safeApprove(address(aaveLendingPool), _amount);
         for (uint256 i = 0; i < swapManager.N_DEX(); i++) {
@@ -77,7 +77,7 @@ abstract contract AaveStrategy is Strategy, AaveCore {
     }
 
     /// @notice Claim Aave rewards and convert to _toToken.
-    function _claimRewardsAndConvertTo(address _toToken) internal override {
+    function _claimRewardsAndConvertTo(address _toToken) internal virtual override {
         uint256 _aaveAmount = _claimAave();
         if (_aaveAmount > 0) {
             uint256 minAmtOut =
@@ -105,7 +105,7 @@ abstract contract AaveStrategy is Strategy, AaveCore {
      * @param _totalDebt Total collateral debt of this strategy
      * @return profit in collateral token
      */
-    function _realizeProfit(uint256 _totalDebt) internal override returns (uint256) {
+    function _realizeProfit(uint256 _totalDebt) internal virtual override returns (uint256) {
         _claimRewardsAndConvertTo(address(collateralToken));
         uint256 _aTokenBalance = aToken.balanceOf(address(this));
         if (_aTokenBalance > _totalDebt) {
