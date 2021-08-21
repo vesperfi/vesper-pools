@@ -102,25 +102,33 @@ abstract contract CompoundXYStrategy is Strategy {
      */
     function totalValueCurrent() external override returns (uint256 _totalValue) {
         _claimComp();
-        uint256 _compAccrued = IERC20(COMP).balanceOf(address(this));
         supplyCToken.exchangeRateCurrent();
         borrowCToken.exchangeRateCurrent();
-        _totalValue = _calculateTotalValue(_compAccrued);
+        _totalValue = _calculateTotalValue(IERC20(COMP).balanceOf(address(this)));
     }
 
     /**
-     * @notice Current borrow ratio, calculated as current borrow divide by max allowed borrow
+     * @notice Calculate and return borrow ratio range.
+     * @dev It is calculated as collateralFactor * borrowLimit
+     */
+    function borrowRatioRange() external view returns (uint256 _minBorrowRatio, uint256 _maxBorrowRatio) {
+        (, uint256 _collateralFactorMantissa, ) = COMPTROLLER.markets(address(supplyCToken));
+        _minBorrowRatio = (minBorrowLimit * _collateralFactorMantissa) / 1e18;
+        _maxBorrowRatio = (maxBorrowLimit * _collateralFactorMantissa) / 1e18;
+    }
+
+    /**
+     * @notice Current borrow ratio, calculated as current borrow divide by current supply as borrow
      * Return value is based on basis points, i.e. 7500 = 75% ratio
      */
     function currentBorrowRatio() external view returns (uint256) {
         uint256 _cTokenAmount = supplyCToken.balanceOf(address(this));
         uint256 _supply = (_cTokenAmount * supplyCToken.exchangeRateStored()) / 1e18;
         uint256 _currentBorrow = borrowCToken.borrowBalanceStored(address(this));
-        (, uint256 _collateralFactorMantissa, ) = COMPTROLLER.markets(address(supplyCToken));
-        // Calculate max borrow based on supply and market rate
-        uint256 _maxBorrowAsCollateral = (_supply * _collateralFactorMantissa) / 1e18;
-        (, uint256 _maxBorrow, ) =
-            swapManager.bestOutputFixedInput(address(collateralToken), borrowToken, _maxBorrowAsCollateral);
+        if (_currentBorrow == 0) {
+            return 0;
+        }
+        (, uint256 _maxBorrow, ) = swapManager.bestOutputFixedInput(address(collateralToken), borrowToken, _supply);
         return _maxBorrow == 0 ? 0 : (_currentBorrow * MAX_BPS) / _maxBorrow;
     }
 
@@ -132,8 +140,7 @@ abstract contract CompoundXYStrategy is Strategy {
      * @dev For up to date value check totalValueCurrent()
      */
     function totalValue() public view virtual override returns (uint256 _totalValue) {
-        uint256 _compAccrued = COMPTROLLER.compAccrued(address(this));
-        _totalValue = _calculateTotalValue(_compAccrued);
+        _totalValue = _calculateTotalValue(COMPTROLLER.compAccrued(address(this)));
     }
 
     /**
