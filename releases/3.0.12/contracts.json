@@ -148,6 +148,7 @@
           "implementation": "0xE82cEC55C0aD923195a523a6953a0dAD432E7A9f"
         },
         "strategies": {
+          "RariFuseStrategyDAI": "0x5495f41144ECeF9233f15AC3E4283f5F653fc96c",
           "ConvexStrategyDAI": "0x6897d2cBf66e317bdE74595C455BeE09cf144136"
         }
       },
