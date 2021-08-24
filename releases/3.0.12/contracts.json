@@ -149,7 +149,8 @@
         },
         "strategies": {
           "RariFuseStrategyDAI": "0x5495f41144ECeF9233f15AC3E4283f5F653fc96c",
-          "ConvexStrategyDAI": "0x6897d2cBf66e317bdE74595C455BeE09cf144136"
+          "ConvexStrategyDAI": "0x6897d2cBf66e317bdE74595C455BeE09cf144136",
+          "YearnStrategyDAI": "0xA385821a6f24a1e541ab22448eb03aE9f21a1611"
         }
       },
       "veeth-dai": {
