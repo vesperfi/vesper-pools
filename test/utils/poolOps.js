@@ -136,7 +136,14 @@ async function rebalance(strategies) {
   return txs
 }
 
-async function timeTravel(seconds = 6 * 60 * 60, blocks = 25, strategyType = '', underlayStrategy = '') {
+// eslint-disable-next-line max-params
+async function timeTravel(
+  seconds = 6 * 60 * 60,
+  blocks = 25,
+  strategyType = '',
+  underlayStrategy = '',
+  strategies = []
+) {
   const timeTravelFn = async function () {
     await provider.send('evm_increaseTime', [seconds])
     await provider.send('evm_mine')
@@ -146,7 +153,14 @@ async function timeTravel(seconds = 6 * 60 * 60, blocks = 25, strategyType = '',
       await provider.send('evm_mine')
     }
   }
-  return strategyType.includes('compound') || underlayStrategy.includes('compound') ? blockMineFn() : timeTravelFn()
+  let isCompoundStrategy = strategyType.includes('compound') || underlayStrategy.includes('compound')
+  strategies.forEach(function (strategy) {
+    if (strategy.type.includes('compound')) {
+      isCompoundStrategy = true
+    }
+  })
+
+  return isCompoundStrategy ? blockMineFn() : timeTravelFn()
 }
 
 /**

@@ -20,7 +20,7 @@ const TokenLike = 'TokenLikeTest'
 const CollateralManager = 'CollateralManager'
 let address = require('../../helper/ethereum/address')
 if (process.env.CHAIN === 'polygon') {
-  address =require('../../helper/polygon/address')
+  address = require('../../helper/polygon/address')
 }
 hre.address = address
 /**
@@ -38,7 +38,7 @@ async function getUsers() {
   const users = []
   const signers = await ethers.getSigners()
   for (const signer of signers) {
-    users.push({signer, address: signer.address})
+    users.push({ signer, address: signer.address })
   }
   return users
 }
@@ -96,8 +96,7 @@ async function createMakerStrategy(poolAddress, strategyName, options) {
  *
  * @param {object} poolAddress pool address
  * @param {object} strategyName Strategy name
- * @param options
- * @param {object} vPool Vesper pool instance
+ * @param {object} options extra params
  * @returns {object} Strategy instance
  */
 async function createVesperMakerStrategy(poolAddress, strategyName, options) {
@@ -207,16 +206,14 @@ async function makeNewStrategy(oldStrategy, poolAddress, _options) {
  *
  * @param {object} obj Current calling object aka 'this'
  * @param {PoolData} poolData Data for pool setup
- * @param {string} addressListFactory factory address
- * @param {string} swapManager .
  */
 async function setupVPool(obj, poolData) {
-  const {poolConfig, strategies, vPool, feeCollector} = poolData
+  const { poolConfig, strategies, vPool, feeCollector } = poolData
   obj.strategies = strategies
   obj.feeCollector = feeCollector
-  obj.pool = await deployContract(poolConfig.contractName, poolConfig.poolParams)
   obj.accountant = await deployContract('PoolAccountant')
-  
+  obj.pool = await deployContract(poolConfig.contractName, poolConfig.poolParams)
+
   await obj.accountant.init(obj.pool.address)
   await obj.pool.initialize(...poolConfig.poolParams, obj.accountant.address, address.ADDRESS_LIST_FACTORY)
   const options = {
@@ -228,7 +225,7 @@ async function setupVPool(obj, poolData) {
   const collateralTokenAddress = await obj.pool.token()
   obj.collateralToken = await ethers.getContractAt(TokenLike, collateralTokenAddress)
   obj.swapManager = await ethers.getContractAt('ISwapManager', address.SWAP_MANAGER)
-  
+
   // Must wait an hour for oracles to be effective, unless they were created before the strategy
   await provider.send('evm_increaseTime', [3600])
   await provider.send('evm_mine')
@@ -259,4 +256,4 @@ async function getEvent(txnObj, contractInstance, eventName) {
   return decodedEvents.find(event => !!event)
 }
 
-module.exports = {deployContract, getUsers, setupVPool, getEvent, makeNewStrategy, createStrategy}
+module.exports = { deployContract, getUsers, setupVPool, getEvent, makeNewStrategy, createStrategy }

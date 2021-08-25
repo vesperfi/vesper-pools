@@ -15,7 +15,8 @@ const StrategyType = {
   EARN_CREAM: 'earnCream',
   EARN_AAVE: 'earnAave',
   RARI_FUSE: 'rariFuse',
-  COMPOUND_XY: 'compoundXY'
+  COMPOUND_XY: 'compoundXY',
+  COMPOUND_LEVERAGE: 'compoundLeverage'
 }
 
 module.exports = Object.freeze(StrategyType)

@@ -8,6 +8,7 @@ const { getUsers, getEvent } = require('../utils/setupHelper')
 const { shouldBehaveLikeAaveStrategy } = require('../behavior/aave-strategy')
 const { shouldBehaveLikeCompoundStrategy } = require('../behavior/compound-strategy')
 const { shouldBehaveLikeCompoundXYStrategy } = require('../behavior/compound-xy')
+const { shouldBehaveLikeCompoundLeverageStrategy } = require('../behavior/compound-leverage')
 const { shouldBehaveLikeMakerStrategy } = require('../behavior/maker-strategy')
 const { shouldBehaveLikeCreamStrategy } = require('../behavior/cream-strategy')
 const { shouldBehaveLikeCurveStrategy } = require('../behavior/crv-strategy')
@@ -32,6 +33,7 @@ function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
     [StrategyType.AAVE_MAKER]: shouldBehaveLikeMakerStrategy,
     [StrategyType.COMPOUND_MAKER]: shouldBehaveLikeMakerStrategy,
     [StrategyType.COMPOUND_XY]: shouldBehaveLikeCompoundXYStrategy,
+    [StrategyType.COMPOUND_LEVERAGE]: shouldBehaveLikeCompoundLeverageStrategy,
     [StrategyType.CREAM]: shouldBehaveLikeCreamStrategy,
     [StrategyType.CURVE]: shouldBehaveLikeCurveStrategy,
     [StrategyType.EARN_MAKER]: shouldBehaveLikeEarnMakerStrategy,
