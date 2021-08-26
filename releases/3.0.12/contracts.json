@@ -182,6 +182,35 @@
         "strategies": {
           "AlphaLendStrategyETH": "0xeCe0f32840280aD0069Dd89Ad97Ad6dF1bB0fF2A"
         }
+      },
+      "vfrdai": {
+        "buffer": "0x71a659A9dbb2dCeFAfaE4A89FF12eCAa788c3456",
+        "coveragePool": {
+          "pool": {
+            "proxy": "0x0b1E5e449CA0d7D8937d038e298737e023e86Dc5",
+            "implementation": "0x92D12a8182feF81Fab7c25BC6C586278636C5C22",
+            "poolAccountant": {
+              "proxy": "0xFAFB4397A7F5210918636dab6D45b766Baf74109",
+              "implementation": "0xF45DbAd376826d4Cc52CD6c67cCCC1B4050296d9"
+            }
+          },
+          "strategies": {
+            "CompoundCoverageStrategyDAI": "0x0f0600C5a32BBFEA0495bAfACA551D7a13565281"
+          }
+        },
+        "stablePool": {
+          "pool": {
+            "proxy": "0xb4C912714f07FcD078d17479010f705F807bB115",
+            "implementation": "0x853ec3C32CeeEaE3c014B04e3088c909ec714F2d",
+            "poolAccountant": {
+              "proxy": "0x492fe1758B72515D15BADaa3Dc2cA74529a7ac61",
+              "implementation": "0xc3888a50cf1af4Ec8fE1FA9993e339EDEF544229"
+            }
+          },
+          "strategies": {
+            "CompoundStableStrategyDAI": "0x0972077897e634305869baadc94b76fe449d3ff0"
+          }
+        }
       }
     }
   }

@@ -189,4 +189,4 @@ const deployFunction = async function ({ getNamedAccounts, deployments }) {
   return true
 }
 module.exports = deployFunction
-module.exports.tags = ['vfrDAI-3.0.4']
+module.exports.tags = ['vfrDAI-3.0.12']
