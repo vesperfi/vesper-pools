@@ -1,9 +1,11 @@
-name: vfrDAI Pool
+name: vfrDAI VFR
 on:
   pull_request:
     paths:
       - "test/vfrdai/*.js"
       - "contracts/pool/*.sol"
+      - "contracts/strategies/compound/vfr/*.sol"
+      - "contracts/strategies/convex/vfr/*.sol"
 
 jobs:
   vfrdai-pool-test:
@@ -25,5 +27,8 @@ jobs:
       - name: Run npm install with node v${{ matrix.node }}
         run: npm install
 
-      - name: Running vfrDAI Pool tests
-        run: npm test "test/vfrdai/pool.js"
+      - name: Running vfrDAI VFR deterministic tests
+        run: npm test "test/vfrdai/vfr-deterministic.js"
+
+      - name: Running vfrDAI VFR non-deterministic tests
+        run: npm test "test/vfrdai/vfr-nondeterministic.js"

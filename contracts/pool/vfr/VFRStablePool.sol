@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.3;
 
-import "../interfaces/vesper/IPoolAccountant.sol";
+import "../../interfaces/vesper/IPoolAccountant.sol";
 import "./VFRPool.sol";
 
 // solhint-disable no-empty-blocks
@@ -76,15 +76,19 @@ contract VFRStablePool is VFRPool {
             predictedPricePerShare = ((totalValue() + profits) * 1e18) / totalSupply();
         }
 
-        // Predict the APY based on the unreported profits of all strategies
-        predictedAPY =
-            ((predictedPricePerShare - initialPricePerShare) * (1e18 * 365 * 24 * 3600)) /
-            (initialPricePerShare * (block.timestamp - startTime));
+        if (predictedPricePerShare < initialPricePerShare) {
+            predictedAPY = 0;
+        } else {
+            // Predict the APY based on the unreported profits of all strategies
+            predictedAPY =
+                ((predictedPricePerShare - initialPricePerShare) * (1e18 * 365 * 24 * 3600)) /
+                (initialPricePerShare * (block.timestamp - startTime));
 
-        // Although the predicted APY can be greater than the target APY due to the funds
-        // available in the buffer, the strategies will make sure to never send more funds
-        // to the pool than the amount needed to cover the target APY
-        predictedAPY = predictedAPY > targetAPY ? targetAPY : predictedAPY;
+            // Although the predicted APY can be greater than the target APY due to the funds
+            // available in the buffer, the strategies will make sure to never send more funds
+            // to the pool than the amount needed to cover the target APY
+            predictedAPY = predictedAPY > targetAPY ? targetAPY : predictedAPY;
+        }
 
         // The predicted APY must be within the target APY by no more than the current tolerance
         depositsHalted = targetAPY - predictedAPY > tolerance;

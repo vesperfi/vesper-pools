@@ -223,6 +223,7 @@ abstract contract Crv3PoolStrategyBase is Crv3x, Strategy {
 
     function _realizeGross(uint256 _totalDebt)
         internal
+        virtual
         returns (
             uint256 _profit,
             uint256 _loss,

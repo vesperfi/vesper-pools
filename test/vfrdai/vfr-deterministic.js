@@ -1,46 +1,42 @@
 'use strict'
 
-const {expect} = require('chai')
-const {ethers} = require('hardhat')
+const { expect } = require('chai')
+const { ethers } = require('hardhat')
 
-const {DAI} = require('../../helper/ethereum/address')
-const {rebalance, timeTravel} = require('../utils/poolOps')
-const {prepareConfig} = require('./config')
+const { DAI, WETH } = require('../../helper/ethereum/address')
+const StrategyType = require('../utils/strategyTypes')
+const { rebalance, timeTravel } = require('../utils/poolOps')
+const { swapExactToken } = require('../utils/tokenSwapper')
+const {
+  adjustDaiBalance,
+  deposit,
+  fundBuffer,
+  getBlockTime,
+  getPoolAPY,
+  getUserAPY,
+  isCloseEnough,
+  prepareConfig,
+  stablePoolIsWithinTarget
+} = require('./common')
 
-const {hexlify, parseEther, solidityKeccak256, zeroPad} = ethers.utils
+const { hexlify, parseEther, solidityKeccak256, zeroPad } = ethers.utils
 
-const one = ethers.BigNumber.from(10).pow(18)
+const ONE = parseEther('1')
+const ONE_MILLION = parseEther('1000000')
+const COMP = '0xc00e94cb662c3520282e6f5717214004a7f26888'
 
-describe('Compound VFR', function () {
+describe('VFR DAI Deterministic', function () {
   let daiGiver, user1, user2, user3
-  let stablePool, stableStrategies, coveragePool, coverageStrategies, collateralToken, buffer
+  let stablePool, stableStrategies, coveragePool, coverageStrategies
+  let collateralToken, buffer
 
-  async function deposit(pool, depositor, amount) {
-    // Give DAI to the depositor
-    await collateralToken
-      .connect(daiGiver.signer)
-      .transfer(depositor.address, parseEther(amount.toString()))
-    // Approve the pool
-    await collateralToken
-      .connect(depositor.signer)
-      .approve(pool.address, parseEther(amount.toString()))
-    // Deposit
-    return pool
-      .connect(depositor.signer)
-      .deposit(parseEther(amount.toString()))
-  }
-
-  async function adjustDaiBalance(address, balance) {
-    const index = solidityKeccak256(['uint256', 'uint256'], [address, 2])
+  async function adjustCompBalance(address, balance) {
+    const index = solidityKeccak256(['uint256', 'uint256'], [address, 1])
     const value = hexlify(zeroPad(parseEther(balance.toString()).toHexString(), 32))
 
     // Hack the balance by directly setting the EVM storage
-    await ethers.provider.send('hardhat_setStorageAt', [DAI, index, value])
+    await ethers.provider.send('hardhat_setStorageAt', [COMP, index, value])
     await ethers.provider.send('evm_mine', [])
-  }
-
-  async function getBlockTime(blockNumber = 'latest') {
-    return ethers.provider.getBlock(blockNumber).then(block => block.timestamp)
   }
 
   async function earnStrategyAPY(pool, strategy, apy) {
@@ -54,68 +50,56 @@ describe('Compound VFR', function () {
     const startTime = await stablePool.startTime()
 
     // Compute the profit needed to achieve the requested APY
-    const neededProfitWithoutFee = totalDebt.mul(apy).mul(currentTime - startTime).div(one.mul(365 * 24 * 3600))
+    const neededProfitWithoutFee = totalDebt.mul(apy).mul(currentTime - startTime).div(ONE.mul(365 * 24 * 3600))
     const neededProfit = neededProfitWithoutFee.mul(10000).div(ethers.BigNumber.from(10000).sub(fee))
 
-    // Hacky way of earning a strategy profits by directly sending some cTokens to it
-    const cdai = await ethers.getContractAt('CToken', '0x5d3a536e4d6dbd6114cc1ead35777bab948e3643')
-    await collateralToken.connect(daiGiver.signer).approve(cdai.address, neededProfit)
-    await cdai.connect(daiGiver.signer)['mint(uint256)'](neededProfit)
-
-    // Hack earnings for the strategy by sending some funds directly to it
-    await cdai.connect(daiGiver.signer).transfer(strategy.instance.address, await cdai.balanceOf(daiGiver.address))
+    // Clear all accumulated profits and mimick earning strategy a fixed profit
+    await adjustCompBalance(strategy.instance.address, 0)
+    const CDAI = '0x5d3a536e4d6dbd6114cc1ead35777bab948e3643'
+    await swapExactToken(neededProfit, [DAI, WETH, CDAI], daiGiver, strategy.instance.address)
   }
 
-  async function fundBuffer(amount) {
-    // Transfer DAI directly to the buffer
-    await collateralToken.connect(daiGiver.signer).transfer(buffer.address, parseEther(amount.toString()))
-  }
+  // It's very easy to set up deterministic behavior with Compound strategies
+  const stableStrategyConfigs = [
+    {
+      name: 'CompoundStableStrategyDAI',
+      type: StrategyType.COMPOUND,
+      config: { interestFee: 1500, debtRatio: 5000, debtRate: ONE_MILLION },
+    },
+    {
+      name: 'CompoundStableStrategyDAI',
+      type: StrategyType.COMPOUND,
+      config: { interestFee: 1500, debtRatio: 5000, debtRate: ONE_MILLION },
+    },
+  ]
 
-  function isCloseEnough(x, y, tolerance = 1000) {
-    // Default tolerance .01% (eg. x is within .1% of y)
-    return x.sub(y).abs().lt(y.div(tolerance))
-  }
-
-  async function stablePoolIsWithinTarget() {
-    const currentPricePerShare = await stablePool.pricePerShare()
-    const targetPricePerShare = await stablePool.targetPricePerShare()
-    return isCloseEnough(targetPricePerShare, currentPricePerShare)
-  }
-
-  async function getPoolAPY(pool) {
-    const startTime = (await pool.startTime()).toNumber()
-    const currentTime = await getBlockTime()
-    const initialPricePerShare = await pool.initialPricePerShare()
-    const currentPricePerShare = await pool.pricePerShare()
-    return currentPricePerShare.sub(initialPricePerShare)
-      .mul(one.mul(365 * 24 * 3600))
-      .div(initialPricePerShare.mul(currentTime - startTime))
-  }
-
-  async function getUserAPY(pool, depositTx, amount) {
-    const initialAmount = parseEther(amount.toString())
-    const depositTime = await getBlockTime(depositTx.blockNumber)
-    const currentTime = await getBlockTime()
-    const currentPricePerShare = await pool.pricePerShare()
-    const currentAmount = initialAmount.mul(currentPricePerShare).div(one)
-    return currentAmount.sub(initialAmount)
-      .mul(one.mul(365 * 24 * 3600))
-      .div(initialAmount.mul(currentTime - depositTime))
-  }
+  const coverageStrategyConfigs = [
+    {
+      name: 'CompoundCoverageStrategyDAI',
+      type: StrategyType.COMPOUND,
+      config: { interestFee: 1500, debtRatio: 5000, debtRate: ONE_MILLION },
+    },
+    {
+      name: 'CompoundCoverageStrategyDAI',
+      type: StrategyType.COMPOUND,
+      config: { interestFee: 1500, debtRatio: 5000, debtRate: ONE_MILLION },
+    },
+  ]
 
   before(async function () {
-    await prepareConfig()
+    await prepareConfig(stableStrategyConfigs, coverageStrategyConfigs)
   })
-
+  
   beforeEach(async function () {
-    ;[, daiGiver, user1, user2, user3] = this.users
+    [, daiGiver, user1, user2, user3] = this.users
+  
     for (const user of [user1, user2, user3]) {
       // Clear the DAI balance of users
       await adjustDaiBalance(user.address, 0)
     }
     // Fund the DAI giver account
     await adjustDaiBalance(daiGiver.address, 1000000)
-
+  
     stablePool = this.stable.pool
     coveragePool = this.coverage.pool
     stableStrategies = this.stable.strategies
@@ -129,11 +113,11 @@ describe('Compound VFR', function () {
       // 5% target APY with 1% tolerance
       await stablePool.retarget(parseEther('0.05'), parseEther('0.01'))
   
-      const depositTx = await deposit(stablePool, user1, 1000)
+      const depositTx = await deposit(collateralToken, stablePool, daiGiver, user1, 1000)
       expect(await stablePool.balanceOf(user1.address)).to.be.gt(0)
   
       await rebalance(stableStrategies)
-      await timeTravel(5 * 24 * 3600)
+      await timeTravel(2 * 24 * 3600)
   
       // Each strategy earns 2% APY
       await earnStrategyAPY(stablePool, stableStrategies[0], parseEther('0.02'))
@@ -142,25 +126,25 @@ describe('Compound VFR', function () {
   
       await stablePool.checkpoint()
       // predicted APY is 2%
-      expect(isCloseEnough(await stablePool.predictedAPY(), parseEther('0.02'))).to.be.true
+      expect(isCloseEnough(await stablePool.predictedAPY(), parseEther('0.02'), 10)).to.be.true
   
       // user1 earned a 2% APY
-      expect(isCloseEnough(await getUserAPY(stablePool, depositTx, 1000), parseEther('0.02'))).to.be.true
+      expect(isCloseEnough(await getUserAPY(stablePool, depositTx, 1000), parseEther('0.02'), 10)).to.be.true
       // pool earned a 2% APY
-      expect(isCloseEnough(await getPoolAPY(stablePool), parseEther('0.02'))).to.be.true
+      expect(isCloseEnough(await getPoolAPY(stablePool), parseEther('0.02'), 10)).to.be.true
       // Deposits are halted
-      await expect(deposit(stablePool, user2, 1000)).to.be.revertedWith('pool-under-target')
+      await expect(deposit(collateralToken, stablePool, daiGiver, user2, 1000)).to.be.revertedWith('pool-under-target')
     })
   
     it('allow deposits if pool is under target but by no more than tolerance', async function () {
       // 5% target APY with 1% tolerance
       await stablePool.retarget(parseEther('0.05'), parseEther('0.01'))
   
-      const depositTx = await deposit(stablePool, user1, 1000)
+      const depositTx = await deposit(collateralToken, stablePool, daiGiver, user1, 1000)
       expect(await stablePool.balanceOf(user1.address)).to.be.gt(0)
       
       await rebalance(stableStrategies)
-      await timeTravel(5 * 24 * 3600)
+      await timeTravel(2 * 24 * 3600)
   
       // Each strategy earns 0.45% APY
       await earnStrategyAPY(stablePool, stableStrategies[0], parseEther('0.045'))
@@ -169,15 +153,15 @@ describe('Compound VFR', function () {
       // The checkpoint will predict the APY based on unreported profits within the strategies
       await stablePool.checkpoint()
       // predicted APY is 0.45%
-      expect(isCloseEnough(await stablePool.predictedAPY(), parseEther('0.045'))).to.be.true
+      expect(isCloseEnough(await stablePool.predictedAPY(), parseEther('0.045'), 10)).to.be.true
   
       await rebalance(stableStrategies)
   
       // user1 APY is 0.45%
-      expect(isCloseEnough(await getUserAPY(stablePool, depositTx, 1000), parseEther('0.045'))).to.be.true
+      expect(isCloseEnough(await getUserAPY(stablePool, depositTx, 1000), parseEther('0.045'), 10)).to.be.true
   
       // Deposits are not halted
-      await deposit(stablePool, user2, 1000)
+      await deposit(collateralToken, stablePool, daiGiver, user2, 1000)
       expect(await stablePool.balanceOf(user2.address)).to.be.gt(0)
     })
   
@@ -185,11 +169,11 @@ describe('Compound VFR', function () {
       // 5% target APY with 1% tolerance
       await stablePool.retarget(parseEther('0.05'), parseEther('0.01'))
   
-      const depositTx = await deposit(stablePool, user1, 1000)
+      const depositTx = await deposit(collateralToken, stablePool, daiGiver, user1, 1000)
       expect(await stablePool.balanceOf(user1.address)).to.be.gt(0)
       
       await rebalance(stableStrategies)
-      await timeTravel(5 * 24 * 3600)
+      await timeTravel(2 * 24 * 3600)
   
       // Each strategy earns 0.6% APY
       await earnStrategyAPY(stablePool, stableStrategies[0], parseEther('0.06'))
@@ -200,7 +184,7 @@ describe('Compound VFR', function () {
       const afterBufferBalance = await collateralToken.balanceOf(buffer.address)
   
       // pool should be on target
-      expect(await stablePoolIsWithinTarget()).to.be.true
+      expect(await stablePoolIsWithinTarget(stablePool)).to.be.true
   
       // user1 APY is 5%
       expect(isCloseEnough(await getUserAPY(stablePool, depositTx, 1000), parseEther('0.05'))).to.be.true
@@ -214,8 +198,8 @@ describe('Compound VFR', function () {
       // 5% target APY with 1% tolerance
       await stablePool.retarget(parseEther('0.05'), parseEther('0.01'))
   
-      const depositTx = await deposit(stablePool, user1, 1000)
-      await timeTravel(5 * 24 * 3600)
+      const depositTx = await deposit(collateralToken, stablePool, daiGiver, user1, 1000)
+      await timeTravel(2 * 24 * 3600)
   
       await rebalance(stableStrategies)
       await timeTravel(5 * 24 * 3600)
@@ -225,7 +209,7 @@ describe('Compound VFR', function () {
       await earnStrategyAPY(stablePool, stableStrategies[1], parseEther('0.01'))
   
       // Funds the buffer
-      await fundBuffer(1000)
+      await fundBuffer(collateralToken, buffer, daiGiver, 1000)
   
       // The checkpoint will predict the APY based on the funds available in the buffer
       await stablePool.checkpoint()
@@ -235,7 +219,7 @@ describe('Compound VFR', function () {
       await rebalance(stableStrategies)
   
       // pool should be on target
-      expect(await stablePoolIsWithinTarget()).to.be.true
+      expect(await stablePoolIsWithinTarget(stablePool)).to.be.true
       // user1 APY is 5%
       expect(isCloseEnough(await getUserAPY(stablePool, depositTx, 1000), parseEther('0.05'))).to.be.true
       // pool APY is 5%
@@ -248,9 +232,9 @@ describe('Compound VFR', function () {
       // 1% target APY with 0.1% tolerance
       await stablePool.retarget(parseEther('0.01'), parseEther('0.001'))
 
-      await deposit(stablePool, user1, 1000)
+      await deposit(collateralToken, stablePool, daiGiver, user1, 1000)
       await rebalance(stableStrategies)
-      await deposit(coveragePool, user1, 1000)
+      await deposit(collateralToken, coveragePool, daiGiver, user1, 1000)
       await rebalance(coverageStrategies)
 
       await timeTravel(24 * 3600)
@@ -271,9 +255,9 @@ describe('Compound VFR', function () {
       // 1% target APY with 0.1% tolerance
       await stablePool.retarget(parseEther('0.01'), parseEther('0.001'))
 
-      await deposit(stablePool, user1, 1000)
+      await deposit(collateralToken, stablePool, daiGiver, user1, 1000)
       await rebalance(stableStrategies)
-      await deposit(coveragePool, user1, 1000)
+      await deposit(collateralToken, coveragePool, daiGiver, user1, 1000)
       await rebalance(coverageStrategies)
 
       await timeTravel(24 * 3600)
