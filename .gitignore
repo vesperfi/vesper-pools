@@ -23,3 +23,6 @@ coverage.json
 
 *.iml
 .idea
+
+#deployment
+deployments/localhost/*
