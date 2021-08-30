@@ -2,6 +2,7 @@
 
 const fs = require('fs')
 const _ = require('lodash')
+const compareVersions = require('compare-versions')
 const PROXY_ADMIN = 'DefaultProxyAdmin'
 
 function getPoolData(data) {
@@ -66,8 +67,12 @@ function getDeploymentData(dirName) {
 }
 
 function getPreviousRelease() {
-  const releases = fs.readdirSync('releases')
+  let releases = fs.readdirSync('releases')
   if (releases.length) {
+    if (releases[0] === '.DS_Store') {
+      releases.shift() // delete first element, generally found on mac machine.
+    }
+    releases = releases.sort(compareVersions)
     const prevRelease = releases[releases.length - 1]
     const preReleaseFile = `releases/${prevRelease}/contracts.json`
     if (fs.existsSync(preReleaseFile)) {
