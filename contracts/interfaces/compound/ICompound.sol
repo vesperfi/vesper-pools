@@ -5,6 +5,8 @@ pragma solidity 0.8.3;
 interface CToken {
     function accrueInterest() external returns (uint256);
 
+    function balanceOf(address owner) external view returns (uint256);
+
     function balanceOfUnderlying(address owner) external returns (uint256);
 
     function borrowBalanceCurrent(address account) external returns (uint256);
@@ -14,6 +16,16 @@ interface CToken {
     function exchangeRateCurrent() external returns (uint256);
 
     function exchangeRateStored() external view returns (uint256);
+
+    function getAccountSnapshot(address account)
+        external
+        view
+        returns (
+            uint256,
+            uint256,
+            uint256,
+            uint256
+        );
 
     function borrow(uint256 borrowAmount) external returns (uint256);
 
@@ -36,8 +48,6 @@ interface CToken {
         address user,
         uint256 amount
     ) external returns (bool);
-
-    function balanceOf(address owner) external view returns (uint256);
 
     function underlying() external view returns (address);
 }

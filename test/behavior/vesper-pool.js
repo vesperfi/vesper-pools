@@ -1,8 +1,8 @@
 'use strict'
 
 const swapper = require('../utils/tokenSwapper')
-const {getPermitData} = require('../utils/signHelper')
-const {MNEMONIC} = require('../utils/testkey')
+const { getPermitData } = require('../utils/signHelper')
+const { MNEMONIC } = require('../utils/testkey')
 const {
   deposit: _deposit,
   rebalance,
@@ -16,8 +16,8 @@ const chaiAlmost = require('chai-almost')
 const chai = require('chai')
 chai.use(chaiAlmost(1))
 const expect = chai.expect
-const {BigNumber: BN} = require('ethers')
-const {ethers} = require('hardhat')
+const { BigNumber: BN } = require('ethers')
+const { ethers } = require('hardhat')
 const DECIMAL18 = BN.from('1000000000000000000')
 const MAX_BPS = BN.from('10000')
 async function shouldBehaveLikePool(poolName, collateralName) {
@@ -53,7 +53,7 @@ async function shouldBehaveLikePool(poolName, collateralName) {
     describe(`Gasless approval for ${poolName} token`, function () {
       it('Should allow gasless approval using permit()', async function () {
         const amount = DECIMAL18.toString()
-        const {owner, deadline, sign} = await getPermitData(pool, amount, MNEMONIC, user1.address)
+        const { owner, deadline, sign } = await getPermitData(pool, amount, MNEMONIC, user1.address)
         await pool.permit(owner, user1.address, amount, deadline, sign.v, sign.r, sign.s)
         const allowance = await pool.allowance(owner, user1.address)
         expect(allowance).to.be.equal(amount, `${poolName} allowance is wrong`)
@@ -105,11 +105,8 @@ async function shouldBehaveLikePool(poolName, collateralName) {
     })
 
     describe(`Withdraw ${collateralName} from ${poolName} pool`, function () {
-      let depositAmount, totalSupplyBefore, totalDebtBefore, totalValueBefore
+      let depositAmount
       beforeEach(async function () {
-        totalSupplyBefore = await pool.totalSupply()
-        totalDebtBefore = await pool.totalDebt()
-        totalValueBefore = await pool.totalValue()
         depositAmount = await deposit(20, user1)
       })
       after(reset)
@@ -176,7 +173,8 @@ async function shouldBehaveLikePool(poolName, collateralName) {
         const dust = DECIMAL18.div(BN.from(100)) // Dust is less than 1e16
         await rebalance(strategies)
         // Some strategies can report a loss if they don't have time to earn anything
-        await timeTravel(60 * 24 * 60 * 60)
+        // Time travel based on type of strategy. For compound strategy mine 500 blocks, else time travel
+        await timeTravel(60 * 24 * 60 * 60, 500, '', '', strategies)
         await rebalance(strategies)
 
         let o = await pool.balanceOf(user1.address)
@@ -189,13 +187,13 @@ async function shouldBehaveLikePool(poolName, collateralName) {
           pool.totalDebt(),
           pool.totalSupply(),
           pool.totalValue(),
-          pool.balanceOf(user1.address),
-          collateralToken.balanceOf(user2.address),
+          pool.balanceOf(user2.address),
+          collateralToken.balanceOf(user1.address),
         ]).then(function ([totalDebt, totalSupply, totalValue, vPoolBalance, collateralBalance]) {
           // Due to rounding some dust, 10000 wei, might left in case of Compound and Yearn strategy
-          expect(totalDebtBefore.sub(totalDebt)).to.be.lte(dust, `${collateralName} total debt is wrong`)
-          expect(totalSupplyBefore.sub(totalSupply)).to.be.lte(dust, `Total supply of ${poolName} is wrong`)
-          expect(totalValueBefore.sub(totalValue)).to.be.lte(dust, `Total value of ${poolName} is wrong`)
+          expect(totalDebt).to.be.lte(dust, `${collateralName} total debt is wrong`)
+          expect(totalSupply).to.be.lte(dust, `Total supply of ${poolName} is wrong`)
+          expect(totalValue).to.be.lte(dust, `Total value of ${poolName} is wrong`)
           expect(vPoolBalance).to.be.lte(dust, `${poolName} balance of user is wrong`)
           expect(collateralBalance).to.be.gte(depositAmount, `${collateralName} balance of user is wrong`)
         })
@@ -327,6 +325,7 @@ async function shouldBehaveLikePool(poolName, collateralName) {
 
       it('Should allow fee collector to withdraw without fee', async function () {
         const dust = DECIMAL18.div(BN.from(100)) // Dust is less than 1e16
+        await deposit(10, user1)
         await deposit(10, user2)
         await rebalance(strategies)
         const withdrawAmount = await pool.balanceOf(user2.address)
@@ -557,4 +556,4 @@ async function shouldBehaveLikePool(poolName, collateralName) {
   })
 }
 
-module.exports = {shouldBehaveLikePool}
+module.exports = { shouldBehaveLikePool }
