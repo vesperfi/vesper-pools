@@ -10,9 +10,13 @@ contract VesperEarnDrip is PoolRewards {
      * @dev Notify that reward is added.
      * Also updates reward rate and reward earning period.
      */
-    function notifyRewardAmount(uint256 rewardAmount, uint256 _rewardDuration) external override {
+    function notifyRewardAmount(
+        address _rewardToken,
+        uint256 _rewardAmount,
+        uint256 _rewardDuration
+    ) external override {
         (bool isStrategy, , , , , , , ) = IVesperPool(pool).strategy(msg.sender);
         require(msg.sender == IVesperPool(pool).governor() || isStrategy, "not-authorized");
-        super._notifyRewardAmount(rewardAmount, _rewardDuration);
+        super._notifyRewardAmount(_rewardToken, _rewardAmount, _rewardDuration, IVesperPool(pool).totalSupply());
     }
 }

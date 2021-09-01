@@ -68,7 +68,7 @@ abstract contract Earn is Strategy {
                 _earned = _earned - _fee;
             }
             IERC20(_token).safeTransfer(_dripContract, _earned);
-            IPoolRewards(_dripContract).notifyRewardAmount(_earned, dripPeriod);
+            IPoolRewards(_dripContract).notifyRewardAmount(_token, _earned, dripPeriod);
         }
     }
 }

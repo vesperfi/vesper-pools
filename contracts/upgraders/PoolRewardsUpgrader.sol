@@ -10,40 +10,26 @@ contract PoolRewardsUpgrader is UpgraderBase {
     {}
 
     function _calls() internal pure override returns (bytes[] memory calls) {
-        calls = new bytes[](6);
+        calls = new bytes[](3);
         calls[0] = abi.encodeWithSignature("pool()");
-        calls[1] = abi.encodeWithSignature("rewardToken()");
-        calls[2] = abi.encodeWithSignature("lastUpdateTime()");
-        calls[3] = abi.encodeWithSignature("rewardPerTokenStored()");
-        calls[4] = abi.encodeWithSignature("lastTimeRewardApplicable()");
-        calls[5] = abi.encodeWithSignature("rewardPerToken()");
+        calls[1] = abi.encodeWithSignature("getRewardTokens()");
+        calls[2] = abi.encodeWithSignature("rewardPerToken()");
     }
 
     function _checkResults(bytes[] memory _beforeResults, bytes[] memory _afterResults) internal pure override {
         address beforePool = abi.decode(_beforeResults[0], (address));
-        address beforeRewardToken = abi.decode(_beforeResults[1], (address));
-        uint256 beforeLastUpdateTime = abi.decode(_beforeResults[2], (uint256));
-        uint256 beforeRewardPerTokenStored = abi.decode(_beforeResults[3], (uint256));
-        uint256 beforeLastTimeRewardApplicable = abi.decode(_beforeResults[4], (uint256));
-        uint256 beforeRewardPerToken = abi.decode(_beforeResults[5], (uint256));
+        address[] memory beforeRewardToken = abi.decode(_beforeResults[1], (address[]));
+        (, address[] memory beforeRewardPerToken) = abi.decode(_beforeResults[2], (address[], address[]));
 
         address afterPool = abi.decode(_afterResults[0], (address));
-        address afterRewardToken = abi.decode(_afterResults[1], (address));
-        uint256 afterLastUpdateTime = abi.decode(_afterResults[2], (uint256));
-        uint256 afterRewardPerTokenStored = abi.decode(_afterResults[3], (uint256));
-        uint256 afterLastTimeRewardApplicable = abi.decode(_afterResults[4], (uint256));
-        uint256 afterRewardPerToken = abi.decode(_afterResults[5], (uint256));
+        address[] memory afterRewardToken = abi.decode(_afterResults[1], (address[]));
+        (, address[] memory afterRewardPerToken) = abi.decode(_beforeResults[2], (address[], address[]));
 
+        require(beforePool == afterPool, "fields-test-failed");
         require(
-            beforePool == afterPool &&
-                beforeRewardToken == afterRewardToken &&
-                beforeLastUpdateTime == afterLastUpdateTime &&
-                beforeRewardPerTokenStored == afterRewardPerTokenStored,
-            "fields-test-failed"
-        );
-        require(
-            beforeLastTimeRewardApplicable == afterLastTimeRewardApplicable &&
-                beforeRewardPerToken == afterRewardPerToken,
+            beforeRewardToken.length == afterRewardToken.length &&
+                beforeRewardToken[0] == afterRewardToken[0] &&
+                beforeRewardPerToken[0] == afterRewardPerToken[0],
             "methods-test-failed"
         );
     }
