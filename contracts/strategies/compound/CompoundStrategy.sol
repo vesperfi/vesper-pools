@@ -31,7 +31,7 @@ abstract contract CompoundStrategy is Strategy {
         _totalValue = _calculateTotalValue(COMPTROLLER.compAccrued(address(this)));
     }
 
-    function totalValueCurrent() external override returns (uint256 _totalValue) {
+    function totalValueCurrent() external virtual override returns (uint256 _totalValue) {
         _claimComp();
         _totalValue = _calculateTotalValue(IERC20(COMP).balanceOf(address(this)));
     }
@@ -73,7 +73,7 @@ abstract contract CompoundStrategy is Strategy {
     }
 
     /// @notice Claim COMP and convert COMP into collateral token.
-    function _claimRewardsAndConvertTo(address _toToken) internal override {
+    function _claimRewardsAndConvertTo(address _toToken) internal virtual override {
         _claimComp();
         uint256 _compAmount = IERC20(COMP).balanceOf(address(this));
         if (_compAmount != 0) {
@@ -157,7 +157,7 @@ abstract contract CompoundStrategy is Strategy {
         return _amount;
     }
 
-    function _setupOracles() internal override {
+    function _setupOracles() internal virtual override {
         swapManager.createOrUpdateOracle(COMP, WETH, oraclePeriod, oracleRouterIdx);
         if (address(collateralToken) != WETH) {
             swapManager.createOrUpdateOracle(WETH, address(collateralToken), oraclePeriod, oracleRouterIdx);

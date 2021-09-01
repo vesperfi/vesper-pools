@@ -34,7 +34,7 @@ abstract contract CompoundMakerStrategy is MakerStrategy {
         _totalValue = _calculateTotalValue(COMPTROLLER.compAccrued(address(this)));
     }
 
-    function totalValueCurrent() public override returns (uint256 _totalValue) {
+    function totalValueCurrent() public virtual override returns (uint256 _totalValue) {
         _claimComp();
         _totalValue = _calculateTotalValue(IERC20(COMP).balanceOf(address(this)));
     }
@@ -85,7 +85,7 @@ abstract contract CompoundMakerStrategy is MakerStrategy {
     }
 
     /// @notice Claim rewardToken from lender and convert it into DAI
-    function _claimRewardsAndConvertTo(address _toToken) internal override {
+    function _claimRewardsAndConvertTo(address _toToken) internal virtual override {
         _claimComp();
         uint256 _compAmount = IERC20(COMP).balanceOf(address(this));
         if (_compAmount > 0) {

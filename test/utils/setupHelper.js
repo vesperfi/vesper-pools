@@ -135,7 +135,13 @@ async function createStrategy(strategy, poolAddress, options = {}) {
   await instance.updateFeeCollector(strategy.feeCollector)
   const strategyTokenAddress = await instance.token()
   const strategyTokenName =
-    strategyType === StrategyType.VESPER_MAKER ? IVesperPool : strategyType.includes('compound') ? CToken : TokenLike
+    strategyType === StrategyType.VESPER_MAKER
+      ? IVesperPool
+      : strategyType.includes('compound') ||
+        strategyType === StrategyType.EARN_COMPOUND ||
+        strategyType === StrategyType.EARN_CREAM
+      ? CToken
+      : TokenLike
 
   if (strategyType === StrategyType.CURVE) {
     // alias token.balanceOf to internal method for LP Balance
@@ -215,7 +221,7 @@ async function setupVPool(obj, poolData) {
   await obj.pool.initialize(...poolConfig.poolParams, obj.accountant.address, address.ADDRESS_LIST_FACTORY)
   const options = {
     vPool,
-  }
+  }  
   await createStrategies(obj, options)
   await addStrategies(obj)
   await obj.pool.updateFeeCollector(feeCollector)

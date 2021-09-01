@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity 0.8.3;
-import "hardhat/console.sol";
 import "./CreamStrategy.sol";
 
 // solhint-disable no-empty-blocks

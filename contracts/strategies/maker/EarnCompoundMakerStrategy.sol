@@ -3,30 +3,31 @@
 pragma solidity 0.8.3;
 
 import "./MakerStrategy.sol";
-import "./Earn.sol";
+import "../Earn.sol";
 import "./CompoundMakerStrategy.sol";
 import "../aave/AaveCore.sol";
 import "../../interfaces/vesper/IPoolRewards.sol";
 
 /// @dev This strategy will deposit collateral token in Maker, borrow Dai and
 /// deposit borrowed DAI in Aave to earn interest.
-abstract contract EarnCompoundMakerStrategy is Earn, CompoundMakerStrategy {
+abstract contract EarnCompoundMakerStrategy is CompoundMakerStrategy, Earn {
     //solhint-disable no-empty-blocks
     constructor(
         address _pool,
         address _cm,
         address _swapManager,
         address _receiptToken,
-        bytes32 _collateralType
-    ) CompoundMakerStrategy(_pool, _cm, _swapManager, _receiptToken, _collateralType) {}
+        bytes32 _collateralType,
+        address _dripToken
+    ) CompoundMakerStrategy(_pool, _cm, _swapManager, _receiptToken, _collateralType) Earn(_dripToken) {}
 
-    /**
-     * @notice Update update period of distribution of earning done in one rebalance
-     * @dev _dripPeriod in seconds
-     */
-    function updateDripPeriod(uint256 _dripPeriod) external onlyGovernor {
-        require(_dripPeriod != 0, "dripPeriod-zero");
-        dripPeriod = _dripPeriod;
+    function totalValueCurrent() public override(Strategy, CompoundMakerStrategy) returns (uint256 _totalValue) {
+        _claimComp();
+        _totalValue = _calculateTotalValue(IERC20(COMP).balanceOf(address(this)));
+    }
+
+    function _claimRewardsAndConvertTo(address _toToken) internal override(Strategy, CompoundMakerStrategy) {
+        CompoundMakerStrategy._claimRewardsAndConvertTo(_toToken);
     }
 
     /**
@@ -38,10 +39,10 @@ abstract contract EarnCompoundMakerStrategy is Earn, CompoundMakerStrategy {
      */
     function _realizeProfit(
         uint256 /*_totalDebt*/
-    ) internal virtual override returns (uint256) {
-        _claimRewardsAndConvertTo(DAI);
+    ) internal virtual override(Strategy, MakerStrategy) returns (uint256) {
+        _claimRewardsAndConvertTo(dripToken);
         _rebalanceDaiInLender();
-        _forwardEarning(DAI, feeCollector, pool);
+        _forwardEarning(dripToken, feeCollector, pool);
         return collateralToken.balanceOf(address(this));
     }
 }

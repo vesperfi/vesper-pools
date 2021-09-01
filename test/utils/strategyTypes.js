@@ -11,6 +11,9 @@ const StrategyType = {
   CREAM: 'cream',
   YEARN: 'yearn',
   EARN_MAKER: 'earnMaker',
+  EARN_COMPOUND: 'earnCompound',
+  EARN_CREAM: 'earnCream',
+  EARN_AAVE: 'earnAave',
   RARI_FUSE: 'rariFuse',
   COMPOUND_XY: 'compoundXY'
 }
