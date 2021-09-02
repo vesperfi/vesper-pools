@@ -144,8 +144,12 @@ abstract contract CompoundStrategy is Strategy {
      */
     function _safeWithdraw(uint256 _amount) internal returns (uint256) {
         uint256 _collateralBalance = _convertToCollateral(cToken.balanceOf(address(this)));
-        // Get minimum of _amount and _collateralBalance
-        return _withdrawHere(_amount < _collateralBalance ? _amount : _collateralBalance);
+        // Get available liquidity from Compound
+        uint256 _availableLiquidity = cToken.getCash();
+        // Get minimum of _amount and _avaialbleLiquidity
+        uint256 _withdrawAmount = _amount < _availableLiquidity ? _amount : _availableLiquidity;
+        // Get minimum of _withdrawAmount and _collateralBalance
+        return _withdrawHere(_withdrawAmount < _collateralBalance ? _withdrawAmount : _collateralBalance);
     }
 
     /// @dev Withdraw collateral here. Do not transfer to pool

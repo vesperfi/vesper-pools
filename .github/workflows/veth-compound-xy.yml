@@ -3,7 +3,9 @@ on:
   pull_request:
     paths:
       - "test/veth/compound-xy.js"
+      - "test/veth/compound.js"
       - "contracts/strategies/Strategy.sol"
+      - "contracts/strategies/CompoundStrategy.sol"
       - "contracts/strategies/compound/CompoundXYStrategy.sol"
       - "contracts/strategies/compound/CompoundXYStrategyETH.sol"
 
@@ -29,3 +31,6 @@ jobs:
 
       - name: Running vETH with Compound XY
         run: npm test "test/veth/compound-xy.js"
+
+      - name: Running vETH with Compound
+        run: npm test "test/veth/compound.js"
