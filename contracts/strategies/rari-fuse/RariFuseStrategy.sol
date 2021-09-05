@@ -11,7 +11,7 @@ contract RariFuseStrategy is CompoundStrategy {
     using SafeERC20 for IERC20;
     string public constant NAME = "RariFuse-Strategy";
     string public constant VERSION = "3.0.13";
-    uint256 public immutable fusePoolId;
+    uint256 public fusePoolId;
     address private constant FUSE_POOL_DIRECTORY = 0x835482FE0532f169024d5E9410199369aAD5C77E;
     event FusePoolChanged(uint256 indexed newFusePoolId, address indexed oldCToken, address indexed newCToken);
 
@@ -49,6 +49,7 @@ contract RariFuseStrategy is CompoundStrategy {
         emit FusePoolChanged(_newPoolId, address(cToken), _newCToken);
         cToken = CToken(_newCToken);
         receiptToken = _newCToken;
+        fusePoolId = _newPoolId;
     }
 
     function isReservedToken(address _token) public view override returns (bool) {
@@ -82,7 +83,7 @@ contract RariFuseStrategy is CompoundStrategy {
      * @param _totalDebt Total collateral debt of this strategy
      * @return profit in collateral token
      */
-    function _realizeProfit(uint256 _totalDebt) internal override returns (uint256) {
+    function _realizeProfit(uint256 _totalDebt) internal virtual override returns (uint256) {
         uint256 _collateralBalance = _convertToCollateral(cToken.balanceOf(address(this)));
 
         if (_collateralBalance > _totalDebt) {

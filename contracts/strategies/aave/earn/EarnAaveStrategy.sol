@@ -35,7 +35,7 @@ abstract contract EarnAaveStrategy is AaveStrategy, Earn {
             _withdraw(address(collateralToken), address(this), _aTokenBalance - _totalDebt);
         }
         _convertCollateralToDrip();
-        _forwardEarning(dripToken, feeCollector, pool);
+        _forwardEarning();
         return 0;
     }
 

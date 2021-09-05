@@ -32,7 +32,7 @@ abstract contract YearnStrategy is Strategy {
     }
 
     /// @notice Approve all required tokens
-    function _approveToken(uint256 _amount) internal override {
+    function _approveToken(uint256 _amount) internal virtual override {
         collateralToken.safeApprove(pool, _amount);
         collateralToken.safeApprove(address(yToken), _amount);
     }
@@ -56,7 +56,7 @@ abstract contract YearnStrategy is Strategy {
      * @param _totalDebt Total collateral debt of this strategy
      * @return profit in collateral token
      */
-    function _realizeProfit(uint256 _totalDebt) internal override returns (uint256) {
+    function _realizeProfit(uint256 _totalDebt) internal virtual override returns (uint256) {
         uint256 _collateralBalance = _getCollateralBalance();
         if (_collateralBalance > _totalDebt) {
             _withdrawHere(_collateralBalance - _totalDebt);

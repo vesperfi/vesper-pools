@@ -12,8 +12,9 @@ describe('veETH pool strategies', function () {
   const ONE_MILLION = ethers.utils.parseEther('1000000')
   const strategies = [
     {
-      name: 'EarnCompoundStrategyETH',
-      type: StrategyType.EARN_COMPOUND,
+      name: 'EarnRariFuseStrategyETH',
+      type: StrategyType.EARN_RARI_FUSE,
+      fusePoolId: 23, // Vesper Lend
       config: {interestFee, debtRatio: 9000, debtRate: ONE_MILLION},
     },
   ]

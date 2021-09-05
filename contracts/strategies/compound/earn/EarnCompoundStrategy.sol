@@ -45,7 +45,7 @@ abstract contract EarnCompoundStrategy is CompoundStrategy, Earn {
             _withdrawHere(_collateralBalance - _totalDebt);
         }
         _convertCollateralToDrip();
-        _forwardEarning(dripToken, feeCollector, pool);
+        _forwardEarning();
         return 0;
     }
 

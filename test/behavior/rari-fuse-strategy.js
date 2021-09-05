@@ -40,8 +40,10 @@ function shouldBehaveLikeRariFuseStrategy(strategyIndex) {
     it('Should not switch to the same Rari Fuse Pool', async function () {
       await deposit(pool, collateralToken, 10, user1)
       await rebalanceStrategy(strategy)
- 
-      expect(strategy.instance.migrateFusePool(18)).to.be.revertedWith('same-fuse-pool')
+
+      const fusePoolId = await strategy.instance.fusePoolId()
+
+      expect(strategy.instance.migrateFusePool(fusePoolId)).to.be.revertedWith('same-fuse-pool')
 
     })
     it('Should fail switching to a wrong Rari Fuse Pool', async function () {

@@ -79,7 +79,14 @@ async function harvestYearn(strategy) {
 
   const signer = await ethers.provider.getSigner(strategy.signer)
 
-  await swapper.swapEthForToken(5, collateralTokenAddress, { signer }, vault)
+  if (collateralTokenAddress === WETH_ADDRESS) {
+    const weth = await ethers.getContractAt('TokenLike', collateralTokenAddress, signer)
+    const transferAmount = ethers.utils.parseEther('5')
+    await weth.deposit({ value: transferAmount })
+    await weth.transfer(vault, transferAmount)
+  } else {
+    await swapper.swapEthForToken(5, collateralTokenAddress, { signer }, vault)
+  }
 
 }
 
@@ -95,14 +102,14 @@ async function rebalanceStrategy(strategy) {
     if (strategy.type.includes('Maker')) {
       await bringAboveWater(strategy, 10)
     }
-    if (strategy.type.includes('yearn')) {
+    if (strategy.type.includes('yearn') || strategy.type.includes('Yearn')) {
       await harvestYearn(strategy)
     }
-    if (strategy.type.includes('alpha')) {
+    if (strategy.type.includes('alpha') || strategy.type.includes('Alpha')) {
       // Alpha SafeBox has a cToken - this method calls exchangeRateCurrent on the cToken
       await strategy.instance.updateTokenRate()
     }
-    if (strategy.type.includes('rariFuse')) {
+    if (strategy.type.includes('rariFuse') || strategy.type.includes('earnRariFuse')) {
       const cToken = await ethers.getContractAt('CToken', strategy.token.address)
       await cToken.accrueInterest()
     }

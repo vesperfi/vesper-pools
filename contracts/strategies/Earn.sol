@@ -37,6 +37,10 @@ abstract contract Earn is Strategy {
     /// @notice Converts excess collateral earned to drip token
     function _convertCollateralToDrip() internal {
         uint256 _collateralAmount = collateralToken.balanceOf(address(this));
+        _convertCollateralToDrip(_collateralAmount);
+    }
+
+    function _convertCollateralToDrip(uint256 _collateralAmount) internal {
         if (_collateralAmount != 0) {
             uint256 minAmtOut =
                 (swapSlippage != 10000)
@@ -52,23 +56,19 @@ abstract contract Earn is Strategy {
     /**
      * @notice Send this earning to drip contract.
      */
-    function _forwardEarning(
-        address _token,
-        address _feeCollector,
-        address _pool
-    ) internal {
-        (, uint256 _interestFee, , , , , , ) = IVesperPool(_pool).strategy(address(this));
-        address _dripContract = IVesperPool(_pool).poolRewards();
-        uint256 _earned = IERC20(_token).balanceOf(address(this));
+    function _forwardEarning() internal {
+        (, uint256 _interestFee, , , , , , ) = IVesperPool(pool).strategy(address(this));
+        address _dripContract = IVesperPool(pool).poolRewards();
+        uint256 _earned = IERC20(dripToken).balanceOf(address(this));
         if (_earned != 0) {
             totalEarned += _earned;
             uint256 _fee = (_earned * _interestFee) / 10000;
             if (_fee != 0) {
-                IERC20(_token).safeTransfer(_feeCollector, _fee);
+                IERC20(dripToken).safeTransfer(feeCollector, _fee);
                 _earned = _earned - _fee;
             }
-            IERC20(_token).safeTransfer(_dripContract, _earned);
-            IPoolRewards(_dripContract).notifyRewardAmount(_token, _earned, dripPeriod);
+            IERC20(dripToken).safeTransfer(_dripContract, _earned);
+            IPoolRewards(_dripContract).notifyRewardAmount(dripToken, _earned, dripPeriod);
         }
     }
 }

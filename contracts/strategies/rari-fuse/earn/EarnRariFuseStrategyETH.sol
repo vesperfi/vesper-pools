@@ -2,22 +2,25 @@
 
 pragma solidity 0.8.3;
 
-import "./RariFuseStrategy.sol";
-import "../../interfaces/token/IToken.sol";
+import "./EarnRariFuseStrategy.sol";
+import "../../../interfaces/token/IToken.sol";
 
 // solhint-disable no-empty-blocks
-/// @title Deposit ETH in a Rari Fuse Pool and earn interest.
-contract RariFuseStrategyETH is RariFuseStrategy {
+/// @title Deposit ETH/WETH in RariFuse and earn interest in DAI.
+contract EarnRariFuseStrategyETH is EarnRariFuseStrategy {
+    // DAI = 0x6b175474e89094c44da98b954eedeac495271d0f
     constructor(
         address _pool,
         address _swapManager,
         uint256 _fusePoolId
-    ) RariFuseStrategy(_pool, _swapManager, _fusePoolId) {}
-
-    /// @dev Only receive ETH from either cToken or WETH
-    receive() external payable {
-        require(msg.sender == address(cToken) || msg.sender == WETH, "not-allowed-to-send-ether");
-    }
+    )
+        EarnRariFuseStrategy(
+            _pool,
+            _swapManager,
+            _fusePoolId,
+            0x6B175474E89094C44Da98b954EedeAC495271d0F // DAI
+        )
+    {}
 
     function migrateFusePool(uint256 _newPoolId) external override onlyKeeper {
         address _newCToken = _cTokenByUnderlying(_newPoolId, address(collateralToken));
@@ -30,8 +33,13 @@ contract RariFuseStrategyETH is RariFuseStrategy {
         fusePoolId = _newPoolId;
     }
 
+    /// @dev Only receive ETH from either cToken or WETH
+    receive() external payable {
+        require(msg.sender == address(cToken) || msg.sender == WETH, "not-allowed-to-send-ether");
+    }
+
     /**
-     * @dev This hook get called after collateral is redeemed from a Rari Fuse Pool
+     * @dev This hook get called after collateral is redeemed from RariFuse
      * Vesper deals in WETH as collateral so convert ETH to WETH
      */
     function _afterRedeem() internal override {
@@ -39,8 +47,8 @@ contract RariFuseStrategyETH is RariFuseStrategy {
     }
 
     /**
-     * @dev During reinvest we have WETH as collateral but Rari Fuse accepts ETH.
-     * Withdraw ETH from WETH before calling mint in Rari Fuse Pool.
+     * @dev During reinvest we have WETH as collateral but RariFuse accepts ETH.
+     * Withdraw ETH from WETH before calling mint in RariFuse.
      */
     function _reinvest() internal override {
         uint256 _collateralBalance = collateralToken.balanceOf(address(this));

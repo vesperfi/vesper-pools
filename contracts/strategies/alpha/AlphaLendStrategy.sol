@@ -27,7 +27,7 @@ abstract contract AlphaLendStrategy is Strategy {
         require(address(IVesperPool(_pool).token()) == address(safeBox.uToken()), "u-token-mismatch");
     }
 
-    function _setupOracles() internal override {
+    function _setupOracles() internal virtual override {
         swapManager.createOrUpdateOracle(ALPHA, WETH, oraclePeriod, oracleRouterIdx);
         if (address(collateralToken) != WETH) {
             swapManager.createOrUpdateOracle(WETH, address(collateralToken), oraclePeriod, oracleRouterIdx);
@@ -65,7 +65,7 @@ abstract contract AlphaLendStrategy is Strategy {
     }
 
     /// @notice Claim ALPHA and convert ALPHA into collateral token.
-    function _claimRewardsAndConvertTo(address _toToken) internal override {
+    function _claimRewardsAndConvertTo(address _toToken) internal virtual override {
         uint256 _alphaAmount = IERC20(ALPHA).balanceOf(address(this));
         if (_alphaAmount != 0) {
             uint256 minAmtOut =
@@ -79,29 +79,6 @@ abstract contract AlphaLendStrategy is Strategy {
         }
     }
 
-    function _generateReport()
-        internal
-        override
-        returns (
-            uint256 _profit,
-            uint256 _loss,
-            uint256 _payback
-        )
-    {
-        uint256 _excessDebt = IVesperPool(pool).excessDebt(address(this));
-        uint256 _totalDebt = IVesperPool(pool).totalDebtOf(address(this));
-        _claimRewardsAndConvertTo(address(collateralToken));
-        safeBox.withdraw(safeBox.balanceOf(address(this)));
-        _afterDownstreamWithdrawal();
-        uint256 _collateralBalance = collateralToken.balanceOf(address(this));
-        if (_collateralBalance > _totalDebt) {
-            _profit = _collateralBalance - _totalDebt;
-        } else {
-            _loss = _totalDebt - _collateralBalance;
-        }
-        _payback = (_excessDebt > _collateralBalance) ? _collateralBalance : _excessDebt;
-    }
-
     /// @notice Deposit collateral in Alpha
     function _reinvest() internal virtual override {
         uint256 _collateralBalance = collateralToken.balanceOf(address(this));
@@ -112,11 +89,7 @@ abstract contract AlphaLendStrategy is Strategy {
 
     /// @dev Withdraw collateral and transfer it to pool
     function _withdraw(uint256 _collateralAmount) internal override {
-        uint256 _sbBalance = safeBox.balanceOf(address(this));
-        uint256 toWithdraw =
-            _collateralAmount < _convertToCollateral(_sbBalance) ? convertToIb(_collateralAmount) : _sbBalance;
-        safeBox.withdraw(toWithdraw);
-        _afterDownstreamWithdrawal();
+        _withdrawHere(_collateralAmount);
         collateralToken.safeTransfer(pool, collateralToken.balanceOf(address(this)));
     }
 
@@ -128,14 +101,42 @@ abstract contract AlphaLendStrategy is Strategy {
         return (_collateralAmount * 1e18) / safeBox.cToken().exchangeRateStored();
     }
 
+    function _withdrawHere(uint256 _collateralAmount) internal returns (uint256) {
+        uint256 _collateralBalanceBefore = collateralToken.balanceOf(address(this));
+        uint256 _sbBalance = safeBox.balanceOf(address(this));
+        uint256 _toWithdraw = convertToIb(_collateralAmount);
+        if (_toWithdraw > _sbBalance) {
+            _toWithdraw = _sbBalance;
+        }
+        safeBox.withdraw(_toWithdraw);
+        _afterDownstreamWithdrawal();
+        return collateralToken.balanceOf(address(this)) - _collateralBalanceBefore;
+    }
+
+    function _liquidate(uint256 _excessDebt) internal override returns (uint256 _payback) {
+        if (_excessDebt != 0) {
+            _payback = _withdrawHere(_excessDebt);
+        }
+    }
+
+    function _realizeProfit(uint256 _totalDebt) internal virtual override returns (uint256) {
+        _claimRewardsAndConvertTo(address(collateralToken));
+        uint256 _collateralBalance = _convertToCollateral(safeBox.balanceOf(address(this)));
+        if (_collateralBalance > _totalDebt) {
+            _withdrawHere(_collateralBalance - _totalDebt);
+        }
+        return collateralToken.balanceOf(address(this));
+    }
+
+    function _realizeLoss(uint256 _totalDebt) internal view override returns (uint256 _loss) {
+        uint256 _collateralBalance = _convertToCollateral(safeBox.balanceOf(address(this)));
+        if (_collateralBalance < _totalDebt) {
+            _loss = _totalDebt - _collateralBalance;
+        }
+    }
+
     /* solhint-disable no-empty-blocks */
     function _afterDownstreamWithdrawal() internal virtual {}
 
     function _beforeMigration(address _newStrategy) internal virtual override {}
-
-    function _liquidate(uint256 _excessDebt) internal override returns (uint256 _payback) {}
-
-    function _realizeProfit(uint256 _totalDebt) internal override returns (uint256) {}
-
-    function _realizeLoss(uint256 _totalDebt) internal override returns (uint256 _loss) {}
 }

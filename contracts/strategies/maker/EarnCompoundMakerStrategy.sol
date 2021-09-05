@@ -42,7 +42,7 @@ abstract contract EarnCompoundMakerStrategy is CompoundMakerStrategy, Earn {
     ) internal virtual override(Strategy, MakerStrategy) returns (uint256) {
         _claimRewardsAndConvertTo(dripToken);
         _rebalanceDaiInLender();
-        _forwardEarning(dripToken, feeCollector, pool);
+        _forwardEarning();
         return collateralToken.balanceOf(address(this));
     }
 }
