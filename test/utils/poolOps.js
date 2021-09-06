@@ -113,12 +113,6 @@ async function rebalanceStrategy(strategy) {
     tx = await strategy.instance.rebalance()
   }
   await executeIfExist(strategy.token.exchangeRateCurrent)
-  if (strategy.type.includes('vesper')) {
-    let s = await strategy.token.strategies(0)
-    s = await ethers.getContractAt('IStrategy', s)
-    // TODO: do it recursive
-    await s.rebalance()
-  }
   return tx
 }
 

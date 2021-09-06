@@ -3,11 +3,14 @@
 pragma solidity 0.8.3;
 
 import "./MakerStrategy.sol";
+import "../../interfaces/vesper/IPoolRewards.sol";
 
 /// @dev This strategy will deposit collateral token in Maker, borrow Dai and
 /// deposit borrowed DAI in Vesper DAI pool to earn interest.
+//solhint-disable no-empty-blocks
 abstract contract VesperMakerStrategy is MakerStrategy {
     using SafeERC20 for IERC20;
+    address internal constant VSP = 0x1b40183EFB4Dd766f11bDa7A7c3AD8982e998421;
 
     constructor(
         address _pool,
@@ -22,6 +25,9 @@ abstract contract VesperMakerStrategy is MakerStrategy {
     function _approveToken(uint256 _amount) internal override {
         super._approveToken(_amount);
         IERC20(DAI).safeApprove(address(receiptToken), _amount);
+        for (uint256 i = 0; i < swapManager.N_DEX(); i++) {
+            IERC20(VSP).safeApprove(address(swapManager.ROUTERS(i)), _amount);
+        }
     }
 
     function _getDaiBalance() internal view override returns (uint256) {
@@ -42,6 +48,14 @@ abstract contract VesperMakerStrategy is MakerStrategy {
         uint256 _daiBalance = _getDaiBalance();
         if (_daiBalance > _daiDebt) {
             _withdrawDaiFromLender(_daiBalance - _daiDebt);
+        }
+    }
+
+    /// @notice Claim rewardToken from lender and convert it into DAI
+    function _claimRewardsAndConvertTo(address _toToken) internal virtual override {
+        uint256 _vspAmount = IERC20(VSP).balanceOf(address(this));
+        if (_vspAmount > 0) {
+            _safeSwap(VSP, _toToken, _vspAmount, 1);
         }
     }
 }

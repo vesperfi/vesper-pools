@@ -4,11 +4,14 @@ const {deposit, executeIfExist, rebalanceStrategy} = require('../utils/poolOps')
 const {expect} = require('chai')
 const {ethers} = require('hardhat')
 const {BigNumber: BN} = require('ethers')
+const StrategyType = require('../utils/strategyTypes')
+const PoolConfig = require('../../helper/ethereum/poolConfig')
+const address = require('../../helper/ethereum/address')
 const {getUsers, deployContract} = require('../utils/setupHelper')
 const DECIMAL18 = BN.from('1000000000000000000')
 
 function shouldValidateMakerCommonBehaviour(strategyIndex) {
-  let pool, strategy, token
+  let pool, strategy, token, newStrategy
   let collateralToken, collateralDecimal, isUnderwater, cm, vaultNum, strategyName, swapManager
   let gov, user1, user2
 
@@ -21,7 +24,6 @@ function shouldValidateMakerCommonBehaviour(strategyIndex) {
     const divisor = DECIMAL18.div(BN.from('10').pow(collateralDecimal))
     return BN.from(amount).div(divisor).toString()
   }
-
 
   describe(`MakerStrategy specific tests for strategy[${strategyIndex}]`, function () {
     beforeEach(async function () {
@@ -37,6 +39,18 @@ function shouldValidateMakerCommonBehaviour(strategyIndex) {
       // Decimal will be used for amount conversion
       collateralDecimal = await this.collateralToken.decimals()
       swapManager = this.swapManager
+
+      // New Maker Strategy
+      if (strategy.type === StrategyType.VESPER_MAKER || strategy.type === StrategyType.EARN_VESPER_MAKER) {
+        // Setup vPool (vDAI)
+        const vPool = await deployContract(PoolConfig.VDAI.contractName, PoolConfig.VDAI.poolParams)
+        const accountant = await deployContract('PoolAccountant')
+        await accountant.init(vPool.address)
+        await vPool.initialize(...PoolConfig.VDAI.poolParams, accountant.address, address.ADDRESS_LIST_FACTORY)
+        newStrategy = await deployContract(strategyName, [pool.address, cm.address, swapManager.address, vPool.address])
+      } else {
+        newStrategy = await deployContract(strategyName, [pool.address, cm.address, swapManager.address])
+      }
     })
 
     describe('Resurface', function () {
@@ -95,12 +109,10 @@ function shouldValidateMakerCommonBehaviour(strategyIndex) {
 
     describe('Vault transfer', function () {
       it('Should not transfer vault ownership using any account.', async function () {
-        const newStrategy = await deployContract(strategyName, [pool.address, cm.address, swapManager.address])
         await expect(cm.connect(user1.signer)['transferVaultOwnership(address)'](newStrategy.address)).to.be.reverted
       })
 
       it('Should transfer vault ownership on strategy migration', async function () {
-        const newStrategy = await deployContract(strategyName, [pool.address, cm.address, swapManager.address])
         const vaultBeforeMigration = await cm.vaultNum(strategy.instance.address)
 
         await pool.connect(gov.signer).migrateStrategy(strategy.instance.address, newStrategy.address)
@@ -115,7 +127,6 @@ function shouldValidateMakerCommonBehaviour(strategyIndex) {
 
       it('Should have new strategy as owner of the vault.', async function () {
         const vaultInfoBefore = await cm.getVaultInfo(strategy.instance.address)
-        const newStrategy = await deployContract(strategyName, [pool.address, cm.address, swapManager.address])
 
         await pool.connect(gov.signer).migrateStrategy(strategy.instance.address, newStrategy.address)
         await expect(cm.getVaultInfo(strategy.instance.address)).to.be.revertedWith('invalid-vault-number')

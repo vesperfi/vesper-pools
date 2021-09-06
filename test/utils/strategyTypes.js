@@ -7,6 +7,7 @@ const StrategyType = {
   AAVE_MAKER: 'aaveMaker',
   COMPOUND_MAKER: 'compoundMaker',
   VESPER_MAKER: 'vesperMaker',
+  EARN_VESPER_MAKER: 'earnVesperMaker',
   CURVE: 'curve',
   CREAM: 'cream',
   YEARN: 'yearn',
