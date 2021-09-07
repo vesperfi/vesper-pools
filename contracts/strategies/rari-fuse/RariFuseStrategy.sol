@@ -7,19 +7,22 @@ import "../../interfaces/rari-fuse/IComptroller.sol";
 import "../../interfaces/rari-fuse/IFusePoolDirectory.sol";
 
 /// @title This strategy will deposit collateral token in a Rari Fuse Pool and earn interest.
-abstract contract RariFuseStrategy is CompoundStrategy {
+contract RariFuseStrategy is CompoundStrategy {
     using SafeERC20 for IERC20;
-
+    string public constant NAME = "RariFuse-Strategy";
+    string public constant VERSION = "3.0.13";
+    uint256 public immutable fusePoolId;
     address private constant FUSE_POOL_DIRECTORY = 0x835482FE0532f169024d5E9410199369aAD5C77E;
-
     event FusePoolChanged(uint256 indexed newFusePoolId, address indexed oldCToken, address indexed newCToken);
 
     // solhint-disable no-empty-blocks
     constructor(
         address _pool,
         address _swapManager,
-        address _receiptToken
-    ) CompoundStrategy(_pool, _swapManager, _receiptToken) {}
+        uint256 _fusePoolId
+    ) CompoundStrategy(_pool, _swapManager, _cTokenByUnderlying(_fusePoolId, address(IVesperPool(_pool).token()))) {
+        fusePoolId = _fusePoolId;
+    }
 
     // solhint-enable no-empty-blocks
 
@@ -60,6 +63,10 @@ abstract contract RariFuseStrategy is CompoundStrategy {
     function _cTokenByUnderlying(uint256 _poolId, address _collateralToken) internal view returns (address) {
         (, , address _comptroller, , ) = IFusePoolDirectory(FUSE_POOL_DIRECTORY).pools(_poolId);
         require(_comptroller != address(0), "rari-fuse-invalid-comptroller");
+        if (_collateralToken == WETH) {
+            // cETH is mapped with 0x0
+            _collateralToken = address(0x0);
+        }
         address _cToken = IComptroller(_comptroller).cTokensByUnderlying(_collateralToken);
         require(_cToken != address(0), "rari-fuse-invalid-ctoken");
         return _cToken;

@@ -13,6 +13,7 @@ describe('vETH Pool', function () {
     {
       name: 'RariFuseStrategyETH',
       type: StrategyType.RARI_FUSE,
+      fusePoolId: 23, // Vesper Lend
       config: {interestFee, debtRatio: 9000, debtRate: ONE_MILLION},
     },
   ]

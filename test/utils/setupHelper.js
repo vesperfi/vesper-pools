@@ -38,7 +38,7 @@ async function getUsers() {
   const users = []
   const signers = await ethers.getSigners()
   for (const signer of signers) {
-    users.push({ signer, address: signer.address })
+    users.push({signer, address: signer.address})
   }
   return users
 }
@@ -115,6 +115,7 @@ async function createVesperMakerStrategy(poolAddress, strategyName, options) {
   return strategyInstance
 }
 
+// eslint-disable-next-line complexity
 async function createStrategy(strategy, poolAddress, options = {}) {
   const strategyType = strategy.type
   let instance
@@ -126,6 +127,12 @@ async function createStrategy(strategy, poolAddress, options = {}) {
     instance = await createMakerStrategy(poolAddress, strategy.name, options)
   } else if (strategyType === StrategyType.VESPER_MAKER) {
     instance = await createVesperMakerStrategy(poolAddress, strategy.name, options)
+  } else if (strategyType === StrategyType.RARI_FUSE) {
+    instance = await deployContract(strategy.name, [
+      poolAddress,
+      address.SWAP_MANAGER,
+      strategy.fusePoolId,
+    ])
   } else {
     instance = await deployContract(strategy.name, [poolAddress, address.SWAP_MANAGER])
   }
@@ -208,7 +215,7 @@ async function makeNewStrategy(oldStrategy, poolAddress, _options) {
  * @param {PoolData} poolData Data for pool setup
  */
 async function setupVPool(obj, poolData) {
-  const { poolConfig, strategies, vPool, feeCollector } = poolData
+  const {poolConfig, strategies, vPool, feeCollector} = poolData
   obj.strategies = strategies
   obj.feeCollector = feeCollector
   obj.accountant = await deployContract('PoolAccountant')
@@ -217,8 +224,8 @@ async function setupVPool(obj, poolData) {
   await obj.accountant.init(obj.pool.address)
   await obj.pool.initialize(...poolConfig.poolParams, obj.accountant.address, address.ADDRESS_LIST_FACTORY)
   const options = {
-    vPool,
-  }  
+    vPool
+  }
   await createStrategies(obj, options)
   await addStrategies(obj)
   await obj.pool.updateFeeCollector(feeCollector)
@@ -256,4 +263,4 @@ async function getEvent(txnObj, contractInstance, eventName) {
   return decodedEvents.find(event => !!event)
 }
 
-module.exports = { deployContract, getUsers, setupVPool, getEvent, makeNewStrategy, createStrategy }
+module.exports = {deployContract, getUsers, setupVPool, getEvent, makeNewStrategy, createStrategy}

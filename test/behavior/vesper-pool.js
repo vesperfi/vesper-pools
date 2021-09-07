@@ -169,6 +169,10 @@ async function shouldBehaveLikePool(poolName, collateralName) {
       })
 
       it(`Should withdraw all ${collateralName} after rebalance`, async function () {
+        // reset interest fee to 0.
+        for(const strategy of strategies) {
+          await accountant.updateInterestFee(strategy.instance.address, '0')
+        }
         depositAmount = await deposit(10, user2)
         const dust = DECIMAL18.div(BN.from(100)) // Dust is less than 1e16
         await rebalance(strategies)

@@ -11,8 +11,9 @@ describe('vDAI Pool', function () {
   const interestFee = '1500' // 15%
   const strategies = [
     {
-      name: 'RariFuseStrategyDAI',
+      name: 'RariFuseStrategy',
       type: StrategyType.RARI_FUSE,
+      fusePoolId: 23, // Vesper Lend
       config: {interestFee, debtRatio: 9000, debtRate: ONE_MILLION},
     },
   ]

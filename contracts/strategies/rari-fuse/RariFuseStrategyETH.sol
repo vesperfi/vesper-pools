@@ -8,16 +8,11 @@ import "../../interfaces/token/IToken.sol";
 // solhint-disable no-empty-blocks
 /// @title Deposit ETH in a Rari Fuse Pool and earn interest.
 contract RariFuseStrategyETH is RariFuseStrategy {
-    string public constant NAME = "RariFuse-Strategy-ETH";
-    string public constant VERSION = "3.0.11";
-
-    constructor(address _pool, address _swapManager)
-        RariFuseStrategy(
-            _pool,
-            _swapManager,
-            _cTokenByUnderlying(18, address(0)) // Pool 18#, ETH
-        )
-    {}
+    constructor(
+        address _pool,
+        address _swapManager,
+        uint256 _fusePoolId
+    ) RariFuseStrategy(_pool, _swapManager, _fusePoolId) {}
 
     /// @dev Only receive ETH from either cToken or WETH
     receive() external payable {
