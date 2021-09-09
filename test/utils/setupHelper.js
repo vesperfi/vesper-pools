@@ -105,13 +105,15 @@ async function createVesperMakerStrategy(poolAddress, strategyName, options) {
     poolAddress,
     collateralManager.address,
     address.SWAP_MANAGER,
-    options.vPool.address,
+    options.vPool.address
   ])
   await strategyInstance.createVault()
   strategyInstance.collateralManager = collateralManager
   await Promise.all([strategyInstance.updateBalancingFactor(300, 250), collateralManager.addGemJoin(gemJoins)])
+  
   const feeList = await options.vPool.feeWhitelist()
   await options.vPool.addInList(feeList, strategyInstance.address)
+  
   return strategyInstance
 }
 
@@ -125,7 +127,7 @@ async function createStrategy(strategy, poolAddress, options = {}) {
     strategyType === StrategyType.COMPOUND_MAKER
   ) {
     instance = await createMakerStrategy(poolAddress, strategy.name, options)
-  } else if (strategyType === StrategyType.VESPER_MAKER) {
+  } else if (strategyType === StrategyType.VESPER_MAKER || strategyType === StrategyType.EARN_VESPER_MAKER) {
     instance = await createVesperMakerStrategy(poolAddress, strategy.name, options)
   } else if (strategyType === StrategyType.RARI_FUSE) {
     instance = await deployContract(strategy.name, [
@@ -220,7 +222,7 @@ async function setupVPool(obj, poolData) {
   obj.feeCollector = feeCollector
   obj.accountant = await deployContract('PoolAccountant')
   obj.pool = await deployContract(poolConfig.contractName, poolConfig.poolParams)
-
+  
   await obj.accountant.init(obj.pool.address)
   await obj.pool.initialize(...poolConfig.poolParams, obj.accountant.address, address.ADDRESS_LIST_FACTORY)
   const options = {

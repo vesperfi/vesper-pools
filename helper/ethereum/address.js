@@ -14,7 +14,8 @@ const Address = {
   ANY_ERC20: '0xa3d58c4e56fedcae3a7c43a725aee9a71f0ece4e',
   SUSHI_ROUTER: '0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D',
   NATIVE_TOKEN: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
-  MULTICALL: '0xeefba1e63905ef1d7acba5a8513c70307c1ce441'
+  MULTICALL: '0xeefba1e63905ef1d7acba5a8513c70307c1ce441',
+  VSP: '0x1b40183efb4dd766f11bda7a7c3ad8982e998421'
 }
 
 module.exports = Object.freeze(Address)

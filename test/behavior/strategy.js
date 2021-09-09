@@ -11,8 +11,9 @@ const { shouldBehaveLikeCompoundXYStrategy } = require('../behavior/compound-xy'
 const { shouldBehaveLikeCompoundLeverageStrategy } = require('../behavior/compound-leverage')
 const { shouldBehaveLikeMakerStrategy } = require('../behavior/maker-strategy')
 const { shouldBehaveLikeCreamStrategy } = require('../behavior/cream-strategy')
-const { shouldBehaveLikeCurveStrategy } = require('../behavior/crv-strategy')
+const { shouldBehaveLikeCrvStrategy } = require('../behavior/crv-strategy')
 const { shouldBehaveLikeEarnMakerStrategy } = require('../behavior/earn-maker-strategy')
+const { shouldBehaveLikeEarnVesperMakerStrategy } = require('../behavior/earn-vesper-maker-strategy')
 const { shouldBehaveLikeEarnCompoundStrategy } = require('../behavior/earn-compound-strategy')
 const { shouldBehaveLikeEarnCreamStrategy } = require('../behavior/earn-cream-strategy')
 const { shouldBehaveLikeEarnAaveStrategy } = require('../behavior/earn-aave-strategy')
@@ -35,8 +36,9 @@ function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
     [StrategyType.COMPOUND_XY]: shouldBehaveLikeCompoundXYStrategy,
     [StrategyType.COMPOUND_LEVERAGE]: shouldBehaveLikeCompoundLeverageStrategy,
     [StrategyType.CREAM]: shouldBehaveLikeCreamStrategy,
-    [StrategyType.CURVE]: shouldBehaveLikeCurveStrategy,
+    [StrategyType.CURVE]: shouldBehaveLikeCrvStrategy,
     [StrategyType.EARN_MAKER]: shouldBehaveLikeEarnMakerStrategy,
+    [StrategyType.EARN_VESPER_MAKER]: shouldBehaveLikeEarnVesperMakerStrategy,
     [StrategyType.EARN_COMPOUND]: shouldBehaveLikeEarnCompoundStrategy,
     [StrategyType.EARN_CREAM]: shouldBehaveLikeEarnCreamStrategy,
     [StrategyType.EARN_AAVE]: shouldBehaveLikeEarnAaveStrategy,
@@ -183,7 +185,7 @@ function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
 
       it('Should increase total value after rebalance', async function () {
         await rebalanceStrategy(this.strategies[strategyIndex]) // rebalance to handle under water
-        await deposit(pool, collateralToken, 1, user1)
+        await deposit(pool, collateralToken, 10, user1)
         const totalValueBefore = await strategy.totalValue()
         const totalDebtBefore = await pool.totalDebtOf(strategy.address)
         expect(totalValueBefore).to.be.equal(totalDebtBefore, 'Total value should be same as total debt')
