@@ -3,7 +3,6 @@
 pragma solidity 0.8.3;
 
 import "./CompoundXYStrategy.sol";
-import "../../interfaces/token/IToken.sol";
 
 // solhint-disable no-empty-blocks
 /// @title Deposit ETH/WETH in Compound and earn interest.
@@ -27,23 +26,17 @@ contract CompoundXYStrategyETH is CompoundXYStrategy {
         require(msg.sender == address(supplyCToken) || msg.sender == WETH, "not-allowed-to-send-ether");
     }
 
-    /**
-     * @dev This hook get called after collateral is redeemed from Compound
-     * Vesper deals in WETH as collateral so convert ETH to WETH
-     */
-    function _afterRedeem() internal override {
-        TokenLike(WETH).deposit{value: address(this).balance}();
-    }
-
-    /**
-     * @dev Compound support ETH as collateral. Convert WETH to ETH and mint cETH
-     * @dev Compound mint() for ETH has no return value
-     */
-    function _mint(uint256 _amount) internal override returns (uint256) {
+    /// @dev Unwrap ETH and supply in Compound
+    function _mintX(uint256 _amount) internal override {
         if (_amount != 0) {
             TokenLike(WETH).withdraw(_amount);
             supplyCToken.mint{value: _amount}();
         }
-        return 0;
+    }
+
+    /// @dev Withdraw ETH from Compound and Wrap those as WETH
+    function _redeemX(uint256 _amount) internal override {
+        super._redeemX(_amount);
+        TokenLike(WETH).deposit{value: address(this).balance}();
     }
 }
