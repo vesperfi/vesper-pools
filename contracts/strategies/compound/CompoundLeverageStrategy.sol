@@ -380,6 +380,16 @@ abstract contract CompoundLeverageStrategy is Strategy {
             }
         }
         uint256 _collateralBefore = collateralToken.balanceOf(address(this));
+
+        // If we do not have enough collateral, try to get some via COMP
+        // This scenario is rare and will happen during last withdraw
+        if (_amount > cToken.balanceOfUnderlying(address(this))) {
+            // Use all collateral for withdraw
+            _collateralBefore = 0;
+            _claimRewardsAndConvertTo(address(collateralToken));
+            // Updated amount
+            _amount = _amount - collateralToken.balanceOf(address(this));
+        }
         _redeemUnderlying(_amount);
         uint256 _collateralAfter = collateralToken.balanceOf(address(this));
         return _collateralAfter - _collateralBefore;
