@@ -182,7 +182,7 @@
         },
         "strategies": {
           "AlphaLendStrategyETH": "0xeCe0f32840280aD0069Dd89Ad97Ad6dF1bB0fF2A",
-          "RariFuseStrategy#23":"0x4769f18ba364658bf98Bf74606ef2f8cfB17D425"
+          "RariFuseStrategy#23": "0x78041341e79693953AB49f5040d3Ac8cA8cd2397"
         }
       },
       "vfrdai": {
