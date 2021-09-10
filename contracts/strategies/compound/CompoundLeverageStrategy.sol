@@ -14,7 +14,6 @@ abstract contract CompoundLeverageStrategy is Strategy {
     uint256 internal constant MAX_BPS = 10_000; //100%
     uint256 public minBorrowLimit = 7_000; // 70%
     uint256 public maxBorrowLimit = 9_000; // 90%
-    address public borrowToken;
     CToken internal cToken;
     address internal constant COMP = 0xc00e94Cb662C3520282E6f5717214004A7f26888;
     Comptroller internal constant COMPTROLLER = Comptroller(0x3d9819210A31b4961b30EF54bE2aeD79B9c9Cd3B);
@@ -204,8 +203,7 @@ abstract contract CompoundLeverageStrategy is Strategy {
 
     /**
      * @notice Generate report for pools accounting and also send profit and any payback to pool.
-     * @dev Claim COMP and first convert COMP to borrowToken to cover interest, if any, on _borrow amount.
-     * Convert remaining COMP to collateral.
+     * @dev Claim COMP and convert to collateral.
      */
     function _generateReport()
         internal
@@ -393,19 +391,19 @@ abstract contract CompoundLeverageStrategy is Strategy {
      * below functions and handle wrap/unwrap of WETH.
      */
     function _mint(uint256 _amount) internal virtual {
-        cToken.mint(_amount);
+        require(cToken.mint(_amount) == 0, "supply-to-compound-failed");
     }
 
     function _redeemUnderlying(uint256 _amount) internal virtual {
-        cToken.redeemUnderlying(_amount);
+        require(cToken.redeemUnderlying(_amount) == 0, "withdraw-from-compound-failed");
     }
 
     function _borrowCollateral(uint256 _amount) internal virtual {
-        cToken.borrow(_amount);
+        require(cToken.borrow(_amount) == 0, "borrow-from-compound-failed");
     }
 
     function _repayBorrow(uint256 _amount) internal virtual {
-        cToken.repayBorrow(_amount);
+        require(cToken.repayBorrow(_amount) == 0, "repay-to-compound-failed");
     }
 
     //////////////////////////////////////////////////////////////////////////////

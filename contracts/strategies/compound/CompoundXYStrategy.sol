@@ -4,6 +4,7 @@ pragma solidity 0.8.3;
 
 import "../Strategy.sol";
 import "../../interfaces/compound/ICompound.sol";
+import "../../interfaces/token/IToken.sol";
 
 /// @title This strategy will deposit collateral token in Compound and based on position
 /// it will borrow another token. Supply X borrow Y and keep borrowed amount here
@@ -14,7 +15,7 @@ abstract contract CompoundXYStrategy is Strategy {
     uint256 public minBorrowLimit = 7_000; // 70%
     uint256 public maxBorrowLimit = 9_000; // 90%
     address public borrowToken;
-    CToken internal supplyCToken;
+    CToken public immutable supplyCToken;
     CToken public borrowCToken;
     address internal constant COMP = 0xc00e94Cb662C3520282E6f5717214004A7f26888;
     Comptroller internal constant COMPTROLLER = Comptroller(0x3d9819210A31b4961b30EF54bE2aeD79B9c9Cd3B);
@@ -30,7 +31,7 @@ abstract contract CompoundXYStrategy is Strategy {
         require(_receiptToken != address(0), "cToken-address-is-zero");
         supplyCToken = CToken(_receiptToken);
         borrowCToken = CToken(_borrowCToken);
-        borrowToken = borrowCToken.underlying();
+        borrowToken = _getBorrowToken(_borrowCToken);
 
         address[] memory _cTokens = new address[](2);
         _cTokens[0] = _receiptToken;
@@ -60,16 +61,14 @@ abstract contract CompoundXYStrategy is Strategy {
         // Update token address
         emit UpdatedBorrowCToken(address(borrowCToken), _newBorrowCToken);
         borrowCToken = CToken(_newBorrowCToken);
-        borrowToken = borrowCToken.underlying();
+        borrowToken = _getBorrowToken(_newBorrowCToken);
 
         // Approve new borrowCToken
         IERC20(borrowToken).safeApprove(_newBorrowCToken, type(uint256).max);
 
         // Borrow again
         (uint256 _borrowAmount, ) = _calculateBorrowPosition(0, true);
-        if (_borrowAmount != 0) {
-            borrowCToken.borrow(_borrowAmount);
-        }
+        _borrowY(_borrowAmount);
     }
 
     /**
@@ -346,17 +345,6 @@ abstract contract CompoundXYStrategy is Strategy {
         }
     }
 
-    /**
-     * @dev Compound support ETH as collateral not WETH. ETH strategy can override
-     * this function and handle mint using ETH.
-     */
-    function _mint(uint256 _amount) internal virtual returns (uint256) {
-        if (_amount != 0) {
-            return supplyCToken.mint(_amount);
-        }
-        return 0;
-    }
-
     /// @notice Deposit collateral in Compound and adjust borrow position
     function _reinvest() internal virtual override {
         uint256 _collateralBalance = collateralToken.balanceOf(address(this));
@@ -365,13 +353,11 @@ abstract contract CompoundXYStrategy is Strategy {
         if (_shouldRepay) {
             // Repay _borrowAmount to maintain safe position
             _repay(_borrowAmount, false);
-            _mint(collateralToken.balanceOf(address(this)));
+            _mintX(collateralToken.balanceOf(address(this)));
         } else {
             // Happy path, mint more borrow more
-            _mint(_collateralBalance);
-            if (_borrowAmount != 0) {
-                borrowCToken.borrow(_borrowAmount);
-            }
+            _mintX(_collateralBalance);
+            _borrowY(_borrowAmount);
         }
     }
 
@@ -403,7 +389,7 @@ abstract contract CompoundXYStrategy is Strategy {
                 // Here borrowToken amount needed is (_currentBorrow - _borrowBalanceHere)
                 _swapToBorrowToken(address(collateralToken), _currentBorrow - _borrowBalanceHere);
             }
-            borrowCToken.repayBorrow(_repayAmount);
+            _repayY(_repayAmount);
         }
     }
 
@@ -423,8 +409,7 @@ abstract contract CompoundXYStrategy is Strategy {
             if (_amountIn > _fromBalanceHere) {
                 if (_from == address(collateralToken)) {
                     // Redeem some collateral, so that we have enough collateral to get expected output
-                    supplyCToken.redeemUnderlying(_amountIn - _fromBalanceHere);
-                    _afterRedeem();
+                    _redeemX(_amountIn - _fromBalanceHere);
                 } else {
                     _amountIn = _fromBalanceHere;
                     // Adjust expected output based on _from token balance we have.
@@ -453,27 +438,58 @@ abstract contract CompoundXYStrategy is Strategy {
             _repay(_repayAmount, true);
         }
         uint256 _collateralBefore = collateralToken.balanceOf(address(this));
-
-        uint256 _supply = supplyCToken.balanceOfUnderlying(address(this));
-        // If _amount is >= _supply, redeem all cTokens, else redeem required underlying
-        if (_amount >= _supply) {
-            supplyCToken.redeem(supplyCToken.balanceOf(address(this)));
-        } else {
-            supplyCToken.redeemUnderlying(_amount);
-        }
-        _afterRedeem();
+        _redeemX(_amount);
         uint256 _collateralAfter = collateralToken.balanceOf(address(this));
 
         return _collateralAfter - _collateralBefore;
     }
 
+    function _getBorrowToken(address _cToken) private view returns (address) {
+        // If cETH
+        if (_cToken == 0x4Ddc2D193948926D02f9B1fE9e1daa0718270ED5) {
+            return WETH;
+        }
+        return CToken(_cToken).underlying();
+    }
+
+    //////////////////// Compound wrapper functions //////////////////////////////
     /**
-     * @dev Compound support ETH as collateral not WETH. This hook will take
-     * care of conversion from WETH to ETH and vice versa.
-     * @dev This will be used in ETH strategy only, hence empty implementation
+     * @dev Compound support ETH as collateral not WETH. So ETH strategy can override
+     * _mintX and _redeemX functions and handle wrap/unwrap of WETH.
      */
+    function _mintX(uint256 _amount) internal virtual {
+        if (_amount != 0) {
+            require(supplyCToken.mint(_amount) == 0, "supply-to-compound-failed");
+        }
+    }
+
+    function _redeemX(uint256 _amount) internal virtual {
+        require(supplyCToken.redeemUnderlying(_amount) == 0, "withdraw-from-compound-failed");
+    }
+
+    /// @dev BorrowToken can be updated at run time and if it is WETH then wrap borrowed ETH into WETH
+    function _borrowY(uint256 _amount) internal {
+        if (_amount != 0) {
+            require(borrowCToken.borrow(_amount) == 0, "borrow-from-compound-failed");
+            if (borrowToken == WETH) {
+                TokenLike(WETH).deposit{value: address(this).balance}();
+            }
+        }
+    }
+
+    /// @dev BorrowToken can be updated at run time and if it is WETH then unwrap WETH as ETH before repay
+    function _repayY(uint256 _amount) internal {
+        if (borrowToken == WETH) {
+            TokenLike(WETH).withdraw(_amount);
+            borrowCToken.repayBorrow{value: _amount}();
+        } else {
+            require(borrowCToken.repayBorrow(_amount) == 0, "repay-to-compound-failed");
+        }
+    }
+
+    //////////////////////////////////////////////////////////////////////////////
+
     /* solhint-disable no-empty-blocks */
-    function _afterRedeem() internal virtual {}
 
     // We overridden _generateReport which eliminates need of below function.
     function _liquidate(uint256 _excessDebt) internal override returns (uint256 _payback) {}
