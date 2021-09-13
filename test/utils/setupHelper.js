@@ -5,6 +5,7 @@ const ethers = hre.ethers
 const provider = hre.waffle.provider
 
 const StrategyType = require('../utils/strategyTypes')
+const Address = require('../../helper/ethereum/address')
 
 const mcdEthAJoin = '0x2F0b23f53734252Bda2277357e97e1517d6B042A'
 const mcdEthCJoin = '0xF04a5cC80B1E94C69B48f5ee68a08CD2F09A7c3E'
@@ -129,7 +130,7 @@ async function createStrategy(strategy, poolAddress, options = {}) {
     instance = await createMakerStrategy(poolAddress, strategy.name, options)
   } else if (strategyType === StrategyType.VESPER_MAKER || strategyType === StrategyType.EARN_VESPER_MAKER) {
     instance = await createVesperMakerStrategy(poolAddress, strategy.name, options)
-  } else if (strategyType === StrategyType.RARI_FUSE) {
+  } else if (strategyType === StrategyType.RARI_FUSE || strategyType === StrategyType.EARN_RARI_FUSE) {
     instance = await deployContract(strategy.name, [
       poolAddress,
       address.SWAP_MANAGER,
@@ -265,4 +266,24 @@ async function getEvent(txnObj, contractInstance, eventName) {
   return decodedEvents.find(event => !!event)
 }
 
-module.exports = {deployContract, getUsers, setupVPool, getEvent, makeNewStrategy, createStrategy}
+/**
+ * Setup Vesper Earn Drip Pool for testing
+ */
+async function setupEarnDrip() {
+  beforeEach(async function () {
+    const vesperEarnDripImpl = await deployContract('VesperEarnDrip', [])
+    // Deploy proxy admin
+    const proxyAdmin = await deployContract('ProxyAdmin', [])
+    const initData = vesperEarnDripImpl.interface.encodeFunctionData('initialize', [this.pool.address, [Address.DAI]])
+    // deploy proxy with logic implementation
+    const proxy = await deployContract('TransparentUpgradeableProxy', [
+      vesperEarnDripImpl.address,
+      proxyAdmin.address,
+      initData,
+    ])
+    // Get implementation from proxy
+    this.earnDrip = await ethers.getContractAt('VesperEarnDrip', proxy.address)
+    await this.pool.updatePoolRewards(proxy.address)
+  })
+}
+module.exports = {deployContract, getUsers, setupVPool, getEvent, makeNewStrategy, createStrategy, setupEarnDrip}

@@ -12,8 +12,8 @@ describe('veETH pool strategies', function () {
   const ONE_MILLION = ethers.utils.parseEther('1000000')
   const strategies = [
     {
-      name: 'EarnCompoundStrategyETH',
-      type: StrategyType.EARN_COMPOUND,
+      name: 'EarnYearnStrategyETH',
+      type: StrategyType.EARN_YEARN,
       config: {interestFee, debtRatio: 9000, debtRate: ONE_MILLION},
     },
   ]
