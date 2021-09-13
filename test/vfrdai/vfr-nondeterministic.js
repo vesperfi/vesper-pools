@@ -1,14 +1,14 @@
 'use strict'
 
 const { expect } = require('chai')
-const { ethers } = require('hardhat')
-
+const hre = require('hardhat')
+const ethers = hre.ethers
 const { DAI, WETH } = require('../../helper/ethereum/address')
 const StrategyType = require('../utils/strategyTypes')
 const { rebalance, timeTravel } = require('../utils/poolOps')
 const { swapExactToken } = require('../utils/tokenSwapper')
+const { adjustBalance } = require('../utils/balance')
 const {
-  adjustDaiBalance,
   deposit,
   fundBuffer,
   isCloseEnough,
@@ -55,17 +55,17 @@ describe('VFR DAI Non-deterministic', function () {
   before(async function () {
     await prepareConfig(stableStrategyConfigs, coverageStrategyConfigs)
   })
-  
+
   beforeEach(async function () {
     [, daiGiver, user1, user2, user3] = this.users
-  
+
     for (const user of [user1, user2, user3]) {
       // Clear the DAI balance of users
-      await adjustDaiBalance(user.address, 0)
+      await adjustBalance(DAI, user.address, 0)
     }
     // Fund the DAI giver account
-    await adjustDaiBalance(daiGiver.address, 1000000)
-  
+    await adjustBalance(DAI, daiGiver.address, ethers.utils.parseEther('1000000'))
+
     stablePool = this.stable.pool
     coveragePool = this.coverage.pool
     stableStrategies = this.stable.strategies
@@ -94,12 +94,36 @@ describe('VFR DAI Non-deterministic', function () {
         const dai = await ethers.getContractAt('ERC20', DAI)
         await dai.connect(daiGiver.signer).transfer(stableStrategies[0].instance.address, needed.div(2))
         await swapExactToken(needed.div(2), [DAI, WETH, CDAI], daiGiver, stableStrategies[1].instance.address)
-        
+
         await stablePool.checkpoint()
         predictedAPY = await stablePool.predictedAPY()
       }
 
       expect(isCloseEnough(predictedAPY, parseEther('0.05'), 10)).to.be.true
+    })
+
+    it('Should consider strategy loss in checkPoint', async function () {
+      // Setting low bar for easy testing
+      await stablePool.retarget(parseEther('0.05'), parseEther('0.005'))
+
+      await deposit(collateralToken, stablePool, daiGiver, user1, 1000)
+      expect(await stablePool.balanceOf(user1.address)).to.be.gt(0)
+      await rebalance(stableStrategies)
+
+      // Manipulate earning so that we can get APY
+      const needed = await stablePool.amountToReachTarget(stableStrategies[0].instance.address)
+      const dai = await ethers.getContractAt('ERC20', DAI)
+      await dai.connect(daiGiver.signer).transfer(stableStrategies[0].instance.address, needed)
+
+      // Manipulate cDAI balance in strategy to report loss
+      const cDAI = await ethers.getContractAt('ERC20', CDAI)
+      const cDAIBal = await cDAI.balanceOf(stableStrategies[1].instance.address)
+      // Update balance to report 100000 wei loss
+      await adjustBalance(CDAI, stableStrategies[1].instance.address, cDAIBal.sub(100000))
+
+      await stablePool.checkpoint()
+      const predictedAPY = await stablePool.predictedAPY()
+      expect(predictedAPY).to.gt(0, 'Incorrect predicted APY')
     })
 
     it('missed profits are taken from the buffer', async function () {
@@ -110,7 +134,7 @@ describe('VFR DAI Non-deterministic', function () {
       expect(await stablePool.balanceOf(user1.address)).to.be.gt(0)
 
       await rebalance(stableStrategies)
-      await timeTravel(5 * 24 * 3600)
+      await timeTravel(24 * 3600)
       await rebalance(stableStrategies)
 
       await stablePool.checkpoint()
@@ -118,7 +142,7 @@ describe('VFR DAI Non-deterministic', function () {
       if (predictedAPY < parseEther('0.03')) {
         const needed = await stablePool.amountToReachTarget(stableStrategies[0].instance.address)
         await fundBuffer(collateralToken, buffer, daiGiver, formatEther(needed))
-        
+
         await stablePool.checkpoint()
         predictedAPY = await stablePool.predictedAPY()
       }

@@ -3,12 +3,14 @@
 pragma solidity 0.8.3;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../../interfaces/vesper/IVFRCoveragePool.sol";
 import "../../interfaces/vesper/IVFRStablePool.sol";
 import "../../interfaces/vesper/IVesperPool.sol";
 
 contract VFRBuffer {
+    using SafeERC20 for IERC20;
+
     address public token;
     address public stablePool;
     address public coveragePool;
@@ -57,13 +59,13 @@ contract VFRBuffer {
         // Make sure enough funds are available
         uint256 balance = IERC20(token).balanceOf(address(this));
         require(balance >= _amount, "insufficient-balance");
-        IERC20(token).transfer(msg.sender, _amount);
+        IERC20(token).safeTransfer(msg.sender, _amount);
     }
 
     function flush() public {
         require(IVFRStablePool(stablePool).keepers().contains(msg.sender), "not-a-keeper");
         // Transfer any outstanding funds to the coverage pool
-        IERC20(token).transfer(coveragePool, IERC20(token).balanceOf(address(this)));
+        IERC20(token).safeTransfer(coveragePool, IERC20(token).balanceOf(address(this)));
     }
 
     function updateCoverageTime(uint256 _coverageTime) external {
