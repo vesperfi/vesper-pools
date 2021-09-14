@@ -100,7 +100,7 @@ contract PoolRewards is Initializable, IPoolRewards, ReentrancyGuard, PoolReward
      * @notice Claim earned rewards.
      * @dev This function will claim rewards for all tokens being rewarded
      */
-    function claimReward(address _account) external override nonReentrant {
+    function claimReward(address _account) external virtual override nonReentrant {
         uint256 _totalSupply = IERC20(pool).totalSupply();
         uint256 _balance = IERC20(pool).balanceOf(_account);
         uint256 _len = rewardTokens.length;
@@ -112,7 +112,7 @@ contract PoolRewards is Initializable, IPoolRewards, ReentrancyGuard, PoolReward
             uint256 reward = rewards[_rewardToken][_account];
             if (reward != 0 && reward <= IERC20(_rewardToken).balanceOf(address(this))) {
                 rewards[_rewardToken][_account] = 0;
-                IERC20(_rewardToken).safeTransfer(_account, reward);
+                _transferRewards(_rewardToken, _account, reward);
                 emit RewardPaid(_account, _rewardToken, reward);
             }
         }
@@ -283,5 +283,13 @@ contract PoolRewards is Initializable, IPoolRewards, ReentrancyGuard, PoolReward
             rewards[_rewardToken][_account] = _claimable(_rewardToken, _account, _totalSupply, _balance);
             userRewardPerTokenPaid[_rewardToken][_account] = _rewardPerTokenStored;
         }
+    }
+
+    function _transferRewards(
+        address _rewardToken,
+        address _account,
+        uint256 _reward
+    ) internal virtual {
+        IERC20(_rewardToken).safeTransfer(_account, _reward);
     }
 }
