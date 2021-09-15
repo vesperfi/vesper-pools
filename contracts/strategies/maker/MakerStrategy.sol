@@ -217,7 +217,7 @@ abstract contract MakerStrategy is Strategy {
                 block.timestamp
             );
             cm.payback(IERC20(DAI).balanceOf(address(this)));
-            IVesperPool(pool).reportLoss(_daiNeeded);
+            IVesperPool(pool).reportLoss(_collateralNeeded);
         }
     }
 
