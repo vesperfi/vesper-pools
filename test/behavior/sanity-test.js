@@ -1,5 +1,6 @@
 'use strict'
 
+const {unlock} = require('../utils/setupHelper')
 const {deposit: _deposit, totalDebtOfAllStrategy, reset} = require('../utils/poolOps')
 const time = require('../utils/time')
 const chaiAlmost = require('chai-almost')
@@ -10,12 +11,9 @@ const {BigNumber: BN} = require('ethers')
 
 const DECIMAL18 = BN.from('1000000000000000000')
 const MAX_BPS = BN.from('10000')
-const gov = {}
-const hre = require('hardhat')
-const ethers = hre.ethers
 async function shouldDoSanityTest(poolName, collateralName) {
   let pool, strategies, collateralToken, collateralDecimal
-  let user1
+  let user1, signer
 
   async function deposit(amount, depositor) {
     return _deposit(pool, collateralToken, amount, depositor)
@@ -25,6 +23,15 @@ async function shouldDoSanityTest(poolName, collateralName) {
     const multiplier = DECIMAL18.div(BN.from(10).pow(collateralDecimal))
     return BN.from(amount).mul(multiplier)
   }
+
+  async function rebalanceAllStrategies() {
+    for (const strategy of strategies) {
+      const strategyMetadata = await pool.strategy(strategy.instance.address)
+      if (strategyMetadata._active) {
+        await strategy.instance.connect(signer).rebalance()
+      }
+    }
+  }
   afterEach(reset)
 
   describe(`${poolName} basic operation tests`, function () {
@@ -32,20 +39,11 @@ async function shouldDoSanityTest(poolName, collateralName) {
       ;[, user1] = this.users
       // This setup helps in not typing 'this' all the time
       pool = this.pool
-      gov.address = await pool.governor()
-      await hre.network.provider.request({
-        method: 'hardhat_impersonateAccount',
-        params: [gov.address.toString()]}
-      )
       strategies = this.strategies
       collateralToken = this.collateralToken
       // Decimal will be used for amount conversion
       collateralDecimal = await this.collateralToken.decimals()
-        await hre.network.provider.request({
-        method: 'hardhat_impersonateAccount',
-        params: [gov.address]}
-      )
-       gov.signer = await ethers.provider.getSigner(gov.address)
+      signer = await unlock(await pool.governor())
     })
 
     describe(`Deposit ${collateralName} into the ${poolName} pool`, function () {
@@ -97,13 +95,9 @@ async function shouldDoSanityTest(poolName, collateralName) {
         const tvBefore = await pool.totalValue()
         const tdBefore = await pool.totalDebt()
         await deposit(10, user1)
-        for(const strategy of strategies) {
-          await strategy.instance.connect(gov.signer).rebalance()
-        }
+        rebalanceAllStrategies()
         await time.increase(3 * 24 * 60 * 60)
-        for(const strategy of strategies) {
-          await strategy.instance.connect(gov.signer).rebalance()
-        }
+        rebalanceAllStrategies()
         return Promise.all([pool.totalValue(), pool.totalDebt(), pool.balanceOf(user1.address)]).then(function ([
           tvAfter,
           tdAfter,
