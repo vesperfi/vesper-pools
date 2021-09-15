@@ -52,6 +52,7 @@ contract VFRStablePool is VFRPool {
         address[] memory strategies = getStrategies();
 
         uint256 profits;
+        uint256 loss;
         for (uint256 i = 0; i < strategies.length; i++) {
             (, uint256 fee, , , uint256 totalDebt, , , ) = IPoolAccountant(poolAccountant).strategy(strategies[i]);
             uint256 totalValue = IStrategy(strategies[i]).totalValueCurrent();
@@ -59,6 +60,8 @@ contract VFRStablePool is VFRPool {
                 uint256 totalProfits = totalValue - totalDebt;
                 uint256 actualProfits = totalProfits - ((totalProfits * fee) / MAX_BPS);
                 profits += actualProfits;
+            } else {
+                loss += (totalDebt - totalValue);
             }
         }
 
@@ -66,6 +69,11 @@ contract VFRStablePool is VFRPool {
             // This should take into account that an interest fee is taken from the amount in the buffer
             // (however, the interest fee depends on which strategy will request funds from the buffer)
             profits += token.balanceOf(buffer);
+        }
+
+        // Profit will be reduced, if any strategy is expected to report loss.
+        if (loss != 0) {
+            profits = profits > loss ? profits - loss : 0;
         }
 
         // Calculate the price per share if the above profits were to be reported

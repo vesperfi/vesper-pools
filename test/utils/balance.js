@@ -1,15 +1,19 @@
 'use strict'
 
 const hre = require('hardhat')
+const Address = require('../../helper/ethereum/address')
 const ethers = hre.ethers
-const {hexlify, parseUnits, solidityKeccak256, zeroPad} = ethers.utils
+const { BigNumber } = require('ethers')
+const { hexlify, solidityKeccak256, zeroPad, getAddress } = ethers.utils
 
 // Slot number mapping for a token. Prepared using utility https://github.com/kendricktan/slot20
 const slots = {
-  '0x6b175474e89094c44da98b954eedeac495271d0f': 2, // DAI
-  '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2': 3, // WETH
-  '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48': 9, // USDC
-  '0xdac17f958d2ee523a2206206994597c13d831ec7': 2, // USDT
+  [Address.DAI]: 2,
+  [Address.WETH]: 3,
+  [Address.USDC]: 9,
+  [Address.USDT]: 2,
+  '0x5d3a536E4D6DbD6114cc1Ead35777bAB948E3643': 14, // cDAI
+  '0xc00e94Cb662C3520282E6f5717214004A7f26888': 1 // COMP
 }
 
 /**
@@ -19,7 +23,8 @@ const slots = {
  * @returns {number} slot number for provided token address
  */
 function getSlot(token) {
-  return slots[token.toLowerCase()]
+  // only use checksum address
+  return slots[getAddress(token)]
 }
 
 /**
@@ -27,7 +32,7 @@ function getSlot(token) {
  *
  * @param {string} token  token address
  * @param {string} targetAddress address at which token balance to be updated.
- * @param {number} balance balance amount to be set
+ * @param {BigNumber|string|number} balance balance amount to be set
  */
 
 async function adjustBalance(token, targetAddress, balance) {
@@ -37,14 +42,18 @@ async function adjustBalance(token, targetAddress, balance) {
   }
 
   const index = hexlify(solidityKeccak256(['uint256', 'uint256'], [targetAddress, slot]))
-  .replace('0x0', '0x') // reason: https://github.com/nomiclabs/hardhat/issues/1585 comments
+    .replace('0x0', '0x') // reason: https://github.com/nomiclabs/hardhat/issues/1585 comments
 
-  const newBalance = parseUnits(balance.toString(), 0)
-  const value = hexlify(zeroPad(newBalance.toHexString(), 32))
+  if (!BigNumber.isBigNumber(balance)) {
+    // eslint-disable-next-line no-param-reassign
+    balance = BigNumber.from(balance)
+  }
+
+  const value = hexlify(zeroPad(balance.toHexString(), 32))
 
   // Hack the balance by directly setting the EVM storage
   await ethers.provider.send('hardhat_setStorageAt', [token, index, value])
   await ethers.provider.send('evm_mine', [])
 }
 
-module.exports = {adjustBalance}
+module.exports = { adjustBalance }

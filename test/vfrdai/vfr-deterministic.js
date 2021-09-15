@@ -7,8 +7,8 @@ const { DAI, WETH } = require('../../helper/ethereum/address')
 const StrategyType = require('../utils/strategyTypes')
 const { rebalance, timeTravel } = require('../utils/poolOps')
 const { swapExactToken } = require('../utils/tokenSwapper')
+const { adjustBalance } = require('../utils/balance')
 const {
-  adjustDaiBalance,
   deposit,
   fundBuffer,
   getBlockTime,
@@ -19,7 +19,7 @@ const {
   stablePoolIsWithinTarget
 } = require('./common')
 
-const { hexlify, parseEther, solidityKeccak256, zeroPad } = ethers.utils
+const { parseEther } = ethers.utils
 
 const ONE = parseEther('1')
 const ONE_MILLION = parseEther('1000000')
@@ -29,15 +29,6 @@ describe('VFR DAI Deterministic', function () {
   let daiGiver, user1, user2, user3
   let stablePool, stableStrategies, coveragePool, coverageStrategies
   let collateralToken, buffer
-
-  async function adjustCompBalance(address, balance) {
-    const index = solidityKeccak256(['uint256', 'uint256'], [address, 1])
-    const value = hexlify(zeroPad(parseEther(balance.toString()).toHexString(), 32))
-
-    // Hack the balance by directly setting the EVM storage
-    await ethers.provider.send('hardhat_setStorageAt', [COMP, index, value])
-    await ethers.provider.send('evm_mine', [])
-  }
 
   async function earnStrategyAPY(pool, strategy, apy) {
     // Get strategy information
@@ -54,7 +45,7 @@ describe('VFR DAI Deterministic', function () {
     const neededProfit = neededProfitWithoutFee.mul(10000).div(ethers.BigNumber.from(10000).sub(fee))
 
     // Clear all accumulated profits and mimick earning strategy a fixed profit
-    await adjustCompBalance(strategy.instance.address, 0)
+    await adjustBalance(COMP, strategy.instance.address, 0)
     const CDAI = '0x5d3a536e4d6dbd6114cc1ead35777bab948e3643'
     await swapExactToken(neededProfit, [DAI, WETH, CDAI], daiGiver, strategy.instance.address)
   }
@@ -89,17 +80,17 @@ describe('VFR DAI Deterministic', function () {
   before(async function () {
     await prepareConfig(stableStrategyConfigs, coverageStrategyConfigs)
   })
-  
+
   beforeEach(async function () {
     [, daiGiver, user1, user2, user3] = this.users
-  
+
     for (const user of [user1, user2, user3]) {
       // Clear the DAI balance of users
-      await adjustDaiBalance(user.address, 0)
+      await adjustBalance(DAI, user.address, 0)
     }
     // Fund the DAI giver account
-    await adjustDaiBalance(daiGiver.address, 1000000)
-  
+    await adjustBalance(DAI, daiGiver.address, ethers.utils.parseEther('1000000'))
+
     stablePool = this.stable.pool
     coveragePool = this.coverage.pool
     stableStrategies = this.stable.strategies
@@ -112,22 +103,22 @@ describe('VFR DAI Deterministic', function () {
     it('disallow deposits if pool is under target by more than tolerance', async function () {
       // 5% target APY with 1% tolerance
       await stablePool.retarget(parseEther('0.05'), parseEther('0.01'))
-  
+
       const depositTx = await deposit(collateralToken, stablePool, daiGiver, user1, 1000)
       expect(await stablePool.balanceOf(user1.address)).to.be.gt(0)
-  
+
       await rebalance(stableStrategies)
       await timeTravel(2 * 24 * 3600)
-  
+
       // Each strategy earns 2% APY
       await earnStrategyAPY(stablePool, stableStrategies[0], parseEther('0.02'))
       await earnStrategyAPY(stablePool, stableStrategies[1], parseEther('0.02'))
       await rebalance(stableStrategies)
-  
+
       await stablePool.checkpoint()
       // predicted APY is 2%
       expect(isCloseEnough(await stablePool.predictedAPY(), parseEther('0.02'), 10)).to.be.true
-  
+
       // user1 earned a 2% APY
       expect(isCloseEnough(await getUserAPY(stablePool, depositTx, 1000), parseEther('0.02'), 10)).to.be.true
       // pool earned a 2% APY
@@ -135,57 +126,57 @@ describe('VFR DAI Deterministic', function () {
       // Deposits are halted
       await expect(deposit(collateralToken, stablePool, daiGiver, user2, 1000)).to.be.revertedWith('pool-under-target')
     })
-  
+
     it('allow deposits if pool is under target but by no more than tolerance', async function () {
       // 5% target APY with 1% tolerance
       await stablePool.retarget(parseEther('0.05'), parseEther('0.01'))
-  
+
       const depositTx = await deposit(collateralToken, stablePool, daiGiver, user1, 1000)
       expect(await stablePool.balanceOf(user1.address)).to.be.gt(0)
-      
+
       await rebalance(stableStrategies)
       await timeTravel(2 * 24 * 3600)
-  
+
       // Each strategy earns 0.45% APY
       await earnStrategyAPY(stablePool, stableStrategies[0], parseEther('0.045'))
       await earnStrategyAPY(stablePool, stableStrategies[1], parseEther('0.045'))
-  
+
       // The checkpoint will predict the APY based on unreported profits within the strategies
       await stablePool.checkpoint()
       // predicted APY is 0.45%
       expect(isCloseEnough(await stablePool.predictedAPY(), parseEther('0.045'), 10)).to.be.true
-  
+
       await rebalance(stableStrategies)
-  
+
       // user1 APY is 0.45%
       expect(isCloseEnough(await getUserAPY(stablePool, depositTx, 1000), parseEther('0.045'), 10)).to.be.true
-  
+
       // Deposits are not halted
       await deposit(collateralToken, stablePool, daiGiver, user2, 1000)
       expect(await stablePool.balanceOf(user2.address)).to.be.gt(0)
     })
-  
+
     it('excess profits are sent to the buffer', async function () {
       // 5% target APY with 1% tolerance
       await stablePool.retarget(parseEther('0.05'), parseEther('0.01'))
-  
+
       const depositTx = await deposit(collateralToken, stablePool, daiGiver, user1, 1000)
       expect(await stablePool.balanceOf(user1.address)).to.be.gt(0)
-      
+
       await rebalance(stableStrategies)
       await timeTravel(2 * 24 * 3600)
-  
+
       // Each strategy earns 0.6% APY
       await earnStrategyAPY(stablePool, stableStrategies[0], parseEther('0.06'))
       await earnStrategyAPY(stablePool, stableStrategies[1], parseEther('0.06'))
-  
+
       const beforeBufferBalance = await collateralToken.balanceOf(buffer.address)
       await rebalance(stableStrategies)
       const afterBufferBalance = await collateralToken.balanceOf(buffer.address)
-  
+
       // pool should be on target
       expect(await stablePoolIsWithinTarget(stablePool)).to.be.true
-  
+
       // user1 APY is 5%
       expect(isCloseEnough(await getUserAPY(stablePool, depositTx, 1000), parseEther('0.05'))).to.be.true
       // pool APY is 5%
@@ -193,31 +184,31 @@ describe('VFR DAI Deterministic', function () {
       // buffer got funded the additional profits above the pool's target APY
       expect(afterBufferBalance).to.be.gt(beforeBufferBalance)
     })
-  
+
     it('missed profits are taken from the buffer', async function () {
       // 5% target APY with 1% tolerance
       await stablePool.retarget(parseEther('0.05'), parseEther('0.01'))
-  
+
       const depositTx = await deposit(collateralToken, stablePool, daiGiver, user1, 1000)
       await timeTravel(2 * 24 * 3600)
-  
+
       await rebalance(stableStrategies)
       await timeTravel(5 * 24 * 3600)
-  
+
       // Each strategy earns 0.1% APY
       await earnStrategyAPY(stablePool, stableStrategies[0], parseEther('0.01'))
       await earnStrategyAPY(stablePool, stableStrategies[1], parseEther('0.01'))
-  
+
       // Funds the buffer
       await fundBuffer(collateralToken, buffer, daiGiver, 1000)
-  
+
       // The checkpoint will predict the APY based on the funds available in the buffer
       await stablePool.checkpoint()
       // predicted APY is 0.45%
       expect(isCloseEnough(await stablePool.predictedAPY(), parseEther('0.05'))).to.be.true
-      
+
       await rebalance(stableStrategies)
-  
+
       // pool should be on target
       expect(await stablePoolIsWithinTarget(stablePool)).to.be.true
       // user1 APY is 5%
