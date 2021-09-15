@@ -12,6 +12,7 @@ const slots = {
   [Address.WETH]: 3,
   [Address.USDC]: 9,
   [Address.USDT]: 2,
+  [Address.WBTC]: 0,
   '0x5d3a536E4D6DbD6114cc1Ead35777bAB948E3643': 14, // cDAI
   '0xc00e94Cb662C3520282E6f5717214004A7f26888': 1 // COMP
 }
@@ -37,7 +38,7 @@ function getSlot(token) {
 
 async function adjustBalance(token, targetAddress, balance) {
   const slot = getSlot(token)
-  if (slots === undefined) {
+  if (slot === undefined) {
     throw new Error(`Missing slot configuration for token ${token}`)
   }
 
