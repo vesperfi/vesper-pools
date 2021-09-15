@@ -10,16 +10,16 @@ const {ethers} = require('hardhat')
 const poolConfig = require('../../helper/ethereum/poolConfig').VADAI
 describe('VADAI Pool', function () {
   const interestFee = '1500' // 15%
-  const feeCollector = '0x223809E09ec28C28219769C3FF05c790c213152C'
+  const feeCollector = '0xadb5ef0ca9029b340bccdef005aef442c7f91c96'
 
   beforeEach(async function () {
     const poolName = poolConfig.poolParams[1].toLowerCase()
     this.pool = await ethers.getContractAt(poolConfig.contractName, contracts[poolName].pool.proxy)
-    const _strategies = Object.keys(contracts[poolName].strategies)
+    this.poolAccountant = await ethers.getContractAt('PoolAccountant', contracts[poolName].pool.poolAccountant.proxy)
+    const _strategies = await this.poolAccountant.getStrategies()
     this.strategies = []
     for (const _strategy of _strategies) {
-      const address = contracts[poolName].strategies[_strategy]
-      const instance = await ethers.getContractAt(_strategy, address)
+      const instance = await ethers.getContractAt('IStrategy', _strategy)
       const strat = {
         instance,
         feeCollector,
