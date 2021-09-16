@@ -91,6 +91,7 @@ contract PoolRewards is Initializable, IPoolRewards, ReentrancyGuard, PoolReward
     /// @notice Add new reward token in existing rewardsToken array
     function addRewardToken(address _newRewardToken) external onlyAuthorized {
         require(_newRewardToken != address(0), "reward-token-address-zero");
+        require(!isRewardToken[_newRewardToken], "reward-token-already-exist");
         emit RewardTokenAdded(_newRewardToken, rewardTokens);
         rewardTokens.push(_newRewardToken);
         isRewardToken[_newRewardToken] = true;
