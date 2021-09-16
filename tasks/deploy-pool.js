@@ -77,8 +77,9 @@ task('deploy-pool', 'Deploy vesper pool')
       await copy(networkDir, poolDir, {overwrite: true, filter: copyFilter})
     } 
     catch (error) {
+      console.log(error)
       // in case fail. copy and save it for review
-      const filter = [`${networkDir}/*.json`, `${networkDir}/solcInputs`, `!${networkDir}/DefaultProxyAdmin.json`]
+      const filter = ['*.json', 'solcInputs/*', '!DefaultProxyAdmin.json']
       await copy(networkDir, `${networkDir}/failed/${pool}`, {overwrite: true, filter})
     }
     finally {

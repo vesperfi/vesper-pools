@@ -163,12 +163,10 @@
             "implementation": "0x8Ad5b311a7d9111BCC3E92811cd23dcE9Ba62E0a"
           }
         },
-        "poolRewards": {
-          "proxy": "0xeA6c376D019119230B69F5AA9d59507B9b564791",
-          "implementation": "0x7b07296561d0Ea40dd6fFC5C19A934796A829eef"
-        },
         "strategies": {
-          "EarnCompoundMakerStrategyETH": "0x235A6DCe7D40fa5b0157F55Dda0693dcAc4Ea932"
+          "EarnAaveMakerStrategyETH": "0x87201Cd1ad8c0e98d0f1C67aEbD3922E46F9dA0C",
+          "EarnCompoundMakerStrategyETH": "0x235A6DCe7D40fa5b0157F55Dda0693dcAc4Ea932",
+          "EarnCompoundStrategyETH": "0x1E10aad97f2312B0b02424e628397B0ADD536D8b"
         }
       },
       "vaeth": {
