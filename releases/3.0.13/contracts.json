@@ -165,7 +165,7 @@
         },
         "poolRewards": {
           "proxy": "0x84462fD358CD74615c2112604D1fCfB767F59acc",
-          "implementation": "0x0Ec2c6422Cf208579b60572efFb68e1C059cE764"
+          "implementation": "0xDC5Ef8AaBa4b3B0f9f9186c938Da884Aade28068"
         },
         "strategies": {
           "EarnAaveMakerStrategyETH": "0x87201Cd1ad8c0e98d0f1C67aEbD3922E46F9dA0C",

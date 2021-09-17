@@ -13,6 +13,11 @@ function prepareConfig(_strategies) {
       name: 'CreamStrategyLINK',
       type: StrategyType.CREAM,
       config: {interestFee, debtRatio: 9000, debtRate: ONE_MILLION}
+    },
+    {
+      name: 'CreamStrategyLINK',
+      type: StrategyType.CREAM,
+      config: {interestFee, debtRatio: 0, debtRate: ONE_MILLION}
     }
   ]
   beforeEach(async function () {
