@@ -15,7 +15,7 @@ abstract contract ConvexCoverageStrategy is ConvexStrategy, VFR {
         address _swapManager,
         uint256 _collateralIdx,
         uint256 _convexPoolId
-    ) ConvexStrategy(_pool, _threePool, _threeCrv, _gauge, _swapManager, _collateralIdx, _convexPoolId) {}
+    ) ConvexStrategy(_pool, _threePool, _threeCrv, _gauge, _swapManager, _collateralIdx, _convexPoolId, 3) {}
 
     function _realizeGross(uint256 _totalDebt)
         internal

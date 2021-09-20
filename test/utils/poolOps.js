@@ -9,6 +9,10 @@ const DECIMAL = BigNumber.from('1000000000000000000')
 const WETH_ADDRESS = '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2'
 const DAI = '0x6b175474e89094c44da98b954eedeac495271d0f'
 const StrategyType = require('../utils/strategyTypes')
+const address = require('../../helper/ethereum/address')
+const { parseEther } = require('@ethersproject/units')
+const { adjustBalance } = require('./balance')
+const { NATIVE_TOKEN } = require('../../helper/ethereum/address')
 
 async function executeIfExist(fn) {
   if (typeof fn === 'function') {
@@ -36,6 +40,12 @@ async function deposit(pool, token, amount, depositor) {
     depositAmount = requestedAmount
     await token.connect(depositor.signer).approve(pool.address, depositAmount)
     await pool.connect(depositor.signer)['deposit(uint256)'](depositAmount)
+  } else if (token.address === address.MIM) {
+    // estimates ETH -> MIM conversion assuming 1 MIM =~ 1 DAI
+    depositAmount = await swapper.getAmountsOut(parseEther(amount.toString()), [ NATIVE_TOKEN, address.DAI ] )
+    adjustBalance(token.address, depositor.address, depositAmount)
+    await token.connect(depositor.signer).approve(pool.address, depositAmount)
+    await pool.connect(depositor.signer).deposit(depositAmount)
   } else {
     depositAmount = await swapper.swapEthForToken(amount, token.address, depositor)
     await token.connect(depositor.signer).approve(pool.address, depositAmount)

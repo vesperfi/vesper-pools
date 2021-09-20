@@ -44,4 +44,10 @@ async function swapExactToken(amountIn, path, caller, receiver) {
   return amountOut
 }
 
-module.exports = {swapEthForToken, swapExactToken}
+async function getAmountsOut(amountIn, path) {
+  const uni = await ethers.getContractAt('IUniswapRouterTest', SUSHI_ROUTER)
+  const amountsOut = await uni.getAmountsOut(amountIn, path)
+  return amountsOut[path.length-1]
+}
+
+module.exports = {swapEthForToken, swapExactToken, getAmountsOut}

@@ -13,6 +13,6 @@ contract ConvexStrategyDAI is ConvexStrategy {
     address private constant GAUGE = 0xbFcF63294aD7105dEa65aA58F8AE5BE2D9d0952A;
 
     constructor(address _pool, address _swapManager)
-        ConvexStrategy(_pool, THREEPOOL, THREECRV, GAUGE, _swapManager, 0, 9)
+        ConvexStrategy(_pool, THREEPOOL, THREECRV, GAUGE, _swapManager, 0, 9, 3)
     {}
 }

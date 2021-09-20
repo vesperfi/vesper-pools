@@ -49,7 +49,7 @@ async function shouldBehaveLikeMultiPool(poolName) {
         expect(debt0).to.be.eq(0, 'Withdraw from Strategy 1 is wrong')
       })
 
-      it('Should be able to shuffle withdraw queue', async function () {
+      it.only('Should be able to shuffle withdraw queue', async function () {
         await accountant
           .connect(gov.signer)
           .updateWithdrawQueue([strategies[1].instance.address, strategies[0].instance.address])

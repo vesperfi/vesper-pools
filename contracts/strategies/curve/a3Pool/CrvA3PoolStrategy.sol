@@ -7,11 +7,12 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../../../interfaces/vesper/IVesperPool.sol";
 import "../../../interfaces/aave/IAave.sol";
 import "../../Strategy.sol";
-import "../3Pool/Crv3PoolStrategy.sol";
+import "../CrvPoolStrategyBase.sol";
 
 /// @title This strategy will deposit collateral token in Curve 3Pool and earn interest.
-abstract contract CrvA3PoolStrategy is Crv3PoolStrategyBase {
+abstract contract CrvA3PoolStrategy is CrvPoolStrategyBase {
     using SafeERC20 for IERC20;
+    uint256 private constant N = 3;
     address private constant CRV_POOL = 0xDeBF20617708857ebe4F679508E7b7863a8A8EeE;
     address private constant LP = 0xFd2a8fA60Abd58Efe3EeE34dd494cD491dC14900;
     address private constant GAUGE = 0xd662908ADA2Ea1916B3318327A97eB18aD588b5d;
@@ -22,7 +23,7 @@ abstract contract CrvA3PoolStrategy is Crv3PoolStrategyBase {
         address _pool,
         address _swapManager,
         uint256 _collateralIdx
-    ) Crv3PoolStrategyBase(_pool, CRV_POOL, LP, GAUGE, _swapManager, _collateralIdx) {
+    ) CrvPoolStrategyBase(_pool, CRV_POOL, LP, GAUGE, _swapManager, _collateralIdx, N) {
         require(IStableSwap3xUnderlying(CRV_POOL).lp_token() == LP, "receipt-token-mismatch");
         require(
             IStableSwap3xUnderlying(CRV_POOL).underlying_coins(_collateralIdx) == address(IVesperPool(_pool).token()),
@@ -110,21 +111,13 @@ abstract contract CrvA3PoolStrategy is Crv3PoolStrategyBase {
     function _setupOracles() internal override {
         swapManager.createOrUpdateOracle(CRV, WETH, oraclePeriod, oracleRouterIdx);
         swapManager.createOrUpdateOracle(AAVE, WETH, oraclePeriod, oracleRouterIdx);
-        for (uint256 i = 0; i < N; i++) {
+        for (uint256 i = 0; i < n; i++) {
             swapManager.createOrUpdateOracle(
                 IStableSwap3xUnderlying(CRV_POOL).underlying_coins(i),
                 WETH,
                 oraclePeriod,
                 oracleRouterIdx
             );
-        }
-    }
-
-    // overrides init in Crv3x
-    function _init(address _pool) internal override {
-        for (uint256 i = 0; i < N; i++) {
-            coins[i] = IStableSwap3xUnderlying(_pool).underlying_coins(i);
-            coinDecimals[i] = IERC20Metadata(coins[i]).decimals();
         }
     }
 

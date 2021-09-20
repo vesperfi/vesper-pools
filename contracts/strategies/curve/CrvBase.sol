@@ -6,8 +6,10 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import "../../interfaces/curve/IStableSwap.sol";
-import "../../interfaces/curve/ILiquidityGaugeV2.sol";
+import "../../interfaces/curve/ILiquidityGauge.sol";
 import "../../interfaces/curve/ITokenMinter.sol";
+import "../../interfaces/curve/IMetapoolFactory.sol";
+import "../../interfaces/curve/IDepositZap.sol";
 
 abstract contract CrvBase {
     using SafeERC20 for IERC20;
@@ -30,11 +32,7 @@ abstract contract CrvBase {
         crvPool = IStableSwapUnderlying(_pool);
         crvLp = _lp;
         crvGauge = _gauge;
-        _init(_pool);
     }
-
-    // must be implemented downstream
-    function _init(address _pool) internal virtual;
 
     function _minimumLpPrice(uint256 _safeRate) internal view returns (uint256) {
         return ((crvPool.get_virtual_price() * _safeRate) / 1e18);
@@ -60,8 +58,8 @@ abstract contract CrvBase {
         view
         returns (uint256 lpToWithdraw, uint256 unstakeAmt)
     {
-        uint256 lp = IERC20(crvLp).balanceOf(address(this));
-        uint256 tlp = lp + totalStaked();
+        uint256 lp = getLp();
+        uint256 tlp = totalLp();
         lpToWithdraw = (_amtNeeded * tlp) / getLpValueAs(tlp, i);
         lpToWithdraw = (lpToWithdraw > tlp) ? tlp : lpToWithdraw;
         if (lpToWithdraw > lp) {
@@ -75,7 +73,7 @@ abstract contract CrvBase {
 
     // While this is inaccurate in terms of slippage, this gives us the
     // best estimate (least manipulatable value) to calculate share price
-    function getLpValue(uint256 _lpAmount) public view returns (uint256) {
+    function getLpValue(uint256 _lpAmount) public view virtual returns (uint256) {
         return (_lpAmount != 0) ? (crvPool.get_virtual_price() * _lpAmount) / 1e18 : 0;
     }
 
@@ -121,6 +119,11 @@ abstract contract CrvBase {
     }
 
     function totalLp() public view virtual returns (uint256 total) {
-        total = IERC20(crvLp).balanceOf(address(this)) + IERC20(crvGauge).balanceOf(address(this));
+        total = getLp() + IERC20(crvGauge).balanceOf(address(this));
+    }
+
+    // Gets LP value not staked in gauge
+    function getLp() public view virtual returns (uint256 total) {
+        total = IERC20(crvLp).balanceOf(address(this));
     }
 }

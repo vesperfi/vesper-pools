@@ -4,49 +4,50 @@ pragma solidity 0.8.3;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "../../interfaces/vesper/IVesperPool.sol";
 import "../Strategy.sol";
-import "./Crv3x.sol";
+import "./CrvBase.sol";
 
-/// @title This strategy will deposit collateral token in Curve 3Pool and earn interest.
-abstract contract Crv3PoolStrategyBase is Crv3x, Strategy {
+/// @title This strategy will deposit collateral token in a Curve Pool and earn interest.
+abstract contract CrvPoolStrategyBase is CrvBase, Strategy {
     using SafeERC20 for IERC20;
 
     mapping(address => bool) internal reservedToken;
 
-    address public immutable threePool;
-    address public immutable threeCrv;
-    address public immutable gauge;
-
     uint256 public immutable collIdx;
     uint256 public usdRate;
     uint256 public usdRateTimestamp;
+
+    address[] public coins;
+    uint256[] public coinDecimals;
     bool public depositError;
 
     uint256 public crvSlippage = 10; // 10000 is 100%; 10 is 0.1%
-
+    uint256 internal immutable n;
     event UpdatedCrvSlippage(uint256 oldCrvSlippage, uint256 newCrvSlippage);
 
     event DepositFailed(string reason);
 
     constructor(
         address _pool,
-        address _threePool,
-        address _threeCrv,
-        address _gauge,
+        address _crvPool,
+        address _crvLp,
+        address _crvGauge,
         address _swapManager,
-        uint256 _collateralIdx
+        uint256 _collateralIdx,
+        uint256 _n
     )
-        Crv3x(_threePool, _threeCrv, _gauge) // 3Pool Manager
-        Strategy(_pool, _swapManager, _threeCrv)
+        CrvBase(_crvPool, _crvLp, _crvGauge) // 3Pool Manager
+        Strategy(_pool, _swapManager, _crvLp)
     {
-        require(_collateralIdx < N, "invalid-collateral");
-        threePool = _threePool;
-        threeCrv = _threeCrv;
-        gauge = _gauge;
-        reservedToken[_threeCrv] = true;
+        require(_collateralIdx < _n, "invalid-collateral");
+
+        n = _n;
+        reservedToken[_crvLp] = true;
         reservedToken[CRV] = true;
         collIdx = _collateralIdx;
+        _init(_crvPool, _n);
     }
 
     function updateCrvSlippage(uint256 _newCrvSlippage) external onlyGovernor {
@@ -78,13 +79,8 @@ abstract contract Crv3PoolStrategyBase is Crv3x, Strategy {
 
     function _setupOracles() internal virtual override {
         swapManager.createOrUpdateOracle(CRV, WETH, oraclePeriod, oracleRouterIdx);
-        for (uint256 i = 0; i < N; i++) {
-            swapManager.createOrUpdateOracle(
-                IStableSwap3xUnderlying(threePool).coins(i),
-                WETH,
-                oraclePeriod,
-                oracleRouterIdx
-            );
+        for (uint256 i = 0; i < n; i++) {
+            swapManager.createOrUpdateOracle(coins[i], WETH, oraclePeriod, oracleRouterIdx);
         }
     }
 
@@ -96,7 +92,7 @@ abstract contract Crv3PoolStrategyBase is Crv3x, Strategy {
         // otherwise, calculate a rate and store it.
         uint256 lowest;
         uint256 highest;
-        for (uint256 i = 0; i < N; i++) {
+        for (uint256 i = 0; i < n; i++) {
             // get the rate for $1
             (uint256 rate, bool isValid) = _consultOracle(coins[i], WETH, 10**coinDecimals[i]);
             if (isValid) {
@@ -123,6 +119,17 @@ abstract contract Crv3PoolStrategyBase is Crv3x, Strategy {
             IERC20(CRV).safeApprove(address(swapManager.ROUTERS(i)), _amount);
         }
         IERC20(crvLp).safeApprove(crvGauge, _amount);
+    }
+
+    function _init(address _crvPool, uint256 _n) internal virtual {
+        address[] memory _coins = new address[](_n);
+        uint256[] memory _coinDecimals = new uint256[](_n);
+        for (uint256 i = 0; i < _n; i++) {
+            _coins[i] = IStableSwapUnderlying(_crvPool).coins(i);
+            _coinDecimals[i] = IERC20Metadata(_coins[i]).decimals();
+        }
+        coins = _coins;
+        coinDecimals = _coinDecimals;
     }
 
     function _reinvest() internal override {

@@ -12,6 +12,7 @@ const PoolConfig = {
   VUNI: {contractName: 'VPool', poolParams: ['vUNI Pool', 'vUNI', Address.UNI]},
   VUSDC: {contractName: 'VPool', poolParams: ['vUSDC Pool', 'vUSDC', Address.USDC]},
   VUSDT: {contractName: 'VPool', poolParams: ['vUSDT Pool', 'vUSDT', Address.USDT]},
+  VMIM: {contractName: 'VPool', poolParams: ['vMIM Pool', 'vMIM', Address.MIM]},
   VFRStableDAI: {contractName: 'VFRStablePool', poolParams: ['vfrsDAI Pool', 'vfrsDAI', Address.DAI]},
   VFRCoverageDAI: {contractName: 'VFRCoveragePool', poolParams: ['vfrcDAI Pool', 'vfrcDAI', Address.DAI]},
 }
