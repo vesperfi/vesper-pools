@@ -283,7 +283,7 @@ async function setupEarnDrip() {
     const vesperEarnDripImpl = await deployContract('VesperEarnDrip', [])
     // Deploy proxy admin
     const proxyAdmin = await deployContract('ProxyAdmin', [])
-    const initData = vesperEarnDripImpl.interface.encodeFunctionData('initialize', [this.pool.address, [Address.DAI]])
+    const initData = vesperEarnDripImpl.interface.encodeFunctionData('initialize', [this.pool.address, [Address.vDAI]])
     // deploy proxy with logic implementation
     const proxy = await deployContract('TransparentUpgradeableProxy', [
       vesperEarnDripImpl.address,
@@ -292,7 +292,13 @@ async function setupEarnDrip() {
     ])
     // Get implementation from proxy
     this.earnDrip = await ethers.getContractAt('VesperEarnDrip', proxy.address)
+    await this.earnDrip.updateGrowToken(Address.vDAI)
     await this.pool.updatePoolRewards(proxy.address)
+
+    for (const strategy of this.strategies) {
+      await strategy.instance.approveGrowToken()
+    }
+
   })
 }
 module.exports = {

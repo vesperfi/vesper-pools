@@ -4,7 +4,7 @@ pragma solidity 0.8.3;
 
 import "@openzeppelin/contracts/utils/Context.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "../interfaces/vesper/IPoolRewards.sol";
+import "../interfaces/vesper/IEarnDrip.sol";
 import "../interfaces/vesper/IVesperPool.sol";
 import "./Strategy.sol";
 
@@ -34,6 +34,15 @@ abstract contract Earn is Strategy {
         dripPeriod = _dripPeriod;
     }
 
+    /// @dev Approves EarnDrip' Grow token to spend dripToken
+    function approveGrowToken() external onlyKeeper {
+        address _dripContract = IVesperPool(pool).poolRewards();
+        address _growPool = IEarnDrip(_dripContract).growToken();
+        // Checks that the Grow Pool supports dripToken as underlying
+        require(address(IVesperPool(_growPool).token()) == dripToken, "invalid-grow-pool");
+        IERC20(dripToken).safeApprove(_growPool, MAX_UINT_VALUE);
+    }
+
     /// @notice Converts excess collateral earned to drip token
     function _convertCollateralToDrip() internal {
         uint256 _collateralAmount = collateralToken.balanceOf(address(this));
@@ -61,14 +70,21 @@ abstract contract Earn is Strategy {
         address _dripContract = IVesperPool(pool).poolRewards();
         uint256 _earned = IERC20(dripToken).balanceOf(address(this));
         if (_earned != 0) {
+            // Fetches which rewardToken collects the drip
+            address _growPool = IEarnDrip(_dripContract).growToken();
+            // Checks that the Grow Pool supports dripToken as underlying
+            require(address(IVesperPool(_growPool).token()) == dripToken, "invalid-grow-pool");
+
             totalEarned += _earned;
             uint256 _fee = (_earned * _interestFee) / 10000;
             if (_fee != 0) {
                 IERC20(dripToken).safeTransfer(feeCollector, _fee);
                 _earned = _earned - _fee;
             }
-            IERC20(dripToken).safeTransfer(_dripContract, _earned);
-            IPoolRewards(_dripContract).notifyRewardAmount(dripToken, _earned, dripPeriod);
+            IVesperPool(_growPool).deposit(_earned);
+            uint256 _growPoolShares = IERC20(_growPool).balanceOf(address(this));
+            IERC20(_growPool).safeTransfer(_dripContract, _growPoolShares);
+            IEarnDrip(_dripContract).notifyRewardAmount(_growPool, _growPoolShares, dripPeriod);
         }
     }
 }

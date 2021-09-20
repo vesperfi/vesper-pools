@@ -22,16 +22,17 @@ function shouldBehaveLikeEarnRariFuseStrategy(strategyIndex) {
       collateralToken = this.collateralToken
     })
 
-    it('Should increase DAI balance on rebalance', async function () {
+    it('Should increase vDAI balance on rebalance', async function () {
       await deposit(pool, collateralToken, 40, user2)
       await rebalanceStrategy(strategy)
       const pricePerShareBefore = await pool.pricePerShare()
       const dai = await ethers.getContractAt('ERC20', Address.DAI)
-      const tokenBalanceBefore = await dai.balanceOf(this.earnDrip.address)
+      const vDai = await ethers.getContractAt('ERC20', Address.vDAI)
+      const tokenBalanceBefore = await vDai.balanceOf(this.earnDrip.address)
       await timeTravel('',100, 'compound')
       await rebalanceStrategy(strategy)
-      const tokenBalanceAfter = await dai.balanceOf(this.earnDrip.address)
-      expect(tokenBalanceAfter).to.be.gt(tokenBalanceBefore, 'Should increase DAI balance in RariFuse strategy')
+      const tokenBalanceAfter = await vDai.balanceOf(this.earnDrip.address)
+      expect(tokenBalanceAfter).to.be.gt(tokenBalanceBefore, 'Should increase vDAI balance in RariFuse strategy')
       await timeTravel()
       const withdrawAmount = await pool.balanceOf(user2.address)
       expect(withdrawAmount).gt(0, 'Invalid withdraw amount')
