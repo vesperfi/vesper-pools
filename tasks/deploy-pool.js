@@ -75,7 +75,14 @@ task('deploy-pool', 'Deploy vesper pool')
       // Copy files from network directory to pool specific directory after deployment
       // Note: This operation will overwrite files. Anything start with dot(.) will not be copied
       await copy(networkDir, poolDir, {overwrite: true, filter: copyFilter})
-    } finally {
+    } 
+    catch (error) {
+      console.log(error)
+      // in case fail. copy and save it for review
+      const filter = ['*.json', 'solcInputs/*', '!DefaultProxyAdmin.json']
+      await copy(networkDir, `${networkDir}/failed/${pool}`, {overwrite: true, filter})
+    }
+    finally {
       // Delete all json files except DefaultProxyAdmin.json. Also delete solcInputs directory
       // Anything start with dot(.) will not be deleted
       const deleteFilter = [`${networkDir}/*.json`, `${networkDir}/solcInputs`, `!${networkDir}/DefaultProxyAdmin.json`]

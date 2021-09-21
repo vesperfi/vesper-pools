@@ -54,6 +54,7 @@ async function shouldBehaveLikeMultiPool(poolName) {
           .connect(gov.signer)
           .updateWithdrawQueue([strategies[1].instance.address, strategies[0].instance.address])
         await rebalance(strategies)
+        await rebalance(strategies)
         let tokenHere = await pool.tokensHere()
         let debt1 = await pool.totalDebtOf(strategies[1].instance.address)
         const debt0Before = await pool.totalDebtOf(strategies[0].instance.address)

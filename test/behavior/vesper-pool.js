@@ -183,7 +183,7 @@ async function shouldBehaveLikePool(poolName, collateralName) {
 
         let o = await pool.balanceOf(user1.address)
         await pool.connect(user1.signer).withdraw(o)
-
+        await rebalance(strategies)
         o = await pool.balanceOf(user2.address)
         await pool.connect(user2.signer).withdraw(o)
 

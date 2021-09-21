@@ -108,15 +108,6 @@ task('create-release', 'Create release file from deploy data')
     // If last stored release is same as current release
     if (prevReleaseData.version === release) {
       // Update release with new deployment
-      const networkRoot = prevReleaseData.networks[network]
-      // Safety check for proxy admin when release is same
-      if (
-        networkRoot &&
-        networkRoot.defaultProxyAdmin &&
-        networkRoot.defaultProxyAdmin !== deployData.DefaultProxyAdmin
-      ) {
-        throw new Error('Proxy admin mismatch')
-      }
       releaseData = prevReleaseData
       // We might have new network in this deployment, if not exist add network and admin
       if (!releaseData.networks[network]) {

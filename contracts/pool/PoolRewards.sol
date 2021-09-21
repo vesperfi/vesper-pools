@@ -43,6 +43,7 @@ contract PoolRewardsStorage {
 
 /// @title Distribute rewards based on vesper pool balance and supply
 contract PoolRewards is Initializable, IPoolRewards, ReentrancyGuard, PoolRewardsStorage {
+    string public constant VERSION = "3.0.13";
     using SafeERC20 for IERC20;
 
     /**
@@ -91,6 +92,7 @@ contract PoolRewards is Initializable, IPoolRewards, ReentrancyGuard, PoolReward
     /// @notice Add new reward token in existing rewardsToken array
     function addRewardToken(address _newRewardToken) external onlyAuthorized {
         require(_newRewardToken != address(0), "reward-token-address-zero");
+        require(!isRewardToken[_newRewardToken], "reward-token-already-exist");
         emit RewardTokenAdded(_newRewardToken, rewardTokens);
         rewardTokens.push(_newRewardToken);
         isRewardToken[_newRewardToken] = true;
