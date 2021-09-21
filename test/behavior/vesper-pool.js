@@ -206,7 +206,7 @@ async function shouldBehaveLikePool(poolName, collateralName) {
 
     describe(`Multi transfer ${poolName} pool tokens`, function () {
       it('Should transfer to multiple recipients', async function () {
-        await deposit(10, user1)
+        await deposit(100, user1)
         const balanceBefore = await pool.balanceOf(user4.address)
         expect(balanceBefore).to.be.equal(0, `${collateralName} balance should be 0`)
         await pool

@@ -15,8 +15,8 @@ abstract contract Crv3PoolStrategyBase is Crv3x, Strategy {
     mapping(address => bool) internal reservedToken;
 
     address public immutable threePool;
-    address internal immutable threeCrv;
-    address internal immutable gauge;
+    address public immutable threeCrv;
+    address public immutable gauge;
 
     uint256 public immutable collIdx;
     uint256 public usdRate;

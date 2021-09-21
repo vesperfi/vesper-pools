@@ -8,7 +8,6 @@ const {advanceBlock} = require('../utils/time')
 const {ethers} = require('hardhat')
 
 const CRV = '0xD533a949740bb3306d119CC777fa900bA034cd52'
-const THREE_CRV = '0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490'
 
 // crv strategy specific tests
 function shouldBehaveLikeCrvStrategy(strategyIndex) {
@@ -25,7 +24,8 @@ function shouldBehaveLikeCrvStrategy(strategyIndex) {
 
     it('Should get CRV token as reserve token', async function () {
       expect(await strategy.isReservedToken(CRV)).to.be.true
-      expect(await strategy.isReservedToken(THREE_CRV)).to.be.true
+      const crvLP = await strategy.threeCrv()
+      expect(await strategy.isReservedToken(crvLP)).to.be.true
     })
 
     it('Should get total value', async function () {

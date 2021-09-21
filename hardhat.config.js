@@ -31,13 +31,14 @@ module.exports = {
       url: process.env.NODE_URL,
       chainId: 1,
       gas: 6700000,
+      // accounts: {mnemonic: process.env.MNEMONIC},
     },
     polygon: {
       url: process.env.NODE_URL,
       chainId: 137,
       gas: 11700000,
       // accounts: [process.env.PRIVATE_KEY]
-    }
+    },
   },
   paths: {
     deployments: 'deployments',

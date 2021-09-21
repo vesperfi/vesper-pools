@@ -30,7 +30,7 @@ abstract contract ConvexStrategy is Crv3PoolStrategyBase {
         cvxCrvRewards = _reward;
         convexPoolId = _convexPoolId;
         reservedToken[CVX] = true;
-        oracleRouterIdx = 1; // Default dex is sushswap
+        oracleRouterIdx = 0;
     }
 
     function updateClaimRewards(bool _isClaimRewards) external onlyGovernor {
@@ -49,8 +49,8 @@ abstract contract ConvexStrategy is Crv3PoolStrategyBase {
         super._approveToken(_amount);
     }
 
-    function _setupOracles() internal override {
-        swapManager.createOrUpdateOracle(CVX, WETH, oraclePeriod, oracleRouterIdx);
+    function _setupOracles() internal virtual override {
+        swapManager.createOrUpdateOracle(CVX, WETH, oraclePeriod, 1);
         super._setupOracles();
     }
 
