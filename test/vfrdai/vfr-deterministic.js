@@ -10,6 +10,7 @@ const { swapExactToken } = require('../utils/tokenSwapper')
 const { adjustBalance } = require('../utils/balance')
 const {
   deposit,
+  withdraw,
   fundBuffer,
   getBlockTime,
   getPoolAPY,
@@ -100,6 +101,29 @@ describe('VFR DAI Deterministic', function () {
   })
 
   describe('Stable pool', function () {
+
+    it('disallow withdraw if lock period is not expired', async function () {
+      // 5% target APY with 1% tolerance
+      await stablePool.retarget(parseEther('0.05'), parseEther('0.01'))
+
+      await deposit(collateralToken, stablePool, daiGiver, user1, 1000)
+      expect(await stablePool.balanceOf(user1.address)).to.be.gt(0)
+
+      await rebalance(stableStrategies)
+      await timeTravel(1 * 24 * 3600)
+
+      await expect(withdraw(stablePool, user1)).to.be.revertedWith('lock-period-not-expired')
+      await expect(stablePool.connect(user1.signer).transfer(user2.address, 1)).to.be.revertedWith(
+        'lock-period-not-expired'
+      )
+
+      const lockPeriod = (await stablePool.lockPeriod()).toNumber()
+      await timeTravel(lockPeriod)
+
+      await withdraw(stablePool, user1)
+
+    })
+
     it('disallow deposits if pool is under target by more than tolerance', async function () {
       // 5% target APY with 1% tolerance
       await stablePool.retarget(parseEther('0.05'), parseEther('0.01'))
