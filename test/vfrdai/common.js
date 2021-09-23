@@ -65,6 +65,11 @@ async function deposit(collateralToken, pool, from, to, amount) {
     .deposit(parseEther(amount.toString()))
 }
 
+async function withdraw(pool, from, amount = 0) {
+  const _amount = amount === 0 ? await pool.balanceOf(from.address) : parseEther(amount.toString())
+  return pool.connect(from.signer).withdraw(_amount)
+}
+
 async function adjustDaiBalance(address, balance) {
   const index = solidityKeccak256(['uint256', 'uint256'], [address, 2])
   const value = hexlify(zeroPad(parseEther(balance.toString()).toHexString(), 32))
@@ -118,6 +123,7 @@ async function getUserAPY(pool, depositTx, amount) {
 module.exports = {
   adjustDaiBalance,
   deposit,
+  withdraw,
   fundBuffer,
   getBlockTime,
   getPoolAPY,

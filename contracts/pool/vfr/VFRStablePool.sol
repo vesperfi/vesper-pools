@@ -15,16 +15,34 @@ contract VFRStablePool is VFRPool {
 
     uint256 public predictedAPY;
     uint256 public tolerance;
+    uint256 public lockPeriod;
+
+    // user address to last deposit timestamp mapping
+    mapping(address => uint256) public depositTimestamp;
+
     bool public depositsHalted;
 
     event ToleranceSet(uint256 tolerance);
+    event LockPeriodSet(uint256 lockPeriod);
     event Retarget(uint256 targetAPY, uint256 tolerance);
 
     constructor(
         string memory _name,
         string memory _symbol,
         address _token
-    ) VFRPool(_name, _symbol, _token) {}
+    ) VFRPool(_name, _symbol, _token) {
+        lockPeriod = 7 days;
+    }
+
+    modifier onlyWithdrawUnlocked(address _sender) {
+        require(block.timestamp >= depositTimestamp[_sender] + lockPeriod, "lock-period-not-expired");
+        _;
+    }
+
+    function setLockPeriod(uint256 _newLockPeriod) external onlyGovernor {
+        require(_newLockPeriod != lockPeriod, "same-lock-period");
+        lockPeriod = _newLockPeriod;
+    }
 
     function setTolerance(uint256 _tolerance) external onlyGovernor {
         require(_tolerance != 0, "tolerance-value-is-zero");
@@ -124,6 +142,19 @@ contract VFRStablePool is VFRPool {
 
     function _deposit(uint256 _amount) internal override {
         require(!depositsHalted, "pool-under-target");
+        depositTimestamp[_msgSender()] = block.timestamp;
         super._deposit(_amount);
+    }
+
+    function _withdraw(uint256 _shares) internal override onlyWithdrawUnlocked(_msgSender()) {
+        super._withdraw(_shares);
+    }
+
+    function _transfer(
+        address _sender,
+        address _recipient,
+        uint256 _amount
+    ) internal override onlyWithdrawUnlocked(_sender) {
+        super._transfer(_sender, _recipient, _amount);
     }
 }

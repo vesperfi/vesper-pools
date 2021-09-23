@@ -212,7 +212,7 @@ abstract contract PoolShareToken is Initializable, PoolERC20Permit, Governed, Pa
     }
 
     /// @dev Burns shares and returns the collateral value, after fee, of those.
-    function _withdraw(uint256 _shares) internal {
+    function _withdraw(uint256 _shares) internal virtual {
         if (withdrawFee == 0) {
             _withdrawWithoutFee(_shares);
         } else {
