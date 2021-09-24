@@ -5,6 +5,7 @@ const { ethers } = require('hardhat')
 const { getUsers } = require('../utils/setupHelper')
 const { deposit } = require('../utils/poolOps')
 const { advanceBlock } = require('../utils/time')
+const { adjustBalance } = require('../utils/balance')
 
 const cUNIAddress = '0x35A18000230DA775CAc24873d00Ff85BccdeD550'
 const cAAVEAddress = '0xe65cdB6479BaC1e22340E4E755fAE7E509EcD06c'
@@ -216,6 +217,19 @@ function shouldBehaveLikeCompoundXYStrategy(strategyIndex) {
       await advanceBlock(100)
       const totalValue = await strategy.totalValue()
       expect(totalValue).to.be.gt(0, 'loss making strategy')
+    })
+
+    it('Should recover extra borrow tokens', async function () {
+      await deposit(pool, collateralToken, 10, user1)
+      await strategy.connect(governor.signer).rebalance()
+      const tokensHere = await pool.tokensHere()
+      const borrowBalance = await borrowToken.balanceOf(strategy.address)
+      await adjustBalance(borrowToken.address, strategy.address, borrowBalance.mul(11).div(10))
+      const updatedBorrowBalance = await borrowToken.balanceOf(strategy.address)
+      expect(updatedBorrowBalance).to.gt(borrowBalance, 'Borrow balance should increase')
+      await strategy.connect(governor.signer).recoverBorrowToken(0)
+      const newTokensHere = await pool.tokensHere()
+      expect(newTokensHere).to.gt(tokensHere, 'Recover borrow token failed')
     })
 
     it('Should calculate APY', async function () {

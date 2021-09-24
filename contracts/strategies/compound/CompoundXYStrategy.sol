@@ -40,6 +40,30 @@ abstract contract CompoundXYStrategy is Strategy {
     }
 
     /**
+     * @notice Recover extra borrow tokens from strategy
+     * @dev If we get liquidation in Compound, we will have borrowToken sitting in strategy.
+     * This function allows to recover idle borrow token amount.
+     * @param _amountToRecover Amount of borrow token we want to recover in 1 call.
+     *      Set it 0 to recover all available borrow tokens
+     */
+    function recoverBorrowToken(uint256 _amountToRecover) external onlyKeeper {
+        uint256 _borrowBalanceHere = IERC20(borrowToken).balanceOf(address(this));
+        uint256 _borrowInCompound = borrowCToken.borrowBalanceStored(address(this));
+
+        if (_borrowBalanceHere > _borrowInCompound) {
+            uint256 _extraBorrowBalance = _borrowBalanceHere - _borrowInCompound;
+            uint256 _recoveryAmount =
+                (_amountToRecover != 0 && _extraBorrowBalance > _amountToRecover)
+                    ? _amountToRecover
+                    : _extraBorrowBalance;
+            // Do swap and transfer
+            uint256 _collateralBefore = collateralToken.balanceOf(address(this));
+            _safeSwap(borrowToken, address(collateralToken), _recoveryAmount, 1);
+            collateralToken.transfer(pool, collateralToken.balanceOf(address(this)) - _collateralBefore);
+        }
+    }
+
+    /**
      * @notice Update borrow CToken
      * @dev Repay borrow for old borrow CToken and borrow for new borrow CToken
      * @param _newBorrowCToken Address of new CToken
@@ -178,6 +202,7 @@ abstract contract CompoundXYStrategy is Strategy {
         for (uint256 i = 0; i < swapManager.N_DEX(); i++) {
             IERC20(COMP).safeApprove(address(swapManager.ROUTERS(i)), _amount);
             collateralToken.safeApprove(address(swapManager.ROUTERS(i)), _amount);
+            IERC20(borrowToken).safeApprove(address(swapManager.ROUTERS(i)), _amount);
         }
     }
 
