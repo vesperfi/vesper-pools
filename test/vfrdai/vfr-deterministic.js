@@ -291,4 +291,61 @@ describe('VFR DAI Deterministic', function () {
       expect(isCloseEnough(await coveragePool.pricePerShare(), parseEther('1'), 100000)).to.be.false
     })
   })
+
+  describe('Auto-retargeting Stable pool', function () {
+
+    it('Should increase +1% target APY if prediction average is higher', async function () {
+      // 5% target APY with 1% tolerance
+      await stablePool.retarget(parseEther('0.05'), parseEther('0.01'))
+      await deposit(collateralToken, stablePool, daiGiver, user1, 1000)
+      await rebalance(stableStrategies)
+
+      // Each strategy earns 4% APY
+      await timeTravel(24 * 3600)
+      await timeTravel(0,100,'compound')
+      await earnStrategyAPY(stablePool, stableStrategies[0], parseEther('0.04'))
+      await earnStrategyAPY(stablePool, stableStrategies[1], parseEther('0.04'))
+      await rebalance(stableStrategies)
+      await stablePool.checkpoint()
+      const oldAvgPredictedAPY = await stablePool.avgPredictedAPY()
+
+      // Pushes APY prediction above target APY (~7%)
+      await timeTravel(24 * 3600)
+      await timeTravel(0,100,'compound')
+      await earnStrategyAPY(stablePool, stableStrategies[0], parseEther('0.07'))
+      await earnStrategyAPY(stablePool, stableStrategies[1], parseEther('0.07'))
+      await rebalance(stableStrategies)
+      await stablePool.checkpoint()
+      
+      expect(await stablePool.avgPredictedAPY()).to.be.gt(oldAvgPredictedAPY)
+
+      const oldTargetAPY = await stablePool.targetAPY()
+      await stablePool.autoRetarget()
+
+      expect(await stablePool.targetAPY()).to.be.gt(oldTargetAPY)
+
+    })
+
+    it('Should decrease -1% target APY if prediction average is lower', async function () {
+      // 5% target APY with 1% tolerance
+      await stablePool.retarget(parseEther('0.05'), parseEther('0.01'))
+      await deposit(collateralToken, stablePool, daiGiver, user1, 1000)
+      await rebalance(stableStrategies)
+
+      // Each strategy earns 3% APY
+      await timeTravel(24 * 3600)
+      await timeTravel(0,100,'compound')
+      await earnStrategyAPY(stablePool, stableStrategies[0], parseEther('0.03'))
+      await earnStrategyAPY(stablePool, stableStrategies[1], parseEther('0.03'))
+      await rebalance(stableStrategies)
+      await stablePool.checkpoint()
+  
+      const oldTargetAPY = await stablePool.targetAPY()
+      await stablePool.autoRetarget()
+
+      expect(await stablePool.targetAPY()).to.be.lt(oldTargetAPY)
+
+    })
+
+  })
 })
