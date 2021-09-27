@@ -10,7 +10,7 @@ const ONE_MILLION = DECIMAL6.mul('1000000')
 const config = {
   feeCollector: Address.FEE_COLLECTOR,
   interestFee: '1500',
-  debtRatio: '9500',
+  debtRatio: '0',
   debtRate: ONE_MILLION.toString(),
   withdrawFee: 60,
 }

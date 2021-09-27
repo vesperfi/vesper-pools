@@ -229,7 +229,8 @@
         },
         "strategies": {
           "ConvexSBTCStrategyWBTC": "0x43CeCF2e018FEE7EE94410f85FcefeD2a3843ef2",
-          "CrvsBTCStrategyWBTC": "0x867FC11B40351451d1dc3114A4204B2444b94B32"
+          "CrvsBTCStrategyWBTC": "0x867FC11B40351451d1dc3114A4204B2444b94B32",
+          "RariFuseStrategy": "0x2962741a2aec7627F64E77a5808A025F49ea17DA"
         }
       }
     }
