@@ -88,7 +88,7 @@ const deployFunction = async function ({getNamedAccounts, deployments}) {
       execute: {
         init: {
           methodName: 'initialize',
-          args: [poolProxy.address, vsp],
+          args: [poolProxy.address, [vsp]],
         },
       },
     },
