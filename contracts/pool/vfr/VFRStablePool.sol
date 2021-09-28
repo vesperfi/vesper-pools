@@ -141,7 +141,8 @@ contract VFRStablePool is VFRPool {
     // Gets the time-weighted average Predicted APY since last retarget
     // It updates every checkpoint since last retarget (more checkpoints -> better prediction)
     function avgPredictedAPY() public view returns (uint256 _avgPredictedAPY) {
-        _avgPredictedAPY = accPredictedAPY / (lastObservationBlock - predictionStartBlock);
+        uint256 _elapsedBlocks = lastObservationBlock - predictionStartBlock;
+        _avgPredictedAPY = (_elapsedBlocks != 0) ? accPredictedAPY / _elapsedBlocks : 0;
     }
 
     function targetPricePerShare() public view returns (uint256) {
