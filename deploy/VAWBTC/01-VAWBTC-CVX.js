@@ -4,8 +4,8 @@ const Address = require('../../helper/ethereum/address')
 const PoolAccountant = 'PoolAccountant'
 const convexSBTCStrategyWBTC = 'ConvexSBTCStrategyWBTC'
 const {BigNumber} = require('ethers')
-const DECIMAL6 = BigNumber.from('1000000')
-const ONE_MILLION = DECIMAL6.mul('1000000')
+const DECIMAL8 = BigNumber.from('100000000')
+const ONE_MILLION = DECIMAL8.mul('1000000')
 const config = {
   feeCollector: Address.FEE_COLLECTOR,
   interestFee: '1500',
