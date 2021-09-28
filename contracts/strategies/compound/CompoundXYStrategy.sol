@@ -4,6 +4,7 @@ pragma solidity 0.8.3;
 
 import "../Strategy.sol";
 import "../../interfaces/compound/ICompound.sol";
+import "../../interfaces/oracle/IUniswapV3Oracle.sol";
 import "../../interfaces/token/IToken.sol";
 
 /// @title This strategy will deposit collateral token in Compound and based on position
@@ -19,6 +20,8 @@ abstract contract CompoundXYStrategy is Strategy {
     CToken public borrowCToken;
     address internal constant COMP = 0xc00e94Cb662C3520282E6f5717214004A7f26888;
     Comptroller internal constant COMPTROLLER = Comptroller(0x3d9819210A31b4961b30EF54bE2aeD79B9c9Cd3B);
+    IUniswapV3Oracle internal constant ORACLE = IUniswapV3Oracle(0x0F1f5A87f99f0918e6C81F16E59F3518698221Ff);
+    uint32 internal constant TWAP_PERIOD = 3600;
 
     event UpdatedBorrowCToken(address indexed previousBorrowCToken, address indexed newBorrowCToken);
 
@@ -58,7 +61,7 @@ abstract contract CompoundXYStrategy is Strategy {
                     : _extraBorrowBalance;
             // Do swap and transfer
             uint256 _collateralBefore = collateralToken.balanceOf(address(this));
-            _safeSwap(borrowToken, address(collateralToken), _recoveryAmount, 1);
+            _safeSwap(borrowToken, address(collateralToken), _recoveryAmount);
             collateralToken.transfer(pool, collateralToken.balanceOf(address(this)) - _collateralBefore);
         }
     }
@@ -308,7 +311,7 @@ abstract contract CompoundXYStrategy is Strategy {
         _claimComp();
         uint256 _compAmount = IERC20(COMP).balanceOf(address(this));
         if (_compAmount != 0) {
-            _safeSwap(COMP, _toToken, _compAmount, 1);
+            _safeSwap(COMP, _toToken, _compAmount);
         }
     }
 
@@ -345,7 +348,7 @@ abstract contract CompoundXYStrategy is Strategy {
 
         uint256 _compRemaining = IERC20(COMP).balanceOf(address(this));
         if (_compRemaining != 0) {
-            _safeSwap(COMP, address(collateralToken), _compRemaining, 1);
+            _safeSwap(COMP, address(collateralToken), _compRemaining);
         }
 
         // Any collateral here is profit
@@ -475,6 +478,21 @@ abstract contract CompoundXYStrategy is Strategy {
             return WETH;
         }
         return CToken(_cToken).underlying();
+    }
+
+    function _safeSwap(
+        address _tokenIn,
+        address _tokenOut,
+        uint256 _amountIn
+    ) private {
+        uint256 _minAmountOut =
+            swapSlippage != 10000
+                ? _calcAmtOutAfterSlippage(
+                    ORACLE.assetToAsset(_tokenIn, _amountIn, _tokenOut, TWAP_PERIOD),
+                    swapSlippage
+                )
+                : 1;
+        _safeSwap(_tokenIn, _tokenOut, _amountIn, _minAmountOut);
     }
 
     //////////////////// Compound wrapper functions //////////////////////////////

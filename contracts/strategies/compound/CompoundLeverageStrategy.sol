@@ -5,6 +5,7 @@ pragma solidity 0.8.3;
 
 import "../Strategy.sol";
 import "../../interfaces/compound/ICompound.sol";
+import "../../interfaces/oracle/IUniswapV3Oracle.sol";
 import "../../FlashLoanHelper.sol";
 
 /// @title This strategy will deposit collateral token in Compound and based on position
@@ -18,6 +19,8 @@ abstract contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
     CToken internal cToken;
     address internal constant COMP = 0xc00e94Cb662C3520282E6f5717214004A7f26888;
     Comptroller internal constant COMPTROLLER = Comptroller(0x3d9819210A31b4961b30EF54bE2aeD79B9c9Cd3B);
+    IUniswapV3Oracle internal constant ORACLE = IUniswapV3Oracle(0x0F1f5A87f99f0918e6C81F16E59F3518698221Ff);
+    uint32 internal constant TWAP_PERIOD = 3600;
 
     uint256 public dyDxMarketId;
 
@@ -99,7 +102,7 @@ abstract contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
     function isLossMaking() external returns (bool) {
         _claimComp();
         (, uint256 _compAsCollateral, ) =
-            swapManager.bestInputFixedOutput(COMP, address(collateralToken), IERC20(COMP).balanceOf(address(this)));
+            swapManager.bestOutputFixedInput(COMP, address(collateralToken), IERC20(COMP).balanceOf(address(this)));
 
         uint256 _totalDebt = IVesperPool(pool).totalDebtOf(address(this));
 
@@ -210,7 +213,7 @@ abstract contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
         _claimComp();
         uint256 _compAmount = IERC20(COMP).balanceOf(address(this));
         if (_compAmount != 0) {
-            _safeSwap(COMP, _toToken, _compAmount, 1);
+            _safeSwap(COMP, _toToken, _compAmount);
         }
     }
 
@@ -446,6 +449,24 @@ abstract contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
             //borrow more to cover fee
             _borrowCollateral(_repayAmount);
         }
+    }
+
+    /**
+     * @dev If swap slippage is defined then use oracle to get amountOut and calculate minAmountOut
+     */
+    function _safeSwap(
+        address _tokenIn,
+        address _tokenOut,
+        uint256 _amountIn
+    ) private {
+        uint256 _minAmountOut =
+            swapSlippage != 10000
+                ? _calcAmtOutAfterSlippage(
+                    ORACLE.assetToAsset(_tokenIn, _amountIn, _tokenOut, TWAP_PERIOD),
+                    swapSlippage
+                )
+                : 1;
+        _safeSwap(_tokenIn, _tokenOut, _amountIn, _minAmountOut);
     }
 
     //////////////////// Compound wrapper functions //////////////////////////////
