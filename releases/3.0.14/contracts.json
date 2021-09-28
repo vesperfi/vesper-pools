@@ -227,7 +227,7 @@
         },
         "poolRewards": {
           "proxy": "0x30D63c7651D7Ed798Af5385f4d5Fc9a3d966bB45",
-          "implementation": "0x8F09f6dbEc65C94e5aF7A5d2682342FC1fBC86Fc"
+          "implementation": "0xEbe36251eba30Cac560db3A8259b7987485e1C3E"
         },
         "strategies": {
           "ConvexSBTCStrategyWBTC": "0x43CeCF2e018FEE7EE94410f85FcefeD2a3843ef2",

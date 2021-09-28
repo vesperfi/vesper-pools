@@ -43,7 +43,7 @@ contract PoolRewardsStorage {
 
 /// @title Distribute rewards based on vesper pool balance and supply
 contract PoolRewards is Initializable, IPoolRewards, ReentrancyGuard, PoolRewardsStorage {
-    string public constant VERSION = "3.0.13";
+    string public constant VERSION = "3.0.14";
     using SafeERC20 for IERC20;
 
     /**
