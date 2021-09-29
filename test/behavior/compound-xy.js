@@ -220,6 +220,8 @@ function shouldBehaveLikeCompoundXYStrategy(strategyIndex) {
     })
 
     it('Should recover extra borrow tokens', async function () {
+      // using swap slippage for realistic scenario
+      await strategy.connect(governor.signer).updateSwapSlippage('1000')
       await deposit(pool, collateralToken, 10, user1)
       await strategy.connect(governor.signer).rebalance()
       const tokensHere = await pool.tokensHere()

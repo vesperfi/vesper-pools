@@ -200,6 +200,7 @@ function shouldBehaveLikeCompoundLeverageStrategy(strategyIndex) {
     })
 
     it('Should liquidate COMP when claimed by external source', async function () {
+      await strategy.connect(governor.signer).updateSwapSlippage('1000')
       const comptroller = await ethers.getContractAt('Comptroller', comptrollerAddress)
       const comp = await ethers.getContractAt('ERC20', compAddress)
       await deposit(pool, collateralToken, 10, user2)
