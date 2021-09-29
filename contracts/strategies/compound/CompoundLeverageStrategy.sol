@@ -22,8 +22,6 @@ abstract contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
     IUniswapV3Oracle internal constant ORACLE = IUniswapV3Oracle(0x0F1f5A87f99f0918e6C81F16E59F3518698221Ff);
     uint32 internal constant TWAP_PERIOD = 3600;
 
-    uint256 public dyDxMarketId;
-
     constructor(
         address _pool,
         address _swapManager,
@@ -31,7 +29,6 @@ abstract contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
     ) Strategy(_pool, _swapManager, _receiptToken) {
         require(_receiptToken != address(0), "cToken-address-is-zero");
         cToken = CToken(_receiptToken);
-        dyDxMarketId = _getMarketIdFromTokenAddress(SOLO, address(IVesperPool(_pool).token()));
     }
 
     /**
@@ -52,7 +49,7 @@ abstract contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
     }
 
     function updateDyDxStatus(bool _status) external onlyGovernor {
-        _updateDyDxStatus(_status);
+        _updateDyDxStatus(_status, address(collateralToken));
     }
 
     /**
@@ -360,7 +357,7 @@ abstract contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
         // Due to more fee Aave flash loan is not used for borrow
         if (isDyDxActive && _position > 0) {
             bytes memory _data = abi.encode(_position, _shouldRepay);
-            _position -= _doDyDxFlashLoan(address(collateralToken), dyDxMarketId, _position, _data);
+            _position -= _doDyDxFlashLoan(address(collateralToken), _position, _data);
         }
 
         uint256 i = 0;
@@ -382,7 +379,7 @@ abstract contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
             // Due to less fee DyDx is our primary flash loan provider
             if (isDyDxActive) {
                 bytes memory _data = abi.encode(_position, _shouldRepay);
-                _position -= _doDyDxFlashLoan(address(collateralToken), dyDxMarketId, _position, _data);
+                _position -= _doDyDxFlashLoan(address(collateralToken), _position, _data);
             }
             // Do aave flash loan if needed
             if (_position > 0 && isAaveActive) {

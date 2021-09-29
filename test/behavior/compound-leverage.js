@@ -80,7 +80,7 @@ function shouldBehaveLikeCompoundLeverageStrategy(strategyIndex) {
       expect(borrowRatio).to.lt(range._maxBorrowRatio, 'Borrow should be < max borrow ratio')
     })
 
-    it('Should verify that aave flash loan works', async function () {
+    it('Should verify that Aave flash loan works', async function () {
       await strategy.connect(governor.signer).updateDyDxStatus(false)
       await strategy.connect(governor.signer).updateAaveStatus(true)
       await deposit(pool, collateralToken, 100, user1)
@@ -105,8 +105,8 @@ function shouldBehaveLikeCompoundLeverageStrategy(strategyIndex) {
       expect(borrowRatio).to.lt(range._maxBorrowRatio, 'Borrow should be < max borrow ratio')
     })
 
-    it('Should verify that normal leverage/deleverage works', async function () {
-      await strategy.connect(governor.signer).updateDyDxStatus(false)
+    it('Should verify that DyDx flash loan works', async function () {
+      await strategy.connect(governor.signer).updateDyDxStatus(true)
       await strategy.connect(governor.signer).updateAaveStatus(false)
       await deposit(pool, collateralToken, 100, user1)
       await strategy.connect(governor.signer).rebalance()

@@ -20,14 +20,18 @@ abstract contract FlashLoanHelper {
     AaveLendingPoolAddressesProvider internal constant AAVE_ADDRESSES_PROVIDER =
         AaveLendingPoolAddressesProvider(0xB53C1a33016B2DC2fF3653530bfF1848a515c8c5);
     address internal constant SOLO = 0x1E0447b19BB6EcFdAe1e4AE1694b0C3659614e4e;
-    bool internal isAaveActive = false;
-    bool internal isDyDxActive = true;
+    uint256 public dyDxMarketId;
+    bool public isAaveActive = false;
+    bool public isDyDxActive = false;
 
     function _updateAaveStatus(bool _status) internal {
         isAaveActive = _status;
     }
 
-    function _updateDyDxStatus(bool _status) internal {
+    function _updateDyDxStatus(bool _status, address _token) internal {
+        if (_status) {
+            dyDxMarketId = _getMarketIdFromTokenAddress(SOLO, _token);
+        }
         isDyDxActive = _status;
     }
 
@@ -56,6 +60,7 @@ abstract contract FlashLoanHelper {
         uint256 _amountDesired,
         bytes memory _data
     ) internal returns (uint256 _amount) {
+        require(isAaveActive, "aave-flash-loan-is-not-active");
         AaveLendingPool _aaveLendingPool = AaveLendingPool(AAVE_ADDRESSES_PROVIDER.getLendingPool());
 
         address[] memory assets = new address[](1);
@@ -102,16 +107,15 @@ abstract contract FlashLoanHelper {
     /**
      * @notice This is entry point for DyDx flash loan
      * @param _token Token for which we are taking flash loan
-     * @param _marketId DyDx market id for _token
      * @param _amountDesired Flash loan amount
      * @param _data This will be passed downstream for processing. It can be empty.
      */
     function _doDyDxFlashLoan(
         address _token,
-        uint256 _marketId,
         uint256 _amountDesired,
         bytes memory _data
     ) internal returns (uint256 _amount) {
+        require(isDyDxActive, "dydx-flash-loan-is-not-active");
         _amount = _amountDesired;
 
         // Check token liquidity in DyDx
@@ -130,9 +134,9 @@ abstract contract FlashLoanHelper {
         // 3. Deposit _token back
         Actions.ActionArgs[] memory operations = new Actions.ActionArgs[](3);
 
-        operations[0] = _getWithdrawAction(_marketId, _amount);
+        operations[0] = _getWithdrawAction(dyDxMarketId, _amount);
         operations[1] = _getCallAction(_callData);
-        operations[2] = _getDepositAction(_marketId, repayAmount);
+        operations[2] = _getDepositAction(dyDxMarketId, repayAmount);
 
         Account.Info[] memory accountInfos = new Account.Info[](1);
         accountInfos[0] = _getAccountInfo();
