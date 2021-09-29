@@ -13,7 +13,14 @@ contract VFRStablePool is VFRPool {
     uint256 public startTime;
     uint256 public initialPricePerShare;
 
+    // Spot predictedAPY (can't be > targetAPY)
     uint256 public predictedAPY;
+
+    // Accumulator for Time-weighted average Predicted APY for auto-retargeting
+    uint256 public accPredictedAPY;
+    uint256 public lastObservationBlock;
+    uint256 public predictionStartBlock;
+
     uint256 public tolerance;
     uint256 public lockPeriod;
 
@@ -32,6 +39,8 @@ contract VFRStablePool is VFRPool {
         address _token
     ) VFRPool(_name, _symbol, _token) {
         lockPeriod = 7 days;
+        predictionStartBlock = block.number;
+        lastObservationBlock = block.number;
     }
 
     modifier onlyWithdrawUnlocked(address _sender) {
@@ -52,18 +61,24 @@ contract VFRStablePool is VFRPool {
     }
 
     function retarget(uint256 _apy, uint256 _tolerance) external onlyGovernor {
-        // eg. 100% APY -> 1 * 1e18 = 1e18
-        //     5% APY -> 0.05 * 1e18 = 5e16
-        targetAPY = _apy;
-        startTime = block.timestamp;
-        initialPricePerShare = pricePerShare();
-        predictedAPY = _apy;
-        // Only allow deposits if at the last rebalance the pool's actual APY
-        // was not behind the target APY for more than 'tolerance'. Probably
-        // a better way to set this is dynamically based on how long the pool
-        // has been running for.
-        tolerance = _tolerance;
-        emit Retarget(_apy, _tolerance);
+        _retarget(_apy, _tolerance);
+    }
+
+    // Moves Target APY by a tolerance step according to time-weighted Predicted APY
+    // Make sure to collect enough checkpoints before for a accurate retargeting
+    function autoRetarget() external onlyKeeper {
+        uint256 _avgPredictedAPY = avgPredictedAPY();
+
+        // Make sure to have at least a checkpoint since last retarget
+        require(_avgPredictedAPY > 0, "invalid-avg-predicted-apy");
+
+        if (_avgPredictedAPY > targetAPY + tolerance) {
+            _retarget(targetAPY + tolerance, tolerance);
+        } else if (_avgPredictedAPY < targetAPY - tolerance) {
+            _retarget(targetAPY - tolerance, tolerance);
+        }
+        // if _avgPredictedAPY is within targetAPY (+/- ~ tolerance) do nothing
+        // Goal is to keep rate as fixed as possible
     }
 
     function checkpoint() external onlyKeeper {
@@ -110,6 +125,9 @@ contract VFRStablePool is VFRPool {
                 ((predictedPricePerShare - initialPricePerShare) * (1e18 * 365 * 24 * 3600)) /
                 (initialPricePerShare * (block.timestamp - startTime));
 
+            // Updates the time-weighted average Predicted APY accumulator
+            accPredictedAPY += predictedAPY * (block.number - lastObservationBlock);
+            lastObservationBlock = block.number;
             // Although the predicted APY can be greater than the target APY due to the funds
             // available in the buffer, the strategies will make sure to never send more funds
             // to the pool than the amount needed to cover the target APY
@@ -118,6 +136,13 @@ contract VFRStablePool is VFRPool {
 
         // The predicted APY must be within the target APY by no more than the current tolerance
         depositsHalted = targetAPY - predictedAPY > tolerance;
+    }
+
+    // Gets the time-weighted average Predicted APY since last retarget
+    // It updates every checkpoint since last retarget (more checkpoints -> better prediction)
+    function avgPredictedAPY() public view returns (uint256 _avgPredictedAPY) {
+        uint256 _elapsedBlocks = lastObservationBlock - predictionStartBlock;
+        _avgPredictedAPY = (_elapsedBlocks != 0) ? accPredictedAPY / _elapsedBlocks : 0;
     }
 
     function targetPricePerShare() public view returns (uint256) {
@@ -138,6 +163,26 @@ contract VFRStablePool is VFRPool {
             return (amountWithoutFee * MAX_BPS) / (MAX_BPS - fee);
         }
         return 0;
+    }
+
+    function _retarget(uint256 _apy, uint256 _tolerance) internal {
+        // eg. 100% APY -> 1 * 1e18 = 1e18
+        //     5% APY -> 0.05 * 1e18 = 5e16
+        targetAPY = _apy;
+        startTime = block.timestamp;
+        initialPricePerShare = pricePerShare();
+        predictedAPY = _apy;
+        // Only allow deposits if at the last rebalance the pool's actual APY
+        // was not behind the target APY for more than 'tolerance'. Probably
+        // a better way to set this is dynamically based on how long the pool
+        // has been running for.
+        tolerance = _tolerance;
+        emit Retarget(_apy, _tolerance);
+
+        // Restart time-weighted PredictedAPY calculation
+        lastObservationBlock = block.number;
+        predictionStartBlock = block.number;
+        accPredictedAPY = 0;
     }
 
     function _deposit(uint256 _amount) internal override {
