@@ -87,7 +87,7 @@
           "implementation": "0xe2751fD3FA863be8Bf924296Edb4386618acb121"
         },
         "strategies": {
-          "AaveStrategyUNI": "0xe3eCC89D37E90edFfE6380Dc26fDBcCbd6f95435",
+          "AaveStrategyUNI": "0xed8BA4be8E0422f345156E9071f1B7218f0E36Ba",
           "CompoundMakerStrategyUNI": "0xA1CcDa3c0b94f3CA7eE44DCc2Bd9e414f7167669",
           "CompoundStrategyUNI": "0xdb0950c877Db658E17a8120E89b4f2Ffc4Dd6e05"
         }
@@ -227,7 +227,7 @@
         },
         "poolRewards": {
           "proxy": "0x30D63c7651D7Ed798Af5385f4d5Fc9a3d966bB45",
-          "implementation": "0x8F09f6dbEc65C94e5aF7A5d2682342FC1fBC86Fc"
+          "implementation": "0xEbe36251eba30Cac560db3A8259b7987485e1C3E"
         },
         "strategies": {
           "ConvexSBTCStrategyWBTC": "0x43CeCF2e018FEE7EE94410f85FcefeD2a3843ef2",
