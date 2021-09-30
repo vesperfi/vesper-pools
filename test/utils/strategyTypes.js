@@ -18,6 +18,7 @@ const StrategyType = {
   EARN_RARI_FUSE: 'earnRariFuse',
   EARN_ALPHA_LEND: 'earnAlphaLend',
   EARN_YEARN: 'earnYearn',
+  EARN_CURVE: 'earnCurve',
   RARI_FUSE: 'rariFuse',
   COMPOUND_XY: 'compoundXY',
   COMPOUND_LEVERAGE: 'compoundLeverage'

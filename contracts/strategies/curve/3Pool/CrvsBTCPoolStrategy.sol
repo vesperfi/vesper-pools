@@ -30,7 +30,7 @@ abstract contract CrvsBTCPoolStrategy is Crv3PoolStrategyBase {
         );
     }
 
-    function convertFrom18(uint256 amount) public pure override returns (uint256) {
+    function convertFrom18(uint256 amount) public pure virtual override returns (uint256) {
         return amount / (10**10);
     }
 
