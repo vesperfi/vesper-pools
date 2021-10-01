@@ -6,6 +6,7 @@ const {deposit, timeTravel} = require('../utils/poolOps')
 const { shouldBehaveLikeCompoundStrategy } = require('./compound-strategy')
 const Address = require('../../helper/ethereum/address')
 const {ethers} = require('hardhat')
+const DECIMAL6 = ethers.BigNumber.from('1000000')
 
 // Earn Compound strategy specific tests
 function shouldBehaveLikeEarnCompoundStrategy(strategyIndex) {
@@ -33,13 +34,24 @@ function shouldBehaveLikeEarnCompoundStrategy(strategyIndex) {
       await strategy.rebalance()
       const tokenBalanceAfter = await vDai.balanceOf(this.earnDrip.address)
       expect(tokenBalanceAfter).to.be.gt(tokenBalanceBefore, 'Should increase vDAI balance in Compound strategy')
-      await timeTravel()
+      const pricePerShareAfter = await pool.pricePerShare()
+
+      // Allow some room for dust errors
+      expect(pricePerShareBefore.div(DECIMAL6)).to.gte(
+        pricePerShareAfter.div(DECIMAL6),
+        'Price per share shouldn\'t increase'
+      )
+
+      await timeTravel('',100, 'compound')
       const withdrawAmount = await pool.balanceOf(user2.address)
-      await pool.connect(user2.signer).withdrawETH(withdrawAmount)
+
+      if (collateralToken.address === Address.WETH)
+        await pool.connect(user2.signer).withdrawETH(withdrawAmount)
+      else
+        await pool.connect(user2.signer).withdraw(withdrawAmount)
+
       const earnedDai = await dai.balanceOf(user2.address)
       expect(earnedDai).to.be.gt(0, 'No dai earned')
-      const pricePerShareAfter = await pool.pricePerShare()
-      expect(pricePerShareBefore).to.eq(pricePerShareAfter,'Price per share shouldn\'t increase')
     })
 
   })
