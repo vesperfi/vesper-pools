@@ -14,8 +14,8 @@ abstract contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
     using SafeERC20 for IERC20;
 
     uint256 internal constant MAX_BPS = 10_000; //100%
-    uint256 public minBorrowLimit = 7_000; // 70%
-    uint256 public maxBorrowLimit = 9_000; // 90%
+    uint256 public minBorrowRatio = 5_000; // 50%
+    uint256 public maxBorrowRatio = 6_000; // 60%
     CToken internal cToken;
     address internal constant COMP = 0xc00e94Cb662C3520282E6f5717214004A7f26888;
     Comptroller internal constant COMPTROLLER = Comptroller(0x3d9819210A31b4961b30EF54bE2aeD79B9c9Cd3B);
@@ -32,16 +32,17 @@ abstract contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
     }
 
     /**
-     * @notice Update upper and lower borrow limit
-     * @dev It is possible to set 0 as _minBorrowLimit to not borrow anything
-     * @param _minBorrowLimit Minimum % we want to borrow
-     * @param _maxBorrowLimit Maximum % we want to borrow
+     * @notice Update upper and lower borrow ratio
+     * @dev It is possible to set 0 as _minBorrowRatio to not borrow anything
+     * @param _minBorrowRatio Minimum % we want to borrow
+     * @param _maxBorrowRatio Maximum % we want to borrow
      */
-    function updateBorrowLimit(uint256 _minBorrowLimit, uint256 _maxBorrowLimit) external onlyGovernor {
-        require(_maxBorrowLimit < MAX_BPS, "invalid-max-borrow-limit");
-        require(_maxBorrowLimit > _minBorrowLimit, "max-should-be-higher-than-min");
-        minBorrowLimit = _minBorrowLimit;
-        maxBorrowLimit = _maxBorrowLimit;
+    function updateBorrowRatio(uint256 _minBorrowRatio, uint256 _maxBorrowRatio) external onlyGovernor {
+        (, uint256 _collateralFactor, ) = COMPTROLLER.markets(address(cToken));
+        require(_maxBorrowRatio < (_collateralFactor / 1e14), "invalid-max-borrow-limit");
+        require(_maxBorrowRatio > _minBorrowRatio, "max-should-be-higher-than-min");
+        minBorrowRatio = _minBorrowRatio;
+        maxBorrowRatio = _maxBorrowRatio;
     }
 
     function updateAaveStatus(bool _status) external onlyGovernor {
@@ -61,16 +62,6 @@ abstract contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
         cToken.exchangeRateCurrent();
         _claimComp();
         _totalValue = _calculateTotalValue(IERC20(COMP).balanceOf(address(this)));
-    }
-
-    /**
-     * @notice Calculate and return borrow ratio range.
-     * @dev It is calculated as collateralFactor * borrowLimit
-     */
-    function borrowRatioRange() public view returns (uint256 _minBorrowRatio, uint256 _maxBorrowRatio) {
-        (, uint256 _collateralFactor, ) = COMPTROLLER.markets(address(cToken));
-        _minBorrowRatio = (minBorrowLimit * _collateralFactor) / 1e18;
-        _maxBorrowRatio = (maxBorrowLimit * _collateralFactor) / 1e18;
     }
 
     /**
@@ -137,7 +128,7 @@ abstract contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
      */
     function _beforeMigration(address _newStrategy) internal virtual override {
         require(IStrategy(_newStrategy).token() == address(cToken), "wrong-receipt-token");
-        minBorrowLimit = 0;
+        minBorrowRatio = 0;
         // It will calculate amount to repay based on borrow limit and payback all
         _reinvest();
     }
@@ -157,7 +148,7 @@ abstract contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
         uint256 _totalSupply = cToken.balanceOfUnderlying(address(this));
         uint256 _currentBorrow = cToken.borrowBalanceStored(address(this));
         // If minimum borrow limit set to 0 then repay borrow
-        if (minBorrowLimit == 0) {
+        if (minBorrowRatio == 0) {
             return (_currentBorrow, true);
         }
 
@@ -166,10 +157,9 @@ abstract contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
         // In case of withdraw, _amount can be greater than _supply
         uint256 _newSupply = _isDeposit ? _supply + _amount : _supply > _amount ? _supply - _amount : 0;
 
-        (uint256 _minBorrowRatio, uint256 _maxBorrowRatio) = borrowRatioRange();
         // (supply * borrowRatio)/(BPS - borrowRatio)
-        uint256 _borrowUpperBound = (_newSupply * _maxBorrowRatio) / (MAX_BPS - _maxBorrowRatio);
-        uint256 _borrowLowerBound = (_newSupply * _minBorrowRatio) / (MAX_BPS - _minBorrowRatio);
+        uint256 _borrowUpperBound = (_newSupply * maxBorrowRatio) / (MAX_BPS - maxBorrowRatio);
+        uint256 _borrowLowerBound = (_newSupply * minBorrowRatio) / (MAX_BPS - minBorrowRatio);
 
         // If our current borrow is greater than max borrow allowed, then we will have to repay
         // some to achieve safe position else borrow more.
@@ -398,10 +388,10 @@ abstract contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
             if (_position != 0) {
                 // Calculate redeemable at current borrow and supply.
                 (uint256 _supply, uint256 _borrow) = getPosition();
-                (, uint256 _maxBorrowRatio) = borrowRatioRange();
+
                 uint256 _supplyToSupportBorrow;
-                if (_maxBorrowRatio != 0) {
-                    _supplyToSupportBorrow = (_borrow * MAX_BPS) / _maxBorrowRatio;
+                if (maxBorrowRatio != 0) {
+                    _supplyToSupportBorrow = (_borrow * MAX_BPS) / maxBorrowRatio;
                 }
                 // Current supply minus supply required to support _borrow at _maxBorrowRatio
                 uint256 _redeemable = _supply - _supplyToSupportBorrow;
