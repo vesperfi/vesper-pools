@@ -86,6 +86,8 @@ function shouldValidateMakerCommonBehaviour(strategyIndex) {
       })
 
       it('Should deposit via fallback and rebalance', async function () {
+        // Skips this test in case collateral is not ETH/WETH
+        if (collateralToken.address !== address.WETH) return true
         const depositAmount = 10
         await ethers.provider.send('eth_sendTransaction', [
           {
@@ -144,16 +146,24 @@ function shouldValidateMakerCommonBehaviour(strategyIndex) {
       it('Should withdraw after rebalance', async function () {
         await deposit(pool, collateralToken, 10, user2)
         await rebalanceStrategy(strategy)
-        const balanceBefore = await ethers.provider.getBalance(user2.address)
+        const balanceBefore =
+          collateralToken.address === address.WETH
+            ? await ethers.provider.getBalance(user2.address)
+            : await collateralToken.balanceOf(user2.address)
         const withdrawAmount = await pool.balanceOf(user2.address)
-        await pool.connect(user2.signer).withdrawETH(withdrawAmount)
+        if (collateralToken.address === address.WETH) await pool.connect(user2.signer).withdrawETH(withdrawAmount)
+        else await pool.connect(user2.signer).withdraw(withdrawAmount)
+
+        const balanceAfter =
+          collateralToken.address === address.WETH
+            ? await ethers.provider.getBalance(user2.address)
+            : await collateralToken.balanceOf(user2.address)
         return Promise.all([
           pool.totalDebt(),
           pool.totalSupply(),
           pool.totalValue(),
           pool.balanceOf(user2.address),
-          ethers.provider.getBalance(user2.address),
-        ]).then(function ([totalDebt, totalSupply, totalValue, vPoolBalance, balanceAfter]) {
+        ]).then(function ([totalDebt, totalSupply, totalValue, vPoolBalance]) {
           expect(totalDebt).to.be.equal('0', 'debt is wrong')
           expect(totalSupply).to.be.equal('0', 'Total supply is wrong')
           expect(totalValue).to.be.equal('0', 'Total value is wrong')
