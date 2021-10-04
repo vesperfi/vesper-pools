@@ -31,17 +31,22 @@ async function shouldBehaveLikeEarnVesperMakerStrategy(strategyIndex) {
 
         await strategy.instance.rebalance()
         const dai = await ethers.getContractAt('ERC20', Address.DAI)
+        const vDai = await ethers.getContractAt('ERC20', Address.vDAI)
         const poolRewards = await pool.poolRewards()
 
-        const tokenBalanceBefore = await dai.balanceOf(poolRewards)
+        const tokenBalanceBefore = await vDai.balanceOf(poolRewards)
         await timeTravel(10 * 24 * 60 * 60)
         await strategy.instance.rebalance()
 
-        const tokenBalanceAfter = await dai.balanceOf(poolRewards)
-        expect(tokenBalanceAfter).to.be.gt(tokenBalanceBefore, 'Should increase dai balance')
+        const tokenBalanceAfter = await vDai.balanceOf(poolRewards)
+        expect(tokenBalanceAfter).to.be.gt(tokenBalanceBefore, 'Should increase vDai balance')
         await timeTravel()
         const withdrawAmount = await pool.balanceOf(user2.address)
-        await pool.connect(user2.signer).withdrawETH(withdrawAmount)
+
+        if (collateralToken.address === Address.WETH)
+          await pool.connect(user2.signer).withdrawETH(withdrawAmount)
+        else
+          await pool.connect(user2.signer).withdraw(withdrawAmount)
 
         const earnedDai = await dai.balanceOf(user2.address)
         expect(earnedDai).to.be.gt(0, 'No dai earned')
