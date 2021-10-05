@@ -3,6 +3,7 @@
 const { prepareConfig } = require('./config')
 const { shouldBehaveLikePool } = require('../behavior/vesper-pool')
 const { shouldBehaveLikeStrategy } = require('../behavior/strategy')
+const { shouldMigrateStrategies } = require('../behavior/strategy-migration')
 const StrategyType = require('../utils/strategyTypes')
 const { ethers } = require('hardhat')
 
@@ -22,4 +23,5 @@ describe('vETH Pool with Compound Leverage Strategy', function () {
   for (let i = 0; i < strategies.length; i++) {
     shouldBehaveLikeStrategy(i, strategies[i].type, strategies[i].name)
   }
+  shouldMigrateStrategies('vETH')
 })
