@@ -40,6 +40,7 @@ abstract contract Earn is Strategy {
         address _growPool = IEarnDrip(_dripContract).growToken();
         // Checks that the Grow Pool supports dripToken as underlying
         require(address(IVesperPool(_growPool).token()) == dripToken, "invalid-grow-pool");
+        IERC20(dripToken).safeApprove(_growPool, 0);
         IERC20(dripToken).safeApprove(_growPool, MAX_UINT_VALUE);
     }
 
@@ -74,15 +75,15 @@ abstract contract Earn is Strategy {
             address _growPool = IEarnDrip(_dripContract).growToken();
             // Checks that the Grow Pool supports dripToken as underlying
             require(address(IVesperPool(_growPool).token()) == dripToken, "invalid-grow-pool");
-
             totalEarned += _earned;
-            uint256 _fee = (_earned * _interestFee) / 10000;
-            if (_fee != 0) {
-                IERC20(dripToken).safeTransfer(feeCollector, _fee);
-                _earned = _earned - _fee;
-            }
+            uint256 _growPoolBalanceBefore = IERC20(_growPool).balanceOf(address(this));
             IVesperPool(_growPool).deposit(_earned);
-            uint256 _growPoolShares = IERC20(_growPool).balanceOf(address(this));
+            uint256 _growPoolShares = IERC20(_growPool).balanceOf(address(this)) - _growPoolBalanceBefore;
+            uint256 _fee = (_growPoolShares * _interestFee) / 10000;
+            if (_fee != 0) {
+                IERC20(_growPool).safeTransfer(feeCollector, _fee);
+                _growPoolShares -= _fee;
+            }
             IERC20(_growPool).safeTransfer(_dripContract, _growPoolShares);
             IEarnDrip(_dripContract).notifyRewardAmount(_growPool, _growPoolShares, dripPeriod);
         }

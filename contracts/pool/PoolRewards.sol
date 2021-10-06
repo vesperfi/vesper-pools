@@ -141,6 +141,7 @@ contract PoolRewards is Initializable, IPoolRewards, ReentrancyGuard, PoolReward
     function claimable(address _account)
         external
         view
+        virtual
         override
         returns (address[] memory _rewardTokens, uint256[] memory _claimableAmounts)
     {

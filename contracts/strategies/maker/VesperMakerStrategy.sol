@@ -43,7 +43,7 @@ abstract contract VesperMakerStrategy is MakerStrategy {
         IVesperPool(receiptToken).whitelistedWithdraw(_vAmount);
     }
 
-    function _rebalanceDaiInLender() internal override {
+    function _rebalanceDaiInLender() internal virtual override {
         uint256 _daiDebt = cm.getVaultDebt(address(this));
         uint256 _daiBalance = _getDaiBalance();
         if (_daiBalance > _daiDebt) {

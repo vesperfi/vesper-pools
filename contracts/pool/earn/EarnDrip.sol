@@ -21,6 +21,32 @@ contract VesperEarnDrip is PoolRewards {
     }
 
     /**
+     * @notice Returns claimable reward amount.
+     * @dev In case of growToken it will return the actual underlying value
+     * @return _rewardTokens Array of tokens being rewarded
+     * @return _claimableAmounts Array of claimable for token on same index in rewardTokens
+     */
+    function claimable(address _account)
+        external
+        view
+        override
+        returns (address[] memory _rewardTokens, uint256[] memory _claimableAmounts)
+    {
+        uint256 _totalSupply = IERC20(pool).totalSupply();
+        uint256 _balance = IERC20(pool).balanceOf(_account);
+        uint256 _len = rewardTokens.length;
+        _claimableAmounts = new uint256[](_len);
+        for (uint256 i = 0; i < _len; i++) {
+            uint256 _claimableAmount = _claimable(rewardTokens[i], _account, _totalSupply, _balance);
+            if (rewardTokens[i] == growToken) {
+                _claimableAmount = (IVesperPool(growToken).pricePerShare() * _claimableAmount) / 1e18;
+            }
+            _claimableAmounts[i] = _claimableAmount;
+        }
+        _rewardTokens = rewardTokens;
+    }
+
+    /**
      * @dev Notify that reward is added.
      * Also updates reward rate and reward earning period.
      */
