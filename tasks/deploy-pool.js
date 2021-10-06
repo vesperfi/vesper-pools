@@ -4,7 +4,7 @@ const del = require('del')
 const copy = require('recursive-copy')
 const fs = require('fs')
 
-/* eslint-disable no-param-reassign */
+/* eslint-disable no-param-reassign, complexity */
 task('deploy-pool', 'Deploy vesper pool')
   .addParam('pool', 'Vesper pool name')
   .addOptionalParam('release', 'Vesper release semantic version. It will create release file under /releases directory')
@@ -26,7 +26,7 @@ task('deploy-pool', 'Deploy vesper pool')
   -----------------------------------------------------------------------------------------
   `
   )
-  .setAction(async function ({pool, release, deployParams = {}}) {
+  .setAction(async function ({ pool, release, deployParams = {} }) {
     if (typeof deployParams === 'string') {
       deployParams = JSON.parse(deployParams)
     }
@@ -61,7 +61,7 @@ task('deploy-pool', 'Deploy vesper pool')
         }
       }
 
-      await run('deploy', {...deployParams})
+      await run('deploy', { ...deployParams })
 
       let copyFilter = ['*.json', 'solcInputs/*', '!DefaultProxyAdmin.json']
       if (poolDir !== globalDir) {
@@ -74,13 +74,18 @@ task('deploy-pool', 'Deploy vesper pool')
 
       // Copy files from network directory to pool specific directory after deployment
       // Note: This operation will overwrite files. Anything start with dot(.) will not be copied
-      await copy(networkDir, poolDir, {overwrite: true, filter: copyFilter})
-    } 
+      await copy(networkDir, poolDir, { overwrite: true, filter: copyFilter })
+    }
     catch (error) {
-      console.log(error)
-      // in case fail. copy and save it for review
-      const filter = ['*.json', 'solcInputs/*', '!DefaultProxyAdmin.json']
-      await copy(networkDir, `${networkDir}/failed/${pool}`, {overwrite: true, filter})
+      if (error.message.includes('TransportStatusError')) {
+        console.error('Error: Ledger device is locked. Please unlock your ledger device!')
+        process.exit(1)
+      } else {
+        console.log(error)
+        // in case fail. copy and save it for review
+        const filter = ['*.json', 'solcInputs/*', '!DefaultProxyAdmin.json']
+        await copy(networkDir, `${networkDir}/failed/${pool}`, { overwrite: true, filter })
+      }
     }
     finally {
       // Delete all json files except DefaultProxyAdmin.json. Also delete solcInputs directory
@@ -91,7 +96,7 @@ task('deploy-pool', 'Deploy vesper pool')
     }
 
     if (release) {
-      await run('create-release', {pool, release})
+      await run('create-release', { pool, release })
     }
   })
 

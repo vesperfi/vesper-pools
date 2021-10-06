@@ -1,0 +1,114 @@
+diff --git a/node_modules/hardhat-deploy/dist/src/helpers.js b/node_modules/hardhat-deploy/dist/src/helpers.js
+index 6cb6803..3414ac4 100644
+--- a/node_modules/hardhat-deploy/dist/src/helpers.js
++++ b/node_modules/hardhat-deploy/dist/src/helpers.js
+@@ -129,8 +129,8 @@ function linkLibraries(artifact, libraries) {
+                     for (const fixup of fixups) {
+                         bytecode =
+                             bytecode.substr(0, 2 + fixup.start * 2) +
+-                                addr.substr(2) +
+-                                bytecode.substr(2 + (fixup.start + fixup.length) * 2);
++                            addr.substr(2) +
++                            bytecode.substr(2 + (fixup.start + fixup.length) * 2);
+                     }
+                 }
+             }
+@@ -343,8 +343,10 @@ function addHelpers(deploymentManager, partialExtension, network, getArtifact, s
+         const address = options.deterministicDeployment && create2Address
+             ? create2Address
+             : receipt.contractAddress;
+-        const deployment = Object.assign(Object.assign({}, preDeployment), { address,
+-            receipt, transactionHash: receipt.transactionHash, libraries: options.libraries });
++        const deployment = Object.assign(Object.assign({}, preDeployment), {
++            address,
++            receipt, transactionHash: receipt.transactionHash, libraries: options.libraries
++        });
+         await saveDeployment(name, deployment);
+         if (options.log || hardwareWallet) {
+             print(`: deployed at ${deployment.address} with ${receipt === null || receipt === void 0 ? void 0 : receipt.gasUsed} gas\n`);
+@@ -660,7 +662,7 @@ function addHelpers(deploymentManager, partialExtension, network, getArtifact, s
+         }
+         const proxyName = name + '_Proxy';
+         const { address: owner } = getProxyOwner(options);
+-        const { address: from } = getFrom(options.from);
++        // const { address: from } = getFrom(options.from);
+         const implementationArgs = options.args ? [...options.args] : [];
+         // --- Implementation Deployment ---
+         const implementationName = name + '_Implementation';
+@@ -883,12 +885,14 @@ Note that in this case, the contract deployment will not behave the same if depl
+                     }
+                 }
+             }
+-            const proxiedDeployment = Object.assign(Object.assign({}, proxyContract), { receipt: proxy.receipt, address: proxy.address, linkedData: options.linkedData, abi: mergedABI, implementation: implementation.address, args: proxy.args, execute: updateMethod
++            const proxiedDeployment = Object.assign(Object.assign({}, proxyContract), {
++                receipt: proxy.receipt, address: proxy.address, linkedData: options.linkedData, abi: mergedABI, implementation: implementation.address, args: proxy.args, execute: updateMethod
+                     ? {
+                         methodName: updateMethod,
+                         args: updateArgs,
+                     }
+-                    : undefined });
++                    : undefined
++            });
+             if (oldDeployment) {
+                 proxiedDeployment.history = proxiedDeployment.history
+                     ? proxiedDeployment.history.concat([oldDeployment])
+@@ -900,12 +904,14 @@ Note that in this case, the contract deployment will not behave the same if depl
+         }
+         else {
+             if (oldDeployment.implementation !== implementation.address) {
+-                const proxiedDeployment = Object.assign(Object.assign({}, oldDeployment), { implementation: implementation.address, linkedData: options.linkedData, abi: mergedABI, execute: updateMethod
++                const proxiedDeployment = Object.assign(Object.assign({}, oldDeployment), {
++                    implementation: implementation.address, linkedData: options.linkedData, abi: mergedABI, execute: updateMethod
+                         ? {
+                             methodName: updateMethod,
+                             args: updateArgs,
+                         }
+-                        : undefined });
++                        : undefined
++                });
+                 proxiedDeployment.history = proxiedDeployment.history
+                     ? proxiedDeployment.history.concat([oldDeployment])
+                     : [oldDeployment];
+@@ -1382,9 +1388,9 @@ Note that in this case, the contract deployment will not behave the same if depl
+                         console.log(`
+ from: ${from}
+ to: ${to} (${contract.name})${value
+-                            ? '\nvalue: ' +
++                                ? '\nvalue: ' +
+                                 (typeof value === 'string' ? value : value.toString())
+-                            : ''}
++                                : ''}
+ method: ${contract.method}
+ args:
+   - ${contract.args.join('\n  - ')}
+@@ -1396,9 +1402,9 @@ args:
+                         console.log(`
+ from: ${from}
+ to: ${to ? to : '0x0000000000000000000000000000000000000000'}${value
+-                            ? '\nvalue: ' +
++                                ? '\nvalue: ' +
+                                 (typeof value === 'string' ? value : value.toString())
+-                            : ''}
++                                : ''}
+ data: ${data}
+ `);
+                     }
+@@ -1562,14 +1568,16 @@ data: ${data}
+             return method(overrides);
+         }
+     }
+-    const extension = Object.assign(Object.assign({}, partialExtension), { fetchIfDifferent,
++    const extension = Object.assign(Object.assign({}, partialExtension), {
++        fetchIfDifferent,
+         deploy, diamond: {
+             deploy: diamond,
+         }, catchUnknownSigner,
+         execute,
+         rawTx,
+         read,
+-        deterministic });
++        deterministic
++    });
+     const utils = {
+         dealWithPendingTransactions: async (pendingTxs, pendingTxPath, globalGasPrice) => {
+             var _a, _b;
