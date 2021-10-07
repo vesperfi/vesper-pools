@@ -35,9 +35,10 @@ abstract contract VFR {
                 uint256 amountNeeded = targetAmount - _profit;
                 if (amountNeeded > 0) {
                     uint256 amountInBuffer = collateralToken.balanceOf(buffer);
-                    uint256 amountReceived = amountInBuffer >= amountNeeded ? amountNeeded : amountInBuffer;
-                    IVFRBuffer(buffer).request(amountReceived);
-                    _profit += amountReceived;
+                    uint256 amountRequestedMax = amountInBuffer >= amountNeeded ? amountNeeded : amountInBuffer;
+                    uint256 amountBeforeRequest = collateralToken.balanceOf(address(this));
+                    IVFRBuffer(buffer).request(amountRequestedMax);
+                    _profit += collateralToken.balanceOf(address(this)) - amountBeforeRequest;
                 }
             }
         }
