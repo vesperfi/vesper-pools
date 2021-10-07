@@ -255,6 +255,7 @@ abstract contract Crv3PoolStrategyBase is Crv3x, Strategy {
 
     function _generateReport()
         internal
+        virtual
         override
         returns (
             uint256 _profit,
@@ -270,7 +271,7 @@ abstract contract Crv3PoolStrategyBase is Crv3x, Strategy {
         _payback = _liquidate(_excessDebt, _toUnstake);
     }
 
-    function rebalance() external override onlyKeeper {
+    function rebalance() external virtual override onlyKeeper {
         (uint256 _profit, uint256 _loss, uint256 _payback) = _generateReport();
         IVesperPool(pool).reportEarning(_profit, _loss, _payback);
         _reinvest();
