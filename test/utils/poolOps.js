@@ -91,6 +91,16 @@ async function harvestYearn(strategy) {
 }
 
 /**
+ * Simulates profit in a Vesper Pool
+ * As of now simulating profits behaves exactly like harvestYearn
+ *
+ * @param {object} strategy - strategy object
+ */ 
+async function harvestVesper(strategy) {
+  return harvestYearn(strategy)
+} 
+
+/**
  * Rebalance one strategy
  *
  * @param {object} strategy - strategy object
@@ -104,6 +114,9 @@ async function rebalanceStrategy(strategy) {
     }
     if (strategy.type.includes('yearn') || strategy.type.includes('Yearn')) {
       await harvestYearn(strategy)
+    }
+    if (strategy.type === 'earnVesper') {
+      await harvestVesper(strategy)
     }
     if (strategy.type.includes('alpha') || strategy.type.includes('Alpha')) {
       // Alpha SafeBox has a cToken - this method calls exchangeRateCurrent on the cToken
