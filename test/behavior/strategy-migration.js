@@ -1,21 +1,22 @@
 'use strict'
 
-const {makeNewStrategy} = require('../utils/setupHelper')
-const {deposit: _deposit, timeTravel, rebalance, rebalanceStrategy} = require('../utils/poolOps')
-const {expect} = require('chai')
+const { makeNewStrategy } = require('../utils/setupHelper')
+const { deposit: _deposit, timeTravel, rebalanceStrategy } = require('../utils/poolOps')
+const StrategyType = require('../utils/strategyTypes')
+const { expect } = require('chai')
 
 async function shouldMigrateStrategies(poolName) {
-  let pool, strategies, collateralToken, accountant
-  let user1, user2, user3, gov
-  const options = {skipVault: true, addressListFactory: '0xded8217De022706A191eE7Ee0Dc9df1185Fb5dA3'}
+  let pool, strategies, collateralToken
+  let user1, user2, gov
+  const options = { skipVault: true, addressListFactory: '0xded8217De022706A191eE7Ee0Dc9df1185Fb5dA3' }
 
   async function deposit(amount, depositor) {
     return _deposit(pool, collateralToken, amount, depositor)
   }
 
-  async function assertMigrateStrategy(oldStrategy, newStrategy, receiptToken) {
+  async function migrateAndAssert(oldStrategy, newStrategy, receiptToken) {
     await Promise.all([deposit(50, user2), deposit(30, user1)])
-    await rebalance(strategies)
+    await rebalanceStrategy(oldStrategy)
     const [totalSupplyBefore, totalValueBefore, totalDebtBefore, totalDebtRatioBefore, receiptTokenBefore] =
       await Promise.all([
         pool.totalSupply(),
@@ -49,28 +50,31 @@ async function shouldMigrateStrategies(poolName) {
       totalDebtRatioBefore,
       `${poolName} total debt ratio after migration is not correct`
     )
-    expect(receiptTokenAfter2).to.be.gte(
-      receiptTokenBefore,
-      `${poolName} receipt  token balance of new strategy after migration is not correct`
-    )
+    if (newStrategy.type === StrategyType.COMPOUND_LEVERAGE) {
+      // new strategy will have less receipt tokens due to deleverage at migration
+      expect(receiptTokenAfter2).to.be.lt(
+        receiptTokenBefore,
+        `${poolName} receipt  token balance of new strategy after migration is not correct`
+      )
+    } else {
+      expect(receiptTokenAfter2).to.be.gte(
+        receiptTokenBefore,
+        `${poolName} receipt  token balance of new strategy after migration is not correct`
+      )
+    }
     expect(receiptTokenAfter).to.be.eq(
       0,
       `${poolName} receipt  token balance of new strategy after migration is not correct`
     )
   }
 
-  async function assertDeposit() {
-    await deposit(50, user3)
-    const amount = await pool.balanceOf(user1.address)
-    expect(amount).to.be.gt(0, 'failed to deposit in pool')
-  }
-
-  async function assertWithdraw(newStrategy) {
+  async function assertDepositAndWithdraw(newStrategy) {
     await deposit(50, user2)
-    const amountBefore = await pool.balanceOf(user3.address)
+    const amountBefore = await pool.balanceOf(user2.address)
+    expect(amountBefore).to.be.gt(0, 'failed to deposit in pool')
     await rebalanceStrategy(newStrategy)
-    await pool.connect(user3.signer).withdraw(amountBefore)
-    const amountAfter = await pool.balanceOf(user3.address)
+    await pool.connect(user2.signer).withdraw(amountBefore)
+    const amountAfter = await pool.balanceOf(user2.address)
     expect(amountAfter).to.be.equal(0, 'amount should be 0 after withdraw')
   }
 
@@ -85,8 +89,6 @@ async function shouldMigrateStrategies(poolName) {
   }
 
   async function assertProfit(newStrategy) {
-    await deposit(20, user2)
-    await rebalanceStrategy(newStrategy)
     await timeTravel()
     await rebalanceStrategy(newStrategy)
     const strategyParams = await pool.strategy(newStrategy.instance.address)
@@ -94,49 +96,28 @@ async function shouldMigrateStrategies(poolName) {
     expect(totalProfit).to.be.gt(0, `Total debt of strategy in ${poolName} is wrong`)
   }
 
-  async function strategyMigration(strategyIndex) {
-    const newStrategy = await makeNewStrategy(strategies[strategyIndex], pool.address, options)
-    await assertMigrateStrategy(strategies[strategyIndex], newStrategy, strategies[strategyIndex].token)
-    await assertDeposit()
-    await assertWithdraw(newStrategy)
+  async function strategyMigration(strategy) {
+    const newStrategy = await makeNewStrategy(strategy, pool.address, options)
+    await migrateAndAssert(strategy, newStrategy, strategy.token)
+    await assertDepositAndWithdraw(newStrategy)
     await assertTotalDebt(newStrategy)
     await assertProfit(newStrategy)
   }
 
   describe(`${poolName} Strategy Migration`, function () {
     beforeEach(async function () {
-      ;[gov, user1, user2, user3] = this.users
+      ;[gov, user1, user2] = this.users
       pool = this.pool
-      accountant = this.accountant
       strategies = this.strategies
       collateralToken = this.collateralToken
-      await accountant.connect(gov.signer).updateDebtRatio(strategies[0].instance.address, 4800)
-      await accountant.connect(gov.signer).updateDebtRatio(strategies[1].instance.address, 4500)
     })
 
-    describe(`${poolName}: Should migrate from one strategy to another one`, function () {
-      it(`Should be able to migrate strategy[0] for ${poolName}`, async function () {
-        const strategyIndex = 0
-        const newStrategy = await makeNewStrategy(strategies[strategyIndex], pool.address, options)
-        await assertMigrateStrategy(strategies[strategyIndex], newStrategy, strategies[strategyIndex].token)
-      })
-      it(`Should be able to migrate strategy[1] for ${poolName}`, async function () {
-        const strategyIndex = 1
-        const newStrategy = await makeNewStrategy(strategies[strategyIndex], pool.address, options)
-        await assertMigrateStrategy(strategies[strategyIndex], newStrategy, strategies[strategyIndex].token)
-      })
-    })
-
-    describe(`${poolName}: Post migration`, function () {
-      it(`Should work all common operation for strategy[0] ${poolName}`, async function () {
-        await strategyMigration(0)
-      })
-
-      it(`Should work all common operation for strategy[1] ${poolName}`, async function () {
-        await strategyMigration(1)
-      })
+    it(`Should be able to migrate strategies for ${poolName}`, async function () {
+      for (const strategy of strategies) {
+        await strategyMigration(strategy)
+      }
     })
   })
 }
 
-module.exports = {shouldMigrateStrategies}
+module.exports = { shouldMigrateStrategies }
