@@ -32,6 +32,11 @@ async function shouldBehaveLikeEarnVesperStrategy(strategyIndex) {
         await rebalanceStrategy(strategy)
         const dripToken = await ethers.getContractAt('ERC20', await strategy.instance.dripToken())
         const dripTokenSymbol = await dripToken.symbol()
+        const earnedDripBefore =
+          dripToken.address === Address.WETH
+            ? await ethers.provider.getBalance(user2.address)
+            : await dripToken.balanceOf(user2.address)
+
         const EarnDrip = await ethers.getContractAt('IEarnDrip', await pool.poolRewards())
         const growToken = await ethers.getContractAt('ERC20', await EarnDrip.growToken())
         const growTokenSymbol = await growToken.symbol()
@@ -56,8 +61,12 @@ async function shouldBehaveLikeEarnVesperStrategy(strategyIndex) {
         else
           await pool.connect(user2.signer).withdraw(withdrawAmount)
 
-        const earnedDrip = await dripToken.balanceOf(user2.address)
-        expect(earnedDrip).to.be.gt(0, `No ${dripTokenSymbol} earned`)
+        const earnedDrip =
+          dripToken.address === Address.WETH
+            ? await ethers.provider.getBalance(user2.address)
+            : await dripToken.balanceOf(user2.address)
+
+        expect(earnedDrip.sub(earnedDripBefore)).to.be.gt(0, `No ${dripTokenSymbol} earned`)
 
       })
     })

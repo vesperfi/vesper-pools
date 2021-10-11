@@ -38,6 +38,7 @@ abstract contract EarnVesperStrategy is Strategy, Earn {
         collateralToken.safeApprove(pool, _amount);
         collateralToken.safeApprove(address(vToken), _amount);
         for (uint256 i = 0; i < swapManager.N_DEX(); i++) {
+            IERC20(VSP).safeApprove(address(swapManager.ROUTERS(i)), _amount);
             collateralToken.safeApprove(address(swapManager.ROUTERS(i)), _amount);
         }
     }

@@ -4,14 +4,23 @@ pragma solidity 0.8.3;
 
 import "../PoolRewards.sol";
 import "../../interfaces/vesper/IVesperPool.sol";
+import "../../interfaces/token/IToken.sol";
 
 contract VesperEarnDrip is PoolRewards {
+    TokenLike internal constant WETH = TokenLike(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);
+
     using SafeERC20 for IERC20;
 
     event DripRewardPaid(address indexed user, address indexed rewardToken, uint256 reward);
     event GrowTokenUpdated(address indexed oldGrowToken, address indexed newGrowToken);
 
     address public growToken;
+
+    /// @dev Handle incoming ETH from WETH to the contract address.
+    /// solhint-disable-next-line no-empty-blocks
+    receive() external payable {
+        require(msg.sender == address(WETH), "deposits-not-allowed");
+    }
 
     /**
      * @dev Notify that reward is added.
@@ -57,7 +66,12 @@ contract VesperEarnDrip is PoolRewards {
             uint256 _dripBalanceBefore = _dripToken.balanceOf(address(this));
             IVesperPool(_rewardToken).withdraw(_reward);
             uint256 _dripTokenAmount = _dripToken.balanceOf(address(this)) - _dripBalanceBefore;
-            _dripToken.safeTransfer(_account, _dripTokenAmount);
+            if (address(_dripToken) != address(WETH)) {
+                _dripToken.safeTransfer(_account, _dripTokenAmount);
+            } else {
+                WETH.withdraw(_dripTokenAmount);
+                Address.sendValue(payable(_account), _dripTokenAmount);
+            }
             emit DripRewardPaid(_account, address(_dripToken), _dripTokenAmount);
         } else {
             super._transferRewards(_rewardToken, _account, _reward);
