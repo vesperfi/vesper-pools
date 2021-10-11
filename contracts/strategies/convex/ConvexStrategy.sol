@@ -57,7 +57,7 @@ abstract contract ConvexStrategy is Crv3PoolStrategyBase {
     function _stakeAllLp() internal override {
         uint256 balance = IERC20(crvLp).balanceOf(address(this));
         if (balance != 0) {
-            IConvex(BOOSTER).deposit(convexPoolId, balance, true);
+            require(IConvex(BOOSTER).deposit(convexPoolId, balance, true), "booster-deposit-failed");
         }
     }
 
@@ -67,7 +67,7 @@ abstract contract ConvexStrategy is Crv3PoolStrategyBase {
 
     function _unstakeLp(uint256 _amount) internal override {
         if (_amount != 0) {
-            Rewards(cvxCrvRewards).withdrawAndUnwrap(_amount, false);
+            require(Rewards(cvxCrvRewards).withdrawAndUnwrap(_amount, false), "withdraw-and-unwrap-failed");
         }
     }
 
