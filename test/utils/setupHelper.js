@@ -277,13 +277,15 @@ async function getEvent(txnObj, contractInstance, eventName) {
 
 /**
  * Setup Vesper Earn Drip Pool for testing
+ *
+ * @param {string} growPool - address of the grow pool where drip is deposited
  */
-async function setupEarnDrip() {
+async function setupEarnDrip(growPool = Address.vDAI) {
   beforeEach(async function () {
     const vesperEarnDripImpl = await deployContract('VesperEarnDrip', [])
     // Deploy proxy admin
     const proxyAdmin = await deployContract('ProxyAdmin', [])
-    const initData = vesperEarnDripImpl.interface.encodeFunctionData('initialize', [this.pool.address, [Address.vDAI]])
+    const initData = vesperEarnDripImpl.interface.encodeFunctionData('initialize', [this.pool.address, [growPool]])
     // deploy proxy with logic implementation
     const proxy = await deployContract('TransparentUpgradeableProxy', [
       vesperEarnDripImpl.address,
@@ -292,7 +294,7 @@ async function setupEarnDrip() {
     ])
     // Get implementation from proxy
     this.earnDrip = await ethers.getContractAt('VesperEarnDrip', proxy.address)
-    await this.earnDrip.updateGrowToken(Address.vDAI)
+    await this.earnDrip.updateGrowToken(growPool)
     await this.pool.updatePoolRewards(proxy.address)
 
     for (const strategy of this.strategies) {

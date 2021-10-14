@@ -22,6 +22,7 @@ const { shouldBehaveLikeEarnAlphaLendStrategy } = require('../behavior/earn-alph
 const { shouldBehaveLikeEarnYearnStrategy } = require('../behavior/earn-yearn-strategy')
 const { shouldBehaveLikeEarnCrvStrategy } = require('../behavior/earn-crv-strategy')
 const { shouldBehaveLikeRariFuseStrategy } = require('./rari-fuse-strategy')
+const { shouldBehaveLikeEarnVesperStrategy } = require('../behavior/earn-vesper-strategy')
 
 const swapper = require('../utils/tokenSwapper')
 const { deposit, rebalanceStrategy, reset } = require('../utils/poolOps')
@@ -50,6 +51,7 @@ function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
     [StrategyType.EARN_ALPHA_LEND]: shouldBehaveLikeEarnAlphaLendStrategy,
     [StrategyType.EARN_YEARN]: shouldBehaveLikeEarnYearnStrategy,
     [StrategyType.EARN_CURVE]: shouldBehaveLikeEarnCrvStrategy,
+    [StrategyType.EARN_VESPER]: shouldBehaveLikeEarnVesperStrategy,
     [StrategyType.RARI_FUSE]: shouldBehaveLikeRariFuseStrategy,
   }
 

@@ -19,6 +19,7 @@ const StrategyType = {
   EARN_ALPHA_LEND: 'earnAlphaLend',
   EARN_YEARN: 'earnYearn',
   EARN_CURVE: 'earnCurve',
+  EARN_VESPER: 'earnVesper',
   RARI_FUSE: 'rariFuse',
   COMPOUND_XY: 'compoundXY',
   COMPOUND_LEVERAGE: 'compoundLeverage'
