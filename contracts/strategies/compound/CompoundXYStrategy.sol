@@ -13,17 +13,26 @@ abstract contract CompoundXYStrategy is Strategy {
     using SafeERC20 for IERC20;
 
     uint256 internal constant MAX_BPS = 10_000; //100%
-    uint256 public minBorrowLimit = 7_000; // 70%
-    uint256 public maxBorrowLimit = 9_000; // 90%
+    uint256 public minBorrowRatio = 4_500; // 45%
+    uint256 public maxBorrowRatio = 6_000; // 60%
+    uint256 public minBorrowLimit;
+    uint256 public maxBorrowLimit;
     address public borrowToken;
     CToken public immutable supplyCToken;
     CToken public borrowCToken;
     address internal constant COMP = 0xc00e94Cb662C3520282E6f5717214004A7f26888;
     Comptroller internal constant COMPTROLLER = Comptroller(0x3d9819210A31b4961b30EF54bE2aeD79B9c9Cd3B);
     IUniswapV3Oracle internal constant ORACLE = IUniswapV3Oracle(0x0F1f5A87f99f0918e6C81F16E59F3518698221Ff);
+    address internal constant CETH = 0x4Ddc2D193948926D02f9B1fE9e1daa0718270ED5;
     uint32 internal constant TWAP_PERIOD = 3600;
 
     event UpdatedBorrowCToken(address indexed previousBorrowCToken, address indexed newBorrowCToken);
+    event UpdatedBorrowRatio(
+        uint256 previousMinBorrowRatio,
+        uint256 newMinBorrowRatio,
+        uint256 previousMaxBorrowRatio,
+        uint256 newMaxBorrowRatio
+    );
 
     constructor(
         address _pool,
@@ -40,6 +49,9 @@ abstract contract CompoundXYStrategy is Strategy {
         _cTokens[0] = _receiptToken;
         _cTokens[1] = _borrowCToken;
         COMPTROLLER.enterMarkets(_cTokens);
+        (, uint256 _collateralFactorMantissa, ) = COMPTROLLER.markets(_receiptToken);
+        minBorrowLimit = (minBorrowRatio * 1e18) / _collateralFactorMantissa;
+        maxBorrowLimit = (maxBorrowRatio * 1e18) / _collateralFactorMantissa;
     }
 
     /**
@@ -99,16 +111,21 @@ abstract contract CompoundXYStrategy is Strategy {
     }
 
     /**
-     * @notice Update upper and lower borrow limit
-     * @dev It is possible to set 0 as _minBorrowLimit to not borrow anything
-     * @param _minBorrowLimit Minimum % we want to borrow
-     * @param _maxBorrowLimit Maximum % we want to borrow
+     * @notice Update upper and lower borrow ratio
+     * @dev It is possible to set 0 as _minBorrowRatio to not borrow anything
+     * @param _minBorrowRatio Minimum % we want to borrow
+     * @param _maxBorrowRatio Maximum % we want to borrow
      */
-    function updateBorrowLimit(uint256 _minBorrowLimit, uint256 _maxBorrowLimit) external onlyGovernor {
-        require(_maxBorrowLimit < MAX_BPS, "invalid-max-borrow-limit");
-        require(_maxBorrowLimit > _minBorrowLimit, "max-should-be-higher-than-min");
-        minBorrowLimit = _minBorrowLimit;
-        maxBorrowLimit = _maxBorrowLimit;
+    function updateBorrowRatio(uint256 _minBorrowRatio, uint256 _maxBorrowRatio) external onlyGovernor {
+        (, uint256 _collateralFactorMantissa, ) = COMPTROLLER.markets(address(supplyCToken));
+        require(_maxBorrowRatio < (_collateralFactorMantissa / 1e14), "invalid-max-borrow-ratio");
+        require(_maxBorrowRatio > _minBorrowRatio, "max-should-be-higher-than-min");
+        emit UpdatedBorrowRatio(minBorrowRatio, _minBorrowRatio, maxBorrowRatio, _maxBorrowRatio);
+        minBorrowRatio = _minBorrowRatio;
+        maxBorrowRatio = _maxBorrowRatio;
+
+        minBorrowLimit = (_minBorrowRatio * 1e18) / _collateralFactorMantissa;
+        maxBorrowLimit = (_maxBorrowRatio * 1e18) / _collateralFactorMantissa;
     }
 
     /**
@@ -119,6 +136,7 @@ abstract contract CompoundXYStrategy is Strategy {
     function repayAll() external onlyKeeper {
         _repay(borrowCToken.borrowBalanceCurrent(address(this)), true);
         minBorrowLimit = 0;
+        minBorrowRatio = 0;
     }
 
     /**
@@ -131,16 +149,6 @@ abstract contract CompoundXYStrategy is Strategy {
         supplyCToken.exchangeRateCurrent();
         borrowCToken.exchangeRateCurrent();
         _totalValue = _calculateTotalValue(IERC20(COMP).balanceOf(address(this)));
-    }
-
-    /**
-     * @notice Calculate and return borrow ratio range.
-     * @dev It is calculated as collateralFactor * borrowLimit
-     */
-    function borrowRatioRange() external view returns (uint256 _minBorrowRatio, uint256 _maxBorrowRatio) {
-        (, uint256 _collateralFactorMantissa, ) = COMPTROLLER.markets(address(supplyCToken));
-        _minBorrowRatio = (minBorrowLimit * _collateralFactorMantissa) / 1e18;
-        _maxBorrowRatio = (maxBorrowLimit * _collateralFactorMantissa) / 1e18;
     }
 
     /**
@@ -474,7 +482,7 @@ abstract contract CompoundXYStrategy is Strategy {
 
     function _getBorrowToken(address _cToken) private view returns (address) {
         // If cETH
-        if (_cToken == 0x4Ddc2D193948926D02f9B1fE9e1daa0718270ED5) {
+        if (_cToken == CETH) {
             return WETH;
         }
         return CToken(_cToken).underlying();

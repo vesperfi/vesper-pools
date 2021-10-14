@@ -121,10 +121,9 @@ contract PoolRewards is Initializable, IPoolRewards, ReentrancyGuard, PoolReward
     }
 
     /**
-     * @notice Updated reward for given account. Only Pool can call
+     * @notice Updated reward for given account.
      */
     function updateReward(address _account) external override {
-        require(msg.sender == pool, "only-pool-can-update-reward");
         uint256 _totalSupply = IERC20(pool).totalSupply();
         uint256 _balance = IERC20(pool).balanceOf(_account);
         uint256 _len = rewardTokens.length;
