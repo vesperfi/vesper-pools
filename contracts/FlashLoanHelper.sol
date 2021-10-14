@@ -21,6 +21,7 @@ abstract contract FlashLoanHelper {
         AaveLendingPoolAddressesProvider(0xB53C1a33016B2DC2fF3653530bfF1848a515c8c5);
     address internal constant SOLO = 0x1E0447b19BB6EcFdAe1e4AE1694b0C3659614e4e;
     uint256 public dyDxMarketId;
+    bytes32 private constant AAVE_PROVIDER_ID = 0x0100000000000000000000000000000000000000000000000000000000000000;
     bool public isAaveActive = false;
     bool public isDyDxActive = false;
 
@@ -62,6 +63,13 @@ abstract contract FlashLoanHelper {
     ) internal returns (uint256 _amount) {
         require(isAaveActive, "aave-flash-loan-is-not-active");
         AaveLendingPool _aaveLendingPool = AaveLendingPool(AAVE_ADDRESSES_PROVIDER.getLendingPool());
+        AaveProtocolDataProvider _aaveProtocolDataProvider =
+            AaveProtocolDataProvider(AAVE_ADDRESSES_PROVIDER.getAddress(AAVE_PROVIDER_ID));
+        // Check token liquidity in Aave
+        (uint256 _availableLiquidity, , , , , , , , , ) = _aaveProtocolDataProvider.getReserveData(_token);
+        if (_amountDesired > _availableLiquidity) {
+            _amountDesired = _availableLiquidity;
+        }
 
         address[] memory assets = new address[](1);
         assets[0] = _token;
@@ -116,15 +124,14 @@ abstract contract FlashLoanHelper {
         bytes memory _data
     ) internal returns (uint256 _amount) {
         require(isDyDxActive, "dydx-flash-loan-is-not-active");
-        _amount = _amountDesired;
 
         // Check token liquidity in DyDx
         uint256 amountInSolo = IERC20(_token).balanceOf(SOLO);
-        if (_amount > amountInSolo) {
-            _amount = amountInSolo;
+        if (_amountDesired > amountInSolo) {
+            _amountDesired = amountInSolo;
         }
         // Repay amount, amount with fee, can be 2 wei higher. Consider 2 wei as fee
-        uint256 repayAmount = _amount + 2;
+        uint256 repayAmount = _amountDesired + 2;
 
         // Encode custom data for callFunction
         bytes memory _callData = abi.encode(_data, repayAmount);
@@ -134,7 +141,7 @@ abstract contract FlashLoanHelper {
         // 3. Deposit _token back
         Actions.ActionArgs[] memory operations = new Actions.ActionArgs[](3);
 
-        operations[0] = _getWithdrawAction(dyDxMarketId, _amount);
+        operations[0] = _getWithdrawAction(dyDxMarketId, _amountDesired);
         operations[1] = _getCallAction(_callData);
         operations[2] = _getDepositAction(dyDxMarketId, repayAmount);
 
@@ -142,17 +149,18 @@ abstract contract FlashLoanHelper {
         accountInfos[0] = _getAccountInfo();
 
         ISoloMargin(SOLO).operate(accountInfos, operations);
+        _amount = _amountDesired;
     }
 
     /// @dev DyDx calls this function after doing flash loan
     function callFunction(
-        address,
-        /* _sender */
+        address _sender,
         Account.Info memory, /* _account */
         bytes memory _callData
     ) external {
         (bytes memory _data, uint256 _repayAmount) = abi.decode(_callData, (bytes, uint256));
-        require(msg.sender == SOLO, "NOT_SOLO");
+        require(msg.sender == SOLO, "!solo");
+        require(_sender == address(this), "invalid-initiator");
         _flashLoanLogic(_data, _repayAmount);
     }
 
