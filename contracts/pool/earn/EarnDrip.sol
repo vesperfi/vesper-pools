@@ -16,8 +16,6 @@ contract VesperEarnDrip is PoolRewards {
 
     address public growToken;
 
-    /// @dev Handle incoming ETH from WETH to the contract address.
-    /// solhint-disable-next-line no-empty-blocks
     receive() external payable {
         require(msg.sender == address(WETH), "deposits-not-allowed");
     }
@@ -66,11 +64,11 @@ contract VesperEarnDrip is PoolRewards {
             uint256 _dripBalanceBefore = _dripToken.balanceOf(address(this));
             IVesperPool(_rewardToken).withdraw(_reward);
             uint256 _dripTokenAmount = _dripToken.balanceOf(address(this)) - _dripBalanceBefore;
-            if (address(_dripToken) != address(WETH)) {
-                _dripToken.safeTransfer(_account, _dripTokenAmount);
-            } else {
+            if (address(_dripToken) == address(WETH)) {
                 WETH.withdraw(_dripTokenAmount);
                 Address.sendValue(payable(_account), _dripTokenAmount);
+            } else {
+                _dripToken.safeTransfer(_account, _dripTokenAmount);
             }
             emit DripRewardPaid(_account, address(_dripToken), _dripTokenAmount);
         } else {

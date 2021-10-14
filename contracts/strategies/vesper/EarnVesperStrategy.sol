@@ -76,7 +76,7 @@ abstract contract EarnVesperStrategy is Strategy, Earn {
     /// @notice Claim VSP rewards in underlying Grow Pool, if any
     function _claimRewardsAndConvertTo(address _toToken) internal virtual override {
         uint256 _vspAmount = IERC20(VSP).balanceOf(address(this));
-        if (_vspAmount > 0) {
+        if (_vspAmount != 0) {
             _safeSwap(VSP, _toToken, _vspAmount, 1);
         }
     }
