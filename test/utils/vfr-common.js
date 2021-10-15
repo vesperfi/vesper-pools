@@ -4,7 +4,7 @@ const { ethers } = require('hardhat')
 
 const { DAI } = require('../../helper/ethereum/address')
 const PoolConfig = require('../../helper/ethereum/poolConfig')
-const { deployContract, getUsers, setupVPool } = require('../utils/setupHelper')
+const { deployContract, getUsers, setupVPool } = require('./setupHelper')
 
 const { hexlify, parseEther, solidityKeccak256, zeroPad } = ethers.utils
 

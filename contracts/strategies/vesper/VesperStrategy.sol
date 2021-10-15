@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity 0.8.3;
-import "../Earn.sol";
 import "../../interfaces/vesper/IVesperPool.sol";
+import "../Strategy.sol";
 
-/// @title This Earn strategy will deposit collateral token in a Vesper Grow Pool
-/// and converts the yield to another Drip Token
-abstract contract EarnVesperStrategy is Strategy, Earn {
+/// @title This Strategy will deposit collateral token in a Vesper Grow Pool
+abstract contract VesperStrategy is Strategy {
     using SafeERC20 for IERC20;
     address internal constant VSP = 0x1b40183EFB4Dd766f11bDa7A7c3AD8982e998421;
     IVesperPool internal immutable vToken;
@@ -14,9 +13,8 @@ abstract contract EarnVesperStrategy is Strategy, Earn {
     constructor(
         address _pool,
         address _swapManager,
-        address _receiptToken,
-        address _dripToken
-    ) Strategy(_pool, _swapManager, _receiptToken) Earn(_dripToken) {
+        address _receiptToken
+    ) Strategy(_pool, _swapManager, _receiptToken) {
         require(_receiptToken != address(0), "vToken-address-is-zero");
         vToken = IVesperPool(_receiptToken);
     }
@@ -39,7 +37,6 @@ abstract contract EarnVesperStrategy is Strategy, Earn {
         collateralToken.safeApprove(address(vToken), _amount);
         for (uint256 i = 0; i < swapManager.N_DEX(); i++) {
             IERC20(VSP).safeApprove(address(swapManager.ROUTERS(i)), _amount);
-            collateralToken.safeApprove(address(swapManager.ROUTERS(i)), _amount);
         }
     }
 
@@ -63,14 +60,12 @@ abstract contract EarnVesperStrategy is Strategy, Earn {
      * @return profit in collateral token
      */
     function _realizeProfit(uint256 _totalDebt) internal virtual override returns (uint256) {
-        _claimRewardsAndConvertTo(address(dripToken));
+        _claimRewardsAndConvertTo(address(collateralToken));
         uint256 _collateralBalance = _getCollateralBalance();
         if (_collateralBalance > _totalDebt) {
             _withdrawHere(_collateralBalance - _totalDebt);
         }
-        _convertCollateralToDrip();
-        _forwardEarning();
-        return 0;
+        return collateralToken.balanceOf(address(this));
     }
 
     /// @notice Claim VSP rewards in underlying Grow Pool, if any
