@@ -14,7 +14,7 @@ const PoolConfig = {
   VUSDC: {contractName: 'VPool', poolParams: ['vUSDC Pool', 'vUSDC', Address.USDC]},
   VUSDT: {contractName: 'VPool', poolParams: ['vUSDT Pool', 'vUSDT', Address.USDT]},
   VFRStableDAI: {contractName: 'VFRStablePool', poolParams: ['vfrsDAI Pool', 'vfrsDAI', Address.DAI]},
-  VFRCoverageDAI: {contractName: 'VFRCoveragePool', poolParams: ['vfrcDAI Pool', 'vfrcDAI', Address.DAI]},
+  VFRCoverageDAI: {contractName: 'VFRPool', poolParams: ['vfrcDAI Pool', 'vfrcDAI', Address.DAI]},
 }
 
 module.exports = Object.freeze(PoolConfig)
