@@ -15,6 +15,7 @@ abstract contract ConvexStrategy is Crv3PoolStrategyBase {
     uint256 public immutable convexPoolId;
     bool public isClaimRewards;
     bool public isClaimExtras;
+    uint256 internal constant SUSHISWAP_ROUTER_INDEX = 1;
 
     constructor(
         address _pool,
@@ -50,7 +51,7 @@ abstract contract ConvexStrategy is Crv3PoolStrategyBase {
     }
 
     function _setupOracles() internal virtual override {
-        swapManager.createOrUpdateOracle(CVX, WETH, oraclePeriod, 1);
+        swapManager.createOrUpdateOracle(CVX, WETH, oraclePeriod, SUSHISWAP_ROUTER_INDEX);
         super._setupOracles();
     }
 

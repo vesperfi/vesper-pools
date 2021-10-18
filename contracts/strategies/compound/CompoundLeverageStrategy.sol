@@ -22,6 +22,13 @@ abstract contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
     IUniswapV3Oracle internal constant ORACLE = IUniswapV3Oracle(0x0F1f5A87f99f0918e6C81F16E59F3518698221Ff);
     uint32 internal constant TWAP_PERIOD = 3600;
 
+    event UpdatedBorrowRatio(
+        uint256 previousMinBorrowRatio,
+        uint256 newMinBorrowRatio,
+        uint256 previousMaxBorrowRatio,
+        uint256 newMaxBorrowRatio
+    );
+
     constructor(
         address _pool,
         address _swapManager,
@@ -41,6 +48,7 @@ abstract contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
         (, uint256 _collateralFactor, ) = COMPTROLLER.markets(address(cToken));
         require(_maxBorrowRatio < (_collateralFactor / 1e14), "invalid-max-borrow-limit");
         require(_maxBorrowRatio > _minBorrowRatio, "max-should-be-higher-than-min");
+        emit UpdatedBorrowRatio(minBorrowRatio, _minBorrowRatio, maxBorrowRatio, _maxBorrowRatio);
         minBorrowRatio = _minBorrowRatio;
         maxBorrowRatio = _maxBorrowRatio;
     }

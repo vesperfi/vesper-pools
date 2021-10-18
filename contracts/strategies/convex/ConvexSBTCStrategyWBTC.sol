@@ -34,7 +34,7 @@ contract ConvexSBTCStrategyWBTC is ConvexStrategy {
     }
 
     function _setupOracles() internal virtual override {
-        swapManager.createOrUpdateOracle(CVX, WETH, oraclePeriod, 1);
+        swapManager.createOrUpdateOracle(CVX, WETH, oraclePeriod, SUSHISWAP_ROUTER_INDEX);
         swapManager.createOrUpdateOracle(CRV, WETH, oraclePeriod, oracleRouterIdx);
         for (int128 i = 0; i < 3; i++) {
             swapManager.createOrUpdateOracle(IStableSwapV2(threePool).coins(i), WETH, oraclePeriod, oracleRouterIdx);

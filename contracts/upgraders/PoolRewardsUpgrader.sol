@@ -23,7 +23,7 @@ contract PoolRewardsUpgrader is UpgraderBase {
 
         address afterPool = abi.decode(_afterResults[0], (address));
         address[] memory afterRewardToken = abi.decode(_afterResults[1], (address[]));
-        (, address[] memory afterRewardPerToken) = abi.decode(_beforeResults[2], (address[], address[]));
+        (, address[] memory afterRewardPerToken) = abi.decode(_afterResults[2], (address[], address[]));
 
         require(beforePool == afterPool, "fields-test-failed");
         require(
