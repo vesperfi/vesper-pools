@@ -225,8 +225,9 @@ async function makeNewStrategy(oldStrategy, poolAddress, _options) {
  *
  * @param {object} obj Current calling object aka 'this'
  * @param {PoolData} poolData Data for pool setup
+ * @param {Function} beforeCreateStrategies Optional function hook to execute ops before strategy creation
  */
-async function setupVPool(obj, poolData) {
+async function setupVPool(obj, poolData, beforeCreateStrategies = null) {
   const {poolConfig, strategies, vPool, feeCollector} = poolData
   obj.strategies = strategies
   obj.feeCollector = feeCollector
@@ -238,6 +239,11 @@ async function setupVPool(obj, poolData) {
   const options = {
     vPool,
   }
+
+  if (beforeCreateStrategies !== null && typeof beforeCreateStrategies === 'function') {
+    await beforeCreateStrategies(obj)
+  }
+
   await createStrategies(obj, options)
   await addStrategies(obj)
   await obj.pool.updateFeeCollector(feeCollector)

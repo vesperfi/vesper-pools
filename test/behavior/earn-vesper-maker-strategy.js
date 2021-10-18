@@ -5,13 +5,12 @@ const {expect} = require('chai')
 const {ethers} = require('hardhat')
 const {getUsers} = require('../utils/setupHelper')
 const Address = require('../../helper/ethereum/address')
-const {shouldValidateMakerCommonBehaviour} = require('./maker-common')
+
 async function shouldBehaveLikeEarnVesperMakerStrategy(strategyIndex) {
   let pool, strategy
   let collateralToken
   let user1, user2
 
-  shouldValidateMakerCommonBehaviour(strategyIndex)
   describe(`MakerStrategy specific tests for strategy[${strategyIndex}]`, function () {
     beforeEach(async function () {
       ;[user1, user2] = await getUsers()
@@ -31,7 +30,7 @@ async function shouldBehaveLikeEarnVesperMakerStrategy(strategyIndex) {
 
         await strategy.instance.rebalance()
         const dai = await ethers.getContractAt('ERC20', Address.DAI)
-        const vDai = await ethers.getContractAt('ERC20', Address.vDAI)
+        const vDai = await ethers.getContractAt('ERC20', await strategy.instance.receiptToken())
         const poolRewards = await pool.poolRewards()
 
         const tokenBalanceBefore = await vDai.balanceOf(poolRewards)
