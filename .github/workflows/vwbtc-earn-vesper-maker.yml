@@ -5,8 +5,8 @@ on:
       - "test/vwbtc/vesper-earn-maker.js"
       - "contracts/strategies/Strategy.sol"
       - "contracts/strategies/maker/MakerStrategy.sol"
-      - "contracts/strategies/maker/EarnVesperMakerStrategy.sol"
-      - "contracts/strategies/maker/EarnVesperMakerStrategyWBTC.sol"
+      - "contracts/strategies/maker/earn/EarnVesperMakerStrategy.sol"
+      - "contracts/strategies/maker/earn/EarnVesperMakerStrategyWBTC.sol"
 
 jobs:
   vwbtc-earn-vesper-maker:

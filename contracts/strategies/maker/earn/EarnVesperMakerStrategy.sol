@@ -2,8 +2,8 @@
 
 pragma solidity 0.8.3;
 
-import "./VesperMakerStrategy.sol";
-import "../Earn.sol";
+import "../VesperMakerStrategy.sol";
+import "../../Earn.sol";
 
 /// @dev This strategy will deposit collateral token in Maker, borrow Dai and
 /// deposit borrowed DAI in Vesper pool to earn interest.
@@ -34,43 +34,40 @@ abstract contract EarnVesperMakerStrategy is VesperMakerStrategy, Earn {
     function _rebalanceDaiInLender() internal override {
         uint256 _daiDebt = cm.getVaultDebt(address(this));
 
-        // DAI balance already deposited in vPool
-        uint256 _daiBalance = _getDaiBalance();
         // DAI balance collected from _claimRewardsAndConvertTo (VSP rewards)
         uint256 _daiFromRewards = IERC20(dripToken).balanceOf(address(this));
 
         address _dripContract = IVesperPool(pool).poolRewards();
         address _growPool = IEarnDrip(_dripContract).growToken();
 
-        uint256 _vAmount;
-
         if (_daiFromRewards != 0) {
             // If we have any spare DAI collected from _claimRewardsAndConvertTo
             // We want to deposit them in vPool
-            uint256 _growPoolBalanceBefore = IERC20(_growPool).balanceOf(address(this));
             IVesperPool(_growPool).deposit(_daiFromRewards);
-            _vAmount = IERC20(_growPool).balanceOf(address(this)) - _growPoolBalanceBefore;
-            totalEarned += _daiFromRewards;
         }
+
+        // DAI balance deposited in vPool
+        uint256 _daiBalance = _getDaiBalance();
 
         if (_daiBalance > _daiDebt) {
-            // If actual DAI balance in vPool has increased we want to forward this to EarnDrip aswell
+            // If actual DAI balance in vPool has increased we want to forward this to EarnDrip
             uint256 _daiEarned = _daiBalance - _daiDebt;
-            _vAmount += (_daiEarned * 1e18) / IVesperPool(receiptToken).pricePerShare();
-            totalEarned += _daiEarned;
-        }
+            uint256 _vAmount = (_daiEarned * 1e18) / IVesperPool(receiptToken).pricePerShare();
 
-        if (_vAmount != 0) {
-            (, uint256 _interestFee, , , , , , ) = IVesperPool(pool).strategy(address(this));
-            uint256 _growPoolBalance = IERC20(_growPool).balanceOf(address(this));
-            uint256 _growPoolShares = (_vAmount > _growPoolBalance) ? _growPoolBalance : _vAmount;
-            uint256 _fee = (_growPoolShares * _interestFee) / 10000;
-            if (_fee != 0) {
-                IERC20(_growPool).safeTransfer(feeCollector, _fee);
-                _growPoolShares = _growPoolShares - _fee;
+            if (_vAmount != 0) {
+                totalEarned += _daiEarned;
+
+                (, uint256 _interestFee, , , , , , ) = IVesperPool(pool).strategy(address(this));
+                uint256 _growPoolBalance = IERC20(_growPool).balanceOf(address(this));
+                uint256 _growPoolShares = (_vAmount > _growPoolBalance) ? _growPoolBalance : _vAmount;
+                uint256 _fee = (_growPoolShares * _interestFee) / 10000;
+                if (_fee != 0) {
+                    IERC20(_growPool).safeTransfer(feeCollector, _fee);
+                    _growPoolShares = _growPoolShares - _fee;
+                }
+                IERC20(_growPool).safeTransfer(_dripContract, _growPoolShares);
+                IEarnDrip(_dripContract).notifyRewardAmount(_growPool, _growPoolShares, dripPeriod);
             }
-            IERC20(_growPool).safeTransfer(_dripContract, _growPoolShares);
-            IEarnDrip(_dripContract).notifyRewardAmount(_growPool, _growPoolShares, dripPeriod);
         }
     }
 
