@@ -1,21 +1,30 @@
 'use strict'
 
-const {deposit, timeTravel, rebalanceStrategy} = require('../utils/poolOps')
+const {deposit, executeIfExist, timeTravel, rebalanceStrategy} = require('../utils/poolOps')
 const {expect} = require('chai')
+const {swapEthForToken} = require('../utils/tokenSwapper')
 const {ethers} = require('hardhat')
 const {getUsers} = require('../utils/setupHelper')
 const Address = require('../../helper/ethereum/address')
 
 async function shouldBehaveLikeEarnVesperMakerStrategy(strategyIndex) {
-  let pool, strategy
+  let pool, strategy, cm, accountant
   let collateralToken
-  let user1, user2
-
+  let gov, user1, user2
+  async function updateRate() {
+    await executeIfExist(strategy.instance.token.exchangeRateCurrent)
+    // Update rate using Jug drip
+    const jugLike = await ethers.getContractAt('JugLike', '0x19c0976f590D67707E62397C87829d896Dc0f1F1')
+    const vaultType = await strategy.instance.collateralType()
+    await jugLike.drip(vaultType)
+  }
   describe(`MakerStrategy specific tests for strategy[${strategyIndex}]`, function () {
     beforeEach(async function () {
-      ;[user1, user2] = await getUsers()
+      ;[gov, user1, user2] = await getUsers()
       pool = this.pool
       strategy = this.strategies[strategyIndex]
+      accountant = this.accountant
+      cm = strategy.instance.collateralManager
       collateralToken = this.collateralToken
     })
 
@@ -49,6 +58,21 @@ async function shouldBehaveLikeEarnVesperMakerStrategy(strategyIndex) {
 
         const earnedDai = await dai.balanceOf(user2.address)
         expect(earnedDai).to.be.gt(0, 'No dai earned')
+      })
+
+      it('Should payback all when debt ratio 0', async function () {
+        await deposit(pool, collateralToken, 50, user2)
+        await strategy.instance.rebalance()
+        const vDAI = await strategy.instance.token()
+        await timeTravel()
+        await updateRate()
+        await strategy.instance.rebalance()
+        // Generating profit
+        await swapEthForToken(1, Address.DAI, {signer:this.users[0].signer}, vDAI)
+        await accountant.connect(gov.signer).updateDebtRatio(strategy.instance.address, 0)
+        await strategy.instance.rebalance()
+        const daiDebtAfter = await cm.getVaultDebt(strategy.instance.address)
+        expect(daiDebtAfter).to.be.eq(0, 'Should increase vault debt on rebalance')
       })
     })
   })
