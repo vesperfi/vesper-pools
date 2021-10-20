@@ -4,23 +4,23 @@ const {getUsers, setupVPool} = require('../utils/setupHelper')
 const StrategyType = require('../utils/strategyTypes')
 let PoolConfig = require('../../helper/ethereum/poolConfig')
 if (process.env.CHAIN === 'polygon') {
-  PoolConfig =require('../../helper/polygon/poolConfig')
+  PoolConfig = require('../../helper/polygon/poolConfig')
 }
 const {ethers} = require('hardhat')
-const ONE_MILLION = ethers.utils.parseEther('1000000')
+const ONE_MILLION = ethers.utils.parseEther('100000000')
 
 function prepareConfig(_strategies) {
   const interestFee = '1500' // 15%
   const strategies = _strategies || [
     {
-      name: 'AaveStrategyWETH',
+      name: 'CreamStrategyWBTC',
       type: StrategyType.AAVE,
-      config: {interestFee, debtRatio: 9000, debtRate: ONE_MILLION},
+      config: {interestFee, debtRatio: 4500, debtRate: ONE_MILLION},
     },
     {
-      name: 'AaveStrategyWETH',
+      name: 'CompoundStrategyWBTC',
       type: StrategyType.COMPOUND,
-      config: {interestFee, debtRatio: 1000, debtRate: ONE_MILLION},
+      config: {interestFee, debtRatio: 4500, debtRate: ONE_MILLION},
     },
   ]
   beforeEach(async function () {
