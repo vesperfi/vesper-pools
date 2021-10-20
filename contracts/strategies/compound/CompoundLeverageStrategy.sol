@@ -66,7 +66,7 @@ abstract contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
      * @dev Report total value in collateral token
      * @dev Claimed COMP will stay in strategy until next rebalance
      */
-    function totalValueCurrent() external override returns (uint256 _totalValue) {
+    function totalValueCurrent() public override returns (uint256 _totalValue) {
         cToken.exchangeRateCurrent();
         _claimComp();
         _totalValue = _calculateTotalValue(IERC20(COMP).balanceOf(address(this)));
@@ -96,16 +96,8 @@ abstract contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
      * @notice Calculate current position using claimed COMP and current borrow.
      */
     function isLossMaking() external returns (bool) {
-        _claimComp();
-        (, uint256 _compAsCollateral, ) =
-            swapManager.bestOutputFixedInput(COMP, address(collateralToken), IERC20(COMP).balanceOf(address(this)));
-
-        uint256 _totalDebt = IVesperPool(pool).totalDebtOf(address(this));
-
-        (uint256 _supply, uint256 _borrow) = getPosition();
-        uint256 _collateralHere = collateralToken.balanceOf(address(this));
-        uint256 _totalCollateral = _collateralHere + _compAsCollateral + _supply - _borrow;
-        return _totalCollateral < _totalDebt;
+        // It's loss making if _totalValue < totalDebt
+        return totalValueCurrent() < IVesperPool(pool).totalDebtOf(address(this));
     }
 
     function isReservedToken(address _token) public view virtual override returns (bool) {
@@ -226,7 +218,7 @@ abstract contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
         )
     {
         uint256 _excessDebt = IVesperPool(pool).excessDebt(address(this));
-        uint256 _totalDebt = IVesperPool(pool).totalDebtOf(address(this));
+        (, , , , uint256 _totalDebt, , , uint256 _debtRatio) = IVesperPool(pool).strategy(address(this));
 
         // Claim COMP and convert to collateral token
         _claimRewardsAndConvertTo(address(collateralToken));
@@ -245,7 +237,6 @@ abstract contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
             if (_collateralHere <= _profit) {
                 _profitToWithdraw = _profit - _collateralHere;
             } else if (_collateralHere >= (_profit + _excessDebt)) {
-                // Very rare scenario
                 _payback = _excessDebt;
             } else {
                 // _profit < CollateralHere < _profit + _excessDebt
@@ -263,6 +254,15 @@ abstract contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
             if (_withdrawn > _profitToWithdraw) {
                 _payback += (_withdrawn - _profitToWithdraw);
             }
+        }
+
+        // Handle scenario if debtRatio is zero and some supply left.
+        // Remaining tokens, after payback withdrawal, are profit
+        (_supply, _borrow) = getPosition();
+        if (_debtRatio == 0 && _supply != 0 && _borrow == 0) {
+            // This will redeem all cTokens this strategy has
+            _redeemUnderlying(MAX_UINT_VALUE);
+            _profit += _supply;
         }
     }
 
@@ -352,11 +352,7 @@ abstract contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
         _mint(_collateralBalance);
 
         // During reinvest, _shouldRepay will be false which indicate that we will borrow more.
-        // Due to more fee Aave flash loan is not used for borrow
-        if (isDyDxActive && _position > 0) {
-            bytes memory _data = abi.encode(_position, _shouldRepay);
-            _position -= _doDyDxFlashLoan(address(collateralToken), _position, _data);
-        }
+        _position -= _doFlashLoan(_position, _shouldRepay);
 
         uint256 i = 0;
         while (_position > 0 && i <= 6) {
@@ -374,16 +370,8 @@ abstract contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
     function _withdrawHere(uint256 _amount) internal returns (uint256) {
         (uint256 _position, bool _shouldRepay) = _calculateDesiredPosition(_amount, false);
         if (_shouldRepay) {
-            // Due to less fee DyDx is our primary flash loan provider
-            if (isDyDxActive) {
-                bytes memory _data = abi.encode(_position, _shouldRepay);
-                _position -= _doDyDxFlashLoan(address(collateralToken), _position, _data);
-            }
-            // Do aave flash loan if needed
-            if (_position > 0 && isAaveActive) {
-                bytes memory _data = abi.encode(_position, _shouldRepay);
-                _position -= _doAaveFlashLoan(address(collateralToken), _position, _data);
-            }
+            // Do deleverage by flash loan
+            _position -= _doFlashLoan(_position, _shouldRepay);
 
             // If we still have _position to deleverage do it via normal deleverage
             uint256 i = 0;
@@ -422,6 +410,27 @@ abstract contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
         _redeemUnderlying(_amount);
         uint256 _collateralAfter = collateralToken.balanceOf(address(this));
         return _collateralAfter - _collateralBefore;
+    }
+
+    /**
+     * @dev Aave flash is used only for withdrawal due to high fee compare to DyDx
+     * @param _flashAmount Amount for flash loan
+     * @param _shouldRepay Flag indicating we want to leverage or deleverage
+     * @return Total amount we leverage or deleverage using flash loan
+     */
+    function _doFlashLoan(uint256 _flashAmount, bool _shouldRepay) internal returns (uint256) {
+        uint256 _totalFlashAmount;
+        // Due to less fee DyDx is our primary flash loan provider
+        if (isDyDxActive && _flashAmount > 0) {
+            bytes memory _data = abi.encode(_flashAmount, _shouldRepay);
+            _totalFlashAmount = _doDyDxFlashLoan(address(collateralToken), _flashAmount, _data);
+            _flashAmount -= _totalFlashAmount;
+        }
+        if (isAaveActive && _shouldRepay && _flashAmount > 0) {
+            bytes memory _data = abi.encode(_flashAmount, _shouldRepay);
+            _totalFlashAmount += _doAaveFlashLoan(address(collateralToken), _flashAmount, _data);
+        }
+        return _totalFlashAmount;
     }
 
     /**
@@ -474,7 +483,13 @@ abstract contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
     }
 
     function _redeemUnderlying(uint256 _amount) internal virtual {
-        require(cToken.redeemUnderlying(_amount) == 0, "withdraw-from-compound-failed");
+        if (_amount == MAX_UINT_VALUE) {
+            // Withdraw all cTokens
+            require(cToken.redeem(cToken.balanceOf(address(this))) == 0, "withdraw-from-compound-failed");
+        } else {
+            // Withdraw underlying
+            require(cToken.redeemUnderlying(_amount) == 0, "withdraw-from-compound-failed");
+        }
     }
 
     function _borrowCollateral(uint256 _amount) internal virtual {

@@ -43,8 +43,7 @@ abstract contract FlashLoanHelper {
     }
 
     /// @dev Override this function to execute logic which uses flash loan amount
-    // solhint-disable-next-line no-empty-blocks
-    function _flashLoanLogic(bytes memory _data, uint256 _repayAmount) internal virtual {}
+    function _flashLoanLogic(bytes memory _data, uint256 _repayAmount) internal virtual;
 
     /***************************** Aave flash loan functions ***********************************/
 

@@ -34,6 +34,30 @@ function shouldBehaveLikeCompoundLeverageStrategy(strategyIndex) {
       token = this.strategies[strategyIndex].token
     })
 
+    it('Should work as expected when debtRatio is 0', async function () {
+      await deposit(pool, collateralToken, 2, user1)
+      await strategy.connect(governor.signer).rebalance()
+      let position = await strategy.getPosition()
+      expect(position._supply).to.gt(0, 'Incorrect supply')
+      expect(position._borrow).to.gt(0, 'Incorrect borrow')
+      expect(await pool.totalDebtOf(strategy.address)).to.gt(0, 'Incorrect total debt of strategy')
+
+      const accountant = await ethers.getContractAt('PoolAccountant', await pool.poolAccountant())
+      await accountant.updateDebtRatio(strategy.address, 0)
+
+      await strategy.connect(governor.signer).rebalance()
+      position = await strategy.getPosition()
+      expect(position._supply).to.eq(0, 'Incorrect supply')
+      expect(position._borrow).to.eq(0, 'Incorrect borrow')
+      expect(await pool.totalDebtOf(strategy.address)).to.eq(0, 'Incorrect total debt of strategy')
+
+      await strategy.connect(governor.signer).rebalance()
+      position = await strategy.getPosition()
+      expect(position._supply).to.eq(0, 'Incorrect supply')
+      expect(position._borrow).to.eq(0, 'Incorrect borrow')
+      expect(await pool.totalDebtOf(strategy.address)).to.eq(0, 'Incorrect total debt of strategy')
+    })
+
     it('Should borrow collateral at rebalance', async function () {
       const depositAmount = await deposit(pool, collateralToken, 10, user1)
       await strategy.connect(governor.signer).rebalance()
