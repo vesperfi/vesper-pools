@@ -226,7 +226,7 @@ abstract contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
         )
     {
         uint256 _excessDebt = IVesperPool(pool).excessDebt(address(this));
-        uint256 _totalDebt = IVesperPool(pool).totalDebtOf(address(this));
+        (, , , , uint256 _totalDebt, , , uint256 _debtRatio) = IVesperPool(pool).strategy(address(this));
 
         // Claim COMP and convert to collateral token
         _claimRewardsAndConvertTo(address(collateralToken));
@@ -245,7 +245,6 @@ abstract contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
             if (_collateralHere <= _profit) {
                 _profitToWithdraw = _profit - _collateralHere;
             } else if (_collateralHere >= (_profit + _excessDebt)) {
-                // Very rare scenario
                 _payback = _excessDebt;
             } else {
                 // _profit < CollateralHere < _profit + _excessDebt
@@ -263,6 +262,15 @@ abstract contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
             if (_withdrawn > _profitToWithdraw) {
                 _payback += (_withdrawn - _profitToWithdraw);
             }
+        }
+
+        // Handle scenario if debtRatio is zero and some supply left.
+        // Remaining tokens, after payback withdrawal, are profit
+        (_supply, _borrow) = getPosition();
+        if (_debtRatio == 0 && _supply != 0 && _borrow == 0) {
+            // This will redeem all cTokens this strategy has
+            _redeemUnderlying(MAX_UINT_VALUE);
+            _profit += _supply;
         }
     }
 
@@ -474,7 +482,13 @@ abstract contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
     }
 
     function _redeemUnderlying(uint256 _amount) internal virtual {
-        require(cToken.redeemUnderlying(_amount) == 0, "withdraw-from-compound-failed");
+        if (_amount == MAX_UINT_VALUE) {
+            // Withdraw all cTokens
+            require(cToken.redeem(cToken.balanceOf(address(this))) == 0, "withdraw-from-compound-failed");
+        } else {
+            // Withdraw underlying
+            require(cToken.redeemUnderlying(_amount) == 0, "withdraw-from-compound-failed");
+        }
     }
 
     function _borrowCollateral(uint256 _amount) internal virtual {
