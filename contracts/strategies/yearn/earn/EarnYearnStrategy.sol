@@ -29,8 +29,7 @@ abstract contract EarnYearnStrategy is YearnStrategy, Earn {
 
     /// @notice Approve all required tokens
     function _approveToken(uint256 _amount) internal override(Strategy, YearnStrategy) {
-        collateralToken.safeApprove(pool, _amount);
-        collateralToken.safeApprove(address(yToken), _amount);
+        YearnStrategy._approveToken(_amount);
         for (uint256 i = 0; i < swapManager.N_DEX(); i++) {
             collateralToken.safeApprove(address(swapManager.ROUTERS(i)), _amount);
         }
