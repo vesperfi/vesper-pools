@@ -173,7 +173,8 @@
         "strategies": {
           "EarnAaveMakerStrategyETH": "0x87201Cd1ad8c0e98d0f1C67aEbD3922E46F9dA0C",
           "EarnCompoundMakerStrategyETH": "0x235A6DCe7D40fa5b0157F55Dda0693dcAc4Ea932",
-          "EarnCompoundStrategyETH": "0x1E10aad97f2312B0b02424e628397B0ADD536D8b"
+          "EarnCompoundStrategyETH": "0x1E10aad97f2312B0b02424e628397B0ADD536D8b",
+          "EarnVesperMakerStrategyETH": "0x61CFB8c0dAc0DD8FA706D73B44Ea144160EE1aE0"
         }
       },
       "vaeth": {

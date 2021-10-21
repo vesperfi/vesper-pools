@@ -1,5 +1,5 @@
 {
-  "version": "3.0.14",
+  "version": "3.0.16",
   "networks": {
     "polygon": {
       "defaultProxyAdmin": "0x768159FF4086dF9214e1dd62778A53F210609200",
@@ -167,14 +167,14 @@
           }
         },
         "poolRewards": {
-          "proxy": "0x84462fD358CD74615c2112604D1fCfB767F59acc",
-          "implementation": "0xDC5Ef8AaBa4b3B0f9f9186c938Da884Aade28068"
+          "proxy": "0xb37eb47cc76C03C6A0C02C8DaED5dB18b96A2448",
+          "implementation": "0x456e0F103B2D2ec2ECe21b2853a6768c3cdAf8C9"
         },
         "strategies": {
           "EarnAaveMakerStrategyETH": "0x87201Cd1ad8c0e98d0f1C67aEbD3922E46F9dA0C",
           "EarnCompoundMakerStrategyETH": "0x235A6DCe7D40fa5b0157F55Dda0693dcAc4Ea932",
           "EarnCompoundStrategyETH": "0x1E10aad97f2312B0b02424e628397B0ADD536D8b",
-          "EarnVesperMakerStrategyETH": "0x61CFB8c0dAc0DD8FA706D73B44Ea144160EE1aE0"
+          "EarnVesperMakerStrategyETH": "0x3533053a07B0127368841240eFEd9bAE973a429E"
         }
       },
       "vaeth": {
@@ -188,7 +188,10 @@
         },
         "strategies": {
           "AlphaLendStrategyETH": "0xeCe0f32840280aD0069Dd89Ad97Ad6dF1bB0fF2A",
-          "RariFuseStrategy#23": "0x78041341e79693953AB49f5040d3Ac8cA8cd2397"
+          "RariFuseStrategy": "0x4769f18ba364658bf98Bf74606ef2f8cfB17D425",
+          "RariFuseStrategy#23": "0x78041341e79693953AB49f5040d3Ac8cA8cd2397",
+          "RariFuseStrategy#18": "0x67893865686C22f0a243114B0893De65117d2f3b",
+          "VesperMakerStrategyETH": "0xADdacB592d550e788e2A952700153eaBB8625741"
         }
       },
       "vfrdai": {
@@ -236,7 +239,8 @@
         "strategies": {
           "ConvexSBTCStrategyWBTC": "0x43CeCF2e018FEE7EE94410f85FcefeD2a3843ef2",
           "CrvsBTCStrategyWBTC": "0x867FC11B40351451d1dc3114A4204B2444b94B32",
-          "RariFuseStrategy": "0x2962741a2aec7627F64E77a5808A025F49ea17DA"
+          "RariFuseStrategy": "0x2962741a2aec7627F64E77a5808A025F49ea17DA",
+          "VesperMakerStrategyWBTC": "0x201C1e1e2F978E90344Df44cf04B3585C6978413"
         }
       }
     }
