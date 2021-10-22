@@ -20,6 +20,8 @@ const deployFunction = async function ({getNamedAccounts, deployments}) {
   await execute(VesperMakerStrategy, {from: deployer, log: true}, 'approveToken')
   await execute(VesperMakerStrategy, {from: deployer, log: true}, 'updateFeeCollector', config.feeCollector)
   await execute(VesperMakerStrategy, {from: deployer, log: true}, 'updateBalancingFactor', 225, 200)
+  await execute(VesperMakerStrategy, {from: deployer, log: true}, 'addKeeper', Address.KEEPER)
+
 
   await execute('VPool', {from: deployer, log: true}, 'migrateStrategy', oldStrategy.address, newStrategy.address)
   

@@ -7,7 +7,7 @@ import "./VesperMakerStrategy.sol";
 //solhint-disable no-empty-blocks
 contract VesperMakerStrategyWBTC is VesperMakerStrategy {
     string public constant NAME = "Vesper-Maker-Strategy-WBTC";
-    string public constant VERSION = "3.0.15";
+    string public constant VERSION = "3.0.16";
 
     constructor(
         address _pool,
