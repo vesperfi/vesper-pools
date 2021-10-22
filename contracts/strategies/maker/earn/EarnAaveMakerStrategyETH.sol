@@ -14,5 +14,5 @@ contract EarnAaveMakerStrategyETH is EarnAaveMakerStrategy {
         address _pool,
         address _cm,
         address _swapManager
-    ) EarnAaveMakerStrategy(_pool, _cm, _swapManager, 0x028171bCA77440897B824Ca71D1c56caC55b68A3, "ETH-A", DAI) {}
+    ) EarnAaveMakerStrategy(_pool, _cm, _swapManager, 0x028171bCA77440897B824Ca71D1c56caC55b68A3, "ETH-C", DAI) {}
 }

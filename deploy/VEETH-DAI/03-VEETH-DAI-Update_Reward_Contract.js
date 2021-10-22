@@ -21,7 +21,6 @@ const deployFunction = async function ({getNamedAccounts, deployments}) {
       },
     },
   })
-  console.log('rewardsProxy.address', rewardsProxy.address)
   await execute(VETH.contractName, {from: deployer, log: true}, 'updatePoolRewards', rewardsProxy.address)
   deployFunction.id = 'veETH-poolReward-1'
   return true
