@@ -23,7 +23,7 @@ Note: These tests will fork the mainnet as required in step 3. It is not recomme
 
   - Run single file
    ```sh
-   npm test test/veth-aave.js
+   npm test test/veth/aave_maker-compound_maker.js
    ```
 
   - Or run them all (but some will fail, because of state modifications to the forked chain)
