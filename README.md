@@ -4,20 +4,24 @@ Please read and get familiar with [Vesper](https://docs.vesper.finance/). This r
 
 ## Setup
 
-1. Install 
+1. Install
 
    ```sh
    git clone --recursive https://github.com/vesperfi/vesper-pools-v3.git
    cd vesper-pools-v3
-   npm install 
+   npm install
    npm run compile
    ```
 2. set NODE_URL in env
     ```sh
     export NODE_URL=<eth mainnet url>
     ```
+3. Compile
 
-3. Test
+   ```sh
+   npm run compile
+   ```
+4. Test
 
 Note: These tests will fork the mainnet as required in step 3. It is not recommended to run all tests at once, but rather to specify a single file.
 
@@ -30,7 +34,7 @@ Note: These tests will fork the mainnet as required in step 3. It is not recomme
    ```sh
    npm test
    ```
-   
+
 ## Run test with coverage
 
 Coverage will launch its own in-process ganache server, so all you need to run is below command.
