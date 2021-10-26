@@ -9,8 +9,8 @@ Please read and get familiar with [Vesper](https://docs.vesper.finance/). This r
    ```sh
    git clone --recursive https://github.com/vesperfi/vesper-pools-v3.git
    cd vesper-pools-v3
+   nvm use
    npm install
-   npm run compile
    ```
 2. set NODE_URL in env
     ```sh
