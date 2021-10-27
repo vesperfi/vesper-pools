@@ -140,6 +140,22 @@ function shouldValidateMakerCommonBehaviour(strategyIndex) {
         expect(vaultInfoBefore.collateralRatio).to.be.equal(vaultInfoAfter.collateralRatio)
         expect(vaultInfoBefore.minimumDebt).to.be.equal(vaultInfoAfter.minimumDebt)
       })
+
+      it('Should revert if collateral type is not the same', async function () {
+        // given
+        strategy = await deployContract('AaveMakerStrategyETH_A', [pool.address, cm.address, swapManager.address])
+        newStrategy = await deployContract('AaveMakerStrategyETH_C', [pool.address, cm.address, swapManager.address])
+        expect(await strategy.collateralType()).to.not.eq(await newStrategy.collateralType())
+
+        const accountant = await ethers.getContractAt('PoolAccountant', await pool.poolAccountant())
+        await accountant.addStrategy(strategy.address, 0, 100, ethers.constants.MaxUint256)
+
+        // when
+        const tx = pool.connect(gov.signer).migrateStrategy(strategy.address, newStrategy.address)
+
+        // then
+        await expect(tx).to.be.revertedWith('collateral-type-must-be-the-same')
+      })
     })
 
     describe('Withdraw scenario', function () {

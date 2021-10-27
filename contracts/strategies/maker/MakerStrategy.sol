@@ -100,6 +100,7 @@ abstract contract MakerStrategy is Strategy {
      * @param _newStrategy Address of new strategy.
      */
     function _beforeMigration(address _newStrategy) internal virtual override {
+        require(MakerStrategy(_newStrategy).collateralType() == collateralType, "collateral-type-must-be-the-same");
         cm.transferVaultOwnership(_newStrategy);
     }
 
