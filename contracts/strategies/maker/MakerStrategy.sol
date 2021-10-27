@@ -87,11 +87,11 @@ abstract contract MakerStrategy is Strategy {
 
     /**
      * @notice Returns true if pool is underwater.
-     * @notice Underwater - If debt is greater than earning of pool.
+     * @notice Underwater - If debt is greater than (earning of pool + DAI in pool + some wei buffer).
      * @notice Earning - Sum of DAI balance and DAI from accrued reward, if any, in lending pool.
      */
     function isUnderwater() public view virtual returns (bool) {
-        return cm.getVaultDebt(address(this)) > _getDaiBalance();
+        return cm.getVaultDebt(address(this)) > (_getDaiBalance() + IERC20(DAI).balanceOf(address(this)) + 1_000);
     }
 
     /**
