@@ -38,8 +38,8 @@ const deployFunction = async function ({getNamedAccounts, deployments}) {
     config.debtRatio,
     config.debtRate
   )
-  deployFunction.id = 'VADAI-RARI-2'
+  deployFunction.id = 'VADAI-RARI#6'
   return true
 }
 module.exports = deployFunction
-module.exports.tags = ['VADAI-RARI-2']
+module.exports.tags = ['VADAI-RARI#6']
