@@ -36,45 +36,50 @@ task('deploy-pool', 'Deploy vesper pool')
     }
     const network = hre.network.name
     const networkDir = `./deployments/${network}`
-    console.log(`Deploying ${pool} on ${network} with deployParams`, deployParams)
+    let deployer = process.env.DEPLOYER
+    if (deployer.startsWith('ledger')) {
+      deployer = deployer.split('ledger://')[1]
+    }
+    console.log(`${deployer} is deploying ${pool} on ${network} with deployParams`, deployParams)
     pool = pool.toLowerCase()
     const poolDir = `${networkDir}/${pool}`
     const globalDir = `${networkDir}/global`
+    const deployerDir = `${globalDir}/${deployer}`
 
     try {
       // Copy files from pool directory to network directory for deployment
       if (fs.existsSync(poolDir)) {
         await copy(poolDir, networkDir, {
           overwrite: true,
-          filter: ['*.json', 'solcInputs/*']
+          filter: ['*.json', 'solcInputs/*', '!DefaultProxyAdmin.json']
         })
       }
-
-      if (poolDir !== globalDir) {
-        // Only if not operating on the global pool
-        // Copy files from global directory to network directory for deployment
-        if (fs.existsSync(globalDir)) {
-          await copy(globalDir, networkDir, {
-            overwrite: true,
-            filter: ['*.json']
-          })
-        }
+      // Copy files from global directory to network directory for deployment
+      if (fs.existsSync(globalDir)) {
+        await copy(globalDir, networkDir, { overwrite: true, filter: ['*.json'] })
+      }
+      // Copy deployer's default proxy admin to network directory for deployment
+      if (fs.existsSync(deployerDir)) {
+        await copy(deployerDir, networkDir, {
+          overwrite: true,
+          filter: ['*.json']
+        })
       }
 
       await run('deploy', { ...deployParams })
 
-      let copyFilter = ['*.json', 'solcInputs/*', '!DefaultProxyAdmin.json']
-      if (poolDir !== globalDir) {
-        // Only if not operating on the global pool
-        // Do not copy global deployments into pool specific deployments
-        if (fs.existsSync(globalDir)) {
-          copyFilter = [...copyFilter, ...fs.readdirSync(globalDir).map(file => `!${file}`)]
-        }
+      let copyFilter = ['*.json', 'solcInputs/*']
+
+      // Do not copy global deployments into pool specific deployments
+      if (fs.existsSync(globalDir)) {
+        copyFilter = [...copyFilter, ...fs.readdirSync(globalDir).map(file => `!${file}`)]
       }
 
       // Copy files from network directory to pool specific directory after deployment
       // Note: This operation will overwrite files. Anything start with dot(.) will not be copied
       await copy(networkDir, poolDir, { overwrite: true, filter: copyFilter })
+      // Copy default proxy admin to deployer directory
+      await copy(networkDir, deployerDir, { overwrite: true, filter: ['DefaultProxyAdmin.json'] })
     }
     catch (error) {
       if (error.message.includes('TransportStatusError')) {
@@ -82,16 +87,15 @@ task('deploy-pool', 'Deploy vesper pool')
         process.exit(1)
       } else {
         console.log(error)
-        // in case fail. copy and save it for review
-        const filter = ['*.json', 'solcInputs/*', '!DefaultProxyAdmin.json']
+        // In case of failure copy and save data for review
+        const filter = ['*.json', 'solcInputs/*']
         await copy(networkDir, `${networkDir}/failed/${pool}`, { overwrite: true, filter })
       }
     }
     finally {
-      // Delete all json files except DefaultProxyAdmin.json. Also delete solcInputs directory
-      // Anything start with dot(.) will not be deleted
-      const deleteFilter = [`${networkDir}/*.json`, `${networkDir}/solcInputs`, `!${networkDir}/DefaultProxyAdmin.json`]
-      // Delete copied files from network directory
+      // Delete filter to delete all json files and solcInputs directory. Anything start with dot(.) will not be deleted
+      const deleteFilter = [`${networkDir}/*.json`, `${networkDir}/solcInputs`]
+      // Delete files/directories using deleteFilter from  network directory
       del.sync(deleteFilter)
     }
 

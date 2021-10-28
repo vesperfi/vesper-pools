@@ -3,17 +3,18 @@
 const fs = require('fs')
 const _ = require('lodash')
 const compareVersions = require('compare-versions')
-const PROXY_ADMIN = 'DefaultProxyAdmin'
 
 function getPoolData(data) {
   const root = {}
   if (data.VPool) {
     root.pool = {
+      proxyAdmin: data.DefaultProxyAdmin,
       proxy: data.VPool,
       implementation: data.VPool_Implementation,
     }
   } else if (data.VETH) {
     root.pool = {
+      proxyAdmin: data.DefaultProxyAdmin,
       proxy: data.VETH,
       implementation: data.VETH_Implementation,
     }
@@ -21,6 +22,7 @@ function getPoolData(data) {
   if (data.PoolAccountant) {
     // Accountant is part of pool
     root.pool.poolAccountant = {
+      proxyAdmin: data.DefaultProxyAdmin,
       proxy: data.PoolAccountant,
       implementation: data.PoolAccountant_Implementation,
     }
@@ -28,6 +30,7 @@ function getPoolData(data) {
 
   if (data.PoolRewards) {
     root.poolRewards = {
+      proxyAdmin: data.DefaultProxyAdmin,
       proxy: data.PoolRewards,
       implementation: data.PoolRewards_Implementation,
     }
@@ -86,7 +89,7 @@ function getPreviousRelease() {
 task('create-release', 'Create release file from deploy data')
   .addParam('pool', 'Vesper pool name')
   .addParam('release', 'Vesper release semantic version, i.e 1.2.3')
-  .setAction(async function ({pool, release}) {
+  .setAction(async function ({ pool, release }) {
     const network = hre.network.name
     const networkDir = `./deployments/${network}`
 
@@ -96,7 +99,6 @@ task('create-release', 'Create release file from deploy data')
 
     // Read pool deployment name and address
     const deployData = getDeploymentData(poolDir)
-    deployData[PROXY_ADMIN] = getAddress(`${networkDir}/${PROXY_ADMIN}.json`)
 
     const releaseDir = `releases/${release}`
     const releaseFile = `${releaseDir}/contracts.json`
@@ -109,49 +111,20 @@ task('create-release', 'Create release file from deploy data')
     if (prevReleaseData.version === release) {
       // Update release with new deployment
       releaseData = prevReleaseData
-      // We might have new network in this deployment, if not exist add network and admin
-      if (!releaseData.networks[network]) {
-        releaseData.networks[network] = {
-          defaultProxyAdmin: deployData.DefaultProxyAdmin,
-        }
-      }
     } else {
       // If this is new release
       // Create new release directory if doesn't exist
       if (!fs.existsSync(releaseDir)) {
-        fs.mkdirSync(releaseDir, {recursive: true})
+        fs.mkdirSync(releaseDir, { recursive: true })
       }
       // Copy data from previous release
       releaseData = prevReleaseData
       // Update release version
       releaseData.version = release
-
-      // If networks exist then add/update network of this deployment. Also update admin
-      if (releaseData.networks) {
-        // If deployment network exist then update proxy admin else add network and admin
-        if (releaseData.networks[network]) {
-          // Store network data
-          const networkData = releaseData.networks[network]
-          // Delete network data from JSON
-          delete releaseData.networks[network]
-          // Add network data back again with admin as first thing, just to keep order same
-          releaseData.networks[network] = {
-            defaultProxyAdmin: deployData.DefaultProxyAdmin,
-            ...networkData,
-          }
-        } else {
-          releaseData.networks[network] = {
-            defaultProxyAdmin: deployData.DefaultProxyAdmin,
-          }
-        }
-      } else {
-        // Else define networks and add network and admin of this deployment
-        releaseData.networks = {
-          [network]: {
-            defaultProxyAdmin: deployData.DefaultProxyAdmin,
-          },
-        }
-      }
+    }
+    // We might have new network in this deployment, if not exist add empty network
+    if (!releaseData.networks[network]) {
+      releaseData.networks[network] = {}
     }
     // Update pool data with latest deployment
     releaseData.networks[network][pool] = getPoolData(deployData)
