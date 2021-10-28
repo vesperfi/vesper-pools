@@ -121,7 +121,7 @@ abstract contract EarnVesperStrategy is Strategy, Earn {
     /// @dev Withdraw collateral here. Do not transfer to pool
     function _withdrawHere(uint256 _amount) internal returns (uint256) {
         uint256 _collateralBefore = collateralToken.balanceOf(address(this));
-        vToken.withdraw(_convertToShares(_amount));
+        vToken.whitelistedWithdraw(_convertToShares(_amount));
         return collateralToken.balanceOf(address(this)) - _collateralBefore;
     }
 

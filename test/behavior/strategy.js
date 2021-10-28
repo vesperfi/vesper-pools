@@ -23,7 +23,8 @@ const { shouldBehaveLikeEarnYearnStrategy } = require('../behavior/earn-yearn-st
 const { shouldBehaveLikeEarnCrvStrategy } = require('../behavior/earn-crv-strategy')
 const { shouldBehaveLikeRariFuseStrategy } = require('./rari-fuse-strategy')
 const { shouldBehaveLikeEarnVesperStrategy } = require('../behavior/earn-vesper-strategy')
-
+const {BigNumber: BN} = require('ethers')
+const DECIMAL18 = BN.from('1000000000000000000')
 const swapper = require('../utils/tokenSwapper')
 const { deposit, rebalanceStrategy, reset } = require('../utils/poolOps')
 const { advanceBlock } = require('../utils/time')
@@ -77,6 +78,14 @@ function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
         await expect(strategy.connect(user2.signer).init(addressListFactory)).to.be.revertedWith(
           'caller-is-not-the-governor'
         )
+      })
+
+      it('Verify convertFrom18 is implemented correctly', async function () {
+        const collateralDecimal = await this.collateralToken.decimals()
+        const divisor = DECIMAL18.div(BN.from('10').pow(collateralDecimal))
+        const expected =  BN.from(DECIMAL18).div(divisor).toString()
+        const actual = await strategy.convertFrom18(DECIMAL18)
+        expect(actual).to.be.equal(expected, 'Conversion from 18 is wrong')
       })
     })
 
@@ -187,10 +196,11 @@ function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
         await expect(strategy.connect(user4.signer).rebalance()).to.be.revertedWith('caller-is-not-a-keeper')
       })
 
-      it('Should have same total value and total debt without rebalance', async function () {
+      it('Verify total value and total debt after rebalance', async function () {
         await deposit(pool, collateralToken, 1, user1)
+        await strategy.rebalance()
         const totalDebtBefore = await pool.totalDebtOf(strategy.address)
-        expect(await strategy.totalValue()).to.be.equal(totalDebtBefore, 'Total value should be same as total debt')
+        expect(await strategy.totalValue()).to.be.gte(totalDebtBefore, 'Total value should be same as total debt')
       })
 
       it('Should increase total value after rebalance', async function () {

@@ -5,12 +5,14 @@ const {expect} = require('chai')
 const {ethers} = require('hardhat')
 const {getUsers} = require('../utils/setupHelper')
 const Address = require('../../helper/ethereum/address')
+const {shouldBehaveLikeUnderlyingVesperPoolStrategy} = require('./strategy-underlying-vesper-pool')
 
 async function shouldBehaveLikeEarnVesperStrategy(strategyIndex) {
   let pool, strategy
   let collateralToken
   let user1, user2
 
+  shouldBehaveLikeUnderlyingVesperPoolStrategy(strategyIndex)
   describe(`Earn Vesper specific tests for strategy[${strategyIndex}]`, function () {
     beforeEach(async function () {
       ;[user1, user2] = await getUsers()

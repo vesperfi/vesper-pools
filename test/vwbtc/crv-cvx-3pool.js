@@ -58,7 +58,7 @@ describe('vWBTC Pool with Convex sBTC', function () {
   describe('Convex sBTC: WBTC Functionality', function () {
     afterEach(reset)
     // This cant pass without additional test infrastructure to simulate convex
-    it.only('Should calculate fees properly and reflect those in share price', async function () {
+    it('Should calculate fees properly and reflect those in share price', async function () {
       await deposit(pool, collateralToken, 20, user1)
       await strategy.rebalance()
       const price1 = await pool.pricePerShare()

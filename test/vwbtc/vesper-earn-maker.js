@@ -46,8 +46,8 @@ describe('veWBTC pool strategies', function () {
       poolRewards.initialize(vPool.address, [address.VSP])
       vPool.updatePoolRewards(poolRewards.address)
   
-      // swap 10 ETH to VSP to fill rewards
-      await swapper.swapEthForToken(BN.from(10), vsp.address, users[0], poolRewards.address)
+      // swap 2 ETH to VSP to fill rewards
+      await swapper.swapEthForToken(BN.from(2), vsp.address, users[0], poolRewards.address)
       poolRewards['notifyRewardAmount(address,uint256,uint256)'](vsp.address, TOTAL_REWARD, REWARD_DURATION)
   
       const vesperEarnDripImpl = await deployContract('VesperEarnDrip', [])

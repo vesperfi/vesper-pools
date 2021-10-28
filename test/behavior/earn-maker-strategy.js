@@ -10,7 +10,6 @@ async function shouldBehaveLikeEarnMakerStrategy(strategyIndex) {
   let pool, strategy
   let collateralToken, cm
   let user1, user2, earnDrip
-
   async function updateRate() {
     await executeIfExist(strategy.instance.token.exchangeRateCurrent)
     // Update rate using Jug drip
