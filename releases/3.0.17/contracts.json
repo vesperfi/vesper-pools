@@ -151,10 +151,11 @@
         "strategies": {
           "ConvexStrategyDAI": "0x6897d2cBf66e317bdE74595C455BeE09cf144136",
           "YearnStrategyDAI": "0xA385821a6f24a1e541ab22448eb03aE9f21a1611",
-          "Crv3PoolStrategyDAI": "0xD11E6772A430c45C7B64927069AF37fa9ab3bE75",
           "RariFuseStrategy#6": "0x81649be6A4f00E3098DA5ff4b166122de4f05cC1",
           "RariFuseStrategy#18": "0x5495f41144ECeF9233f15AC3E4283f5F653fc96c",
-          "RariFuseStrategy#23": "0xd10427bbd5D20f6b3f8c50a9447d8ac50CDC15bf"
+          "RariFuseStrategy#23": "0xd10427bbd5D20f6b3f8c50a9447d8ac50CDC15bf",
+          "RariFuseStrategy#7": "0x44A1423A9b72488Ea4875aEE209706Ac09917e0D",
+          "RariFuseStrategy#8": "0x863FB34417f6a13e6179d946Eb3e2c03157d8f42"
         }
       },
       "veeth-dai": {
@@ -171,7 +172,6 @@
           "implementation": "0x456e0F103B2D2ec2ECe21b2853a6768c3cdAf8C9"
         },
         "strategies": {
-          "EarnAaveMakerStrategyETH": "0x87201Cd1ad8c0e98d0f1C67aEbD3922E46F9dA0C",
           "EarnCompoundMakerStrategyETH": "0x235A6DCe7D40fa5b0157F55Dda0693dcAc4Ea932",
           "EarnCompoundStrategyETH": "0x1E10aad97f2312B0b02424e628397B0ADD536D8b",
           "EarnVesperMakerStrategyETH": "0x3533053a07B0127368841240eFEd9bAE973a429E"
@@ -192,10 +192,9 @@
         },
         "strategies": {
           "AlphaLendStrategyETH": "0xeCe0f32840280aD0069Dd89Ad97Ad6dF1bB0fF2A",
-          "RariFuseStrategy": "0x4769f18ba364658bf98Bf74606ef2f8cfB17D425",
           "RariFuseStrategy#23": "0x78041341e79693953AB49f5040d3Ac8cA8cd2397",
           "RariFuseStrategy#18": "0x67893865686C22f0a243114B0893De65117d2f3b",
-          "VesperMakerStrategyETH": "0xADdacB592d550e788e2A952700153eaBB8625741"
+          "VesperMakerStrategyETH": "0xfa19a598a2c2a22b4ff0731a67ce5513be821e83"
         }
       },
       "vfrdai": {
