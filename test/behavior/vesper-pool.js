@@ -269,6 +269,20 @@ async function shouldBehaveLikePool(poolName, collateralName) {
           expect(vPoolBalance).to.be.eq(convertTo18(depositAmount), `${poolName} balance of user is wrong`)
         })
       })
+
+      it('Should update strategy lastRebalance param', async function () {
+        // given
+        const [strategyToRebalance] = strategies
+        const {_lastRebalance: lastRebalanceBefore} = await pool.strategy(strategyToRebalance.instance.address)
+
+        // when
+        await timeTravel()
+        await rebalance([strategyToRebalance])
+
+        // then
+        const {_lastRebalance: lastRebalanceAfter} = await pool.strategy(strategyToRebalance.instance.address)
+        expect(lastRebalanceAfter).to.gt(lastRebalanceBefore)
+      })
     })
 
     describe(`Price per share of ${poolName} pool`, function () {

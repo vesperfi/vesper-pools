@@ -307,6 +307,7 @@ contract PoolAccountant is Initializable, PoolAccountantStorageV1, Context {
             strategy[_strategy].totalProfit += _profit;
             _fee = (_profit * strategy[_strategy].interestFee) / MAX_BPS;
         }
+        strategy[_strategy].lastRebalance = block.number;
         emit EarningReported(
             _strategy,
             _profit,
