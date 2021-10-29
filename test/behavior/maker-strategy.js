@@ -88,11 +88,7 @@ function shouldBehaveLikeMakerStrategy(strategyIndex) {
         await rebalanceStrategy(strategy)
         const daiDebtAfter = await cm.getVaultDebt(strategy.instance.address)
         expect(daiDebtAfter).to.be.gt(daiDebtBefore, 'Should increase vault debt on rebalance')
-      })
-
-      it('Should report loss in rebalance in underwater situation', async function () {
-        // TODO
-      })
+      })      
     })
   })
 }

@@ -146,16 +146,6 @@ async function shouldBehaveLikeMultiPool(poolName) {
         expect(queue[1]).to.be.eq(strategies[1].instance.address, 'wrong strategies in withdraw queue')
       })
     })
-
-    describe(`${poolName}: total debt`, function () {
-      it('Total of debt should not be more than total debt given to all strategy', async function () {
-        // TODO:
-      })
-
-      it('Should decrease total debt of each strategy and withdraw from strategies', async function () {
-        // TODO:
-      })
-    })
   })
 }
 
