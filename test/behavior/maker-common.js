@@ -14,7 +14,6 @@ function shouldValidateMakerCommonBehaviour(strategyIndex) {
   let pool, strategy, token, newStrategy
   let collateralToken, collateralDecimal, isUnderwater, cm, vaultNum, strategyName, swapManager
   let gov, user1, user2
-
   function convertTo18(amount) {
     const multiplier = DECIMAL18.div(BN.from('10').pow(collateralDecimal))
     return BN.from(amount).mul(multiplier)
@@ -41,12 +40,37 @@ function shouldValidateMakerCommonBehaviour(strategyIndex) {
       swapManager = this.swapManager
 
       // New Maker Strategy
-      if (strategy.type === StrategyType.VESPER_MAKER || strategy.type === StrategyType.EARN_VESPER_MAKER) {
+      if (strategy.type === StrategyType.VESPER_MAKER) {
         // Setup vPool (vDAI)
         const vPool = await deployContract(PoolConfig.VDAI.contractName, PoolConfig.VDAI.poolParams)
         const accountant = await deployContract('PoolAccountant')
         await accountant.init(vPool.address)
         await vPool.initialize(...PoolConfig.VDAI.poolParams, accountant.address, address.ADDRESS_LIST_FACTORY)
+        newStrategy = await deployContract(strategyName, [pool.address, cm.address, swapManager.address, vPool.address])
+      }
+      if (strategy.type === StrategyType.EARN_VESPER_MAKER) {
+        // Setup vPool (vDAI)
+        const vPool = await deployContract(PoolConfig.VDAI.contractName, PoolConfig.VDAI.poolParams)
+        const accountant = await deployContract('PoolAccountant')
+        await accountant.init(vPool.address)
+        await vPool.initialize(...PoolConfig.VDAI.poolParams, accountant.address, address.ADDRESS_LIST_FACTORY)
+        const vesperEarnDripImpl = await deployContract('VesperEarnDrip', [])
+        // Deploy proxy admin
+        const proxyAdmin = await deployContract('ProxyAdmin', [])
+        const initData = vesperEarnDripImpl.interface.encodeFunctionData('initialize', [
+          this.pool.address,
+          [vPool.address],
+        ])
+        // deploy proxy with logic implementation
+        const proxy = await deployContract('TransparentUpgradeableProxy', [
+          vesperEarnDripImpl.address,
+          proxyAdmin.address,
+          initData,
+        ])
+        // Get implementation from proxy
+        const earnDrip = await ethers.getContractAt('VesperEarnDrip', proxy.address)
+        await earnDrip.updateGrowToken(vPool.address)
+        await this.pool.updatePoolRewards(proxy.address)
         newStrategy = await deployContract(strategyName, [pool.address, cm.address, swapManager.address, vPool.address])
       } else {
         newStrategy = await deployContract(strategyName, [pool.address, cm.address, swapManager.address])

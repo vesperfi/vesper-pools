@@ -15,4 +15,8 @@ contract EarnVesperMakerStrategyWBTC is EarnVesperMakerStrategy {
         address _swapManager,
         address _vPool
     ) EarnVesperMakerStrategy(_pool, _cm, _swapManager, _vPool, "WBTC-A", DAI) {}
+
+    function convertFrom18(uint256 amount) public pure virtual override returns (uint256) {
+        return amount / (10**10);
+    }
 }

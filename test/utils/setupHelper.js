@@ -3,7 +3,7 @@
 const hre = require('hardhat')
 const ethers = hre.ethers
 const provider = hre.waffle.provider
-
+const {BigNumber: BN} = require('ethers')
 const StrategyType = require('../utils/strategyTypes')
 const Address = require('../../helper/ethereum/address')
 
@@ -309,6 +309,28 @@ async function setupEarnDrip(growPool = Address.vDAI) {
 
   })
 }
+
+/**
+ * Setup feeWhitelist in mainnet pool for testing
+ *
+ * @param pool
+ */
+ async function addInFeeWhitelist(pool) {
+  // eslint-disable-next-line mocha/no-sibling-hooks
+  beforeEach(async function () {
+    const vaDai = await ethers.getContractAt('VPool', pool)
+    const keeperList =  await ethers.getContractAt('IAddressList', await vaDai.keepers())
+    const keeper = (await keeperList.at(0))[0]
+    const amount = BN.from(10).mul(BN.from('1000000000000000000'))
+    await hre.network.provider.send('hardhat_setBalance', [keeper, amount.toHexString()])
+    const feeWhitelist = await vaDai.feeWhitelist()
+    const signer = await unlock(keeper)
+    const _strategies = await this.pool.getStrategies()
+    for (let i = 0; i < _strategies.length; i++) {
+      await vaDai.connect(signer).addInList(feeWhitelist, _strategies[i])
+    }
+  })
+}
 module.exports = {
   deployContract,
   getUsers,
@@ -318,4 +340,5 @@ module.exports = {
   createStrategy,
   setupEarnDrip,
   unlock,
+  addInFeeWhitelist
 }
