@@ -1,8 +1,8 @@
 'use strict'
 
 const swapper = require('../utils/tokenSwapper')
-const { getPermitData } = require('../utils/signHelper')
-const { MNEMONIC } = require('../utils/testkey')
+const {getPermitData} = require('../utils/signHelper')
+const {MNEMONIC} = require('../utils/testkey')
 const {
   deposit: _deposit,
   rebalance,
@@ -16,8 +16,8 @@ const chaiAlmost = require('chai-almost')
 const chai = require('chai')
 chai.use(chaiAlmost(1))
 const expect = chai.expect
-const { BigNumber: BN } = require('ethers')
-const { ethers } = require('hardhat')
+const {BigNumber: BN} = require('ethers')
+const {ethers} = require('hardhat')
 const DECIMAL18 = BN.from('1000000000000000000')
 const MAX_BPS = BN.from('10000')
 async function shouldBehaveLikePool(poolName, collateralName) {
@@ -53,7 +53,7 @@ async function shouldBehaveLikePool(poolName, collateralName) {
     describe(`Gasless approval for ${poolName} token`, function () {
       it('Should allow gasless approval using permit()', async function () {
         const amount = DECIMAL18.toString()
-        const { owner, deadline, sign } = await getPermitData(pool, amount, MNEMONIC, user1.address)
+        const {owner, deadline, sign} = await getPermitData(pool, amount, MNEMONIC, user1.address)
         await pool.permit(owner, user1.address, amount, deadline, sign.v, sign.r, sign.s)
         const allowance = await pool.allowance(owner, user1.address)
         expect(allowance).to.be.equal(amount, `${poolName} allowance is wrong`)
@@ -170,7 +170,7 @@ async function shouldBehaveLikePool(poolName, collateralName) {
 
       it(`Should withdraw all ${collateralName} after rebalance`, async function () {
         // reset interest fee to 0.
-        for(const strategy of strategies) {
+        for (const strategy of strategies) {
           await accountant.updateInterestFee(strategy.instance.address, '0')
         }
         depositAmount = await deposit(10, user2)
@@ -268,6 +268,20 @@ async function shouldBehaveLikePool(poolName, collateralName) {
           expect(totalSupply).to.be.gte(depositAmount, `Total supply of ${poolName} is wrong`)
           expect(vPoolBalance).to.be.eq(convertTo18(depositAmount), `${poolName} balance of user is wrong`)
         })
+      })
+
+      it('Should update strategy lastRebalance param', async function () {
+        // given
+        const [strategyToRebalance] = strategies
+        const {_lastRebalance: lastRebalanceBefore} = await pool.strategy(strategyToRebalance.instance.address)
+
+        // when
+        await timeTravel()
+        await rebalance([strategyToRebalance])
+
+        // then
+        const {_lastRebalance: lastRebalanceAfter} = await pool.strategy(strategyToRebalance.instance.address)
+        expect(lastRebalanceAfter).to.gt(lastRebalanceBefore)
       })
     })
 
@@ -560,4 +574,4 @@ async function shouldBehaveLikePool(poolName, collateralName) {
   })
 }
 
-module.exports = { shouldBehaveLikePool }
+module.exports = {shouldBehaveLikePool}
