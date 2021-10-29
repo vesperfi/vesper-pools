@@ -176,9 +176,9 @@ abstract contract VPoolBase is PoolShareToken {
         } else if (_totalPayback > _creditLine) {
             token.safeTransferFrom(_msgSender(), address(this), _totalPayback - _creditLine);
         }
-        // Mint interest fee worth shares at strategy address
+        // Mint interest fee worth shares at feeCollector address
         if (_interestFee != 0) {
-            _mint(_msgSender(), _calculateShares(_interestFee));
+            _mint(IStrategy(_msgSender()).feeCollector(), _calculateShares(_interestFee));
         }
     }
 

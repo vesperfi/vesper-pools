@@ -1,8 +1,8 @@
 'use strict'
 
 const swapper = require('../utils/tokenSwapper')
-const { getPermitData } = require('../utils/signHelper')
-const { MNEMONIC } = require('../utils/testkey')
+const {getPermitData} = require('../utils/signHelper')
+const {MNEMONIC} = require('../utils/testkey')
 const {
   deposit: _deposit,
   rebalance,
@@ -16,8 +16,8 @@ const chaiAlmost = require('chai-almost')
 const chai = require('chai')
 chai.use(chaiAlmost(1))
 const expect = chai.expect
-const { BigNumber: BN } = require('ethers')
-const { ethers } = require('hardhat')
+const {BigNumber: BN} = require('ethers')
+const {ethers} = require('hardhat')
 const DECIMAL18 = BN.from('1000000000000000000')
 const MAX_BPS = BN.from('10000')
 async function shouldBehaveLikePool(poolName, collateralName) {
@@ -53,7 +53,7 @@ async function shouldBehaveLikePool(poolName, collateralName) {
     describe(`Gasless approval for ${poolName} token`, function () {
       it('Should allow gasless approval using permit()', async function () {
         const amount = DECIMAL18.toString()
-        const { owner, deadline, sign } = await getPermitData(pool, amount, MNEMONIC, user1.address)
+        const {owner, deadline, sign} = await getPermitData(pool, amount, MNEMONIC, user1.address)
         await pool.permit(owner, user1.address, amount, deadline, sign.v, sign.r, sign.s)
         const allowance = await pool.allowance(owner, user1.address)
         expect(allowance).to.be.equal(amount, `${poolName} allowance is wrong`)
@@ -170,7 +170,7 @@ async function shouldBehaveLikePool(poolName, collateralName) {
 
       it(`Should withdraw all ${collateralName} after rebalance`, async function () {
         // reset interest fee to 0.
-        for(const strategy of strategies) {
+        for (const strategy of strategies) {
           await accountant.updateInterestFee(strategy.instance.address, '0')
         }
         depositAmount = await deposit(10, user2)
@@ -360,12 +360,10 @@ async function shouldBehaveLikePool(poolName, collateralName) {
         // Another deposit
         await deposit(20, user2)
         await rebalance(strategies)
-        await strategies[0].instance.sweepERC20(pool.address)
         const feeEarned1 = await pool.balanceOf(fc)
         expect(feeEarned1).to.be.gt(0, 'Fee collected is not correct')
         await timeTravel()
         await rebalance(strategies)
-        await strategies[0].instance.sweepERC20(pool.address)
         const feeEarned2 = await pool.balanceOf(fc)
         expect(feeEarned2).to.be.gt(feeEarned1, 'Fee collected is not correct')
       })
@@ -560,4 +558,4 @@ async function shouldBehaveLikePool(poolName, collateralName) {
   })
 }
 
-module.exports = { shouldBehaveLikePool }
+module.exports = {shouldBehaveLikePool}
