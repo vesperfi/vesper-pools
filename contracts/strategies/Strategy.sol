@@ -16,7 +16,7 @@ abstract contract Strategy is IStrategy, Context {
     IERC20 public immutable collateralToken;
     address public receiptToken;
     address public immutable override pool;
-    IAddressList public keepers;
+    IAddressList public override keepers;
     address public override feeCollector;
     ISwapManager public swapManager;
 

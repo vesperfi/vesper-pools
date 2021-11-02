@@ -37,7 +37,7 @@ task('deploy-pool', 'Deploy vesper pool')
     const network = hre.network.name
     const networkDir = `./deployments/${network}`
     let deployer = process.env.DEPLOYER
-    if (deployer.startsWith('ledger')) {
+    if (deployer && deployer.startsWith('ledger')) {
       deployer = deployer.split('ledger://')[1]
     }
     console.log(`${deployer} is deploying ${pool} on ${network} with deployParams`, deployParams)

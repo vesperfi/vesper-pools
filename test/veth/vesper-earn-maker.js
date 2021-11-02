@@ -29,7 +29,7 @@ describe('vETH pool strategies', function () {
     await vPool.initialize(...PoolConfig.VDAI.poolParams, accountant.address, address.ADDRESS_LIST_FACTORY)
     
     await setupVPool(this, {
-      poolConfig: PoolConfig.VETHEarn,
+      poolConfig: PoolConfig.VEETH_DAI,
       feeCollector: users[7].address,
       vPool,
       strategies: strategies.map((item, i) => ({
