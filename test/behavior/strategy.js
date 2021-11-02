@@ -255,11 +255,7 @@ function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
       it('Should call approve tokens', async function () {
         await expect(strategy.approveToken()).to.not.reverted
       })
-    })
-
-    // it('Should payback all debt when debt ratio in pool is set 0 for the strategy.', async function () {
-    //   // TODO
-    // })
+    })    
   })
 
   // Run strategy specific tets

@@ -434,10 +434,7 @@ async function shouldBehaveLikePool(poolName, collateralName) {
 
     describe(`${poolName}: Should report earning correctly`, function () {
       after(reset)
-      it('Should not be able to payback more than total debt', async function () {
-        // TODO
-      })
-
+      
       it('Strategy should receive more amount when new deposit happen', async function () {
         await deposit(75, user2)
         await rebalance(strategies)
@@ -489,10 +486,6 @@ async function shouldBehaveLikePool(poolName, collateralName) {
           maxTotalDebt,
           `Total debt of ${poolName} is wrong after withdraw and rebalance`
         )
-      })
-
-      it('Pool decrease total debt when strategy payback', async function () {
-        // TODO:
       })
 
       it('Pool record correct value of profit and loss', async function () {
@@ -559,14 +552,6 @@ async function shouldBehaveLikePool(poolName, collateralName) {
           dust,
           `Debt of strategy in ${poolName} is wrong`
         )
-      })
-
-      it('Strategy should not receive more than available limit in one rebalance', async function () {
-        // TODO:
-      })
-
-      it('Pool take profit from strategy if current debt of pool > max debt', async function () {
-        // TODO:
       })
     })
   })

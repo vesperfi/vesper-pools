@@ -179,20 +179,6 @@ function shouldBehaveLikeCompoundLeverageStrategy(strategyIndex) {
       await expect(tx).to.revertedWith('max-should-be-higher-than-min')
     })
 
-    // TODO write loss making test
-    // it('Should rebalance when loss making', async function () {
-    //   await deposit(pool, collateralToken, 50, user2)
-    //   await strategy.connect(governor.signer).rebalance()
-    //   const borrowBalance = await token.callStatic.borrowBalanceCurrent(strategy.address)
-    //   expect(borrowBalance).to.gt(0, 'Borrow balance should be > 0')
-
-    //   // Advance some blocks to generate interest on borrow
-    //   await advanceBlock(10)
-    //   expect(await strategy.callStatic.isLossMaking()).to.true
-    //   // Even though it is loss making strategy, let rebalance work
-    //   await strategy.connect(governor.signer).rebalance()
-    // })
-
     it('Should repay borrow if borrow limit set to 0', async function () {
       await deposit(pool, collateralToken, 100, user1)
       await strategy.connect(governor.signer).rebalance()

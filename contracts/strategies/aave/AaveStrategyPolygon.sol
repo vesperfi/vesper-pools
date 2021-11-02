@@ -7,7 +7,6 @@ import "../../interfaces/aave/IAave.sol";
 /// @dev This strategy will deposit collateral token in Aave and earn interest.
 abstract contract AaveStrategyPolygon is Strategy {
     using SafeERC20 for IERC20;
-    // TODO confirm provider id
     bytes32 private constant AAVE_PROVIDER_ID = 0x0100000000000000000000000000000000000000000000000000000000000000;
     AaveLendingPool public aaveLendingPool;
     AaveProtocolDataProvider public aaveProtocolDataProvider;

@@ -152,7 +152,6 @@ describe('Vesper Pool: Admin only function tests', function () {
     })
   })
 
-  // TODO move add remove test into accountant tests
   describe('Add strategy test', function () {
     it('Should add strategy and make it active', async function () {
       const config = strategyConfig.config
@@ -240,5 +239,4 @@ describe('Vesper Pool: Admin only function tests', function () {
       await expect(tx).to.be.revertedWith('15', 'New strategy is already active')
     })
   })
-  // TODO Add all other admin function tests
 })

@@ -14,6 +14,8 @@ on:
 jobs:
   vdai-curveA3p-strategy-test:
     runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.NODE_URL }}
     strategy:
       matrix:
         node: [14]
