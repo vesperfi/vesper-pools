@@ -24,6 +24,8 @@ abstract contract CrvPoolStrategyBase is CrvBase, Strategy {
     bool public depositError;
 
     uint256 public crvSlippage = 10; // 10000 is 100%; 10 is 0.1%
+
+    // No. of pooled tokens in the Pool
     uint256 internal immutable n;
     event UpdatedCrvSlippage(uint256 oldCrvSlippage, uint256 newCrvSlippage);
 

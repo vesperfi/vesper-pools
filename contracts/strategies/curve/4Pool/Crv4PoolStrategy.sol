@@ -13,6 +13,7 @@ import "../CrvPoolStrategyBase.sol";
 abstract contract Crv4PoolStrategy is CrvPoolStrategyBase {
     using SafeERC20 for IERC20;
 
+    // No. of pooled tokens in the Pool
     uint256 private constant N = 4;
 
     // Legacy Curve Deposit Helper contract for pure 4Pools
@@ -62,7 +63,7 @@ abstract contract Crv4PoolStrategy is CrvPoolStrategyBase {
             }
         }
         collateralToken.safeApprove(crvDeposit, _amount);
-        IERC20(crvLp).safeApprove(crvDeposit, 0);
+
         IERC20(crvLp).safeApprove(crvDeposit, _amount);
     }
 
@@ -73,35 +74,37 @@ abstract contract Crv4PoolStrategy is CrvPoolStrategyBase {
 
         if (_rewardToken != address(0)) {
             ILiquidityGaugeV1(crvGauge).claim_rewards(address(this));
-            uint256 amt = IERC20(_rewardToken).balanceOf(address(this));
-            if (amt != 0) {
-                address[] memory path = new address[](3);
-                path[0] = _rewardToken;
-                path[1] = WETH;
-                path[2] = _toToken;
-                uint256 minAmtOut =
-                    (swapSlippage != 10000) ? _calcAmtOutAfterSlippage(_getOracleRate(path, amt), swapSlippage) : 1;
-                _safeSwap(_rewardToken, _toToken, amt, minAmtOut);
+            uint256 _amt = IERC20(_rewardToken).balanceOf(address(this));
+            if (_amt != 0) {
+                address[] memory _path = new address[](3);
+                _path[0] = _rewardToken;
+                _path[1] = WETH;
+                _path[2] = _toToken;
+                uint256 _minAmtOut =
+                    (swapSlippage != 10000) ? _calcAmtOutAfterSlippage(_getOracleRate(_path, _amt), swapSlippage) : 1;
+                _safeSwap(_rewardToken, _toToken, _amt, _minAmtOut);
             }
         }
     }
 
     function _depositToCurve(uint256 amt) internal virtual override returns (bool) {
         if (amt != 0) {
-            uint256[4] memory depositAmounts;
-            depositAmounts[collIdx] = amt;
-            uint256 expectedOut =
+            uint256[4] memory _depositAmounts;
+            _depositAmounts[collIdx] = amt;
+            uint256 _expectedOut =
                 _calcAmtOutAfterSlippage(
-                    IStableSwap4xUnderlying(address(crvPool)).calc_token_amount(depositAmounts, true),
+                    IStableSwap4xUnderlying(address(crvPool)).calc_token_amount(_depositAmounts, true),
                     crvSlippage
                 );
 
-            uint256 minLpAmount =
+            uint256 _minLpAmount =
                 ((amt * _getSafeUsdRate()) / crvPool.get_virtual_price()) * 10**(18 - coinDecimals[collIdx]);
-            if (expectedOut > minLpAmount) minLpAmount = expectedOut;
+            if (_expectedOut > _minLpAmount) _minLpAmount = _expectedOut;
             // solhint-disable-next-line no-empty-blocks
-            try IDeposit4x(crvDeposit).add_liquidity(depositAmounts, minLpAmount) {} catch Error(string memory reason) {
-                emit DepositFailed(reason);
+            try IDeposit4x(crvDeposit).add_liquidity(_depositAmounts, _minLpAmount) {} catch Error(
+                string memory _reason
+            ) {
+                emit DepositFailed(_reason);
                 return false;
             }
         }
@@ -111,15 +114,15 @@ abstract contract Crv4PoolStrategy is CrvPoolStrategyBase {
     function _withdrawAsFromCrvPool(
         uint256 _lpAmount,
         uint256 _minAmt,
-        uint256 i
+        uint256 _i
     ) internal virtual override {
-        IDeposit4x(crvDeposit).remove_liquidity_one_coin(_lpAmount, SafeCast.toInt128(int256(i)), _minAmt);
+        IDeposit4x(crvDeposit).remove_liquidity_one_coin(_lpAmount, SafeCast.toInt128(int256(_i)), _minAmt);
     }
 
-    function getLpValueAs(uint256 _lpAmount, uint256 i) public view virtual override returns (uint256) {
+    function getLpValueAs(uint256 _lpAmount, uint256 _i) public view virtual override returns (uint256) {
         return
             (_lpAmount != 0)
-                ? IDeposit4x(crvDeposit).calc_withdraw_one_coin(_lpAmount, SafeCast.toInt128(int256(i)))
+                ? IDeposit4x(crvDeposit).calc_withdraw_one_coin(_lpAmount, SafeCast.toInt128(int256(_i)))
                 : 0;
     }
 }

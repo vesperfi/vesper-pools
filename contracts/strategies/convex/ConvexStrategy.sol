@@ -26,6 +26,7 @@ abstract contract ConvexStrategy is CrvPoolStrategyBase {
         address _swapManager,
         uint256 _collateralIdx,
         uint256 _convexPoolId,
+        // No. of pooled tokens in the pool
         uint256 _n
     ) CrvPoolStrategyBase(_pool, _threePool, _threeCrv, _gauge, _swapManager, _collateralIdx, _n) {
         (address _lp, , , address _reward, , ) = IConvex(BOOSTER).poolInfo(_convexPoolId);

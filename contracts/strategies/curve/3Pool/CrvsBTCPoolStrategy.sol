@@ -42,7 +42,7 @@ abstract contract CrvsBTCPoolStrategy is CrvPoolStrategyBase {
 
     function _setupOracles() internal virtual override {
         swapManager.createOrUpdateOracle(CRV, WETH, oraclePeriod, oracleRouterIdx);
-        for (int128 i = 0; i < 3; i++) {
+        for (int128 i = 0; i < int128(int256(n)); i++) {
             swapManager.createOrUpdateOracle(
                 IStableSwapV2(address(crvPool)).coins(i),
                 WETH,

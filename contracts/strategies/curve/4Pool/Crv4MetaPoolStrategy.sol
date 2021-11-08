@@ -12,6 +12,7 @@ import "../CrvPoolStrategyBase.sol";
 abstract contract Crv4MetaPoolStrategy is CrvPoolStrategyBase {
     using SafeERC20 for IERC20;
 
+    // No. of pooled tokens in the metapool
     uint256 private constant N = 4;
     // Curve Metapool Factory
     address private constant FACTORY = 0x0959158b6040D32d04c301A72CBFD6b39E21c9AE;
@@ -38,7 +39,10 @@ abstract contract Crv4MetaPoolStrategy is CrvPoolStrategyBase {
         require(_coins[_collateralIdx] == address(IVesperPool(_pool).token()), "collateral-mismatch");
     }
 
-    function _init(address _crvPool, uint256 _n) internal virtual override {
+    function _init(
+        address _crvPool,
+        uint256 /* _n */
+    ) internal virtual override {
         coins = IMetapoolFactory(FACTORY).get_underlying_coins(_crvPool);
         coinDecimals = IMetapoolFactory(FACTORY).get_underlying_decimals(_crvPool);
     }
@@ -55,7 +59,6 @@ abstract contract Crv4MetaPoolStrategy is CrvPoolStrategyBase {
         }
         collateralToken.safeApprove(DEPOSIT_ZAP, _amount);
 
-        IERC20(crvLp).safeApprove(DEPOSIT_ZAP, 0);
         IERC20(crvLp).safeApprove(DEPOSIT_ZAP, _amount);
     }
 
@@ -80,39 +83,41 @@ abstract contract Crv4MetaPoolStrategy is CrvPoolStrategyBase {
 
             for (uint256 i = 0; i < _rewardsCount; i++) {
                 address _rewardToken = ILiquidityGaugeV2(crvGauge).reward_tokens(i);
-                uint256 amt = IERC20(_rewardToken).balanceOf(address(this));
-                if (amt != 0) {
-                    address[] memory path = new address[](3);
-                    path[0] = _rewardToken;
-                    path[1] = WETH;
-                    path[2] = _toToken;
-                    uint256 minAmtOut =
-                        (swapSlippage != 10000) ? _calcAmtOutAfterSlippage(_getOracleRate(path, amt), swapSlippage) : 1;
-                    _safeSwap(_rewardToken, _toToken, amt, minAmtOut);
+                uint256 _amt = IERC20(_rewardToken).balanceOf(address(this));
+                if (_amt != 0) {
+                    address[] memory _path = new address[](3);
+                    _path[0] = _rewardToken;
+                    _path[1] = WETH;
+                    _path[2] = _toToken;
+                    uint256 _minAmtOut =
+                        (swapSlippage != 10000)
+                            ? _calcAmtOutAfterSlippage(_getOracleRate(_path, _amt), swapSlippage)
+                            : 1;
+                    _safeSwap(_rewardToken, _toToken, _amt, _minAmtOut);
                 }
             }
         }
     }
 
-    function _depositToCurve(uint256 amt) internal virtual override returns (bool) {
-        if (amt != 0) {
-            uint256[4] memory depositAmounts;
-            depositAmounts[collIdx] = amt;
+    function _depositToCurve(uint256 _amt) internal virtual override returns (bool) {
+        if (_amt != 0) {
+            uint256[4] memory _depositAmounts;
+            _depositAmounts[collIdx] = _amt;
             uint256 expectedOut =
                 _calcAmtOutAfterSlippage(
-                    IDepositZap4x(DEPOSIT_ZAP).calc_token_amount(crvLp, depositAmounts, true),
+                    IDepositZap4x(DEPOSIT_ZAP).calc_token_amount(crvLp, _depositAmounts, true),
                     crvSlippage
                 );
-            uint256 minLpAmount =
-                ((amt * _getSafeUsdRate()) / crvPool.get_virtual_price()) * 10**(18 - coinDecimals[collIdx]);
+            uint256 _minLpAmount =
+                ((_amt * _getSafeUsdRate()) / crvPool.get_virtual_price()) * 10**(18 - coinDecimals[collIdx]);
 
-            if (expectedOut > minLpAmount) minLpAmount = expectedOut;
+            if (expectedOut > _minLpAmount) _minLpAmount = expectedOut;
 
             // solhint-disable-next-line no-empty-blocks
-            try IDepositZap4x(DEPOSIT_ZAP).add_liquidity(crvLp, depositAmounts, minLpAmount) {} catch Error(
-                string memory reason
+            try IDepositZap4x(DEPOSIT_ZAP).add_liquidity(crvLp, _depositAmounts, _minLpAmount) {} catch Error(
+                string memory _reason
             ) {
-                emit DepositFailed(reason);
+                emit DepositFailed(_reason);
                 return false;
             }
         }
@@ -122,15 +127,15 @@ abstract contract Crv4MetaPoolStrategy is CrvPoolStrategyBase {
     function _withdrawAsFromCrvPool(
         uint256 _lpAmount,
         uint256 _minAmt,
-        uint256 i
+        uint256 _i
     ) internal virtual override {
-        IDepositZap4x(DEPOSIT_ZAP).remove_liquidity_one_coin(crvLp, _lpAmount, SafeCast.toInt128(int256(i)), _minAmt);
+        IDepositZap4x(DEPOSIT_ZAP).remove_liquidity_one_coin(crvLp, _lpAmount, SafeCast.toInt128(int256(_i)), _minAmt);
     }
 
-    function getLpValueAs(uint256 _lpAmount, uint256 i) public view virtual override returns (uint256) {
+    function getLpValueAs(uint256 _lpAmount, uint256 _i) public view virtual override returns (uint256) {
         return
             (_lpAmount != 0)
-                ? IDepositZap4x(DEPOSIT_ZAP).calc_withdraw_one_coin(crvLp, _lpAmount, SafeCast.toInt128(int256(i)))
+                ? IDepositZap4x(DEPOSIT_ZAP).calc_withdraw_one_coin(crvLp, _lpAmount, SafeCast.toInt128(int256(_i)))
                 : 0;
     }
 }
