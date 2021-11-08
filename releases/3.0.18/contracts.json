@@ -105,9 +105,19 @@
         }
       },
       "vusdc": {
-        "pool": "0x777A7850251b7A301cfA1E7b1d8a9c4a9C49Cf85",
-        "strategy": {
-          "AaveStrategyUSDC": "0x856678bA7e5E57642b71af14425af4cBe9830F0f"
+        "pool": {
+          "proxyAdmin": "0xe1444fEA423Bf8614c6E731C5BD5e45602AE6afC",
+          "proxy": "0x3553e7420B1D68A010ad447b782fae6388f5F37F",
+          "implementation": "0x35f1B6d2E8117341195B2274e9276CfD6fd64b9b",
+          "poolAccountant": {
+            "proxyAdmin": "0xe1444fEA423Bf8614c6E731C5BD5e45602AE6afC",
+            "proxy": "0xD679a666B3eF6e75d84be098f547Cc3A309bc2dd",
+            "implementation": "0xd895fe21f88585c3bf66a4e23f255a5e8234d309"
+          }
+        },
+        "strategies": {
+          "AaveStrategyUSDC": "0x5cC192ba3F27A4A7741C858bE6c7f2847dfB812a",
+          "CompoundStrategyUSDC": "0x093c8428A6C46A3216D554957610aA70876c6e5c"
         }
       },
       "vusdt": {
