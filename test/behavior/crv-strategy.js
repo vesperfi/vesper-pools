@@ -24,7 +24,7 @@ function shouldBehaveLikeCrvStrategy(strategyIndex) {
 
     it('Should get CRV token as reserve token', async function () {
       expect(await strategy.isReservedToken(CRV)).to.be.true
-      const crvLP = await strategy.threeCrv()
+      const crvLP = await strategy.crvLp()
       expect(await strategy.isReservedToken(crvLP)).to.be.true
     })
 

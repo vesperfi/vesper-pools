@@ -4,10 +4,10 @@ pragma solidity 0.8.3;
 
 import "../../interfaces/convex/IConvex.sol";
 import "../../interfaces/convex/IConvexToken.sol";
-import "../curve/Crv3PoolStrategyBase.sol";
+import "../curve/CrvPoolStrategyBase.sol";
 
 /// @title This strategy will deposit collateral token in Curve 3Pool and stake lp token to convex.
-abstract contract ConvexStrategy is Crv3PoolStrategyBase {
+abstract contract ConvexStrategy is CrvPoolStrategyBase {
     using SafeERC20 for IERC20;
 
     address public constant CVX = 0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B;
@@ -25,8 +25,10 @@ abstract contract ConvexStrategy is Crv3PoolStrategyBase {
         address _gauge,
         address _swapManager,
         uint256 _collateralIdx,
-        uint256 _convexPoolId
-    ) Crv3PoolStrategyBase(_pool, _threePool, _threeCrv, _gauge, _swapManager, _collateralIdx) {
+        uint256 _convexPoolId,
+        // No. of pooled tokens in the pool
+        uint256 _n
+    ) CrvPoolStrategyBase(_pool, _threePool, _threeCrv, _gauge, _swapManager, _collateralIdx, _n) {
         (address _lp, , , address _reward, , ) = IConvex(BOOSTER).poolInfo(_convexPoolId);
         require(_lp == address(_threeCrv), "incorrect-lp-token");
         cvxCrvRewards = _reward;

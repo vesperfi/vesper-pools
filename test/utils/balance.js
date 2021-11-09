@@ -14,6 +14,7 @@ const slots = {
   [Address.USDT]: 2,
   [Address.WBTC]: 0,
   [Address.UNI]: 4,
+  [Address.MIM]: 0, 
   '0x5d3a536E4D6DbD6114cc1Ead35777bAB948E3643': 14, // cDAI
   '0xc00e94Cb662C3520282E6f5717214004A7f26888': 1 // COMP
 }

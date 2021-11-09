@@ -25,5 +25,16 @@ interface ILiquidityGaugeV2 is IERC20 {
     function reward_integral(address) external view returns (uint256);
 
     function reward_integral_for(address, address) external view returns (uint256);
+
+    function lp_token() external view returns (address);
+
+    function reward_count() external view returns (uint256);
+
+    function reward_tokens(uint256 _i) external view returns (address);
 }
+
+interface ILiquidityGaugeV1 is ILiquidityGaugeV2 {
+    function rewarded_token() external view returns (address);
+}
+
 /* solhint-enable */

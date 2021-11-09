@@ -46,6 +46,10 @@ interface IStableSwap {
     ) external;
 }
 
+interface IStableSwapV2 {
+    function coins(int128 i) external view returns (address);
+}
+
 interface IStableSwapUnderlying is IStableSwap {
     function underlying_coins(uint256 i) external view returns (address);
 

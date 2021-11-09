@@ -3,11 +3,6 @@
 pragma solidity 0.8.3;
 
 import "./ConvexStrategy.sol";
-import "hardhat/console.sol";
-
-interface IStableSwapV2 {
-    function coins(int128 i) external view returns (address);
-}
 
 //solhint-disable no-empty-blocks
 contract ConvexSBTCStrategyWBTC is ConvexStrategy {
@@ -18,26 +13,23 @@ contract ConvexSBTCStrategyWBTC is ConvexStrategy {
     address private constant GAUGE = 0x705350c4BcD35c9441419DdD5d2f097d7a55410F;
 
     constructor(address _pool, address _swapManager)
-        ConvexStrategy(_pool, THREEPOOL, THREECRV, GAUGE, _swapManager, 1, 7)
+        ConvexStrategy(_pool, THREEPOOL, THREECRV, GAUGE, _swapManager, 1, 7, 3)
     {}
 
     function convertFrom18(uint256 amount) public pure override returns (uint256) {
         return amount / (10**10);
     }
 
-    function _init(address _pool) internal virtual override {
-        for (int128 _index = 0; _index < 3; _index++) {
-            uint256 i = uint256(int256(_index));
-            coins[i] = IStableSwapV2(_pool).coins(_index);
-            coinDecimals[i] = IERC20Metadata(coins[i]).decimals();
-        }
-    }
-
     function _setupOracles() internal virtual override {
         swapManager.createOrUpdateOracle(CVX, WETH, oraclePeriod, SUSHISWAP_ROUTER_INDEX);
         swapManager.createOrUpdateOracle(CRV, WETH, oraclePeriod, oracleRouterIdx);
-        for (int128 i = 0; i < 3; i++) {
-            swapManager.createOrUpdateOracle(IStableSwapV2(threePool).coins(i), WETH, oraclePeriod, oracleRouterIdx);
+        for (int128 i = 0; i < int128(uint128(n)); i++) {
+            swapManager.createOrUpdateOracle(
+                IStableSwapV2(address(crvPool)).coins(i),
+                WETH,
+                oraclePeriod,
+                oracleRouterIdx
+            );
         }
     }
 }

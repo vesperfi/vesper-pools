@@ -15,7 +15,7 @@ contract EarnCrvsBTCStrategy is CrvsBTCPoolStrategy, Earn {
         address _dripToken
     ) CrvsBTCPoolStrategy(_pool, _swapManager, 1) Earn(_dripToken) {}
 
-    function rebalance() external override(Strategy, Crv3PoolStrategyBase) onlyKeeper {
+    function rebalance() external override(Strategy, CrvPoolStrategyBase) onlyKeeper {
         (uint256 _profit, uint256 _loss, uint256 _payback) = _generateReport();
         if (_profit > 0) {
             _convertCollateralToDrip(_profit);
@@ -33,8 +33,8 @@ contract EarnCrvsBTCStrategy is CrvsBTCPoolStrategy, Earn {
         return CrvsBTCPoolStrategy.convertFrom18(amount);
     }
 
-    function _claimRewardsAndConvertTo(address _toToken) internal override(Strategy, Crv3PoolStrategyBase) {
-        Crv3PoolStrategyBase._claimRewardsAndConvertTo(_toToken);
+    function _claimRewardsAndConvertTo(address _toToken) internal override(Strategy, CrvPoolStrategyBase) {
+        CrvPoolStrategyBase._claimRewardsAndConvertTo(_toToken);
     }
 
     function _setupOracles() internal override(Strategy, CrvsBTCPoolStrategy) {
@@ -43,18 +43,18 @@ contract EarnCrvsBTCStrategy is CrvsBTCPoolStrategy, Earn {
 
     function _generateReport()
         internal
-        override(Strategy, Crv3PoolStrategyBase)
+        override(Strategy, CrvPoolStrategyBase)
         returns (
             uint256 _profit,
             uint256 _loss,
             uint256 _payback
         )
     {
-        return Crv3PoolStrategyBase._generateReport();
+        return CrvPoolStrategyBase._generateReport();
     }
 
     /// @notice Approve all required tokens
-    function _approveToken(uint256 _amount) internal virtual override(Strategy, Crv3PoolStrategyBase) {
+    function _approveToken(uint256 _amount) internal virtual override(Strategy, CrvPoolStrategyBase) {
         collateralToken.safeApprove(pool, _amount);
         collateralToken.safeApprove(address(crvPool), _amount);
         for (uint256 i = 0; i < swapManager.N_DEX(); i++) {
