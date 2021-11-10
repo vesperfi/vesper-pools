@@ -1,4 +1,6 @@
-/* solhint-disable */
+// SPDX-License-Identifier: MIT
+
+/* solhint-disable func-name-mixedcase*/
 pragma solidity 0.8.3;
 
 interface IMetapoolFactory {

@@ -26,7 +26,24 @@ task('deploy-pool', 'Deploy vesper pool')
   -----------------------------------------------------------------------------------------
   `
   )
-  .setAction(async function ({ pool, release, deployParams = {} }) {
+  .addOptionalParam(
+    'strategyParams',
+    `any param passed inside strategyParam object will be used to prepare strategy configuration
+  -----------------------------------------------------------------------------------------
+  name                strategy contract name
+  collateralToken     name of pool collateral token
+  interestFee         interest fee of this strategy
+  debtRatio           debt ratio for this strategy
+  debtRate            debt rate of this strategy
+  swapManager         swap manager address
+  addressListFactory  factory address
+  feeCollector        fee collector address
+  keeper              address we want to add as keeper
+  fusePoolId          Fuse pool id, if applicable
+  -----------------------------------------------------------------------------------------
+  `
+  )
+  .setAction(async function ({ pool, release, deployParams = {}, strategyParams }) {
     if (typeof deployParams === 'string') {
       deployParams = JSON.parse(deployParams)
     }
@@ -34,13 +51,18 @@ task('deploy-pool', 'Deploy vesper pool')
     if (!deployParams.tags) {
       deployParams.tags = pool
     }
+
+    // TODO support multiple networks
+    hre.poolConfig = require('../helper/ethereum/poolConfig')[pool.toUpperCase()]
+    await run('strategy-configuration', { strategyParams })
+
     const network = hre.network.name
     const networkDir = `./deployments/${network}`
     let deployer = process.env.DEPLOYER
     if (deployer && deployer.startsWith('ledger')) {
       deployer = deployer.split('ledger://')[1]
     }
-    console.log(`${deployer} is deploying ${pool} on ${network} with deployParams`, deployParams)
+    console.log(`${deployer} is deploying/updating ${pool} on ${network} with deployParams`, deployParams)
     pool = pool.toLowerCase()
     const poolDir = `${networkDir}/${pool}`
     const globalDir = `${networkDir}/global`
@@ -51,7 +73,7 @@ task('deploy-pool', 'Deploy vesper pool')
       if (fs.existsSync(poolDir)) {
         await copy(poolDir, networkDir, {
           overwrite: true,
-          filter: ['*.json', 'solcInputs/*', '!DefaultProxyAdmin.json']
+          filter: ['*.json', 'solcInputs/*', '!DefaultProxyAdmin.json'],
         })
       }
       // Copy files from global directory to network directory for deployment
@@ -62,7 +84,7 @@ task('deploy-pool', 'Deploy vesper pool')
       if (fs.existsSync(deployerDir)) {
         await copy(deployerDir, networkDir, {
           overwrite: true,
-          filter: ['*.json']
+          filter: ['*.json'],
         })
       }
 
@@ -80,8 +102,7 @@ task('deploy-pool', 'Deploy vesper pool')
       await copy(networkDir, poolDir, { overwrite: true, filter: copyFilter })
       // Copy default proxy admin to deployer directory
       await copy(networkDir, deployerDir, { overwrite: true, filter: ['DefaultProxyAdmin.json'] })
-    }
-    catch (error) {
+    } catch (error) {
       if (error.message.includes('TransportStatusError')) {
         console.error('Error: Ledger device is locked. Please unlock your ledger device!')
         process.exit(1)
@@ -91,8 +112,7 @@ task('deploy-pool', 'Deploy vesper pool')
         const filter = ['*.json', 'solcInputs/*']
         await copy(networkDir, `${networkDir}/failed/${pool}`, { overwrite: true, filter })
       }
-    }
-    finally {
+    } finally {
       // Delete filter to delete all json files and solcInputs directory. Anything start with dot(.) will not be deleted
       const deleteFilter = [`${networkDir}/*.json`, `${networkDir}/solcInputs`]
       // Delete files/directories using deleteFilter from  network directory
