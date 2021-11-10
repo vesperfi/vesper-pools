@@ -7,6 +7,8 @@ const StrategyType = require('../utils/strategyTypes')
 
 const { prepareConfig } = require('../utils/vfr-common')
 const { shouldBehaveLikeVFRPool } = require('../behavior/vfr-pool')
+const { smock } = require('@defi-wonderland/smock')
+const address = require('../../helper/ethereum/address')
 
 const ONE_MILLION = parseEther('1000000')
 
@@ -34,6 +36,10 @@ describe('VFR DAI Vesper', function () {
   ]
 
   before(async function () {
+    const vaDAI = await ethers.getContractAt('VPool', address.vaDAI)
+    const mock = await smock.fake('IAddressList', { address: await vaDAI.feeWhitelist() })
+    // Pretend stable and coverage strategies are whitelisted for withdraw without fee
+    mock.contains.returns(true)
     await prepareConfig(stableStrategyConfigs, coverageStrategyConfigs)
   })
 
