@@ -76,7 +76,7 @@ abstract contract ConvexStrategy is CrvPoolStrategyBase {
     }
 
     function _claimRewardsAndConvertTo(address _toToken) internal virtual override {
-        Rewards(cvxCrvRewards).getReward(address(this), isClaimExtras);
+        require(Rewards(cvxCrvRewards).getReward(address(this), isClaimExtras), "reward-claim-failed");
         uint256 amt = IERC20(CRV).balanceOf(address(this));
         if (amt != 0) {
             uint256 minAmtOut;
