@@ -15,7 +15,6 @@ contract RariFuseStrategy is CompoundStrategy {
     address private constant FUSE_POOL_DIRECTORY = 0x835482FE0532f169024d5E9410199369aAD5C77E;
     event FusePoolChanged(uint256 indexed newFusePoolId, address indexed oldCToken, address indexed newCToken);
 
-    // solhint-disable no-empty-blocks
     constructor(
         address _pool,
         address _swapManager,
@@ -43,9 +42,10 @@ contract RariFuseStrategy is CompoundStrategy {
         address _newCToken = _cTokenByUnderlying(_newPoolId, address(collateralToken));
         require(address(cToken) != _newCToken, "same-fuse-pool");
         require(cToken.redeem(cToken.balanceOf(address(this))) == 0, "withdraw-from-fuse-pool-failed");
-        uint256 _collateralBalance = collateralToken.balanceOf(address(this));
-        collateralToken.safeApprove(_newCToken, _collateralBalance);
-        require(CToken(_newCToken).mint(_collateralBalance) == 0, "deposit-to-fuse-pool-failed");
+        collateralToken.safeApprove(address(cToken), 0);
+        // We usually do infinite approval via approveToken() any way
+        collateralToken.safeApprove(_newCToken, MAX_UINT_VALUE);
+        require(CToken(_newCToken).mint(collateralToken.balanceOf(address(this))) == 0, "deposit-to-fuse-pool-failed");
         emit FusePoolChanged(_newPoolId, address(cToken), _newCToken);
         cToken = CToken(_newCToken);
         receiptToken = _newCToken;
