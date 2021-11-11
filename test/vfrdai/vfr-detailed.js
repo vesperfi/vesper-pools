@@ -7,7 +7,7 @@ const {DAI} = require('../../helper/ethereum/address')
 const StrategyType = require('../utils/strategyTypes')
 const {rebalance, timeTravel} = require('../utils/poolOps')
 const {adjustBalance} = require('../utils/balance')
-const {deposit, withdraw, isCloseEnough, prepareConfig} = require('./common')
+const {deposit, withdraw, isCloseEnough, prepareConfig} = require('../utils/vfr-common')
 
 const {parseEther} = ethers.utils
 

@@ -18,7 +18,7 @@ const {
   isCloseEnough,
   prepareConfig,
   stablePoolIsWithinTarget
-} = require('./common')
+} = require('../utils/vfr-common')
 
 const { parseEther } = ethers.utils
 

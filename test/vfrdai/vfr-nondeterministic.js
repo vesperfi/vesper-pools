@@ -13,7 +13,7 @@ const {
   fundBuffer,
   isCloseEnough,
   prepareConfig,
-} = require('./common')
+} = require('../utils/vfr-common')
 
 const { formatEther, parseEther } = ethers.utils
 

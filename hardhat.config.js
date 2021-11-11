@@ -20,6 +20,7 @@ module.exports = {
       saveDeployments: true,
     },
     hardhat: {
+      chainId: 1,
       initialBaseFeePerGas: 0,
       forking: {
         url: process.env.NODE_URL,
