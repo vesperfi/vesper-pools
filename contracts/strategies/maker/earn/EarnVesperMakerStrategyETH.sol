@@ -7,7 +7,7 @@ import "./EarnVesperMakerStrategy.sol";
 //solhint-disable no-empty-blocks
 contract EarnVesperMakerStrategyETH is EarnVesperMakerStrategy {
     string public constant NAME = "Earn-Vesper-Maker-Strategy-ETH";
-    string public constant VERSION = "3.0.16";
+    string public constant VERSION = "3.0.20";
 
     constructor(
         address _pool,

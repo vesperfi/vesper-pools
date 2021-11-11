@@ -8,7 +8,7 @@ require('hardhat-gas-reporter')
 require('dotenv').config()
 require('./tasks/create-release')
 require('./tasks/deploy-pool')
-
+const junk = 'test test test test test test test test test test test junk'
 if (process.env.RUN_CONTRACT_SIZER === 'true') {
   require('hardhat-contract-sizer')
 }
@@ -32,6 +32,7 @@ module.exports = {
       url: process.env.NODE_URL,
       chainId: 1,
       gas: 6700000,
+      accounts: { mnemonic: process.env.MNEMONIC || junk},
     },
     polygon: {
       url: process.env.NODE_URL,
