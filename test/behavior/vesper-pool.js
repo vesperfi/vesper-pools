@@ -18,6 +18,7 @@ chai.use(chaiAlmost(1))
 const expect = chai.expect
 const {BigNumber: BN} = require('ethers')
 const {ethers} = require('hardhat')
+const {advanceBlock} = require('../utils/time')
 const DECIMAL18 = BN.from('1000000000000000000')
 const MAX_BPS = BN.from('10000')
 async function shouldBehaveLikePool(poolName, collateralName) {
@@ -251,6 +252,8 @@ async function shouldBehaveLikePool(poolName, collateralName) {
         totalValue = await pool.totalValue()
         totalDebtRatio = await pool.totalDebtRatio()
         maxDebt = totalValue.mul(totalDebtRatio).div(MAX_BPS)
+        // Advance 1 block for proper available credit limit check
+        await advanceBlock(1)
         let unusedCredit = BN.from('0')
         for (const strategy of strategies) {
           const credit = await pool.availableCreditLimit(strategy.instance.address)
@@ -434,7 +437,7 @@ async function shouldBehaveLikePool(poolName, collateralName) {
 
     describe(`${poolName}: Should report earning correctly`, function () {
       after(reset)
-      
+
       it('Strategy should receive more amount when new deposit happen', async function () {
         await deposit(75, user2)
         await rebalance(strategies)
