@@ -48,7 +48,11 @@ abstract contract AlphaLendStrategy is Strategy {
      * @dev Report total value in collateral token
      */
     function totalValue() public view virtual override returns (uint256 _totalValue) {
-        _totalValue = _convertToCollateral(safeBox.balanceOf(address(this)));
+        uint256 _alphaAmount = IERC20(ALPHA).balanceOf(address(this));
+        if (_alphaAmount != 0) {
+            (, _totalValue, ) = swapManager.bestOutputFixedInput(ALPHA, address(collateralToken), _alphaAmount);
+        }
+        _totalValue += _convertToCollateral(safeBox.balanceOf(address(this)));
     }
 
     function isReservedToken(address _token) public view virtual override returns (bool) {
@@ -97,14 +101,18 @@ abstract contract AlphaLendStrategy is Strategy {
         return ((_ibAmount * safeBox.cToken().exchangeRateStored()) / 1e18);
     }
 
-    function convertToIb(uint256 _collateralAmount) internal view virtual returns (uint256) {
+    function _convertToIb(uint256 _collateralAmount) internal view virtual returns (uint256) {
         return (_collateralAmount * 1e18) / safeBox.cToken().exchangeRateStored();
     }
 
     function _withdrawHere(uint256 _collateralAmount) internal returns (uint256) {
         uint256 _collateralBalanceBefore = collateralToken.balanceOf(address(this));
         uint256 _sbBalance = safeBox.balanceOf(address(this));
-        uint256 _toWithdraw = convertToIb(_collateralAmount);
+        uint256 _toWithdraw = _convertToIb(_collateralAmount);
+        // Make sure to withdraw requested amount
+        if (_collateralAmount > _convertToCollateral(_toWithdraw)) {
+            _toWithdraw += 1;
+        }
         if (_toWithdraw > _sbBalance) {
             _toWithdraw = _sbBalance;
         }
