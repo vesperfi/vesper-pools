@@ -6,13 +6,11 @@ const provider = hre.waffle.provider
 const { BigNumber } = require('ethers')
 const { depositTokenToAave, depositTokenToCompound } = require('./market')
 const DECIMAL = BigNumber.from('1000000000000000000')
-const WETH_ADDRESS = '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2'
-const DAI = '0x6b175474e89094c44da98b954eedeac495271d0f'
 const StrategyType = require('../utils/strategyTypes')
-const address = require('../../helper/ethereum/address')
 const { parseEther } = require('@ethersproject/units')
 const { adjustBalance } = require('./balance')
-const { NATIVE_TOKEN } = require('../../helper/ethereum/address')
+const { getChain } = require('../utils/chains')
+const { NATIVE_TOKEN, DAI, MIM } = require(`../../helper/${getChain()}/address`)
 
 async function executeIfExist(fn) {
   if (typeof fn === 'function') {
@@ -31,7 +29,7 @@ async function executeIfExist(fn) {
  */
 async function deposit(pool, token, amount, depositor) {
   let depositAmount
-  if (token.address === WETH_ADDRESS) {
+  if (token.address === NATIVE_TOKEN) {
     const wethBalance = await token.balanceOf(depositor.address)
     const requestedAmount = BigNumber.from(amount).mul(DECIMAL)
     if (requestedAmount.gt(wethBalance)) {
@@ -40,9 +38,9 @@ async function deposit(pool, token, amount, depositor) {
     depositAmount = requestedAmount
     await token.connect(depositor.signer).approve(pool.address, depositAmount)
     await pool.connect(depositor.signer)['deposit(uint256)'](depositAmount)
-  } else if (token.address === address.MIM) {
+  } else if (token.address === MIM) {
     // estimates ETH -> MIM conversion assuming 1 MIM =~ 1 DAI
-    depositAmount = await swapper.getAmountsOut(parseEther(amount.toString()), [NATIVE_TOKEN, address.DAI])
+    depositAmount = await swapper.getAmountsOut(parseEther(amount.toString()), [NATIVE_TOKEN, DAI])
     adjustBalance(token.address, depositor.address, depositAmount)
     await token.connect(depositor.signer).approve(pool.address, depositAmount)
     await pool.connect(depositor.signer).deposit(depositAmount)
@@ -88,7 +86,7 @@ async function harvestYearn(strategy) {
 
   const signer = await ethers.provider.getSigner(strategy.signer)
 
-  if (collateralTokenAddress === WETH_ADDRESS) {
+  if (collateralTokenAddress === NATIVE_TOKEN) {
     const weth = await ethers.getContractAt('TokenLike', collateralTokenAddress, signer)
     const transferAmount = ethers.utils.parseEther('5')
     await weth.deposit({ value: transferAmount })

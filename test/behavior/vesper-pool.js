@@ -19,6 +19,7 @@ const expect = chai.expect
 const { BigNumber: BN } = require('ethers')
 const { ethers } = require('hardhat')
 const { advanceBlock } = require('../utils/time')
+const { getChain } = require('../utils/chains')
 const DECIMAL18 = BN.from('1000000000000000000')
 const MAX_BPS = BN.from('10000')
 async function shouldBehaveLikePool(poolName, collateralName) {
@@ -407,10 +408,7 @@ async function shouldBehaveLikePool(poolName, collateralName) {
     describe(`Sweep ERC20 token in ${poolName} pool`, function () {
       after(reset)
       it(`Should sweep ERC20 for ${collateralName}`, async function () {
-        let ANY_ERC20 = require('../../helper/ethereum/address').ANY_ERC20
-        if (process.env.CHAIN === 'polygon') {
-          ANY_ERC20 = require('../../helper/polygon/address').ANY_ERC20
-        }
+        const ANY_ERC20 = require(`../../helper/${getChain()}/address`).ANY_ERC20
         const MET = await ethers.getContractAt('ERC20', ANY_ERC20)
         await deposit(60, user2)
         await swapper.swapEthForToken(2, ANY_ERC20, user1, pool.address)
