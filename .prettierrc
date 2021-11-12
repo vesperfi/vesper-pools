@@ -14,5 +14,5 @@
       }
     }
   ],
-  "bracketSpacing": false
+  "arrowParens": "avoid"
 }
