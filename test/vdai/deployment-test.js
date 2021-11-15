@@ -1,12 +1,12 @@
 'use strict'
-const {shouldDoSanityTest} = require('../behavior/sanity-test')
-const {getUsers} = require('../utils/setupHelper')
+const { shouldDoSanityTest } = require('../behavior/sanity-test')
+const { getUsers } = require('../utils/setupHelper')
 const contracts = require('../../releases/3.0.7/contracts.json').networks.mainnet
-const {BigNumber: BN} = require('ethers')
+const { BigNumber: BN } = require('ethers')
 const DECIMAL18 = BN.from('1000000000000000000')
 const ONE_MILLION = DECIMAL18.mul('1000000')
-const {timeTravel} = require('../utils/poolOps')
-const {ethers} = require('hardhat')
+const { timeTravel } = require('../utils/poolOps')
+const { ethers } = require('hardhat')
 const poolConfig = require('../../helper/ethereum/poolConfig').VADAI
 describe('VADAI Pool', function () {
   const interestFee = '1500' // 15%
@@ -24,7 +24,7 @@ describe('VADAI Pool', function () {
         instance,
         feeCollector,
         name: _strategy,
-        config: {interestFee, debtRatio: 9500, debtRate: ONE_MILLION},
+        config: { interestFee, debtRatio: 9500, debtRate: ONE_MILLION },
       }
       const strategyTokenAddress = await instance.token()
       strat.token = await ethers.getContractAt('CToken', strategyTokenAddress)

@@ -14,12 +14,15 @@ function shouldBehaveLikeCompoundLeverageStrategy(strategyIndex) {
   let strategy, pool, collateralToken, token
   let governor, user1, user2
 
-
   function calculateAPY(pricePerShare, blockElapsed) {
     // APY calculation
     const ETHER = ethers.utils.parseEther('1')
     const ONE_YEAR = 60 * 60 * 24 * 365
-    const APY = pricePerShare.sub(ETHER).mul(ONE_YEAR).mul('100').div(blockElapsed * 14)
+    const APY = pricePerShare
+      .sub(ETHER)
+      .mul(ONE_YEAR)
+      .mul('100')
+      .div(blockElapsed * 14)
     const apyInBasisPoints = APY.mul(100).div(ETHER).toNumber()
     return apyInBasisPoints / 100
   }
@@ -27,7 +30,7 @@ function shouldBehaveLikeCompoundLeverageStrategy(strategyIndex) {
   describe('CompoundLeverageStrategy specific tests', function () {
     beforeEach(async function () {
       const users = await getUsers()
-        ;[governor, user1, user2] = users
+      ;[governor, user1, user2] = users
       pool = this.pool
       strategy = this.strategies[strategyIndex].instance
       collateralToken = this.collateralToken
@@ -97,7 +100,6 @@ function shouldBehaveLikeCompoundLeverageStrategy(strategyIndex) {
       let borrowRatio = await strategy.currentBorrowRatio()
       expect(borrowRatio).to.gt(minBorrowRatio, 'Borrow should be > min borrow ratio')
       expect(borrowRatio).to.lte(maxBorrowRatio, 'Borrow should be <= max borrow ratio')
-
 
       expect(collateralAfter).to.lt(collateralBefore, 'Borrow amount after withdraw should be less')
 
@@ -189,7 +191,6 @@ function shouldBehaveLikeCompoundLeverageStrategy(strategyIndex) {
       const borrowAfter = await token.callStatic.borrowBalanceCurrent(strategy.address)
       expect(borrowAfter).to.eq(0, 'Borrow amount should be = 0')
     })
-
 
     it('Should get COMP token as reserve token', async function () {
       expect(await strategy.isReservedToken(compAddress)).to.equal(true, 'COMP token is reserved')

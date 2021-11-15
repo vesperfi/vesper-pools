@@ -1,17 +1,17 @@
 'use strict'
 
-const {expect} = require('chai')
+const { expect } = require('chai')
 const swapper = require('../utils/tokenSwapper')
-const {getUsers} = require('../utils/setupHelper')
-const {deposit} = require('../utils/poolOps')
-const {adjustBalance} = require('../utils/balance')
-const {advanceBlock} = require('../utils/time')
+const { getUsers } = require('../utils/setupHelper')
+const { deposit } = require('../utils/poolOps')
+const { adjustBalance } = require('../utils/balance')
+const { advanceBlock } = require('../utils/time')
 const COMP = '0xc00e94Cb662C3520282E6f5717214004A7f26888'
 const COMPTROLLER = '0x3d9819210A31b4961b30EF54bE2aeD79B9c9Cd3B'
 const cETH = '0x4Ddc2D193948926D02f9B1fE9e1daa0718270ED5'
-const {ethers} = require('hardhat')
+const { ethers } = require('hardhat')
 const hre = require('hardhat')
-const {BigNumber: BN} = require('ethers')
+const { BigNumber: BN } = require('ethers')
 const DECIMAL18 = BN.from('1000000000000000000')
 
 // Compound strategy specific tests
@@ -68,7 +68,7 @@ function shouldBehaveLikeCompoundStrategy(strategyIndex) {
       await swapper.swapEthForToken(10, COMP, user2, strategy.address)
       const afterSwap = await comp.balanceOf(strategy.address)
       expect(afterSwap).to.be.gt(0, 'COMP balance should increase on strategy address')
-      await comptroller.claimComp(strategy.address, [token.address], {from: user1.address})
+      await comptroller.claimComp(strategy.address, [token.address], { from: user1.address })
       const afterClaim = await comp.balanceOf(strategy.address)
       expect(afterClaim).to.be.gt(afterSwap, 'COMP balance increase after claim')
       await advanceBlock(100)
@@ -94,7 +94,7 @@ function shouldBehaveLikeCompoundStrategy(strategyIndex) {
         const wethBalanceAfterWithdraw = await collateralToken.balanceOf(user1.address)
         expect(wethBalanceAfterWithdraw.sub(wethBalanceBeforeWithdraw)).to.be.equal(
           bufferInPool.add(liquidityAmountInCompound),
-          'incorrect amount withdraw on low liquidity for cETH'
+          'incorrect amount withdraw on low liquidity for cETH',
         )
       }
     })
@@ -122,11 +122,11 @@ function shouldBehaveLikeCompoundStrategy(strategyIndex) {
 
         expect(tokenBalanceAfterWithdraw.sub(tokenBalanceBeforeWithdraw)).to.be.equal(
           bufferInPool.add(liquidityAmountInCompound),
-          'incorrect amount withdraw on low liquidity for ERC20 cToken'
+          'incorrect amount withdraw on low liquidity for ERC20 cToken',
         )
       }
     })
   })
 }
 
-module.exports = {shouldBehaveLikeCompoundStrategy}
+module.exports = { shouldBehaveLikeCompoundStrategy }

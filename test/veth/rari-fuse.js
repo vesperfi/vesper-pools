@@ -1,9 +1,9 @@
 'use strict'
 
-const {prepareConfig} = require('./config')
-const {shouldBehaveLikeStrategy} = require('../behavior/strategy')
+const { prepareConfig } = require('./config')
+const { shouldBehaveLikeStrategy } = require('../behavior/strategy')
 const StrategyType = require('../utils/strategyTypes')
-const {ethers} = require('hardhat')
+const { ethers } = require('hardhat')
 const { shouldBehaveLikePool } = require('../behavior/vesper-pool')
 const ONE_MILLION = ethers.utils.parseEther('1000000')
 
@@ -14,7 +14,7 @@ describe('vETH Pool', function () {
       name: 'RariFuseStrategyETH',
       type: StrategyType.RARI_FUSE,
       fusePoolId: 23, // Vesper Lend
-      config: {interestFee, debtRatio: 9000, debtRate: ONE_MILLION},
+      config: { interestFee, debtRatio: 9000, debtRate: ONE_MILLION },
     },
   ]
   prepareConfig(strategies)

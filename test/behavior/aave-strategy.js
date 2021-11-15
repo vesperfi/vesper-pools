@@ -14,7 +14,7 @@ function shouldBehaveLikeAaveStrategy(strategyIndex) {
   describe('AaveStrategy specific tests', function () {
     beforeEach(async function () {
       const users = await getUsers()
-        ;[, user1, user2] = users
+      ;[, user1, user2] = users
       strategy = this.strategies[strategyIndex].instance
       token = this.strategies[strategyIndex].token
       pool = this.pool
@@ -22,7 +22,7 @@ function shouldBehaveLikeAaveStrategy(strategyIndex) {
     })
 
     it('Should increase totalValue due to aave rewards', async function () {
-      if (await strategy.aaveIncentivesController() !== ZERO_ADDRESS) {
+      if ((await strategy.aaveIncentivesController()) !== ZERO_ADDRESS) {
         await deposit(pool, collateralToken, 10, user2)
         await strategy.rebalance()
         const totalValueBefore = await strategy.totalValue()

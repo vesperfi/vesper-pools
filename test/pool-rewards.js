@@ -32,7 +32,7 @@ describe('Rewards for VDAI Pool', function () {
   ]
   beforeEach(async function () {
     const users = await getUsers()
-      ;[governor, user1, user2, user3] = users
+    ;[governor, user1, user2, user3] = users
     await setupVPool(this, {
       poolConfig: PoolConfig.VDAI,
       feeCollector: users[7].address,
@@ -285,8 +285,13 @@ describe('Rewards for VDAI Pool', function () {
       // Swap and transfer to poolRewards
       await swapper.swapEthForToken(10, Address.UNI, user1, poolRewards.address)
       const uniBalance = await uni.balanceOf(poolRewards.address)
-      await poolRewards.connect(governor.signer)[`${notifyMultiSignature}`]
-        ([vsp.address, Address.UNI], [TOTAL_REWARD, uniBalance], [REWARD_DURATION, REWARD_DURATION])
+      await poolRewards
+        .connect(governor.signer)
+        [`${notifyMultiSignature}`](
+          [vsp.address, Address.UNI],
+          [TOTAL_REWARD, uniBalance],
+          [REWARD_DURATION, REWARD_DURATION],
+        )
     })
 
     it('Should distribute multiple reward tokens', async function () {
@@ -309,7 +314,6 @@ describe('Rewards for VDAI Pool', function () {
       const vspAfter = await vsp.balanceOf(user2.address)
       expect(uniAfter).to.be.gt(0, 'UNI balance after claim should be 0')
       expect(vspAfter).to.be.gt(0, 'VSP balance after claim should be 0')
-
     })
 
     it('Should distribute for multiple epoch', async function () {
@@ -332,8 +336,13 @@ describe('Rewards for VDAI Pool', function () {
       // Swap and transfer UNI to poolRewards
       await swapper.swapEthForToken(10, Address.UNI, user1, poolRewards.address)
       uniBalance = await uni.balanceOf(poolRewards.address)
-      await poolRewards.connect(governor.signer)[`${notifyMultiSignature}`]
-        ([vsp.address, Address.UNI], [TOTAL_REWARD, uniBalance], [REWARD_DURATION, REWARD_DURATION])
+      await poolRewards
+        .connect(governor.signer)
+        [`${notifyMultiSignature}`](
+          [vsp.address, Address.UNI],
+          [TOTAL_REWARD, uniBalance],
+          [REWARD_DURATION, REWARD_DURATION],
+        )
 
       await time.increase(34 * 24 * 60 * 60)
       claimable = claimableAfter

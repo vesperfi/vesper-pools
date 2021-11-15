@@ -1,13 +1,13 @@
 'use strict'
 
-const {unlock} = require('../utils/setupHelper')
-const {deposit: _deposit, totalDebtOfAllStrategy, reset} = require('../utils/poolOps')
+const { unlock } = require('../utils/setupHelper')
+const { deposit: _deposit, totalDebtOfAllStrategy, reset } = require('../utils/poolOps')
 const time = require('../utils/time')
 const chaiAlmost = require('chai-almost')
 const chai = require('chai')
 chai.use(chaiAlmost(1))
 const expect = chai.expect
-const {BigNumber: BN} = require('ethers')
+const { BigNumber: BN } = require('ethers')
 
 const DECIMAL18 = BN.from('1000000000000000000')
 const MAX_BPS = BN.from('10000')
@@ -112,4 +112,4 @@ async function shouldDoSanityTest(poolName, collateralName) {
   })
 }
 
-module.exports = {shouldDoSanityTest}
+module.exports = { shouldDoSanityTest }

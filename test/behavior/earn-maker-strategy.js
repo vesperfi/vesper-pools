@@ -1,11 +1,11 @@
 'use strict'
 
-const {deposit, executeIfExist, timeTravel, rebalanceStrategy} = require('../utils/poolOps')
-const {expect} = require('chai')
-const {ethers} = require('hardhat')
-const {getUsers, deployContract} = require('../utils/setupHelper')
+const { deposit, executeIfExist, timeTravel, rebalanceStrategy } = require('../utils/poolOps')
+const { expect } = require('chai')
+const { ethers } = require('hardhat')
+const { getUsers, deployContract } = require('../utils/setupHelper')
 const Address = require('../../helper/ethereum/address')
-const {shouldValidateMakerCommonBehaviour} = require('./maker-common')
+const { shouldValidateMakerCommonBehaviour } = require('./maker-common')
 async function shouldBehaveLikeEarnMakerStrategy(strategyIndex) {
   let pool, strategy
   let collateralToken, cm
@@ -91,4 +91,4 @@ async function shouldBehaveLikeEarnMakerStrategy(strategyIndex) {
   })
 }
 
-module.exports = {shouldBehaveLikeEarnMakerStrategy}
+module.exports = { shouldBehaveLikeEarnMakerStrategy }

@@ -37,11 +37,7 @@ function prepareConfig(stableStrategies, coverageStrategies) {
       })),
     })
 
-    const buffer = await deployContract('VFRBuffer', [
-      this.stable.pool.address,
-      this.coverage.pool.address,
-      24 * 3600
-    ])
+    const buffer = await deployContract('VFRBuffer', [this.stable.pool.address, this.coverage.pool.address, 24 * 3600])
     this.buffer = buffer
 
     this.stable.pool.setBuffer(buffer.address)
@@ -52,17 +48,11 @@ function prepareConfig(stableStrategies, coverageStrategies) {
 // eslint-disable-next-line max-params
 async function deposit(collateralToken, pool, from, to, amount) {
   // Give DAI to the depositor
-  await collateralToken
-    .connect(from.signer)
-    .transfer(to.address, parseEther(amount.toString()))
+  await collateralToken.connect(from.signer).transfer(to.address, parseEther(amount.toString()))
   // Approve the pool
-  await collateralToken
-    .connect(to.signer)
-    .approve(pool.address, parseEther(amount.toString()))
+  await collateralToken.connect(to.signer).approve(pool.address, parseEther(amount.toString()))
   // Deposit
-  return pool
-    .connect(to.signer)
-    .deposit(parseEther(amount.toString()))
+  return pool.connect(to.signer).deposit(parseEther(amount.toString()))
 }
 
 async function withdraw(pool, from, amount = 0) {
@@ -104,7 +94,8 @@ async function getPoolAPY(pool) {
   const currentTime = await getBlockTime()
   const initialPricePerShare = await pool.initialPricePerShare()
   const currentPricePerShare = await pool.pricePerShare()
-  return currentPricePerShare.sub(initialPricePerShare)
+  return currentPricePerShare
+    .sub(initialPricePerShare)
     .mul(ONE.mul(365 * 24 * 3600))
     .div(initialPricePerShare.mul(currentTime - startTime))
 }
@@ -115,7 +106,8 @@ async function getUserAPY(pool, depositTx, amount) {
   const currentTime = await getBlockTime()
   const currentPricePerShare = await pool.pricePerShare()
   const currentAmount = initialAmount.mul(currentPricePerShare).div(ONE)
-  return currentAmount.sub(initialAmount)
+  return currentAmount
+    .sub(initialAmount)
     .mul(ONE.mul(365 * 24 * 3600))
     .div(initialAmount.mul(currentTime - depositTime))
 }
@@ -130,5 +122,5 @@ module.exports = {
   getUserAPY,
   isCloseEnough,
   prepareConfig,
-  stablePoolIsWithinTarget
+  stablePoolIsWithinTarget,
 }

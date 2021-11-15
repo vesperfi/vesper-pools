@@ -1,10 +1,10 @@
 'use strict'
-const {shouldBehaveLikePool} = require('../behavior/vesper-pool')
-const {shouldBehaveLikeStrategy} = require('../behavior/strategy')
-const {getUsers, setupVPool} = require('../utils/setupHelper')
+const { shouldBehaveLikePool } = require('../behavior/vesper-pool')
+const { shouldBehaveLikeStrategy } = require('../behavior/strategy')
+const { getUsers, setupVPool } = require('../utils/setupHelper')
 const PoolConfig = require('../../helper/ethereum/poolConfig')
 const StrategyType = require('../utils/strategyTypes')
-const {ethers} = require('hardhat')
+const { ethers } = require('hardhat')
 const ONE_MILLION = ethers.utils.parseEther('1000000')
 
 describe('vUSDT Pool', function () {
@@ -13,8 +13,8 @@ describe('vUSDT Pool', function () {
     {
       name: 'AlphaLendStrategyUSDT',
       type: StrategyType.ALPHA_LEND,
-      config: {interestFee, debtRatio: 9000, debtRate: ONE_MILLION},
-    }
+      config: { interestFee, debtRatio: 9000, debtRate: ONE_MILLION },
+    },
   ]
   beforeEach(async function () {
     const users = await getUsers()

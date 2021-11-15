@@ -39,4 +39,3 @@ function prepareConfig(_strategies) {
 }
 
 module.exports = { prepareConfig }
-

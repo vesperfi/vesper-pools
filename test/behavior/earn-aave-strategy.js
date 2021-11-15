@@ -2,10 +2,10 @@
 
 const { expect } = require('chai')
 const { getUsers } = require('../utils/setupHelper')
-const {deposit, timeTravel} = require('../utils/poolOps')
+const { deposit, timeTravel } = require('../utils/poolOps')
 const Address = require('../../helper/ethereum/address')
 const { shouldBehaveLikeAaveStrategy } = require('./aave-strategy')
-const {ethers} = require('hardhat')
+const { ethers } = require('hardhat')
 
 // Earn Aave strategy specific tests
 function shouldBehaveLikeEarnAaveStrategy(strategyIndex) {
@@ -17,7 +17,7 @@ function shouldBehaveLikeEarnAaveStrategy(strategyIndex) {
   describe('EarnAaveStrategy specific tests', function () {
     beforeEach(async function () {
       const users = await getUsers()
-        ;[, user2] = users
+      ;[, user2] = users
       strategy = this.strategies[strategyIndex].instance
       pool = this.pool
       collateralToken = this.collateralToken

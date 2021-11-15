@@ -21,7 +21,7 @@ describe('vWETH Pool', function () {
       name: 'AaveStrategyPolygonWETH',
       type: StrategyType.AAVE,
       config: { interestFee, debtRatio: 4000, debtRate: ONE_MILLION },
-    }
+    },
   ]
   prepareConfig(strategies)
   shouldBehaveLikePool('vWETH', 'WETH')

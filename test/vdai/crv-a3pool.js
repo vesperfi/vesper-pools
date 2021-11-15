@@ -1,13 +1,13 @@
 'use strict'
 
 /* eslint-disable no-console */
-const {ethers} = require('hardhat')
-const {shouldBehaveLikePool} = require('../behavior/vesper-pool')
-const {shouldBehaveLikeStrategy} = require('../behavior/strategy')
-const {reset} = require('../utils/poolOps')
+const { ethers } = require('hardhat')
+const { shouldBehaveLikePool } = require('../behavior/vesper-pool')
+const { shouldBehaveLikeStrategy } = require('../behavior/strategy')
+const { reset } = require('../utils/poolOps')
 const StrategyType = require('../utils/strategyTypes')
 const PoolConfig = require('../../helper/ethereum/poolConfig')
-const {setupVPool, getUsers} = require('../utils/setupHelper')
+const { setupVPool, getUsers } = require('../utils/setupHelper')
 
 const ONE_MILLION = ethers.utils.parseEther('1000000')
 
@@ -22,13 +22,18 @@ describe('vDAI Pool with CrvA3PoolStrategy', function () {
 
   beforeEach(async function () {
     const interestFee = '1500' // 15%
-    const strategyConfig = {interestFee, debtRatio: 10000, debtRate: ONE_MILLION}
+    const strategyConfig = { interestFee, debtRatio: 10000, debtRate: ONE_MILLION }
 
     await setupVPool(this, {
       poolConfig: PoolConfig.VDAI,
       feeCollector: feeAcct.address,
       strategies: [
-        {name: 'CrvA3PoolStrategyDAI', type: StrategyType.CURVE, config: strategyConfig, feeCollector: feeAcct.address},
+        {
+          name: 'CrvA3PoolStrategyDAI',
+          type: StrategyType.CURVE,
+          config: strategyConfig,
+          feeCollector: feeAcct.address,
+        },
       ],
     })
   })

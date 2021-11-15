@@ -17,7 +17,8 @@
         "mocha/no-top-level-hooks": "off",
         "mocha/no-hooks-for-single-case": "off",
         "mocha/no-exports": "off",
-        "mocha/no-setup-in-describe": "off"
+        "mocha/no-setup-in-describe": "off",
+        "mocha/no-skipped-tests": "off"
       }
     },
     {
@@ -41,8 +42,11 @@
       }
     ],
     "jsdoc/require-jsdoc": "off",
-    "max-len": ["error", {"code": 120}],
+    "max-len": ["error", { "code": 120 }],
+    "prettier/prettier": ["error", { "trailingComma": "all" }],
+    // "prettier/prettier": "error",
     "semi": ["error", "never"],
-    "quotes": ["error", "single"]
-  }
+    "quotes": ["error", "single", { "avoidEscape": true }]
+  },
+  "plugins": ["prettier"]
 }

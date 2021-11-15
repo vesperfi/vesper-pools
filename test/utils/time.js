@@ -1,8 +1,8 @@
 'use strict'
 
 const colors = require('ansi-colors')
-const {ethers} = require('hardhat')
-const {BigNumber} = require('ethers')
+const { ethers } = require('hardhat')
+const { BigNumber } = require('ethers')
 
 // Copied from https://github.com/OpenZeppelin/openzeppelin-test-helpers/blob/master/src/time.js
 // Modified to support hardhat and ethers

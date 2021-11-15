@@ -23,7 +23,7 @@ const { shouldBehaveLikeEarnYearnStrategy } = require('../behavior/earn-yearn-st
 const { shouldBehaveLikeEarnCrvStrategy } = require('../behavior/earn-crv-strategy')
 const { shouldBehaveLikeRariFuseStrategy } = require('./rari-fuse-strategy')
 const { shouldBehaveLikeEarnVesperStrategy } = require('../behavior/earn-vesper-strategy')
-const {BigNumber: BN} = require('ethers')
+const { BigNumber: BN } = require('ethers')
 const DECIMAL18 = BN.from('1000000000000000000')
 const swapper = require('../utils/tokenSwapper')
 const { deposit, rebalanceStrategy, reset } = require('../utils/poolOps')
@@ -62,7 +62,7 @@ function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
   describe(`${strategyName} Strategy common behaviour tests`, function () {
     beforeEach(async function () {
       const users = await getUsers()
-        ;[owner, user1, user2, user3, user4, user5] = users
+      ;[owner, user1, user2, user3, user4, user5] = users
       strategy = this.strategies[strategyIndex].instance
       pool = this.pool
       accountant = this.accountant
@@ -76,14 +76,14 @@ function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
 
       it('Should not re-initialize without governor role', async function () {
         await expect(strategy.connect(user2.signer).init(addressListFactory)).to.be.revertedWith(
-          'caller-is-not-the-governor'
+          'caller-is-not-the-governor',
         )
       })
 
       it('Verify convertFrom18 is implemented correctly', async function () {
         const collateralDecimal = await this.collateralToken.decimals()
         const divisor = DECIMAL18.div(BN.from('10').pow(collateralDecimal))
-        const expected =  BN.from(DECIMAL18).div(divisor).toString()
+        const expected = BN.from(DECIMAL18).div(divisor).toString()
         const actual = await strategy.convertFrom18(DECIMAL18)
         expect(actual).to.be.equal(expected, 'Conversion from 18 is wrong')
       })
@@ -133,7 +133,7 @@ function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
 
       it('Should revert if non-gov user add a keeper', async function () {
         await expect(strategy.connect(user2.signer).addKeeper(user3.address)).to.be.revertedWith(
-          'caller-is-not-the-governor'
+          'caller-is-not-the-governor',
         )
       })
 
@@ -149,7 +149,7 @@ function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
 
       it('Should revert if non-gov user remove a keeper', async function () {
         await expect(strategy.connect(user2.signer).removeKeeper(user3.address)).to.be.revertedWith(
-          'caller-is-not-the-governor'
+          'caller-is-not-the-governor',
         )
       })
     })
@@ -157,7 +157,7 @@ function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
     describe('Fee collector', function () {
       it('Should revert if fee collector is zero', async function () {
         await expect(strategy.updateFeeCollector(constants.ZERO_ADDRESS)).to.be.revertedWith(
-          'fee-collector-address-is-zero'
+          'fee-collector-address-is-zero',
         )
       })
 
@@ -256,7 +256,7 @@ function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
       it('Should call approve tokens', async function () {
         await expect(strategy.approveToken()).to.not.reverted
       })
-    })    
+    })
   })
 
   // Run strategy specific tets

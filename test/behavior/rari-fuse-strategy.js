@@ -8,15 +8,13 @@ const { deposit, rebalanceStrategy } = require('../utils/poolOps')
 function shouldBehaveLikeRariFuseStrategy(strategyIndex) {
   let strategy, user1, pool, collateralToken
   describe('RariFuseStrategy specific tests', function () {
-
     beforeEach(async function () {
       const users = await getUsers()
-        ;[user1] = users
+      ;[user1] = users
       pool = this.pool
       strategy = this.strategies[strategyIndex]
       collateralToken = this.collateralToken
     })
-
 
     it('Should switch to a new Rari Fuse Pool', async function () {
       await deposit(pool, collateralToken, 10, user1)
@@ -25,7 +23,7 @@ function shouldBehaveLikeRariFuseStrategy(strategyIndex) {
       const totalValueBefore = await strategy.instance.totalValue()
       const receiptTokenBefore = await strategy.instance.receiptToken()
 
-      // Rari Fuse Strategy: Keeper switches from current Pool id to Pool #7 
+      // Rari Fuse Strategy: Keeper switches from current Pool id to Pool #7
       await strategy.instance.migrateFusePool(7)
 
       await rebalanceStrategy(strategy)
@@ -41,7 +39,7 @@ function shouldBehaveLikeRariFuseStrategy(strategyIndex) {
       await deposit(pool, collateralToken, 10, user1)
       await rebalanceStrategy(strategy)
 
-      // Rari Fuse Strategy: Keeper switches from current Pool id to Pool #7 
+      // Rari Fuse Strategy: Keeper switches from current Pool id to Pool #7
       await strategy.instance.migrateFusePool(7)
       await rebalanceStrategy(strategy)
       const totalValueBefore = await strategy.instance.totalValue()
@@ -58,14 +56,12 @@ function shouldBehaveLikeRariFuseStrategy(strategyIndex) {
       const fusePoolId = await strategy.instance.fusePoolId()
 
       expect(strategy.instance.migrateFusePool(fusePoolId)).to.be.revertedWith('same-fuse-pool')
-
     })
     it('Should fail switching to a wrong Rari Fuse Pool', async function () {
       await deposit(pool, collateralToken, 10, user1)
       await rebalanceStrategy(strategy)
 
       expect(strategy.instance.migrateFusePool(999)).to.be.revertedWith('')
-
     })
   })
 }

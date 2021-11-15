@@ -1,7 +1,7 @@
 'use strict'
 
-const {prepareConfig} = require('./config')
-const {shouldClaimAaveRewards} = require('../behavior/aave-reward')
+const { prepareConfig } = require('./config')
+const { shouldClaimAaveRewards } = require('../behavior/aave-reward')
 
 describe('vDAI pool reward', function () {
   prepareConfig()

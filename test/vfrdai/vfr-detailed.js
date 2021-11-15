@@ -1,15 +1,15 @@
 'use strict'
 
-const {expect} = require('chai')
-const {ethers} = require('hardhat')
+const { expect } = require('chai')
+const { ethers } = require('hardhat')
 
-const {DAI} = require('../../helper/ethereum/address')
+const { DAI } = require('../../helper/ethereum/address')
 const StrategyType = require('../utils/strategyTypes')
-const {rebalance, timeTravel} = require('../utils/poolOps')
-const {adjustBalance} = require('../utils/balance')
-const {deposit, withdraw, isCloseEnough, prepareConfig} = require('../utils/vfr-common')
+const { rebalance, timeTravel } = require('../utils/poolOps')
+const { adjustBalance } = require('../utils/balance')
+const { deposit, withdraw, isCloseEnough, prepareConfig } = require('../utils/vfr-common')
 
-const {parseEther} = ethers.utils
+const { parseEther } = ethers.utils
 
 const ONE_MILLION = parseEther('1000000')
 
@@ -22,12 +22,12 @@ describe('VFR DAI Detailed tests (non-deterministic)', function () {
     {
       name: 'CompoundStableStrategyDAI',
       type: StrategyType.COMPOUND,
-      config: {interestFee: 1500, debtRatio: 5000, debtRate: ONE_MILLION},
+      config: { interestFee: 1500, debtRatio: 5000, debtRate: ONE_MILLION },
     },
     {
       name: 'CompoundStableStrategyDAI',
       type: StrategyType.COMPOUND,
-      config: {interestFee: 1500, debtRatio: 5000, debtRate: ONE_MILLION},
+      config: { interestFee: 1500, debtRatio: 5000, debtRate: ONE_MILLION },
     },
   ]
 
@@ -35,12 +35,12 @@ describe('VFR DAI Detailed tests (non-deterministic)', function () {
     {
       name: 'CompoundCoverageStrategyDAI',
       type: StrategyType.COMPOUND,
-      config: {interestFee: 1500, debtRatio: 5000, debtRate: ONE_MILLION},
+      config: { interestFee: 1500, debtRatio: 5000, debtRate: ONE_MILLION },
     },
     {
       name: 'CompoundCoverageStrategyDAI',
       type: StrategyType.COMPOUND,
-      config: {interestFee: 1500, debtRatio: 5000, debtRate: ONE_MILLION},
+      config: { interestFee: 1500, debtRatio: 5000, debtRate: ONE_MILLION },
     },
   ]
 
@@ -152,7 +152,7 @@ describe('VFR DAI Detailed tests (non-deterministic)', function () {
       expect(await stablePool.depositsHalted()).to.be.true
     })
 
-    it('Smaller Coverage pool can\'t sustain unrealistic APY', async function () {
+    it("Smaller Coverage pool can't sustain unrealistic APY", async function () {
       // Purposely set unrealistic APY in order to trigger coverage request
       // 5% target APY with 0.5% tolerance
       await stablePool.retarget(parseEther('0.05'), parseEther('0.005'))
@@ -203,7 +203,6 @@ describe('VFR DAI Detailed tests (non-deterministic)', function () {
       // Can CoveragePool handle 1 day of unrealistic APY after 7 days warming up?
       // If yes, deposits won't be halted
       expect(await stablePool.depositsHalted()).to.be.false
-
     })
   })
 })

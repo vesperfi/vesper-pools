@@ -1,15 +1,15 @@
 'use strict'
 
 /* eslint-disable no-console */
-const {expect} = require('chai')
-const {ethers} = require('hardhat')
-const {shouldBehaveLikePool} = require('../behavior/vesper-pool')
-const {shouldBehaveLikeStrategy} = require('../behavior/strategy')
-const {deposit, timeTravel, reset} = require('../utils/poolOps')
-const {swapEthForToken} = require('../utils/tokenSwapper')
+const { expect } = require('chai')
+const { ethers } = require('hardhat')
+const { shouldBehaveLikePool } = require('../behavior/vesper-pool')
+const { shouldBehaveLikeStrategy } = require('../behavior/strategy')
+const { deposit, timeTravel, reset } = require('../utils/poolOps')
+const { swapEthForToken } = require('../utils/tokenSwapper')
 const StrategyType = require('../utils/strategyTypes')
 const PoolConfig = require('../../helper/ethereum/poolConfig')
-const {setupVPool, getUsers} = require('../utils/setupHelper')
+const { setupVPool, getUsers } = require('../utils/setupHelper')
 
 const ONE_MILLION = ethers.utils.parseEther('1000000')
 const USDC = '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'
@@ -29,13 +29,18 @@ describe('vDAI Pool with Crv3PoolStrategy', function () {
 
   beforeEach(async function () {
     const interestFee = '1500' // 15%
-    const strategyConfig = {interestFee, debtRatio: 10000, debtRate: ONE_MILLION}
+    const strategyConfig = { interestFee, debtRatio: 10000, debtRate: ONE_MILLION }
 
     await setupVPool(this, {
       poolConfig: PoolConfig.VDAI,
       feeCollector: feeAcct.address,
       strategies: [
-        {name: 'Crv3PoolStrategyDAI', type: StrategyType.CURVE, config: strategyConfig, feeCollector: feeAcct.address},
+        {
+          name: 'Crv3PoolStrategyDAI',
+          type: StrategyType.CURVE,
+          config: strategyConfig,
+          feeCollector: feeAcct.address,
+        },
       ],
     })
 

@@ -1,9 +1,9 @@
 'use strict'
 
-const {ethers} = require('hardhat')
-const {prepareConfig} = require('./config')
-const {shouldBehaveLikePool} = require('../behavior/vesper-pool')
-const {shouldBehaveLikeStrategy} = require('../behavior/strategy')
+const { ethers } = require('hardhat')
+const { prepareConfig } = require('./config')
+const { shouldBehaveLikePool } = require('../behavior/vesper-pool')
+const { shouldBehaveLikeStrategy } = require('../behavior/strategy')
 const StrategyType = require('../utils/strategyTypes')
 
 describe('vLink Pool', function () {
@@ -12,7 +12,7 @@ describe('vLink Pool', function () {
     {
       name: 'AlphaLendStrategyLINK',
       type: StrategyType.ALPHA_LEND,
-      config: {interestFee, debtRatio: 9000, debtRate: ethers.utils.parseEther('1000000')},
+      config: { interestFee, debtRatio: 9000, debtRate: ethers.utils.parseEther('1000000') },
     },
   ]
 

@@ -1,9 +1,9 @@
 'use strict'
 
-const {expect} = require('chai')
+const { expect } = require('chai')
 const hre = require('hardhat')
 const ethers = hre.ethers
-const {getUsers, deployContract, createStrategy} = require('./utils/setupHelper')
+const { getUsers, deployContract, createStrategy } = require('./utils/setupHelper')
 const addressListFactory = hre.address.ADDRESS_LIST_FACTORY
 const Address = require('../helper/ethereum/address')
 const StrategyType = require('./utils/strategyTypes')
@@ -17,7 +17,7 @@ describe('Vesper Pool: Admin only function tests', function () {
   const strategyConfig = {
     name: 'AaveStrategyDAI',
     type: StrategyType.AAVE,
-    config: {interestFee: '1500', debtRatio: 9000, debtRate: oneMillion},
+    config: { interestFee: '1500', debtRatio: 9000, debtRate: oneMillion },
   }
 
   beforeEach(async function () {
@@ -30,7 +30,7 @@ describe('Vesper Pool: Admin only function tests', function () {
     await pool.initialize(...VDAI.poolParams, accountant.address, addressListFactory)
 
     strategyConfig.feeCollector = user4.address
-    strategy = await createStrategy(strategyConfig, pool.address, {addressListFactory})
+    strategy = await createStrategy(strategyConfig, pool.address, { addressListFactory })
   })
 
   describe('Update keeper list', function () {
@@ -146,7 +146,7 @@ describe('Vesper Pool: Admin only function tests', function () {
 
       it('Should revert if not authorized users add in maintainer', async function () {
         await expect(pool.connect(user3.signer).addInList(maintainersList, user4.address)).to.be.revertedWith(
-          'not-a-keeper'
+          'not-a-keeper',
         )
       })
     })
@@ -176,14 +176,14 @@ describe('Vesper Pool: Admin only function tests', function () {
     })
 
     it('Should revert if debt ratio is above limit', async function () {
-      const config = {interestFee: '1500', debtRatio: '10001', debtRate: oneMillion}
+      const config = { interestFee: '1500', debtRatio: '10001', debtRate: oneMillion }
       const tx = accountant.addStrategy(strategy.address, ...Object.values(config))
       // 18 = DEBT_RATIO_LIMIT_REACHED, Limit is 10,000
       await expect(tx).to.be.revertedWith('18', 'Input debt ratio is above max limit')
     })
 
     it('Should revert if interest fee is above limit', async function () {
-      const config = {interestFee: '15000', debtRatio: '9000', debtRate: oneMillion}
+      const config = { interestFee: '15000', debtRatio: '9000', debtRate: oneMillion }
       const tx = accountant.addStrategy(strategy.address, ...Object.values(config))
       // 11 = FEE_LIMIT_REACHED, Limit is 10,000
       await expect(tx).to.be.revertedWith('11', 'Input interest fee is above max limit')
@@ -194,7 +194,7 @@ describe('Vesper Pool: Admin only function tests', function () {
     it('Should migrate strategy', async function () {
       const config = strategyConfig.config
       await accountant.addStrategy(strategy.address, ...Object.values(config))
-      const newStrategy = await createStrategy(strategyConfig, pool.address, {addressListFactory})
+      const newStrategy = await createStrategy(strategyConfig, pool.address, { addressListFactory })
       const tx = pool.migrateStrategy(strategy.address, newStrategy.address)
       await expect(tx)
         .to.emit(accountant, 'StrategyMigrated')
@@ -205,7 +205,7 @@ describe('Vesper Pool: Admin only function tests', function () {
 
     it('Should migrate strategy and replace in strategies array', async function () {
       await accountant.addStrategy(strategy.address, ...Object.values(strategyConfig.config))
-      const newStrategy = await createStrategy(strategyConfig, pool.address, {addressListFactory})
+      const newStrategy = await createStrategy(strategyConfig, pool.address, { addressListFactory })
       expect(await accountant.strategies(0)).to.be.eq(strategy.address, 'strategies[0] should be old strategy')
       await pool.migrateStrategy(strategy.address, newStrategy.address)
       expect(await accountant.strategies(0)).to.be.eq(newStrategy.address, 'strategies[0] should be new strategy')
@@ -214,14 +214,14 @@ describe('Vesper Pool: Admin only function tests', function () {
     it('Should revert if strategy is invalid', async function () {
       await accountant.addStrategy(strategy.address, ...Object.values(strategyConfig.config))
       const pool2 = await deployContract(VDAI.contractName, VDAI.poolParams)
-      const newStrategy = await createStrategy(strategyConfig, pool2.address, {addressListFactory})
+      const newStrategy = await createStrategy(strategyConfig, pool2.address, { addressListFactory })
       const tx = pool.migrateStrategy(strategy.address, newStrategy.address)
       // 17 = INVALID_STRATEGY
       await expect(tx).to.be.revertedWith('17', 'Strategies has different pool')
     })
 
     it('Should revert if old strategy is not active', async function () {
-      const newStrategy = await createStrategy(strategyConfig, pool.address, {addressListFactory})
+      const newStrategy = await createStrategy(strategyConfig, pool.address, { addressListFactory })
       const tx = pool.migrateStrategy(strategy.address, newStrategy.address)
       // 16 = STRATEGY_IS_NOT_ACTIVE
       await expect(tx).to.be.revertedWith('16', 'Old strategy is not active')
@@ -231,7 +231,7 @@ describe('Vesper Pool: Admin only function tests', function () {
       const config = strategyConfig.config
       config.debtRatio = '5000'
       await accountant.addStrategy(strategy.address, ...Object.values(config))
-      const newStrategy = await createStrategy(strategyConfig, pool.address, {addressListFactory})
+      const newStrategy = await createStrategy(strategyConfig, pool.address, { addressListFactory })
       config.debtRatio = '4000'
       await accountant.addStrategy(newStrategy.address, ...Object.values(config))
       const tx = pool.migrateStrategy(strategy.address, newStrategy.address)

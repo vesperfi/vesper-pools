@@ -5,7 +5,7 @@ const { prepareConfig } = require('./config')
 const { shouldBehaveLikeStrategy } = require('../behavior/strategy')
 const StrategyType = require('../utils/strategyTypes')
 const Address = require('../../helper/ethereum/address')
-const {setupEarnDrip, addInFeeWhitelist} = require('../utils/setupHelper')
+const { setupEarnDrip, addInFeeWhitelist } = require('../utils/setupHelper')
 
 describe('veDAI Pool', function () {
   const interestFee = '1500' // 15%

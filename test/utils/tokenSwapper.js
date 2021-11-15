@@ -1,12 +1,12 @@
 'use strict'
 
-const {expect} = require('chai')
-const {ethers} = require('hardhat')
-const {BigNumber} = require('ethers')
+const { expect } = require('chai')
+const { ethers } = require('hardhat')
+const { BigNumber } = require('ethers')
 const DECIMAL = BigNumber.from('1000000000000000000')
 let address = require('../../helper/ethereum/address')
 if (process.env.CHAIN === 'polygon') {
-  address =require('../../helper/polygon/address')
+  address = require('../../helper/polygon/address')
 }
 const SUSHI_ROUTER = address.SUSHI_ROUTER
 const NATIVE_TOKEN = address.NATIVE_TOKEN
@@ -26,7 +26,7 @@ async function swapEthForToken(ethAmount, toToken, caller, receiver) {
   const block = await ethers.provider.getBlock()
   const path = [NATIVE_TOKEN, toToken]
   const token = await ethers.getContractAt('ERC20', toToken)
-  await uni.connect(caller.signer).swapExactETHForTokens(1, path, toAddress, block.timestamp + 60, {value: amountIn})
+  await uni.connect(caller.signer).swapExactETHForTokens(1, path, toAddress, block.timestamp + 60, { value: amountIn })
   const tokenBalance = await token.balanceOf(toAddress)
   expect(tokenBalance).to.be.gt('0', 'Token balance is not correct')
   return tokenBalance
@@ -47,7 +47,7 @@ async function swapExactToken(amountIn, path, caller, receiver) {
 async function getAmountsOut(amountIn, path) {
   const uni = await ethers.getContractAt('IUniswapRouterTest', SUSHI_ROUTER)
   const amountsOut = await uni.getAmountsOut(amountIn, path)
-  return amountsOut[path.length-1]
+  return amountsOut[path.length - 1]
 }
 
-module.exports = {swapEthForToken, swapExactToken, getAmountsOut}
+module.exports = { swapEthForToken, swapExactToken, getAmountsOut }

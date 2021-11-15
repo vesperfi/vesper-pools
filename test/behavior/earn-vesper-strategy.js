@@ -1,11 +1,11 @@
 'use strict'
 
-const {deposit, timeTravel, rebalanceStrategy} = require('../utils/poolOps')
-const {expect} = require('chai')
-const {ethers} = require('hardhat')
-const {getUsers} = require('../utils/setupHelper')
+const { deposit, timeTravel, rebalanceStrategy } = require('../utils/poolOps')
+const { expect } = require('chai')
+const { ethers } = require('hardhat')
+const { getUsers } = require('../utils/setupHelper')
 const Address = require('../../helper/ethereum/address')
-const {shouldBehaveLikeUnderlyingVesperPoolStrategy} = require('./strategy-underlying-vesper-pool')
+const { shouldBehaveLikeUnderlyingVesperPoolStrategy } = require('./strategy-underlying-vesper-pool')
 
 async function shouldBehaveLikeEarnVesperStrategy(strategyIndex) {
   let pool, strategy
@@ -28,7 +28,6 @@ async function shouldBehaveLikeEarnVesperStrategy(strategyIndex) {
       })
 
       it('Should increase drip balance on rebalance', async function () {
-    
         await deposit(pool, collateralToken, 40, user2)
 
         await rebalanceStrategy(strategy)
@@ -54,14 +53,12 @@ async function shouldBehaveLikeEarnVesperStrategy(strategyIndex) {
 
         const pricePerShareAfter = await pool.pricePerShare()
 
-        expect(pricePerShareBefore).to.be.eq(pricePerShareAfter,'Price per share of of EarnPool shouldn\'t increase')
-  
+        expect(pricePerShareBefore).to.be.eq(pricePerShareAfter, "Price per share of of EarnPool shouldn't increase")
+
         const withdrawAmount = await pool.balanceOf(user2.address)
 
-        if (collateralToken.address === Address.WETH)
-          await pool.connect(user2.signer).withdrawETH(withdrawAmount)
-        else
-          await pool.connect(user2.signer).withdraw(withdrawAmount)
+        if (collateralToken.address === Address.WETH) await pool.connect(user2.signer).withdrawETH(withdrawAmount)
+        else await pool.connect(user2.signer).withdraw(withdrawAmount)
 
         const earnedDrip =
           dripToken.address === Address.WETH
@@ -69,10 +66,9 @@ async function shouldBehaveLikeEarnVesperStrategy(strategyIndex) {
             : await dripToken.balanceOf(user2.address)
 
         expect(earnedDrip.sub(earnedDripBefore)).to.be.gt(0, `No ${dripTokenSymbol} earned`)
-
       })
     })
   })
 }
 
-module.exports = {shouldBehaveLikeEarnVesperStrategy}
+module.exports = { shouldBehaveLikeEarnVesperStrategy }
