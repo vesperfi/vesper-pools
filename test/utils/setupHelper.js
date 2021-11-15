@@ -6,6 +6,7 @@ const provider = hre.waffle.provider
 const { BigNumber: BN } = require('ethers')
 const StrategyType = require('../utils/strategyTypes')
 const Address = require('../../helper/ethereum/address')
+const { getChain } = require('./chains')
 
 const mcdEthAJoin = '0x2F0b23f53734252Bda2277357e97e1517d6B042A'
 const mcdEthCJoin = '0xF04a5cC80B1E94C69B48f5ee68a08CD2F09A7c3E'
@@ -19,10 +20,7 @@ const IVesperPool = 'IVesperPoolTest'
 const CToken = 'CToken'
 const TokenLike = 'TokenLikeTest'
 const CollateralManager = 'CollateralManager'
-let address = require('../../helper/ethereum/address')
-if (process.env.CHAIN === 'polygon') {
-  address = require('../../helper/polygon/address')
-}
+const address = require(`../../helper/${getChain()}/address`)
 hre.address = address
 /**
  * @typedef {object} User

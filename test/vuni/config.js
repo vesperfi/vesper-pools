@@ -2,10 +2,8 @@
 
 const { getUsers, setupVPool } = require('../utils/setupHelper')
 const StrategyType = require('../utils/strategyTypes')
-let PoolConfig = require('../../helper/ethereum/poolConfig')
-if (process.env.CHAIN === 'polygon') {
-  PoolConfig = require('../../helper/polygon/poolConfig')
-}
+const { getChain } = require('../utils/chains')
+const PoolConfig = require(`../../helper/${getChain()}/poolConfig`)
 const { ethers } = require('hardhat')
 const ONE_MILLION = ethers.utils.parseEther('1000000')
 

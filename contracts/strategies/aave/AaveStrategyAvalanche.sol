@@ -5,15 +5,15 @@ import "../Strategy.sol";
 import "../../interfaces/aave/IAave.sol";
 
 /// @dev This strategy will deposit collateral token in Aave and earn interest.
-abstract contract AaveStrategyPolygon is Strategy {
+abstract contract AaveStrategyAvalanche is Strategy {
     using SafeERC20 for IERC20;
     bytes32 private constant AAVE_PROVIDER_ID = 0x0100000000000000000000000000000000000000000000000000000000000000;
     AaveLendingPool public aaveLendingPool;
     AaveProtocolDataProvider public aaveProtocolDataProvider;
     AaveIncentivesController public aaveIncentivesController;
     AaveLendingPoolAddressesProvider public aaveAddressesProvider =
-        AaveLendingPoolAddressesProvider(0xd05e3E715d945B59290df0ae8eF85c1BdB684744);
-    address public rewardToken = 0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270;
+        AaveLendingPoolAddressesProvider(0xb6A86025F0FE1862B372cb0ca18CE3EDe02A318f);
+    address public rewardToken = 0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7;
     AToken internal immutable aToken;
     event UpdatedAddressesProvider(address _previousProvider, address _newProvider);
 

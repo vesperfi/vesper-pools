@@ -41,6 +41,11 @@ module.exports = {
       chainId: 137,
       gas: 11700000,
     },
+    avalanche: {
+      url: process.env.NODE_URL,
+      chainId: 43114,
+      gas: 8000000,
+    },
   },
   paths: {
     deployments: 'deployments',
