@@ -80,12 +80,8 @@ abstract contract AaveStrategyPolygon is Strategy {
      * @notice Transfer StakeAave to newStrategy
      * @param _newStrategy Address of newStrategy
      */
-    function _beforeMigration(address _newStrategy) internal override {
-        uint256 _rewardAmount = _claimRewards();
-        if (_claimRewards() != 0) {
-            IERC20(rewardToken).safeTransfer(_newStrategy, _rewardAmount);
-        }
-    }
+    //solhint-disable no-empty-blocks
+    function _beforeMigration(address _newStrategy) internal override {}
 
     /// @notice Claim Aave rewards and convert to _toToken.
     function _claimRewardsAndConvertTo(address _toToken) internal override {
