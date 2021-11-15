@@ -18,12 +18,15 @@ function shouldBehaveLikeCompoundXYStrategy(strategyIndex) {
   let borrowToken, borrowCToken
   let governor, user1, user2
 
-
   function calculateAPY(pricePerShare, blockElapsed) {
     // APY calculation
     const ETHER = ethers.utils.parseEther('1')
     const ONE_YEAR = 60 * 60 * 24 * 365
-    const APY = pricePerShare.sub(ETHER).mul(ONE_YEAR).mul('100').div(blockElapsed * 14)
+    const APY = pricePerShare
+      .sub(ETHER)
+      .mul(ONE_YEAR)
+      .mul('100')
+      .div(blockElapsed * 14)
     const apyInBasisPoints = APY.mul(100).div(ETHER).toNumber()
     return apyInBasisPoints / 100
   }
@@ -31,7 +34,7 @@ function shouldBehaveLikeCompoundXYStrategy(strategyIndex) {
   describe('CompoundXYStrategy specific tests', function () {
     beforeEach(async function () {
       const users = await getUsers()
-        ;[governor, user1, user2] = users
+      ;[governor, user1, user2] = users
       pool = this.pool
       strategy = this.strategies[strategyIndex].instance
       collateralToken = this.collateralToken
@@ -169,7 +172,6 @@ function shouldBehaveLikeCompoundXYStrategy(strategyIndex) {
       const borrowAfter = await borrowToken.balanceOf(strategy.address)
       expect(borrowAfter).to.be.eq(0, 'Borrow amount should be = 0')
     })
-
 
     it('Should get COMP token as reserve token', async function () {
       expect(await strategy.isReservedToken(compAddress)).to.be.equal(true, 'COMP token is reserved')

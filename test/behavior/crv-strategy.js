@@ -1,11 +1,11 @@
 'use strict'
 
-const {expect} = require('chai')
+const { expect } = require('chai')
 const swapper = require('../utils/tokenSwapper')
-const {getUsers} = require('../utils/setupHelper')
-const {deposit} = require('../utils/poolOps')
-const {advanceBlock} = require('../utils/time')
-const {ethers} = require('hardhat')
+const { getUsers } = require('../utils/setupHelper')
+const { deposit } = require('../utils/poolOps')
+const { advanceBlock } = require('../utils/time')
+const { ethers } = require('hardhat')
 
 const CRV = '0xD533a949740bb3306d119CC777fa900bA034cd52'
 
@@ -36,16 +36,16 @@ function shouldBehaveLikeCrvStrategy(strategyIndex) {
     })
 
     it('Should claim CRV when rebalance is called', async function () {
-      await deposit(pool, collateralToken, 1, user1)      
+      await deposit(pool, collateralToken, 1, user1)
       await strategy.rebalance()
       await strategy.rebalance()
       await advanceBlock(1000)
       await strategy.setCheckpoint()
       const crvAccruedBefore = await strategy.claimableRewards()
-      await strategy.rebalance()   
-      const crvAccruedAfter = await strategy.claimableRewards()                  
-      expect(crvAccruedBefore).to.be.gt(0, 'crv accrued should be > 0 before rebalance')     
-      expect(crvAccruedAfter).to.be.equal(0, 'crv accrued should be 0 after rebalance')     
+      await strategy.rebalance()
+      const crvAccruedAfter = await strategy.claimableRewards()
+      expect(crvAccruedBefore).to.be.gt(0, 'crv accrued should be > 0 before rebalance')
+      expect(crvAccruedAfter).to.be.equal(0, 'crv accrued should be 0 after rebalance')
     })
 
     it('Should liquidate CRV when claimed by external source', async function () {
@@ -61,4 +61,4 @@ function shouldBehaveLikeCrvStrategy(strategyIndex) {
   })
 }
 
-module.exports = {shouldBehaveLikeCrvStrategy}
+module.exports = { shouldBehaveLikeCrvStrategy }

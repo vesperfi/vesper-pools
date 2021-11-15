@@ -13,7 +13,6 @@ const address = require('../../helper/ethereum/address')
 const ONE_MILLION = parseEther('1000000')
 
 describe('VFR DAI Vesper', function () {
-
   const stableStrategyConfigs = [
     {
       name: 'VesperStableStrategyDAI',
@@ -24,7 +23,7 @@ describe('VFR DAI Vesper', function () {
       name: 'VesperStableStrategyDAI',
       type: StrategyType.EARN_VESPER,
       config: { interestFee: 1500, debtRatio: 5000, debtRate: ONE_MILLION },
-    }
+    },
   ]
 
   const coverageStrategyConfigs = [
@@ -32,7 +31,7 @@ describe('VFR DAI Vesper', function () {
       name: 'VesperCoverageStrategyDAI',
       type: StrategyType.EARN_VESPER,
       config: { interestFee: 1500, debtRatio: 5000, debtRate: ONE_MILLION },
-    }
+    },
   ]
 
   before(async function () {

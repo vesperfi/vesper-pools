@@ -1,16 +1,16 @@
 'use strict'
-const {getUsers} = require('../utils/setupHelper')
-const {deposit} = require('../utils/poolOps')
-const {expect} = require('chai')
-const {unlock} = require('../utils/setupHelper')
+const { getUsers } = require('../utils/setupHelper')
+const { deposit } = require('../utils/poolOps')
+const { expect } = require('chai')
+const { unlock } = require('../utils/setupHelper')
 const Address = require('../../helper/ethereum/address')
-const {ethers} = require('hardhat')
-const {timeTravel} = require('../utils/poolOps')
+const { ethers } = require('hardhat')
+const { timeTravel } = require('../utils/poolOps')
 
 async function rebalance(strategies, maxIteration = 2) {
-  let i =0
-  const iteration = strategies.length <  maxIteration? strategies.length: maxIteration
-  while(i < iteration) {
+  let i = 0
+  const iteration = strategies.length < maxIteration ? strategies.length : maxIteration
+  while (i < iteration) {
     const strategy = await ethers.getContractAt('IStrategy', strategies[i])
     const keeperList = await ethers.getContractAt('IAddressList', await strategy.keepers())
     const signer = await unlock((await keeperList.at(0))[0])
@@ -31,10 +31,10 @@ describe('veWBTC-DAI Pool', function () {
     const users = await getUsers()
     ;[, user1] = users
     let keeperList = await ethers.getContractAt('IAddressList', await vaDai.keepers())
-    vaDaiKeeper = {address: (await keeperList.at(0))[0]}
+    vaDaiKeeper = { address: (await keeperList.at(0))[0] }
     vaDaiKeeper.signer = await unlock(vaDaiKeeper.address)
     keeperList = await ethers.getContractAt('IAddressList', await pool.keepers())
-    veWbtcKeeper = {address: (await keeperList.at(0))[0]}
+    veWbtcKeeper = { address: (await keeperList.at(0))[0] }
     veWbtcKeeper.signer = await unlock(vaDaiKeeper.address)
   })
 

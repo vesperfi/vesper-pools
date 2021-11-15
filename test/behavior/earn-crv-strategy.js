@@ -1,12 +1,12 @@
 'use strict'
 
-const {expect} = require('chai')
-const {getUsers} = require('../utils/setupHelper')
-const {deposit} = require('../utils/poolOps')
-const {advanceBlock} = require('../utils/time')
-const {shouldBehaveLikeCrvStrategy} = require('./crv-strategy')
+const { expect } = require('chai')
+const { getUsers } = require('../utils/setupHelper')
+const { deposit } = require('../utils/poolOps')
+const { advanceBlock } = require('../utils/time')
+const { shouldBehaveLikeCrvStrategy } = require('./crv-strategy')
 const Address = require('../../helper/ethereum/address')
-const {ethers} = require('hardhat')
+const { ethers } = require('hardhat')
 
 // Earn Curve strategy specific tests
 function shouldBehaveLikeEarnCrvStrategy(strategyIndex) {
@@ -36,7 +36,7 @@ function shouldBehaveLikeEarnCrvStrategy(strategyIndex) {
       const tokenBalanceAfter = await vDai.balanceOf(this.earnDrip.address)
       expect(tokenBalanceAfter).to.be.gt(tokenBalanceBefore, 'Should increase vDAI balance in CRV strategy')
       const pricePerShareAfter = await pool.pricePerShare()
-      expect(pricePerShareBefore).to.eq(pricePerShareAfter,'Price per share shouldn\'t increase')
+      expect(pricePerShareBefore).to.eq(pricePerShareAfter, "Price per share shouldn't increase")
 
       const withdrawAmount = await pool.balanceOf(user2.address)
 
@@ -48,4 +48,4 @@ function shouldBehaveLikeEarnCrvStrategy(strategyIndex) {
   })
 }
 
-module.exports = {shouldBehaveLikeEarnCrvStrategy}
+module.exports = { shouldBehaveLikeEarnCrvStrategy }

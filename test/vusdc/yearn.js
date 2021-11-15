@@ -14,7 +14,7 @@ describe('vUSDC Pool', function () {
       name: 'YearnStrategyUSDC',
       type: StrategyType.YEARN,
       config: { interestFee, debtRatio: 9000, debtRate: ONE_MILLION },
-    }
+    },
   ]
   prepareConfig(strategies)
   shouldBehaveLikePool('vUSDC', 'USDC')

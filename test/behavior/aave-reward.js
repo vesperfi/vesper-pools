@@ -1,10 +1,10 @@
 'use strict'
 
 const swapper = require('../utils/tokenSwapper')
-const {expect} = require('chai')
-const {ethers} = require('hardhat')
+const { expect } = require('chai')
+const { ethers } = require('hardhat')
 const time = require('../utils/time')
-const {deposit, rebalanceStrategy} = require('../utils/poolOps')
+const { deposit, rebalanceStrategy } = require('../utils/poolOps')
 const AAVE_ADDRESS = '0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9'
 const STAKED_AAVE_ADDRESS = '0x4da27a545c0c5B758a6BA100e3a049001de870f5'
 
@@ -147,4 +147,4 @@ function shouldClaimAaveRewards(strategyIndex) {
   })
 }
 
-module.exports = {shouldClaimAaveRewards}
+module.exports = { shouldClaimAaveRewards }

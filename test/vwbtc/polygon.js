@@ -21,7 +21,7 @@ describe('vWBTC Pool', function () {
       name: 'AaveStrategyPolygonWBTC',
       type: StrategyType.AAVE,
       config: { interestFee, debtRatio: 4000, debtRate: ONE_MILLION },
-    }
+    },
   ]
   prepareConfig(strategies)
   shouldBehaveLikePool('vWBTC', 'WBTC')

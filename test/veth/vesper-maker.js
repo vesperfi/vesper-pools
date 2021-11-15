@@ -1,10 +1,10 @@
 'use strict'
-const {deployContract, getUsers, setupVPool} = require('../utils/setupHelper')
-const {shouldBehaveLikeStrategy} = require('../behavior/strategy')
+const { deployContract, getUsers, setupVPool } = require('../utils/setupHelper')
+const { shouldBehaveLikeStrategy } = require('../behavior/strategy')
 const address = require('../../helper/ethereum/address')
 const StrategyType = require('../utils/strategyTypes')
 const PoolConfig = require('../../helper/ethereum/poolConfig')
-const {ethers} = require('hardhat')
+const { ethers } = require('hardhat')
 
 describe('vaETH pool strategies', function () {
   const interestFee = '1500' // 15%
@@ -13,7 +13,7 @@ describe('vaETH pool strategies', function () {
     {
       name: 'VesperMakerStrategyETH',
       type: StrategyType.VESPER_MAKER,
-      config: {interestFee, debtRatio: 9500, debtRate: ONE_MILLION},
+      config: { interestFee, debtRatio: 9500, debtRate: ONE_MILLION },
     },
   ]
   beforeEach(async function () {

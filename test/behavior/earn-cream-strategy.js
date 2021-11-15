@@ -1,11 +1,11 @@
 'use strict'
 
-const {expect} = require('chai')
-const {getUsers} = require('../utils/setupHelper')
-const {deposit, timeTravel} = require('../utils/poolOps')
+const { expect } = require('chai')
+const { getUsers } = require('../utils/setupHelper')
+const { deposit, timeTravel } = require('../utils/poolOps')
 const { shouldBehaveLikeCreamStrategy } = require('./cream-strategy')
 const Address = require('../../helper/ethereum/address')
-const {ethers} = require('hardhat')
+const { ethers } = require('hardhat')
 
 // Earn Compound strategy specific tests
 function shouldBehaveLikeEarnCreamStrategy(strategyIndex) {
@@ -30,7 +30,7 @@ function shouldBehaveLikeEarnCreamStrategy(strategyIndex) {
       const dai = await ethers.getContractAt('ERC20', Address.DAI)
       const vDai = await ethers.getContractAt('ERC20', Address.vDAI)
       const tokenBalanceBefore = await vDai.balanceOf(this.earnDrip.address)
-      await timeTravel('',100, 'compound')
+      await timeTravel('', 100, 'compound')
       await token.accrueInterest()
       await strategy.rebalance()
       const tokenBalanceAfter = await vDai.balanceOf(this.earnDrip.address)
@@ -41,10 +41,9 @@ function shouldBehaveLikeEarnCreamStrategy(strategyIndex) {
       const earnedDai = await dai.balanceOf(user2.address)
       expect(earnedDai).to.be.gt(0, 'No dai earned')
       const pricePerShareAfter = await pool.pricePerShare()
-      expect(pricePerShareBefore).to.eq(pricePerShareAfter,'Price per share shouldn\'t increase')
+      expect(pricePerShareBefore).to.eq(pricePerShareAfter, "Price per share shouldn't increase")
     })
-
   })
 }
 
-module.exports = {shouldBehaveLikeEarnCreamStrategy}
+module.exports = { shouldBehaveLikeEarnCreamStrategy }

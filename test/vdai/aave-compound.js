@@ -1,7 +1,7 @@
 'use strict'
 
-const {prepareConfig} = require('./config')
-const {shouldBehaveLikeStrategy} = require('../behavior/strategy')
+const { prepareConfig } = require('./config')
+const { shouldBehaveLikeStrategy } = require('../behavior/strategy')
 
 describe('vDAI pool strategies', function () {
   const strategies = prepareConfig()

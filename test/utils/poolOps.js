@@ -42,7 +42,7 @@ async function deposit(pool, token, amount, depositor) {
     await pool.connect(depositor.signer)['deposit(uint256)'](depositAmount)
   } else if (token.address === address.MIM) {
     // estimates ETH -> MIM conversion assuming 1 MIM =~ 1 DAI
-    depositAmount = await swapper.getAmountsOut(parseEther(amount.toString()), [ NATIVE_TOKEN, address.DAI ] )
+    depositAmount = await swapper.getAmountsOut(parseEther(amount.toString()), [NATIVE_TOKEN, address.DAI])
     adjustBalance(token.address, depositor.address, depositAmount)
     await token.connect(depositor.signer).approve(pool.address, depositAmount)
     await pool.connect(depositor.signer).deposit(depositAmount)
@@ -83,7 +83,6 @@ async function bringAboveWater(strategy, amount) {
  * @param {object} strategy - strategy object
  */
 async function harvestYearn(strategy) {
-
   const collateralTokenAddress = await strategy.instance.collateralToken()
   const vault = await strategy.instance.receiptToken()
 
@@ -97,7 +96,6 @@ async function harvestYearn(strategy) {
   } else {
     await swapper.swapEthForToken(5, collateralTokenAddress, { signer }, vault)
   }
-
 }
 
 /**
@@ -105,10 +103,10 @@ async function harvestYearn(strategy) {
  * As of now simulating profits behaves exactly like harvestYearn
  *
  * @param {object} strategy - strategy object
- */ 
+ */
 async function harvestVesper(strategy) {
   return harvestYearn(strategy)
-} 
+}
 
 /**
  * Rebalance one strategy
@@ -166,7 +164,7 @@ async function timeTravel(
   blocks = 25,
   strategyType = '',
   underlayStrategy = '',
-  strategies = []
+  strategies = [],
 ) {
   const timeTravelFn = async function () {
     await provider.send('evm_increaseTime', [seconds])
@@ -205,15 +203,14 @@ async function totalDebtOfAllStrategy(strategies, pool) {
 async function reset() {
   // eslint-disable-next-line
   console.log('Resetting Network...')
-  await provider.send(
-    'hardhat_reset',
-    [{
+  await provider.send('hardhat_reset', [
+    {
       forking: {
         jsonRpcUrl: process.env.NODE_URL,
-        blockNumber: process.env.BLOCK_NUMBER ? parseInt(process.env.BLOCK_NUMBER) : undefined
-      }
-    }]
-  )
+        blockNumber: process.env.BLOCK_NUMBER ? parseInt(process.env.BLOCK_NUMBER) : undefined,
+      },
+    },
+  ])
 }
 
 module.exports = { deposit, rebalance, rebalanceStrategy, totalDebtOfAllStrategy, executeIfExist, timeTravel, reset }

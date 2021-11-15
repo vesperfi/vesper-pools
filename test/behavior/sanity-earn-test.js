@@ -1,12 +1,12 @@
 'use strict'
 
-const {deposit: _deposit, totalDebtOfAllStrategy, reset} = require('../utils/poolOps')
+const { deposit: _deposit, totalDebtOfAllStrategy, reset } = require('../utils/poolOps')
 const time = require('../utils/time')
 const chaiAlmost = require('chai-almost')
 const chai = require('chai')
 chai.use(chaiAlmost(1))
 const expect = chai.expect
-const {BigNumber: BN} = require('ethers')
+const { BigNumber: BN } = require('ethers')
 
 const DECIMAL18 = BN.from('1000000000000000000')
 const MAX_BPS = BN.from('10000')
@@ -35,17 +35,17 @@ async function shouldDoSanityEarnTest(poolName, collateralName) {
       gov.address = await pool.governor()
       await hre.network.provider.request({
         method: 'hardhat_impersonateAccount',
-        params: [gov.address.toString()]}
-      )
+        params: [gov.address.toString()],
+      })
       strategies = this.strategies
       collateralToken = this.collateralToken
       // Decimal will be used for amount conversion
       collateralDecimal = await this.collateralToken.decimals()
-        await hre.network.provider.request({
+      await hre.network.provider.request({
         method: 'hardhat_impersonateAccount',
-        params: [gov.address]}
-      )
-       gov.signer = await ethers.provider.getSigner(gov.address)
+        params: [gov.address],
+      })
+      gov.signer = await ethers.provider.getSigner(gov.address)
     })
 
     describe(`Deposit ${collateralName} into the ${poolName} pool`, function () {
@@ -95,7 +95,7 @@ async function shouldDoSanityEarnTest(poolName, collateralName) {
     describe('Rebalance', function () {
       it(`Should earn pool rewards ${collateralName}`, async function () {
         await deposit(20, user1)
-        for(const strategy of strategies) {
+        for (const strategy of strategies) {
           await strategy.instance.connect(gov.signer).rebalance()
         }
         await deposit(10, user1)
@@ -103,7 +103,7 @@ async function shouldDoSanityEarnTest(poolName, collateralName) {
         const poolRewards = await ethers.getContractAt('VesperEarnDrip', rewardContract)
         const claimableBefore = await poolRewards.claimable(user1.address)
         await time.increase(3 * 24 * 60 * 60)
-        for(const strategy of strategies) {
+        for (const strategy of strategies) {
           await strategy.instance.connect(gov.signer).rebalance()
         }
         await time.increase(3 * 24 * 60 * 60)
@@ -114,4 +114,4 @@ async function shouldDoSanityEarnTest(poolName, collateralName) {
   })
 }
 
-module.exports = {shouldDoSanityEarnTest}
+module.exports = { shouldDoSanityEarnTest }

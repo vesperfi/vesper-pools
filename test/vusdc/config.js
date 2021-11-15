@@ -1,12 +1,12 @@
 'use strict'
 
-const {getUsers, setupVPool} = require('../utils/setupHelper')
+const { getUsers, setupVPool } = require('../utils/setupHelper')
 const StrategyType = require('../utils/strategyTypes')
 let PoolConfig = require('../../helper/ethereum/poolConfig')
 if (process.env.CHAIN === 'polygon') {
-  PoolConfig =require('../../helper/polygon/poolConfig')
+  PoolConfig = require('../../helper/polygon/poolConfig')
 }
-const {ethers} = require('hardhat')
+const { ethers } = require('hardhat')
 const ONE_MILLION = ethers.utils.parseEther('1000000')
 
 function prepareConfig(_strategies) {
@@ -15,12 +15,12 @@ function prepareConfig(_strategies) {
     {
       name: 'AaveStrategyUSDC',
       type: StrategyType.AAVE,
-      config: {interestFee, debtRatio: 4000, debtRate: ONE_MILLION},
+      config: { interestFee, debtRatio: 4000, debtRate: ONE_MILLION },
     },
     {
       name: 'CompoundStrategyUSDC',
       type: StrategyType.COMPOUND,
-      config: {interestFee, debtRatio: 4000, debtRate: ONE_MILLION},
+      config: { interestFee, debtRatio: 4000, debtRate: ONE_MILLION },
     },
   ]
   beforeEach(async function () {
@@ -38,4 +38,4 @@ function prepareConfig(_strategies) {
   return strategies
 }
 
-module.exports = {prepareConfig}
+module.exports = { prepareConfig }

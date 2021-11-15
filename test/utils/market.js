@@ -1,5 +1,5 @@
 'use strict'
-const {getUsers} = require('./setupHelper')
+const { getUsers } = require('./setupHelper')
 const swapper = require('./tokenSwapper')
 const hre = require('hardhat')
 const ethers = hre.ethers
@@ -42,4 +42,4 @@ async function depositTokenToCompound(amount, tokenAddress, receiverAddress) {
   await cToken.connect(user.signer).transfer(receiverAddress, cTokenAmount)
 }
 
-module.exports = {depositTokenToAave, depositTokenToCompound}
+module.exports = { depositTokenToAave, depositTokenToCompound }

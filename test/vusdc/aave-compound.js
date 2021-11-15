@@ -1,6 +1,6 @@
 'use strict'
-const {prepareConfig} = require('./config')
-const {shouldBehaveLikeStrategy} = require('../behavior/strategy')
+const { prepareConfig } = require('./config')
+const { shouldBehaveLikeStrategy } = require('../behavior/strategy')
 
 describe('vUSDC pool strategies', function () {
   const strategies = prepareConfig()

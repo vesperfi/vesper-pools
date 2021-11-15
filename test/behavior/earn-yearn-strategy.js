@@ -1,10 +1,10 @@
 'use strict'
 
-const {expect} = require('chai')
-const {getUsers} = require('../utils/setupHelper')
-const {deposit, timeTravel, rebalanceStrategy} = require('../utils/poolOps')
+const { expect } = require('chai')
+const { getUsers } = require('../utils/setupHelper')
+const { deposit, timeTravel, rebalanceStrategy } = require('../utils/poolOps')
 const Address = require('../../helper/ethereum/address')
-const {ethers} = require('hardhat')
+const { ethers } = require('hardhat')
 
 // Earn Yearn strategy specific tests
 function shouldBehaveLikeEarnYearnStrategy(strategyIndex) {
@@ -25,7 +25,7 @@ function shouldBehaveLikeEarnYearnStrategy(strategyIndex) {
       const dai = await ethers.getContractAt('ERC20', Address.DAI)
       const vDai = await ethers.getContractAt('ERC20', Address.vDAI)
       const tokenBalanceBefore = await vDai.balanceOf(this.earnDrip.address)
-      await timeTravel('',100, 'compound')
+      await timeTravel('', 100, 'compound')
       await rebalanceStrategy(strategy)
       const tokenBalanceAfter = await vDai.balanceOf(this.earnDrip.address)
       expect(tokenBalanceAfter).to.be.gt(tokenBalanceBefore, 'Should increase vDAI balance in Yearn strategy')
@@ -36,8 +36,7 @@ function shouldBehaveLikeEarnYearnStrategy(strategyIndex) {
       const earnedDai = await dai.balanceOf(user2.address)
       expect(earnedDai).to.be.gt(0, 'No dai earned')
     })
-
   })
 }
 
-module.exports = {shouldBehaveLikeEarnYearnStrategy}
+module.exports = { shouldBehaveLikeEarnYearnStrategy }

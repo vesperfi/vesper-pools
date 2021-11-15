@@ -8,12 +8,7 @@ const StrategyType = require('../utils/strategyTypes')
 const { rebalance, timeTravel } = require('../utils/poolOps')
 const { swapExactToken } = require('../utils/tokenSwapper')
 const { adjustBalance } = require('../utils/balance')
-const {
-  deposit,
-  fundBuffer,
-  isCloseEnough,
-  prepareConfig,
-} = require('../utils/vfr-common')
+const { deposit, fundBuffer, isCloseEnough, prepareConfig } = require('../utils/vfr-common')
 
 const { formatEther, parseEther } = ethers.utils
 
@@ -57,7 +52,7 @@ describe('VFR DAI Non-deterministic', function () {
   })
 
   beforeEach(async function () {
-    [, daiGiver, user1, user2, user3] = this.users
+    ;[, daiGiver, user1, user2, user3] = this.users
 
     for (const user of [user1, user2, user3]) {
       // Clear the DAI balance of users

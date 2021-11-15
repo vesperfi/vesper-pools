@@ -19,7 +19,7 @@ task('strategy-configuration', 'Prepare strategy configuration for deployment')
   keeper              address we want to add as keeper
   fusePoolId          Fuse pool id, if applicable
   -----------------------------------------------------------------------------------------
-  `
+  `,
   )
   .setAction(async function ({ strategyParams }) {
     // Parse string data as JSON

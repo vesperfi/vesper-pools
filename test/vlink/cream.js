@@ -1,7 +1,7 @@
 'use strict'
 
-const {prepareConfig} = require('./config')
-const {shouldBehaveLikeStrategy} = require('../behavior/strategy')
+const { prepareConfig } = require('./config')
+const { shouldBehaveLikeStrategy } = require('../behavior/strategy')
 
 describe('vLINK Pool', function () {
   const strategies = prepareConfig()

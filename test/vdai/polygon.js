@@ -21,7 +21,7 @@ describe('vDAI Pool', function () {
       name: 'AaveStrategyPolygonDAI',
       type: StrategyType.AAVE,
       config: { interestFee, debtRatio: 4000, debtRate: ONE_MILLION },
-    }
+    },
   ]
   prepareConfig(strategies)
   shouldBehaveLikePool('vDai', 'DAI')

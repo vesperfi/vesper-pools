@@ -24,7 +24,7 @@ task('deploy-pool', 'Deploy vesper pool')
   watch               redeploy on every change of contract or deploy script 
   write               whether to write deployments to file
   -----------------------------------------------------------------------------------------
-  `
+  `,
   )
   .addOptionalParam(
     'strategyParams',
@@ -41,7 +41,7 @@ task('deploy-pool', 'Deploy vesper pool')
   keeper              address we want to add as keeper
   fusePoolId          Fuse pool id, if applicable
   -----------------------------------------------------------------------------------------
-  `
+  `,
   )
   .setAction(async function ({ pool, release, deployParams = {}, strategyParams }) {
     if (typeof deployParams === 'string') {

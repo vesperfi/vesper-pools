@@ -17,7 +17,7 @@ const {
   getUserAPY,
   isCloseEnough,
   prepareConfig,
-  stablePoolIsWithinTarget
+  stablePoolIsWithinTarget,
 } = require('../utils/vfr-common')
 
 const { parseEther } = ethers.utils
@@ -42,7 +42,10 @@ describe('VFR DAI Deterministic', function () {
     const startTime = await stablePool.startTime()
 
     // Compute the profit needed to achieve the requested APY
-    const neededProfitWithoutFee = totalDebt.mul(apy).mul(currentTime - startTime).div(ONE.mul(365 * 24 * 3600))
+    const neededProfitWithoutFee = totalDebt
+      .mul(apy)
+      .mul(currentTime - startTime)
+      .div(ONE.mul(365 * 24 * 3600))
     const neededProfit = neededProfitWithoutFee.mul(10000).div(ethers.BigNumber.from(10000).sub(fee))
 
     // Clear all accumulated profits and mimick earning strategy a fixed profit
@@ -83,7 +86,7 @@ describe('VFR DAI Deterministic', function () {
   })
 
   beforeEach(async function () {
-    [, daiGiver, user1, user2, user3] = this.users
+    ;[, daiGiver, user1, user2, user3] = this.users
 
     for (const user of [user1, user2, user3]) {
       // Clear the DAI balance of users
@@ -101,7 +104,6 @@ describe('VFR DAI Deterministic', function () {
   })
 
   describe('Stable pool', function () {
-
     it('disallow withdraw if lock period is not expired', async function () {
       // 5% target APY with 1% tolerance
       await stablePool.retarget(parseEther('0.05'), parseEther('0.01'))
@@ -114,14 +116,13 @@ describe('VFR DAI Deterministic', function () {
 
       await expect(withdraw(stablePool, user1)).to.be.revertedWith('lock-period-not-expired')
       await expect(stablePool.connect(user1.signer).transfer(user2.address, 1)).to.be.revertedWith(
-        'lock-period-not-expired'
+        'lock-period-not-expired',
       )
 
       const lockPeriod = (await stablePool.lockPeriod()).toNumber()
       await timeTravel(lockPeriod)
 
       await withdraw(stablePool, user1)
-
     })
 
     it('disallow deposits if pool is under target by more than tolerance', async function () {
@@ -293,7 +294,6 @@ describe('VFR DAI Deterministic', function () {
   })
 
   describe('Auto-retargeting Stable pool', function () {
-
     it('Should increase +1% target APY if prediction average is higher', async function () {
       // 5% target APY with 1% tolerance
       await stablePool.retarget(parseEther('0.05'), parseEther('0.01'))
@@ -302,7 +302,7 @@ describe('VFR DAI Deterministic', function () {
 
       // Each strategy earns 4% APY
       await timeTravel(24 * 3600)
-      await timeTravel(0,100,'compound')
+      await timeTravel(0, 100, 'compound')
       await earnStrategyAPY(stablePool, stableStrategies[0], parseEther('0.04'))
       await earnStrategyAPY(stablePool, stableStrategies[1], parseEther('0.04'))
       await rebalance(stableStrategies)
@@ -311,19 +311,18 @@ describe('VFR DAI Deterministic', function () {
 
       // Pushes APY prediction above target APY (~7%)
       await timeTravel(24 * 3600)
-      await timeTravel(0,100,'compound')
+      await timeTravel(0, 100, 'compound')
       await earnStrategyAPY(stablePool, stableStrategies[0], parseEther('0.07'))
       await earnStrategyAPY(stablePool, stableStrategies[1], parseEther('0.07'))
       await rebalance(stableStrategies)
       await stablePool.checkpoint()
-      
+
       expect(await stablePool.avgPredictedAPY()).to.be.gt(oldAvgPredictedAPY)
 
       const oldTargetAPY = await stablePool.targetAPY()
       await stablePool.autoRetarget()
 
       expect(await stablePool.targetAPY()).to.be.gt(oldTargetAPY)
-
     })
 
     it('Should decrease -1% target APY if prediction average is lower', async function () {
@@ -334,18 +333,16 @@ describe('VFR DAI Deterministic', function () {
 
       // Each strategy earns 3% APY
       await timeTravel(24 * 3600)
-      await timeTravel(0,100,'compound')
+      await timeTravel(0, 100, 'compound')
       await earnStrategyAPY(stablePool, stableStrategies[0], parseEther('0.03'))
       await earnStrategyAPY(stablePool, stableStrategies[1], parseEther('0.03'))
       await rebalance(stableStrategies)
       await stablePool.checkpoint()
-  
+
       const oldTargetAPY = await stablePool.targetAPY()
       await stablePool.autoRetarget()
 
       expect(await stablePool.targetAPY()).to.be.lt(oldTargetAPY)
-
     })
-
   })
 })

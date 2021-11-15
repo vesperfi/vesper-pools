@@ -1,9 +1,9 @@
 'use strict'
 
-const {prepareConfig} = require('./config')
-const {shouldBehaveLikeStrategy} = require('../behavior/strategy')
+const { prepareConfig } = require('./config')
+const { shouldBehaveLikeStrategy } = require('../behavior/strategy')
 const StrategyType = require('../utils/strategyTypes')
-const {ethers} = require('hardhat')
+const { ethers } = require('hardhat')
 const ONE_MILLION = ethers.utils.parseEther('1000000')
 
 describe('vUSDT Pool', function () {
@@ -12,7 +12,7 @@ describe('vUSDT Pool', function () {
     {
       name: 'CreamStrategyUSDT',
       type: StrategyType.CREAM,
-      config: {interestFee, debtRatio: 9000, debtRate: ONE_MILLION},
+      config: { interestFee, debtRatio: 9000, debtRate: ONE_MILLION },
     },
   ]
   prepareConfig(strategies)

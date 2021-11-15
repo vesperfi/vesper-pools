@@ -1,8 +1,8 @@
 'use strict'
 
 const swapper = require('../utils/tokenSwapper')
-const {getPermitData} = require('../utils/signHelper')
-const {MNEMONIC} = require('../utils/testkey')
+const { getPermitData } = require('../utils/signHelper')
+const { MNEMONIC } = require('../utils/testkey')
 const {
   deposit: _deposit,
   rebalance,
@@ -16,9 +16,9 @@ const chaiAlmost = require('chai-almost')
 const chai = require('chai')
 chai.use(chaiAlmost(1))
 const expect = chai.expect
-const {BigNumber: BN} = require('ethers')
-const {ethers} = require('hardhat')
-const {advanceBlock} = require('../utils/time')
+const { BigNumber: BN } = require('ethers')
+const { ethers } = require('hardhat')
+const { advanceBlock } = require('../utils/time')
 const DECIMAL18 = BN.from('1000000000000000000')
 const MAX_BPS = BN.from('10000')
 async function shouldBehaveLikePool(poolName, collateralName) {
@@ -54,7 +54,7 @@ async function shouldBehaveLikePool(poolName, collateralName) {
     describe(`Gasless approval for ${poolName} token`, function () {
       it('Should allow gasless approval using permit()', async function () {
         const amount = DECIMAL18.toString()
-        const {owner, deadline, sign} = await getPermitData(pool, amount, MNEMONIC, user1.address)
+        const { owner, deadline, sign } = await getPermitData(pool, amount, MNEMONIC, user1.address)
         await pool.permit(owner, user1.address, amount, deadline, sign.v, sign.r, sign.s)
         const allowance = await pool.allowance(owner, user1.address)
         expect(allowance).to.be.equal(amount, `${poolName} allowance is wrong`)
@@ -266,7 +266,7 @@ async function shouldBehaveLikePool(poolName, collateralName) {
         ]) {
           expect(maxDebt.sub(unusedCredit).sub(totalDebt).toNumber()).to.almost.eq(
             0,
-            `${collateralName} total debt of pool is wrong`
+            `${collateralName} total debt of pool is wrong`,
           )
           expect(totalSupply).to.be.gte(depositAmount, `Total supply of ${poolName} is wrong`)
           expect(vPoolBalance).to.be.eq(convertTo18(depositAmount), `${poolName} balance of user is wrong`)
@@ -276,14 +276,14 @@ async function shouldBehaveLikePool(poolName, collateralName) {
       it('Should update strategy lastRebalance param', async function () {
         // given
         const [strategyToRebalance] = strategies
-        const {_lastRebalance: lastRebalanceBefore} = await pool.strategy(strategyToRebalance.instance.address)
+        const { _lastRebalance: lastRebalanceBefore } = await pool.strategy(strategyToRebalance.instance.address)
 
         // when
         await timeTravel()
         await rebalance([strategyToRebalance])
 
         // then
-        const {_lastRebalance: lastRebalanceAfter} = await pool.strategy(strategyToRebalance.instance.address)
+        const { _lastRebalance: lastRebalanceAfter } = await pool.strategy(strategyToRebalance.instance.address)
         expect(lastRebalanceAfter).to.gt(lastRebalanceBefore)
       })
     })
@@ -469,12 +469,12 @@ async function shouldBehaveLikePool(poolName, collateralName) {
 
         expect(Math.abs(maxTotalDebt.add(excessDebt).sub(totalDebtBefore))).to.almost.equal(
           1,
-          `Total debt of ${poolName} is wrong after rebalance`
+          `Total debt of ${poolName} is wrong after rebalance`,
         )
         const totalDebtOfStrategies = await totalDebtOfAllStrategy(strategies, pool)
         expect(Math.abs(maxTotalDebt.add(excessDebt).sub(totalDebtOfStrategies))).to.almost.equal(
           1,
-          'Total debt of all strategies is wrong after rebalance'
+          'Total debt of all strategies is wrong after rebalance',
         )
         const withdrawAmount = await pool.balanceOf(user1.address)
         await pool.connect(user1.signer).withdraw(withdrawAmount)
@@ -487,7 +487,7 @@ async function shouldBehaveLikePool(poolName, collateralName) {
         totalDebtAfter = await pool.totalDebt()
         expect(totalDebtAfter).to.be.lte(
           maxTotalDebt,
-          `Total debt of ${poolName} is wrong after withdraw and rebalance`
+          `Total debt of ${poolName} is wrong after withdraw and rebalance`,
         )
       })
 
@@ -553,11 +553,11 @@ async function shouldBehaveLikePool(poolName, collateralName) {
         // Due to rounding some dust, 10000 wei, might left in case of Yearn strategy
         expect(Math.abs(debtAfter.sub(debtBefore).sub(expectedLimit))).to.lte(
           dust,
-          `Debt of strategy in ${poolName} is wrong`
+          `Debt of strategy in ${poolName} is wrong`,
         )
       })
     })
   })
 }
 
-module.exports = {shouldBehaveLikePool}
+module.exports = { shouldBehaveLikePool }

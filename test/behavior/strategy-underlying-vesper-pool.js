@@ -1,11 +1,11 @@
 'use strict'
 
-const {deposit, timeTravel, rebalanceStrategy} = require('../utils/poolOps')
-const {expect} = require('chai')
-const {ethers} = require('hardhat')
+const { deposit, timeTravel, rebalanceStrategy } = require('../utils/poolOps')
+const { expect } = require('chai')
+const { ethers } = require('hardhat')
 const hre = require('hardhat')
-const {BigNumber: BN} = require('ethers')
-const {getUsers, unlock} = require('../utils/setupHelper')
+const { BigNumber: BN } = require('ethers')
+const { getUsers, unlock } = require('../utils/setupHelper')
 
 async function shouldBehaveLikeUnderlyingVesperPoolStrategy(strategyIndex) {
   let pool, strategy
@@ -43,11 +43,11 @@ async function shouldBehaveLikeUnderlyingVesperPoolStrategy(strategyIndex) {
         const tokenBalanceAfter = await vDai.balanceOf(fc)
         expect(tokenBalanceAfter).to.be.eq(
           tokenBalanceBefore,
-          'Strategy not setup correctly. Should not pay withdraw fee'
+          'Strategy not setup correctly. Should not pay withdraw fee',
         )
       })
     })
   })
 }
 
-module.exports = {shouldBehaveLikeUnderlyingVesperPoolStrategy}
+module.exports = { shouldBehaveLikeUnderlyingVesperPoolStrategy }

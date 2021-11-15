@@ -1,10 +1,10 @@
 'use strict'
 
-const {expect} = require('chai')
+const { expect } = require('chai')
 const hre = require('hardhat')
 const ethers = hre.ethers
 const poolOps = require('./utils/poolOps')
-const {deployContract, getUsers, createStrategy} = require('./utils/setupHelper')
+const { deployContract, getUsers, createStrategy } = require('./utils/setupHelper')
 const StrategyType = require('./utils/strategyTypes')
 const addressListFactory = hre.address.ADDRESS_LIST_FACTORY
 const VDAI = require('../helper/ethereum/poolConfig').VDAI
@@ -20,7 +20,7 @@ describe('Vesper Pool: proxy', function () {
   const strategyConfig = {
     name: 'AaveStrategyDAI',
     type: StrategyType.AAVE,
-    config: {interestFee: '1500', debtRatio: 9000, debtRate: ethers.utils.parseEther('1000000')},
+    config: { interestFee: '1500', debtRatio: 9000, debtRate: ethers.utils.parseEther('1000000') },
   }
 
   beforeEach(async function () {
@@ -52,7 +52,7 @@ describe('Vesper Pool: proxy', function () {
 
     collateralToken = await ethers.getContractAt('ERC20', await pool.token())
     strategyConfig.feeCollector = user4.address
-    strategy = await createStrategy(strategyConfig, pool.address, {addressListFactory})
+    strategy = await createStrategy(strategyConfig, pool.address, { addressListFactory })
     await accountant.addStrategy(strategy.address, ...Object.values(strategyConfig.config))
   })
 
@@ -111,14 +111,14 @@ describe('Vesper Pool: proxy', function () {
 
         // Trigger upgrade
         await upgrader.connect(governor.signer).safeUpgrade(proxy.address, newPool.address)
-  
+
         pool = await ethers.getContractAt(poolName, proxy.address)
         expect(pool.address).to.be.eq(oldPool, 'Pool address via proxy should be same')
 
         const newPoolImpl = await upgrader.getProxyImplementation(proxy.address)
         expect(newPoolImpl !== oldPoolImpl, 'Implementation address should be different').to.be.true
       })
-  
+
       it('Should properly revert wrong upgrades via upgrader', async function () {
         // Trigger upgrade
         await expect(upgrader.connect(governor.signer).safeUpgrade(proxy.address, MULTICALL)).to.be.reverted

@@ -1,13 +1,13 @@
 'use strict'
 
-const {expect} = require('chai')
+const { expect } = require('chai')
 const hre = require('hardhat')
 const ethers = hre.ethers
-const {rebalance, timeTravel} = require('../utils/poolOps')
-const {adjustBalance} = require('../utils/balance')
-const {deposit, fundBuffer, isCloseEnough} = require('../utils/vfr-common')
+const { rebalance, timeTravel } = require('../utils/poolOps')
+const { adjustBalance } = require('../utils/balance')
+const { deposit, fundBuffer, isCloseEnough } = require('../utils/vfr-common')
 
-const {formatEther, parseEther} = ethers.utils
+const { formatEther, parseEther } = ethers.utils
 
 async function shouldBehaveLikeVFRPool() {
   let collateralGiver, user1, user2, user3
@@ -22,7 +22,6 @@ async function shouldBehaveLikeVFRPool() {
     collateralToken = this.stable.collateralToken
     collateralTokenAddress = collateralToken.address
     buffer = this.buffer
-
     ;[, collateralGiver, user1, user2, user3] = this.users
 
     for (const user of [user1, user2, user3]) {
@@ -108,4 +107,4 @@ async function shouldBehaveLikeVFRPool() {
   })
 }
 
-module.exports = {shouldBehaveLikeVFRPool}
+module.exports = { shouldBehaveLikeVFRPool }

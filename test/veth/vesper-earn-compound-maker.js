@@ -1,9 +1,9 @@
 'use strict'
 
-const {prepareConfig} = require('./config')
-const {shouldBehaveLikeStrategy} = require('../behavior/strategy')
+const { prepareConfig } = require('./config')
+const { shouldBehaveLikeStrategy } = require('../behavior/strategy')
 const StrategyType = require('../utils/strategyTypes')
-const {ethers} = require('hardhat')
+const { ethers } = require('hardhat')
 describe('vETH pool strategies', function () {
   const interestFee = '2500' // 15%
   const ONE_MILLION = ethers.utils.parseEther('1000000')
@@ -11,7 +11,7 @@ describe('vETH pool strategies', function () {
     {
       name: 'EarnCompoundMakerStrategyETH',
       type: StrategyType.EARN_MAKER,
-      config: {interestFee, debtRatio: 9000, debtRate: ONE_MILLION},
+      config: { interestFee, debtRatio: 9000, debtRate: ONE_MILLION },
     },
   ]
   prepareConfig(strategies)

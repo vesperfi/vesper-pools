@@ -1,13 +1,13 @@
 'use strict'
 
-const {deposit, executeIfExist, rebalanceStrategy} = require('../utils/poolOps')
-const {expect} = require('chai')
-const {ethers} = require('hardhat')
-const {BigNumber: BN} = require('ethers')
+const { deposit, executeIfExist, rebalanceStrategy } = require('../utils/poolOps')
+const { expect } = require('chai')
+const { ethers } = require('hardhat')
+const { BigNumber: BN } = require('ethers')
 const StrategyType = require('../utils/strategyTypes')
 const PoolConfig = require('../../helper/ethereum/poolConfig')
 const address = require('../../helper/ethereum/address')
-const {getUsers, deployContract} = require('../utils/setupHelper')
+const { getUsers, deployContract } = require('../utils/setupHelper')
 const DECIMAL18 = BN.from('1000000000000000000')
 
 function shouldValidateMakerCommonBehaviour(strategyIndex) {
@@ -229,4 +229,4 @@ function shouldValidateMakerCommonBehaviour(strategyIndex) {
   })
 }
 
-module.exports = {shouldValidateMakerCommonBehaviour}
+module.exports = { shouldValidateMakerCommonBehaviour }

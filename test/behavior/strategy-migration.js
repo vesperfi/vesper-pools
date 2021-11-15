@@ -48,23 +48,23 @@ async function shouldMigrateStrategies(poolName) {
     expect(totalDebtAfter).to.be.eq(totalDebtBefore, `${poolName} total debt after migration is not correct`)
     expect(totalDebtRatioAfter).to.be.eq(
       totalDebtRatioBefore,
-      `${poolName} total debt ratio after migration is not correct`
+      `${poolName} total debt ratio after migration is not correct`,
     )
     if (newStrategy.type === StrategyType.COMPOUND_LEVERAGE) {
       // new strategy will have less receipt tokens due to deleverage at migration
       expect(receiptTokenAfter2).to.be.lt(
         receiptTokenBefore,
-        `${poolName} receipt  token balance of new strategy after migration is not correct`
+        `${poolName} receipt  token balance of new strategy after migration is not correct`,
       )
     } else {
       expect(receiptTokenAfter2).to.be.gte(
         receiptTokenBefore,
-        `${poolName} receipt  token balance of new strategy after migration is not correct`
+        `${poolName} receipt  token balance of new strategy after migration is not correct`,
       )
     }
     expect(receiptTokenAfter).to.be.eq(
       0,
-      `${poolName} receipt  token balance of new strategy after migration is not correct`
+      `${poolName} receipt  token balance of new strategy after migration is not correct`,
     )
   }
 

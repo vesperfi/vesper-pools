@@ -9,8 +9,8 @@
   "scripts": {
     "solhint": "solhint './contracts/**/*.sol'",
     "solhint:fix": "prettier --write 'contracts/**/*.sol'",
-    "lint": "eslint --cache ./test/*",
-    "lint:fix": "eslint --cache --fix ./test --ext .js",
+    "lint": "eslint --cache ./test/* ./tasks/* ./helper/*",
+    "lint:fix": "eslint --cache --fix ./test ./tasks/ ./helper/ --ext .js",
     "hardhat": "hardhat",
     "clean": "hardhat clean",
     "compile": "hardhat compile",
@@ -23,9 +23,11 @@
     "verify": "hardhat etherscan-verify",
     "size-contract": "hardhat size-contracts",
     "prepare": "husky install",
-    "postinstall": "patch-package"
+    "postinstall": "patch-package",
+    "prettier": "prettier"
   },
   "devDependencies": {
+    "@defi-wonderland/smock": "^2.0.7",
     "@ethersproject/hardware-wallets": "^5.4.0",
     "@nomiclabs/hardhat-ethers": "^2.0.2",
     "@nomiclabs/hardhat-waffle": "^2.0.1",
@@ -42,14 +44,10 @@
     "eslint-config-bloq": "2.3.0",
     "eslint-config-prettier": "6.9.0",
     "eslint-config-standard": "14.1.0",
-    "eslint-plugin-import": "2.20.0",
     "eslint-plugin-jsdoc": "20.3.1",
     "eslint-plugin-mocha": "6.2.2",
-    "eslint-plugin-node": "11.0.0",
-    "eslint-plugin-prefer-arrow": "1.1.7",
+    "eslint-plugin-prettier": "3.4.1",
     "eslint-plugin-promise": "4.2.1",
-    "eslint-plugin-require-path-exists": "1.1.9",
-    "eslint-plugin-standard": "4.0.1",
     "ethereum-waffle": "^3.3.0",
     "ethers": "^5.4.7",
     "hardhat": "^2.6.5",
@@ -70,10 +68,7 @@
     "solidity-coverage": "^0.7.16"
   },
   "engines": {
-    "node": ">=12.0.0",
-    "npm": ">=7.0.0"
-  },
-  "dependencies": {
-    "@defi-wonderland/smock": "^2.0.7"
+    "node": ">=14.16.1",
+    "npm": ">=8.0.0"
   }
 }

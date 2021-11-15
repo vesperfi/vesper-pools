@@ -1,11 +1,11 @@
 'use strict'
-const {shouldDoSanityEarnTest} = require('../behavior/sanity-earn-test')
-const {getUsers} = require('../utils/setupHelper')
+const { shouldDoSanityEarnTest } = require('../behavior/sanity-earn-test')
+const { getUsers } = require('../utils/setupHelper')
 const contracts = require('../../releases/3.0.5/contracts.json').networks.mainnet
-const {BigNumber: BN} = require('ethers')
+const { BigNumber: BN } = require('ethers')
 const DECIMAL18 = BN.from('1000000000000000000')
 const ONE_MILLION = DECIMAL18.mul('1000000')
-const {ethers} = require('hardhat')
+const { ethers } = require('hardhat')
 const poolConfig = require('../../helper/ethereum/poolConfig').VEETH_DAI
 describe('veETH-DAI Pool', function () {
   const interestFee = '1500' // 15%
@@ -23,7 +23,7 @@ describe('veETH-DAI Pool', function () {
         instance,
         feeCollector,
         name: _strategy,
-        config: {interestFee, debtRatio: 9500, debtRate: ONE_MILLION},
+        config: { interestFee, debtRatio: 9500, debtRate: ONE_MILLION },
       }
       const strategyTokenAddress = await instance.token()
       strat.token = await ethers.getContractAt('CToken', strategyTokenAddress)

@@ -1,9 +1,9 @@
 'use strict'
 
-const {getUsers, setupVPool} = require('../utils/setupHelper')
+const { getUsers, setupVPool } = require('../utils/setupHelper')
 const StrategyType = require('../utils/strategyTypes')
 const PoolConfig = require('../../helper/ethereum/poolConfig')
-const {ethers} = require('hardhat')
+const { ethers } = require('hardhat')
 const ONE_MILLION = ethers.utils.parseEther('1000000')
 
 function prepareConfig(_strategies) {
@@ -12,13 +12,13 @@ function prepareConfig(_strategies) {
     {
       name: 'CreamStrategyLINK',
       type: StrategyType.CREAM,
-      config: {interestFee, debtRatio: 9000, debtRate: ONE_MILLION}
+      config: { interestFee, debtRatio: 9000, debtRate: ONE_MILLION },
     },
     {
       name: 'CreamStrategyLINK',
       type: StrategyType.CREAM,
-      config: {interestFee, debtRatio: 0, debtRate: ONE_MILLION}
-    }
+      config: { interestFee, debtRatio: 0, debtRate: ONE_MILLION },
+    },
   ]
   beforeEach(async function () {
     const users = await getUsers()
@@ -35,4 +35,4 @@ function prepareConfig(_strategies) {
   return strategies
 }
 
-module.exports = {prepareConfig}
+module.exports = { prepareConfig }

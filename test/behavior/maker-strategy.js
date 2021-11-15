@@ -1,10 +1,10 @@
 'use strict'
 
-const {deposit, executeIfExist, timeTravel, rebalanceStrategy} = require('../utils/poolOps')
-const {expect} = require('chai')
-const {ethers} = require('hardhat')
-const {getUsers, getEvent} = require('../utils/setupHelper')
-const {shouldValidateMakerCommonBehaviour} = require('./maker-common')
+const { deposit, executeIfExist, timeTravel, rebalanceStrategy } = require('../utils/poolOps')
+const { expect } = require('chai')
+const { ethers } = require('hardhat')
+const { getUsers, getEvent } = require('../utils/setupHelper')
+const { shouldValidateMakerCommonBehaviour } = require('./maker-common')
 
 function shouldBehaveLikeMakerStrategy(strategyIndex) {
   let pool, strategy, token, accountant
@@ -88,9 +88,9 @@ function shouldBehaveLikeMakerStrategy(strategyIndex) {
         await rebalanceStrategy(strategy)
         const daiDebtAfter = await cm.getVaultDebt(strategy.instance.address)
         expect(daiDebtAfter).to.be.gt(daiDebtBefore, 'Should increase vault debt on rebalance')
-      })      
+      })
     })
   })
 }
 
-module.exports = {shouldBehaveLikeMakerStrategy}
+module.exports = { shouldBehaveLikeMakerStrategy }
