@@ -22,6 +22,14 @@ function shouldBehaveLikeCrvStrategy(strategyIndex) {
       crv = await ethers.getContractAt('ERC20', CRV)
     })
 
+    it('Verify convertFrom18 is implemented correctly', async function () {
+      const DECIMAL18 = ethers.utils.parseUnits('1', 18)
+      const collateralDecimal = await this.collateralToken.decimals()
+      const expected = ethers.utils.parseUnits('1', collateralDecimal)
+      const actual = await strategy.convertFrom18(DECIMAL18)
+      expect(actual).to.be.equal(expected, 'Conversion from 18 is wrong')
+    })
+
     it('Should get CRV token as reserve token', async function () {
       expect(await strategy.isReservedToken(CRV)).to.be.true
       const crvLP = await strategy.crvLp()

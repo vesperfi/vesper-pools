@@ -8,7 +8,7 @@ const StrategyType = require('../utils/strategyTypes')
 const PoolConfig = require('../../helper/ethereum/poolConfig')
 const address = require('../../helper/ethereum/address')
 const { getUsers, deployContract } = require('../utils/setupHelper')
-const DECIMAL18 = BN.from('1000000000000000000')
+const DECIMAL18 = ethers.utils.parseUnits('1', 18)
 
 function shouldValidateMakerCommonBehaviour(strategyIndex) {
   let pool, strategy, token, newStrategy
@@ -75,6 +75,12 @@ function shouldValidateMakerCommonBehaviour(strategyIndex) {
       } else {
         newStrategy = await deployContract(strategyName, [pool.address, cm.address, swapManager.address])
       }
+    })
+
+    it('Verify convertFrom18 is implemented correctly', async function () {
+      const expected = ethers.utils.parseUnits('1', collateralDecimal)
+      const actual = await strategy.convertFrom18(DECIMAL18)
+      expect(actual).to.be.equal(expected, 'Conversion from 18 is wrong')
     })
 
     describe('Resurface', function () {

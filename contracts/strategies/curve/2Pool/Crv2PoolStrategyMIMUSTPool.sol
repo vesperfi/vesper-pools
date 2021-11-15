@@ -18,4 +18,9 @@ abstract contract Crv2PoolStrategyMIMUSTPool is Crv2PoolStrategy {
         address _swapManager,
         uint256 _collateralIdx
     ) Crv2PoolStrategy(_pool, _swapManager, CRV_POOL, CRV_LP, GAUGE, _collateralIdx) {}
+
+    /// @dev Convert from 18 decimals to token defined decimals. Default no conversion.
+    function convertFrom18(uint256 amount) public pure override returns (uint256) {
+        return amount;
+    }
 }

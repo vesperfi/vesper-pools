@@ -29,10 +29,6 @@ contract EarnCrvsBTCStrategy is CrvsBTCPoolStrategy, Earn {
         }
     }
 
-    function convertFrom18(uint256 amount) public pure override(Strategy, CrvsBTCPoolStrategy) returns (uint256) {
-        return CrvsBTCPoolStrategy.convertFrom18(amount);
-    }
-
     function _claimRewardsAndConvertTo(address _toToken) internal override(Strategy, CrvPoolStrategyBase) {
         CrvPoolStrategyBase._claimRewardsAndConvertTo(_toToken);
     }

@@ -61,6 +61,9 @@ abstract contract MakerStrategy is Strategy {
         lowWater = _lowWater * WAT;
     }
 
+    /// @dev Convert from 18 decimals to token defined decimals.
+    function convertFrom18(uint256 amount) public pure virtual returns (uint256);
+
     /**
      * @notice Report total value of this strategy
      * @dev Make sure to return value in collateral token and in order to do that

@@ -15,4 +15,9 @@ contract VesperMakerStrategyETH is VesperMakerStrategy {
         address _swapManager,
         address _vPool
     ) VesperMakerStrategy(_pool, _cm, _swapManager, _vPool, "ETH-C") {}
+
+    /// @dev Convert from 18 decimals to token defined decimals. Default no conversion.
+    function convertFrom18(uint256 amount) public pure override returns (uint256) {
+        return amount;
+    }
 }
