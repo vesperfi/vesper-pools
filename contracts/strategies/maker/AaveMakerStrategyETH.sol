@@ -15,4 +15,9 @@ contract AaveMakerStrategyETH is AaveMakerStrategy {
         address _cm,
         address _swapManager
     ) AaveMakerStrategy(_pool, _cm, _swapManager, 0x028171bCA77440897B824Ca71D1c56caC55b68A3, "ETH-A") {}
+
+    /// @dev Convert from 18 decimals to token defined decimals. Default no conversion.
+    function convertFrom18(uint256 amount) public pure override returns (uint256) {
+        return amount;
+    }
 }

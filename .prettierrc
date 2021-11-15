@@ -14,5 +14,6 @@
       }
     }
   ],
-  "arrowParens": "avoid"
+  "arrowParens": "avoid",
+  "trailingComma": "all"
 }

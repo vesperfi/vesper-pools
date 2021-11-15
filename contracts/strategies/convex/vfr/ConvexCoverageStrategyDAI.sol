@@ -15,4 +15,9 @@ contract ConvexCoverageStrategyDAI is ConvexCoverageStrategy {
     constructor(address _pool, address _swapManager)
         ConvexCoverageStrategy(_pool, THREEPOOL, THREECRV, GAUGE, _swapManager, 0, 9)
     {}
+
+    /// @dev Convert from 18 decimals to token defined decimals. Default no conversion.
+    function convertFrom18(uint256 amount) public pure override returns (uint256) {
+        return amount;
+    }
 }

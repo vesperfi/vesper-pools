@@ -58,6 +58,9 @@ abstract contract CrvPoolStrategyBase is CrvBase, Strategy {
         crvSlippage - _newCrvSlippage;
     }
 
+    /// @dev Convert from 18 decimals to token defined decimals.
+    function convertFrom18(uint256 amount) public pure virtual returns (uint256);
+
     /// @dev Check whether given token is reserved or not. Reserved tokens are not allowed to sweep.
     function isReservedToken(address _token) public view override returns (bool) {
         return reservedToken[_token];

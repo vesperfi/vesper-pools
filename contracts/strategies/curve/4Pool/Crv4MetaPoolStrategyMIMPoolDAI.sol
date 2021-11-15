@@ -11,4 +11,9 @@ contract Crv4MetaPoolStrategyMIMPoolDAI is Crv4MetaPoolStrategyMIMPool {
 
     // collateralIdx for DAI is 1
     constructor(address _pool, address _swapManager) Crv4MetaPoolStrategyMIMPool(_pool, _swapManager, 1) {}
+
+    /// @dev Convert from 18 decimals to token defined decimals. Default no conversion.
+    function convertFrom18(uint256 amount) public pure override returns (uint256) {
+        return amount;
+    }
 }

@@ -15,4 +15,9 @@ contract EarnAaveMakerStrategyETH is EarnAaveMakerStrategy {
         address _cm,
         address _swapManager
     ) EarnAaveMakerStrategy(_pool, _cm, _swapManager, 0x028171bCA77440897B824Ca71D1c56caC55b68A3, "ETH-C", DAI) {}
+
+    /// @dev Convert from 18 decimals to token defined decimals. Default no conversion.
+    function convertFrom18(uint256 amount) public pure override returns (uint256) {
+        return amount;
+    }
 }

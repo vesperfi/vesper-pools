@@ -15,4 +15,9 @@ contract EarnVesperMakerStrategyETH is EarnVesperMakerStrategy {
         address _swapManager,
         address _vPool
     ) EarnVesperMakerStrategy(_pool, _cm, _swapManager, _vPool, "ETH-C", DAI) {}
+
+    /// @dev Convert from 18 decimals to token defined decimals. Default no conversion.
+    function convertFrom18(uint256 amount) public pure override returns (uint256) {
+        return amount;
+    }
 }
