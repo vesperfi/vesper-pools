@@ -6,7 +6,8 @@ const StrategyType = require('../utils/strategyTypes')
 const { ethers } = require('hardhat')
 const ONE_MILLION = ethers.utils.parseEther('1000000')
 
-describe('vUSDC Pool', function () {
+// Skipping CREAM strategy tests
+describe.skip('vUSDC Pool', function () {
   const interestFee = '1500' // 15%
   const strategies = [
     {

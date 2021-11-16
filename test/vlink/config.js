@@ -10,13 +10,13 @@ function prepareConfig(_strategies) {
   const interestFee = '1500' // 15%
   const strategies = _strategies || [
     {
-      name: 'CreamStrategyLINK',
-      type: StrategyType.CREAM,
+      name: 'AlphaLendStrategyLINK',
+      type: StrategyType.ALPHA_LEND,
       config: { interestFee, debtRatio: 9000, debtRate: ONE_MILLION },
     },
     {
-      name: 'CreamStrategyLINK',
-      type: StrategyType.CREAM,
+      name: 'AlphaLendStrategyLINK',
+      type: StrategyType.ALPHA_LEND,
       config: { interestFee, debtRatio: 0, debtRate: ONE_MILLION },
     },
   ]

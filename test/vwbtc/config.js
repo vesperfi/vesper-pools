@@ -11,8 +11,8 @@ function prepareConfig(_strategies) {
   const interestFee = '1500' // 15%
   const strategies = _strategies || [
     {
-      name: 'CreamStrategyWBTC',
-      type: StrategyType.AAVE,
+      name: 'EarnCompoundStrategyWBTC',
+      type: StrategyType.EARN_COMPOUND,
       config: { interestFee, debtRatio: 4500, debtRate: ONE_MILLION },
     },
     {

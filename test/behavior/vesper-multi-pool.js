@@ -1,5 +1,6 @@
 'use strict'
 
+const hre = require('hardhat')
 const { deposit: _deposit, rebalance, rebalanceStrategy } = require('../utils/poolOps')
 const { expect } = require('chai')
 const { makeNewStrategy } = require('../utils/setupHelper')
@@ -117,15 +118,15 @@ async function shouldBehaveLikeMultiPool(poolName) {
 
       it('Should not disturb the withdraw queue order', async function () {
         await rebalance(strategies)
-        const hre = require('hardhat')
+
         const newStrategy = await makeNewStrategy(strategies[0], pool.address, {
           addressListFactory: hre.address.ADDRESS_LIST_FACTORY,
           swapManager: hre.address.SWAP_MANAGER,
         })
-        await Promise.all([
-          accountant.connect(gov.signer).updateDebtRatio(strategies[0].instance.address, 3000),
-          accountant.connect(gov.signer).updateDebtRatio(strategies[1].instance.address, 3000),
-        ])
+
+        await accountant.connect(gov.signer).updateDebtRatio(strategies[0].instance.address, 3000)
+        await accountant.connect(gov.signer).updateDebtRatio(strategies[1].instance.address, 3000)
+
         const config = { interestFee: 1500, debtRatio: 2000, debtRate: strategies[0].config.debtRate }
         await accountant.connect(gov.signer).addStrategy(newStrategy.instance.address, ...Object.values(config))
         await accountant

@@ -6,7 +6,8 @@ const { setupEarnDrip } = require('../utils/setupHelper')
 const StrategyType = require('../utils/strategyTypes')
 const { ethers } = require('hardhat')
 
-describe('veETH pool strategies', function () {
+// Skipping CREAM strategy tests
+describe.skip('veETH pool strategies', function () {
   const interestFee = '2500' // 15%
   const ONE_MILLION = ethers.utils.parseEther('1000000')
   const strategies = [

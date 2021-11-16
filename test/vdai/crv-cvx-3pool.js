@@ -53,7 +53,7 @@ describe('vDAI Pool with Convex Crv3PoolStrategy', function () {
   describe('Convex Crv3PoolStrategy: DAI Functionality', function () {
     afterEach(reset)
     // This cant pass without additional test infrastructure to simulate convex
-    xit('Should calculate fees properly and reflect those in share price', async function () {
+    it.skip('Should calculate fees properly and reflect those in share price', async function () {
       await deposit(pool, collateralToken, 20, user1)
       await strategy.rebalance()
       const price1 = await pool.pricePerShare()
