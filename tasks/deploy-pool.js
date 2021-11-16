@@ -3,6 +3,7 @@
 const del = require('del')
 const copy = require('recursive-copy')
 const fs = require('fs')
+const Address = require('../helper/ethereum/address')
 
 /* eslint-disable no-param-reassign, complexity */
 task('deploy-pool', 'Deploy vesper pool')
@@ -27,6 +28,14 @@ task('deploy-pool', 'Deploy vesper pool')
   `,
   )
   .addOptionalParam(
+    'poolParams',
+    `any param passed inside poolParams object will be used to prepare pool configuration
+  -----------------------------------------------------------------------------------------
+  rewardsToken        Rewards token address for poolRewards
+  -----------------------------------------------------------------------------------------
+  `,
+  )
+  .addOptionalParam(
     'strategyParams',
     `any param passed inside strategyParam object will be used to prepare strategy configuration
   -----------------------------------------------------------------------------------------
@@ -43,7 +52,7 @@ task('deploy-pool', 'Deploy vesper pool')
   -----------------------------------------------------------------------------------------
   `,
   )
-  .setAction(async function ({ pool, release, deployParams = {}, strategyParams }) {
+  .setAction(async function ({ pool, release, deployParams = {}, poolParams = {}, strategyParams }) {
     if (typeof deployParams === 'string') {
       deployParams = JSON.parse(deployParams)
     }
@@ -52,8 +61,18 @@ task('deploy-pool', 'Deploy vesper pool')
       deployParams.tags = pool
     }
 
+    if (typeof poolParams === 'string') {
+      poolParams = JSON.parse(poolParams)
+    } else {
+      console.log('Using VSP as default pool rewards token')
+      poolParams.rewardsToken = Address.VSP
+    }
+
     // TODO support multiple networks
     hre.poolConfig = require('../helper/ethereum/poolConfig')[pool.toUpperCase()]
+    // TODO There is room for improvement for whole pool deployment stuff IMO
+    // TODO support multiple tokens for pool rewards
+    hre.poolConfig.rewardsToken = poolParams.rewardsToken
     await run('strategy-configuration', { strategyParams })
 
     const network = hre.network.name
