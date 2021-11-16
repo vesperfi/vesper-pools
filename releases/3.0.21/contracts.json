@@ -346,6 +346,11 @@
             "implementation": "0xEeD0E5AACe8Cee7c5fEDfCB858bcb2082e1B94EE"
           }
         },
+        "poolRewards": {
+          "proxyAdmin": "0xd9A5df2877a42460E9055C4134946668dfcf51f8",
+          "proxy": "0x40971A53fa57b3D26bF0c98075f81955dE78b61F",
+          "implementation": "0xbE33791F85f3CCFd6C5aA6f8Fd5540F14D3574ad"
+        },
         "strategies": {
           "RariFuseStrategy#18": "0xf5A66196306855821159e41f4dDbb71Ae5663825",
           "RariFuseStrategy#27": "0x187C51C9803424efe1Cbe62cFFc0D99B6912c0F6",
