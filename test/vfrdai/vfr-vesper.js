@@ -8,7 +8,7 @@ const StrategyType = require('../utils/strategyTypes')
 const { prepareConfig } = require('../utils/vfr-common')
 const { shouldBehaveLikeVFRPool } = require('../behavior/vfr-pool')
 const { smock } = require('@defi-wonderland/smock')
-const address = require('../../helper/ethereum/address')
+const address = require('../../helper/mainnet/address')
 
 const ONE_MILLION = parseEther('1000000')
 

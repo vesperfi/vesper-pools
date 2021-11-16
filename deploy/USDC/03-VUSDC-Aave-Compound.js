@@ -1,8 +1,8 @@
 'use strict'
 
 const { ethers } = require('hardhat')
-const VUSDC = require('../../helper/ethereum/poolConfig').VUSDC
-const Address = require('../../helper/ethereum/address')
+const VUSDC = require('../../helper/mainnet/poolConfig').VUSDC
+const Address = require('../../helper/mainnet/address')
 
 const PoolAccountant = 'PoolAccountant'
 const aaveStrategyUSDC = 'AaveStrategyUSDC'
@@ -57,7 +57,6 @@ const deployFunction = async function ({ getNamedAccounts, deployments }) {
   await execute(VUSDC.contractName, { from: deployer, log: true }, 'updateFeeCollector', config.feeCollector)
   await execute(VUSDC.contractName, { from: deployer, log: true }, 'updateWithdrawFee', config.withdrawFee)
 
-
   // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ Deploy aaveStrategyUSDC @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ //
   const aaveStrategy = await deploy(aaveStrategyUSDC, {
     from: deployer,
@@ -77,9 +76,8 @@ const deployFunction = async function ({ getNamedAccounts, deployments }) {
     aaveStrategy.address,
     config.interestFee,
     config.debtRatio,
-    config.debtRate
+    config.debtRate,
   )
-
 
   // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ Deploy compoundStrategyUSDC @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ //
   const compoundStrategy = await deploy(compoundStrategyUSDC, {
@@ -100,9 +98,8 @@ const deployFunction = async function ({ getNamedAccounts, deployments }) {
     compoundStrategy.address,
     config.interestFee,
     config.debtRatio,
-    config.debtRate
+    config.debtRate,
   )
-
 
   deployFunction.id = 'VUSDC-Aave-Compound'
   return true

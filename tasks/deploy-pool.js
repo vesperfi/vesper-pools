@@ -13,16 +13,16 @@ task('deploy-pool', 'Deploy vesper pool')
     'deployParams',
     `any param passed inside deployParams object will be passed to hardhat-deploy
   -----------------------------------------------------------------------------------------
-  deploy-scripts      override deploy script folder path 
-  export              export current network deployments 
-  export-all          export all deployments into one file 
-  gasprice            gas price to use for transactions 
-  no-compile          disable pre compilation 
-  no-impersonation    do not impersonate unknown accounts 
-  reset               whether to delete deployments files first 
-  silent              whether to remove log 
-  tags                specify which deploy script to execute via tags, separated by commas 
-  watch               redeploy on every change of contract or deploy script 
+  deploy-scripts      override deploy script folder path
+  export              export current network deployments
+  export-all          export all deployments into one file
+  gasprice            gas price to use for transactions
+  no-compile          disable pre compilation
+  no-impersonation    do not impersonate unknown accounts
+  reset               whether to delete deployments files first
+  silent              whether to remove log
+  tags                specify which deploy script to execute via tags, separated by commas
+  watch               redeploy on every change of contract or deploy script
   write               whether to write deployments to file
   -----------------------------------------------------------------------------------------
   `,
@@ -68,14 +68,13 @@ task('deploy-pool', 'Deploy vesper pool')
       poolParams.rewardsToken = Address.VSP
     }
 
-    // TODO support multiple networks
-    hre.poolConfig = require('../helper/ethereum/poolConfig')[pool.toUpperCase()]
+    const network = hre.network.name
+    hre.poolConfig = require(`../helper/${network}/poolConfig`)[pool.toUpperCase()]
     // TODO There is room for improvement for whole pool deployment stuff IMO
     // TODO support multiple tokens for pool rewards
     hre.poolConfig.rewardsToken = poolParams.rewardsToken
     await run('strategy-configuration', { strategyParams })
 
-    const network = hre.network.name
     const networkDir = `./deployments/${network}`
     let deployer = process.env.DEPLOYER
     if (deployer && deployer.startsWith('ledger')) {

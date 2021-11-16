@@ -2,7 +2,7 @@
 const { shouldBehaveLikePool } = require('../behavior/vesper-pool')
 const { shouldBehaveLikeStrategy } = require('../behavior/strategy')
 const { getUsers, setupVPool } = require('../utils/setupHelper')
-const PoolConfig = require('../../helper/ethereum/poolConfig')
+const PoolConfig = require('../../helper/mainnet/poolConfig')
 const StrategyType = require('../utils/strategyTypes')
 const { ethers } = require('hardhat')
 const ONE_MILLION = ethers.utils.parseEther('1000000')

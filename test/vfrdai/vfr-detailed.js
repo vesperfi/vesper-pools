@@ -3,7 +3,7 @@
 const { expect } = require('chai')
 const { ethers } = require('hardhat')
 
-const { DAI } = require('../../helper/ethereum/address')
+const { DAI } = require('../../helper/mainnet/address')
 const StrategyType = require('../utils/strategyTypes')
 const { rebalance, timeTravel } = require('../utils/poolOps')
 const { adjustBalance } = require('../utils/balance')

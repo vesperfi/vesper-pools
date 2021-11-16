@@ -1,7 +1,7 @@
 'use strict'
 
 const hre = require('hardhat')
-const Address = require('../../helper/ethereum/address')
+const Address = require('../../helper/mainnet/address')
 const ethers = hre.ethers
 const { BigNumber } = require('ethers')
 const { hexlify, solidityKeccak256, zeroPad, getAddress } = ethers.utils

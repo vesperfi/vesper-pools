@@ -4,7 +4,7 @@ const { deposit, executeIfExist, timeTravel, rebalanceStrategy } = require('../u
 const { expect } = require('chai')
 const { ethers } = require('hardhat')
 const { getUsers, deployContract } = require('../utils/setupHelper')
-const Address = require('../../helper/ethereum/address')
+const Address = require('../../helper/mainnet/address')
 const { shouldValidateMakerCommonBehaviour } = require('./maker-common')
 async function shouldBehaveLikeEarnMakerStrategy(strategyIndex) {
   let pool, strategy

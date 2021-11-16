@@ -5,7 +5,7 @@ const { expect } = require('chai')
 const { swapEthForToken } = require('../utils/tokenSwapper')
 const { ethers } = require('hardhat')
 const { getUsers } = require('../utils/setupHelper')
-const Address = require('../../helper/ethereum/address')
+const Address = require('../../helper/mainnet/address')
 const { shouldValidateMakerCommonBehaviour } = require('./maker-common')
 const { shouldBehaveLikeUnderlyingVesperPoolStrategy } = require('./strategy-underlying-vesper-pool')
 

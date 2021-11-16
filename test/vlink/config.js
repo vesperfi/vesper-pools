@@ -2,7 +2,7 @@
 
 const { getUsers, setupVPool } = require('../utils/setupHelper')
 const StrategyType = require('../utils/strategyTypes')
-const PoolConfig = require('../../helper/ethereum/poolConfig')
+const PoolConfig = require('../../helper/mainnet/poolConfig')
 const { ethers } = require('hardhat')
 const ONE_MILLION = ethers.utils.parseEther('1000000')
 

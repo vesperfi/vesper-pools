@@ -5,7 +5,7 @@ const ethers = hre.ethers
 const provider = hre.waffle.provider
 const { BigNumber: BN } = require('ethers')
 const StrategyType = require('../utils/strategyTypes')
-const Address = require('../../helper/ethereum/address')
+const Address = require('../../helper/mainnet/address')
 const { getChain } = require('./chains')
 
 const mcdEthAJoin = '0x2F0b23f53734252Bda2277357e97e1517d6B042A'

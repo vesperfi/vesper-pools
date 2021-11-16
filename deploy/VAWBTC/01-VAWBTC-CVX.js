@@ -1,9 +1,9 @@
 'use strict'
 
-const Address = require('../../helper/ethereum/address')
+const Address = require('../../helper/mainnet/address')
 const PoolAccountant = 'PoolAccountant'
 const convexSBTCStrategyWBTC = 'ConvexSBTCStrategyWBTC'
-const {BigNumber} = require('ethers')
+const { BigNumber } = require('ethers')
 const DECIMAL8 = BigNumber.from('100000000')
 const ONE_MILLION = DECIMAL8.mul('1000000')
 const config = {
@@ -14,9 +14,9 @@ const config = {
   withdrawFee: 60,
 }
 
-const deployFunction = async function ({getNamedAccounts, deployments}) {
-  const {deploy, execute} = deployments
-  const {deployer} = await getNamedAccounts()
+const deployFunction = async function ({ getNamedAccounts, deployments }) {
+  const { deploy, execute } = deployments
+  const { deployer } = await getNamedAccounts()
   // Deploy PoolAccountant. This call will deploy ProxyAdmin, proxy and PoolAccountant
   const poolProxy = await deployments.get('VPool')
 
@@ -26,20 +26,20 @@ const deployFunction = async function ({getNamedAccounts, deployments}) {
     args: [poolProxy.address, Address.SWAP_MANAGER],
   })
 
-  await execute(convexSBTCStrategyWBTC, {from: deployer, log: true}, 'init', Address.ADDRESS_LIST_FACTORY)
-  await execute(convexSBTCStrategyWBTC, {from: deployer, log: true}, 'approveToken')
-  await execute(convexSBTCStrategyWBTC, {from: deployer, log: true}, 'updateFeeCollector', config.feeCollector)
-  await execute(convexSBTCStrategyWBTC, {from: deployer, log: true}, 'addKeeper', Address.KEEPER)
+  await execute(convexSBTCStrategyWBTC, { from: deployer, log: true }, 'init', Address.ADDRESS_LIST_FACTORY)
+  await execute(convexSBTCStrategyWBTC, { from: deployer, log: true }, 'approveToken')
+  await execute(convexSBTCStrategyWBTC, { from: deployer, log: true }, 'updateFeeCollector', config.feeCollector)
+  await execute(convexSBTCStrategyWBTC, { from: deployer, log: true }, 'addKeeper', Address.KEEPER)
 
   // Add strategy in pool accountant
   await execute(
     PoolAccountant,
-    {from: deployer, log: true},
+    { from: deployer, log: true },
     'addStrategy',
     vDaiCrvStrat.address,
     config.interestFee,
     config.debtRatio,
-    config.debtRate
+    config.debtRate,
   )
 
   deployFunction.id = 'VAWBTC-2'

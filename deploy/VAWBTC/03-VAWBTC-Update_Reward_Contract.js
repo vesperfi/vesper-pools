@@ -1,9 +1,9 @@
 'use strict'
 
-const Address = require('../../helper/ethereum/address')
-const deployFunction = async function ({getNamedAccounts, deployments}) {
-  const {deploy} = deployments
-  const {deployer} = await getNamedAccounts()
+const Address = require('../../helper/mainnet/address')
+const deployFunction = async function ({ getNamedAccounts, deployments }) {
+  const { deploy } = deployments
+  const { deployer } = await getNamedAccounts()
   const poolProxy = await deployments.get('VPool')
   const rewardsProxy = await deploy('PoolRewards', {
     from: deployer,

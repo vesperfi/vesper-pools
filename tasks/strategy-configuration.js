@@ -1,6 +1,6 @@
 'use strict'
 
-const Address = require('../helper/ethereum/address')
+const Address = require('../helper/mainnet/address')
 
 /* eslint-disable no-param-reassign, complexity */
 task('strategy-configuration', 'Prepare strategy configuration for deployment')

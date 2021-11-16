@@ -6,8 +6,8 @@ const ethers = hre.ethers
 const { getUsers, deployContract, createStrategy } = require('./utils/setupHelper')
 const addressListFactory = hre.address.ADDRESS_LIST_FACTORY
 const StrategyType = require('./utils/strategyTypes')
-const VDAI = require('../helper/ethereum/poolConfig').VDAI
-const MULTICALL = require('../helper/ethereum/address').MULTICALL
+const VDAI = require('../helper/mainnet/poolConfig').VDAI
+const MULTICALL = require('../helper/mainnet/address').MULTICALL
 
 describe('Pool accountant proxy', function () {
   const oneMillion = ethers.utils.parseEther('1000000')

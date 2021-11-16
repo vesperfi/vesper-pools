@@ -7,9 +7,9 @@ const time = require('./utils/time')
 const poolOps = require('./utils/poolOps')
 const { deployContract, getUsers, setupVPool } = require('./utils/setupHelper')
 const StrategyType = require('./utils/strategyTypes')
-const PoolConfig = require('../helper/ethereum/poolConfig')
+const PoolConfig = require('../helper/mainnet/poolConfig')
 const swapper = require('./utils/tokenSwapper')
-const Address = require('../helper/ethereum/address')
+const Address = require('../helper/mainnet/address')
 
 const TOTAL_REWARD = ethers.utils.parseUnits('150000')
 const REWARD_DURATION = 30 * 24 * 60 * 60

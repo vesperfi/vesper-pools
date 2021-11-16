@@ -1,12 +1,12 @@
 'use strict'
 
-const Address = require('../../helper/ethereum/address')
+const Address = require('../../helper/mainnet/address')
 const RariFuseStrategy = 'RariFuseStrategy'
 const RARI_FUSE_POOL_ID = 8
 
-const deployFunction = async function ({getNamedAccounts, deployments}) {
-  const {deploy} = deployments
-  const {deployer} = await getNamedAccounts()
+const deployFunction = async function ({ getNamedAccounts, deployments }) {
+  const { deploy } = deployments
+  const { deployer } = await getNamedAccounts()
 
   const poolProxy = await deployments.get('VPool')
   await deploy(RariFuseStrategy, {

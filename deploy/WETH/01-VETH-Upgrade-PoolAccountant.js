@@ -1,12 +1,12 @@
 'use strict'
 
-const VETH = require('../../helper/ethereum/poolConfig').VETHEarn
+const VETH = require('../../helper/mainnet/poolConfig').VETHEarn
 const EarnAaveMakerStrategyETH = 'EarnAaveMakerStrategyETH'
-const Address = require('../../helper/ethereum/address')
+const Address = require('../../helper/mainnet/address')
 const PoolAccountant = 'PoolAccountant'
 const PoolAccountantUpgrader = 'PoolAccountantUpgrader'
 const DefaultProxyAdmin = 'DefaultProxyAdmin'
-const {BigNumber} = require('ethers')
+const { BigNumber } = require('ethers')
 const DECIMAL18 = BigNumber.from('1000000000000000000')
 const ONE_MILLION = DECIMAL18.mul('1000000')
 const config = {
@@ -16,9 +16,9 @@ const config = {
   debtRate: ONE_MILLION.toString(),
   withdrawFee: 60,
 }
-const deployFunction = async function ({getNamedAccounts, deployments}) {
-  const {deploy, read, execute} = deployments
-  const {deployer} = await getNamedAccounts()
+const deployFunction = async function ({ getNamedAccounts, deployments }) {
+  const { deploy, read, execute } = deployments
+  const { deployer } = await getNamedAccounts()
 
   const upgrader = await deployments.getOrNull(PoolAccountantUpgrader)
   if (upgrader) {
@@ -34,10 +34,10 @@ const deployFunction = async function ({getNamedAccounts, deployments}) {
       // Transfer proxy ownership to the upgrader
       await execute(
         DefaultProxyAdmin,
-        {from: deployer, log: true},
+        { from: deployer, log: true },
         'changeProxyAdmin',
         poolAccountant.address,
-        upgrader.address
+        upgrader.address,
       )
     }
 
@@ -45,16 +45,16 @@ const deployFunction = async function ({getNamedAccounts, deployments}) {
     const newImplementation = await deploy(`${PoolAccountant}_Implementation`, {
       contract: PoolAccountant,
       from: deployer,
-      log: true
+      log: true,
     })
 
     // Finally, trigger a safe upgrade via the upgrader
     await execute(
       PoolAccountantUpgrader,
-      {from: deployer, log: true},
+      { from: deployer, log: true },
       'safeUpgrade',
       poolAccountant.address,
-      newImplementation.address
+      newImplementation.address,
     )
   } else {
     // Otherwise, fallback to unsafe upgrade through the default proxy admin
@@ -75,27 +75,22 @@ const deployFunction = async function ({getNamedAccounts, deployments}) {
     args: [poolProxy.address, Address.COLLATERAL_MANAGER, Address.SWAP_MANAGER],
   })
 
-  await execute(EarnAaveMakerStrategyETH, {from: deployer, log: true}, 'init', Address.ADDRESS_LIST_FACTORY)
-  await execute(EarnAaveMakerStrategyETH, {from: deployer, log: true}, 'approveToken')
-  await execute(EarnAaveMakerStrategyETH, {from: deployer, log: true}, 'updateFeeCollector', config.feeCollector)
+  await execute(EarnAaveMakerStrategyETH, { from: deployer, log: true }, 'init', Address.ADDRESS_LIST_FACTORY)
+  await execute(EarnAaveMakerStrategyETH, { from: deployer, log: true }, 'approveToken')
+  await execute(EarnAaveMakerStrategyETH, { from: deployer, log: true }, 'updateFeeCollector', config.feeCollector)
 
   // Add strategy in pool accountant
 
-  await execute(
-    PoolAccountant,
-    {from: deployer, log: true},
-    'removeStrategy',
-    0
-  )
+  await execute(PoolAccountant, { from: deployer, log: true }, 'removeStrategy', 0)
 
   await execute(
     PoolAccountant,
-    {from: deployer, log: true},
+    { from: deployer, log: true },
     'addStrategy',
     earnStratMaker.address,
     config.interestFee,
     config.debtRatio,
-    config.debtRate
+    config.debtRate,
   )
   // Prepare id of deployment, next deployment will be triggered if id is changed
   const poolVersion = await read(VETH.contractName, {}, 'VERSION')

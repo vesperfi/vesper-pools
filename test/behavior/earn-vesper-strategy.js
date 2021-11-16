@@ -4,7 +4,7 @@ const { deposit, timeTravel, rebalanceStrategy } = require('../utils/poolOps')
 const { expect } = require('chai')
 const { ethers } = require('hardhat')
 const { getUsers } = require('../utils/setupHelper')
-const Address = require('../../helper/ethereum/address')
+const Address = require('../../helper/mainnet/address')
 const { shouldBehaveLikeUnderlyingVesperPoolStrategy } = require('./strategy-underlying-vesper-pool')
 
 async function shouldBehaveLikeEarnVesperStrategy(strategyIndex) {

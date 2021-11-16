@@ -1,10 +1,10 @@
 'use strict'
 
-const VETH = require('../../helper/ethereum/poolConfig').VETHEarn
-const Address = require('../../helper/ethereum/address')
+const VETH = require('../../helper/mainnet/poolConfig').VETHEarn
+const Address = require('../../helper/mainnet/address')
 const PoolAccountant = 'PoolAccountant'
 const EarnAaveMakerStrategyETH = 'EarnAaveMakerStrategyETH'
-const {BigNumber} = require('ethers')
+const { BigNumber } = require('ethers')
 const DECIMAL18 = BigNumber.from('1000000000000000000')
 const ONE_MILLION = DECIMAL18.mul('1000000')
 const config = {
@@ -15,9 +15,9 @@ const config = {
   withdrawFee: 60,
 }
 
-const deployFunction = async function ({getNamedAccounts, deployments}) {
-  const {deploy, execute, read} = deployments
-  const {deployer} = await getNamedAccounts()
+const deployFunction = async function ({ getNamedAccounts, deployments }) {
+  const { deploy, execute, read } = deployments
+  const { deployer } = await getNamedAccounts()
 
   // Deploy PoolAccountant. This call will deploy ProxyAdmin, proxy and PoolAccountant
   const accountantProxy = await deploy(PoolAccountant, {
@@ -48,7 +48,7 @@ const deployFunction = async function ({getNamedAccounts, deployments}) {
 
   // Initialize PoolAccountant with pool proxy address
   if ((await read(PoolAccountant, {}, 'pool')) === Address.ZERO) {
-    await execute(PoolAccountant, {from: deployer, log: true}, 'init', poolProxy.address)
+    await execute(PoolAccountant, { from: deployer, log: true }, 'init', poolProxy.address)
   }
 
   // Deploy strategy for pool
@@ -58,23 +58,23 @@ const deployFunction = async function ({getNamedAccounts, deployments}) {
     args: [poolProxy.address, Address.COLLATERAL_MANAGER, Address.SWAP_MANAGER],
   })
 
-  await execute(EarnAaveMakerStrategyETH, {from: deployer, log: true}, 'init', Address.ADDRESS_LIST_FACTORY)
-  await execute(EarnAaveMakerStrategyETH, {from: deployer, log: true}, 'approveToken')
-  await execute(EarnAaveMakerStrategyETH, {from: deployer, log: true}, 'updateFeeCollector', config.feeCollector)
+  await execute(EarnAaveMakerStrategyETH, { from: deployer, log: true }, 'init', Address.ADDRESS_LIST_FACTORY)
+  await execute(EarnAaveMakerStrategyETH, { from: deployer, log: true }, 'approveToken')
+  await execute(EarnAaveMakerStrategyETH, { from: deployer, log: true }, 'updateFeeCollector', config.feeCollector)
 
   // Add strategy in pool accountant
   await execute(
     PoolAccountant,
-    {from: deployer, log: true},
+    { from: deployer, log: true },
     'addStrategy',
     earnStratMaker.address,
     config.interestFee,
     config.debtRatio,
-    config.debtRate
+    config.debtRate,
   )
 
-  await execute(VETH.contractName, {from: deployer, log: true}, 'updateFeeCollector', config.feeCollector)
-  await execute(VETH.contractName, {from: deployer, log: true}, 'updateWithdrawFee', config.withdrawFee)
+  await execute(VETH.contractName, { from: deployer, log: true }, 'updateFeeCollector', config.feeCollector)
+  await execute(VETH.contractName, { from: deployer, log: true }, 'updateWithdrawFee', config.withdrawFee)
 
   const rewardsProxy = await deploy('VesperEarnDrip', {
     from: deployer,
@@ -92,7 +92,7 @@ const deployFunction = async function ({getNamedAccounts, deployments}) {
     },
   })
 
-  await execute(VETH.contractName, {from: deployer, log: true}, 'updatePoolRewards', rewardsProxy.address)
+  await execute(VETH.contractName, { from: deployer, log: true }, 'updatePoolRewards', rewardsProxy.address)
 
   // Prepare id of deployment, next deployment will be triggered if id is changed
   const poolVersion = await read(VETH.contractName, {}, 'VERSION')

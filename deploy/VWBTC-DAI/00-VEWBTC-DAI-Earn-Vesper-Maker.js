@@ -1,10 +1,10 @@
 'use strict'
 
-const VEWBTC = require('../../helper/ethereum/poolConfig').VEWBTC_DAI
-const Address = require('../../helper/ethereum/address')
+const VEWBTC = require('../../helper/mainnet/poolConfig').VEWBTC_DAI
+const Address = require('../../helper/mainnet/address')
 const PoolAccountant = 'PoolAccountant'
 const EarnStrategy = 'EarnVesperMakerStrategyWBTC'
-const {BigNumber} = require('ethers')
+const { BigNumber } = require('ethers')
 const DECIMAL8 = BigNumber.from('100000000')
 const ONE_MILLION = DECIMAL8.mul('1000000')
 const config = {
@@ -15,9 +15,9 @@ const config = {
   withdrawFee: 0,
 }
 
-const deployFunction = async function ({getNamedAccounts, deployments}) {
-  const {deploy, execute, read} = deployments
-  const {deployer} = await getNamedAccounts()
+const deployFunction = async function ({ getNamedAccounts, deployments }) {
+  const { deploy, execute, read } = deployments
+  const { deployer } = await getNamedAccounts()
   console.log('deployer', deployer)
   // Deploy PoolAccountant. This call will deploy ProxyAdmin, proxy and PoolAccountant
   const accountantProxy = await deploy(PoolAccountant, {
@@ -48,7 +48,7 @@ const deployFunction = async function ({getNamedAccounts, deployments}) {
 
   // Initialize PoolAccountant with pool proxy address
   if ((await read(PoolAccountant, {}, 'pool')) === Address.ZERO) {
-    await execute(PoolAccountant, {from: deployer, log: true}, 'init', poolProxy.address)
+    await execute(PoolAccountant, { from: deployer, log: true }, 'init', poolProxy.address)
   }
 
   const rewardsProxy = await deploy('VesperEarnDrip', {
@@ -67,8 +67,8 @@ const deployFunction = async function ({getNamedAccounts, deployments}) {
     },
   })
 
-  await execute(VEWBTC.contractName, {from: deployer, log: true}, 'updatePoolRewards', rewardsProxy.address)
-  await execute('VesperEarnDrip', {from: deployer, log: true}, 'updateGrowToken', Address.vaDAI)
+  await execute(VEWBTC.contractName, { from: deployer, log: true }, 'updatePoolRewards', rewardsProxy.address)
+  await execute('VesperEarnDrip', { from: deployer, log: true }, 'updateGrowToken', Address.vaDAI)
 
   const earnStratMaker = await deploy(EarnStrategy, {
     from: deployer,
@@ -76,20 +76,20 @@ const deployFunction = async function ({getNamedAccounts, deployments}) {
     args: [poolProxy.address, Address.COLLATERAL_MANAGER, Address.SWAP_MANAGER, Address.vaDAI],
   })
 
-  await execute(EarnStrategy, {from: deployer, log: true}, 'init', Address.ADDRESS_LIST_FACTORY)
-  await execute(EarnStrategy, {from: deployer, log: true}, 'approveToken')
-  await execute(EarnStrategy, {from: deployer, log: true}, 'createVault')
-  await execute(EarnStrategy, {from: deployer, log: true}, 'updateFeeCollector', config.feeCollector)
-  await execute(EarnStrategy, {from: deployer, log: true}, 'updateBalancingFactor', 225, 200)
+  await execute(EarnStrategy, { from: deployer, log: true }, 'init', Address.ADDRESS_LIST_FACTORY)
+  await execute(EarnStrategy, { from: deployer, log: true }, 'approveToken')
+  await execute(EarnStrategy, { from: deployer, log: true }, 'createVault')
+  await execute(EarnStrategy, { from: deployer, log: true }, 'updateFeeCollector', config.feeCollector)
+  await execute(EarnStrategy, { from: deployer, log: true }, 'updateBalancingFactor', 225, 200)
   // Add strategy in pool accountant
   await execute(
     PoolAccountant,
-    {from: deployer, log: true},
+    { from: deployer, log: true },
     'addStrategy',
     earnStratMaker.address,
     config.interestFee,
     config.debtRatio,
-    config.debtRate
+    config.debtRate,
   )
   deployFunction.id = 'veWBTC-DAI-vaDAI-1'
   return true

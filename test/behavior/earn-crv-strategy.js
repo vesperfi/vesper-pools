@@ -5,7 +5,7 @@ const { getUsers } = require('../utils/setupHelper')
 const { deposit } = require('../utils/poolOps')
 const { advanceBlock } = require('../utils/time')
 const { shouldBehaveLikeCrvStrategy } = require('./crv-strategy')
-const Address = require('../../helper/ethereum/address')
+const Address = require('../../helper/mainnet/address')
 const { ethers } = require('hardhat')
 
 // Earn Curve strategy specific tests
