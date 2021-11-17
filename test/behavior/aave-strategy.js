@@ -3,7 +3,7 @@
 const { expect } = require('chai')
 const { getUsers } = require('../utils/setupHelper')
 const { deposit } = require('../utils/poolOps')
-const ZERO_ADDRESS = require('../../helper/ethereum/address').ZERO
+const ZERO_ADDRESS = require('../../helper/mainnet/address').ZERO
 const time = require('../utils/time')
 
 // Aave strategy specific tests

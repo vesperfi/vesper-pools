@@ -1,11 +1,11 @@
 'use strict'
 
-const Address = require('../../helper/ethereum/address')
+const Address = require('../../helper/mainnet/address')
 const CompoundLeverageStrategyUNI = 'CompoundLeverageStrategyUNI'
 
-const deployFunction = async function ({getNamedAccounts, deployments}) {
-  const {deploy} = deployments
-  const {deployer} = await getNamedAccounts()
+const deployFunction = async function ({ getNamedAccounts, deployments }) {
+  const { deploy } = deployments
+  const { deployer } = await getNamedAccounts()
 
   const poolProxy = await deployments.get('VPool')
   console.log(poolProxy.address)

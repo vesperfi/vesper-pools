@@ -1,10 +1,10 @@
 'use strict'
 
-const VAWBTC = require('../../helper/ethereum/poolConfig').VAWBTC
-const Address = require('../../helper/ethereum/address')
+const VAWBTC = require('../../helper/mainnet/poolConfig').VAWBTC
+const Address = require('../../helper/mainnet/address')
 const PoolAccountant = 'PoolAccountant'
 const crvsBTCStrategyWBTC = 'CrvsBTCStrategyWBTC'
-const {BigNumber} = require('ethers')
+const { BigNumber } = require('ethers')
 const DECIMAL6 = BigNumber.from('1000000')
 const ONE_MILLION = DECIMAL6.mul('1000000')
 const config = {
@@ -15,9 +15,9 @@ const config = {
   withdrawFee: 60,
 }
 
-const deployFunction = async function ({getNamedAccounts, deployments}) {
-  const {deploy, execute, read} = deployments
-  const {deployer} = await getNamedAccounts()
+const deployFunction = async function ({ getNamedAccounts, deployments }) {
+  const { deploy, execute, read } = deployments
+  const { deployer } = await getNamedAccounts()
   // Deploy PoolAccountant. This call will deploy ProxyAdmin, proxy and PoolAccountant
   const accountantProxy = await deploy(PoolAccountant, {
     from: deployer,
@@ -46,7 +46,7 @@ const deployFunction = async function ({getNamedAccounts, deployments}) {
 
   // Initialize PoolAccountant with pool proxy address
   if ((await read(PoolAccountant, {}, 'pool')) === Address.ZERO) {
-    await execute(PoolAccountant, {from: deployer, log: true}, 'init', poolProxy.address)
+    await execute(PoolAccountant, { from: deployer, log: true }, 'init', poolProxy.address)
   }
 
   const vDaiCrvStrat = await deploy(crvsBTCStrategyWBTC, {
@@ -55,24 +55,24 @@ const deployFunction = async function ({getNamedAccounts, deployments}) {
     args: [poolProxy.address, Address.SWAP_MANAGER],
   })
 
-  await execute(crvsBTCStrategyWBTC, {from: deployer, log: true}, 'init', Address.ADDRESS_LIST_FACTORY)
-  await execute(crvsBTCStrategyWBTC, {from: deployer, log: true}, 'approveToken')
-  await execute(crvsBTCStrategyWBTC, {from: deployer, log: true}, 'updateFeeCollector', config.feeCollector)
-  await execute(crvsBTCStrategyWBTC, {from: deployer, log: true}, 'addKeeper', Address.KEEPER)
+  await execute(crvsBTCStrategyWBTC, { from: deployer, log: true }, 'init', Address.ADDRESS_LIST_FACTORY)
+  await execute(crvsBTCStrategyWBTC, { from: deployer, log: true }, 'approveToken')
+  await execute(crvsBTCStrategyWBTC, { from: deployer, log: true }, 'updateFeeCollector', config.feeCollector)
+  await execute(crvsBTCStrategyWBTC, { from: deployer, log: true }, 'addKeeper', Address.KEEPER)
 
   // Add strategy in pool accountant
   await execute(
     PoolAccountant,
-    {from: deployer, log: true},
+    { from: deployer, log: true },
     'addStrategy',
     vDaiCrvStrat.address,
     config.interestFee,
     config.debtRatio,
-    config.debtRate
+    config.debtRate,
   )
 
-  await execute(VAWBTC.contractName, {from: deployer, log: true}, 'updateFeeCollector', config.feeCollector)
-  await execute(VAWBTC.contractName, {from: deployer, log: true}, 'updateWithdrawFee', config.withdrawFee)
+  await execute(VAWBTC.contractName, { from: deployer, log: true }, 'updateFeeCollector', config.feeCollector)
+  await execute(VAWBTC.contractName, { from: deployer, log: true }, 'updateWithdrawFee', config.withdrawFee)
 
   const rewardsProxy = await deploy('PoolRewards', {
     from: deployer,
@@ -90,7 +90,7 @@ const deployFunction = async function ({getNamedAccounts, deployments}) {
     },
   })
 
-  await execute(VAWBTC.contractName, {from: deployer, log: true}, 'updatePoolRewards', rewardsProxy.address)
+  await execute(VAWBTC.contractName, { from: deployer, log: true }, 'updatePoolRewards', rewardsProxy.address)
   deployFunction.id = 'VAWBTC-1'
   return true
 }

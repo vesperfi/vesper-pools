@@ -74,7 +74,7 @@ abstract contract Strategy is IStrategy, Context {
      * NOTE: Any function with onlyKeeper modifier will not work until this function is called.
      * NOTE: Due to gas constraint this function cannot be called in constructor.
      * @param _addressListFactory To support same code in eth side chain, user _addressListFactory as param
-     * ethereum - 0xded8217De022706A191eE7Ee0Dc9df1185Fb5dA3
+     * mainnet - 0xded8217De022706A191eE7Ee0Dc9df1185Fb5dA3
      * polygon - 0xD10D5696A350D65A9AA15FE8B258caB4ab1bF291
      * avalanche - 0xc5CdF8CBE886FC5c1EF5CD4fdd599C975eC6BB54
      */

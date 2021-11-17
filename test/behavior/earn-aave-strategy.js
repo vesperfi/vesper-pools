@@ -3,7 +3,7 @@
 const { expect } = require('chai')
 const { getUsers } = require('../utils/setupHelper')
 const { deposit, timeTravel } = require('../utils/poolOps')
-const Address = require('../../helper/ethereum/address')
+const Address = require('../../helper/mainnet/address')
 const { shouldBehaveLikeAaveStrategy } = require('./aave-strategy')
 const { ethers } = require('hardhat')
 

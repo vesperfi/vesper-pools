@@ -1,9 +1,9 @@
 'use strict'
 const { deployContract, getUsers, setupVPool } = require('../utils/setupHelper')
 const { shouldBehaveLikeStrategy } = require('../behavior/strategy')
-const address = require('../../helper/ethereum/address')
+const address = require('../../helper/mainnet/address')
 const StrategyType = require('../utils/strategyTypes')
-const PoolConfig = require('../../helper/ethereum/poolConfig')
+const PoolConfig = require('../../helper/mainnet/poolConfig')
 const { BigNumber: BN } = require('ethers')
 const swapper = require('../utils/tokenSwapper')
 const { ethers } = require('hardhat')

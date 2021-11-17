@@ -4,7 +4,7 @@ const { expect } = require('chai')
 const { getUsers } = require('../utils/setupHelper')
 const { deposit, timeTravel } = require('../utils/poolOps')
 const { shouldBehaveLikeCompoundStrategy } = require('./compound-strategy')
-const Address = require('../../helper/ethereum/address')
+const Address = require('../../helper/mainnet/address')
 const { ethers } = require('hardhat')
 const DECIMAL6 = ethers.BigNumber.from('1000000')
 

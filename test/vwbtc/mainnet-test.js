@@ -3,7 +3,7 @@ const { getUsers } = require('../utils/setupHelper')
 const { unlock } = require('../utils/setupHelper')
 const contracts = require('../../releases/3.0.16/contracts.json').networks.mainnet
 const { ethers } = require('hardhat')
-const poolConfig = require('../../helper/ethereum/poolConfig').VAWBTC
+const poolConfig = require('../../helper/mainnet/poolConfig').VAWBTC
 
 describe('vAWBTC Pool', function () {
   let governor, pool

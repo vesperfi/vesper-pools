@@ -4,7 +4,7 @@ const { ethers } = require('hardhat')
 const { prepareConfig } = require('./config')
 const { shouldBehaveLikeStrategy } = require('../behavior/strategy')
 const StrategyType = require('../utils/strategyTypes')
-const Address = require('../../helper/ethereum/address')
+const Address = require('../../helper/mainnet/address')
 const { setupEarnDrip, addInFeeWhitelist } = require('../utils/setupHelper')
 
 describe('veDAI Pool', function () {

@@ -1,10 +1,10 @@
 'use strict'
 
-const Address = require('../../helper/ethereum/address')
+const Address = require('../../helper/mainnet/address')
 const VesperMakerStrategy = 'VesperMakerStrategyETH'
-const deployFunction = async function ({getNamedAccounts, deployments}) {
-  const {deploy} = deployments
-  const {deployer} = await getNamedAccounts()
+const deployFunction = async function ({ getNamedAccounts, deployments }) {
+  const { deploy } = deployments
+  const { deployer } = await getNamedAccounts()
 
   const poolProxy = await deployments.get('VETH')
   await deploy(VesperMakerStrategy, {

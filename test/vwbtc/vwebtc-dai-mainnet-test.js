@@ -3,7 +3,7 @@ const { getUsers } = require('../utils/setupHelper')
 const { deposit } = require('../utils/poolOps')
 const { expect } = require('chai')
 const { unlock } = require('../utils/setupHelper')
-const Address = require('../../helper/ethereum/address')
+const Address = require('../../helper/mainnet/address')
 const { ethers } = require('hardhat')
 const { timeTravel } = require('../utils/poolOps')
 

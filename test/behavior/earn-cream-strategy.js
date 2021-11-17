@@ -4,7 +4,7 @@ const { expect } = require('chai')
 const { getUsers } = require('../utils/setupHelper')
 const { deposit, timeTravel } = require('../utils/poolOps')
 const { shouldBehaveLikeCreamStrategy } = require('./cream-strategy')
-const Address = require('../../helper/ethereum/address')
+const Address = require('../../helper/mainnet/address')
 const { ethers } = require('hardhat')
 
 // Earn Compound strategy specific tests

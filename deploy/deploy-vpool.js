@@ -1,6 +1,6 @@
 'use strict'
 
-const Address = require('../helper/ethereum/address')
+const Address = require('../helper/mainnet/address')
 
 const PoolAccountant = 'PoolAccountant'
 

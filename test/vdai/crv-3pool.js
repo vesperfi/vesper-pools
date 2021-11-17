@@ -8,7 +8,7 @@ const { shouldBehaveLikeStrategy } = require('../behavior/strategy')
 const { deposit, timeTravel, reset } = require('../utils/poolOps')
 const { swapEthForToken } = require('../utils/tokenSwapper')
 const StrategyType = require('../utils/strategyTypes')
-const PoolConfig = require('../../helper/ethereum/poolConfig')
+const PoolConfig = require('../../helper/mainnet/poolConfig')
 const { setupVPool, getUsers } = require('../utils/setupHelper')
 
 const ONE_MILLION = ethers.utils.parseEther('1000000')

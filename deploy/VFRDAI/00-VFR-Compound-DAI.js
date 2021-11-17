@@ -2,8 +2,8 @@
 
 const { BigNumber } = require('ethers')
 
-const Address = require('../../helper/ethereum/address')
-const { VFRCoverageDAI, VFRStableDAI } = require('../../helper/ethereum/poolConfig')
+const Address = require('../../helper/mainnet/address')
+const { VFRCoverageDAI, VFRStableDAI } = require('../../helper/mainnet/poolConfig')
 
 const DECIMAL18 = BigNumber.from('1000000000000000000')
 const ONE_MILLION = DECIMAL18.mul('1000000')
@@ -15,7 +15,7 @@ const strategyConfig = {
   withdrawFee: 60,
 }
 
-const deployCoveragePool = async function({ getNamedAccounts, deployments }) {
+const deployCoveragePool = async function ({ getNamedAccounts, deployments }) {
   const { deploy, execute, read } = deployments
   const { deployer } = await getNamedAccounts()
 
@@ -71,26 +71,26 @@ const deployCoveragePool = async function({ getNamedAccounts, deployments }) {
     strategy.address,
     strategyConfig.interestFee,
     strategyConfig.debtRatio,
-    strategyConfig.debtRate
+    strategyConfig.debtRate,
   )
 
   await execute(
     VFRCoverageDAI.contractName,
     { from: deployer, log: true },
     'updateFeeCollector',
-    strategyConfig.feeCollector
+    strategyConfig.feeCollector,
   )
   await execute(
     VFRCoverageDAI.contractName,
     { from: deployer, log: true },
     'updateWithdrawFee',
-    strategyConfig.withdrawFee
+    strategyConfig.withdrawFee,
   )
 
   return poolProxy
 }
 
-const deployStablePool = async function({getNamedAccounts, deployments}) {
+const deployStablePool = async function ({ getNamedAccounts, deployments }) {
   const { deploy, execute, read } = deployments
   const { deployer } = await getNamedAccounts()
 
@@ -146,20 +146,20 @@ const deployStablePool = async function({getNamedAccounts, deployments}) {
     strategy.address,
     strategyConfig.interestFee,
     strategyConfig.debtRatio,
-    strategyConfig.debtRate
+    strategyConfig.debtRate,
   )
 
   await execute(
     VFRStableDAI.contractName,
     { from: deployer, log: true },
     'updateFeeCollector',
-    strategyConfig.feeCollector
+    strategyConfig.feeCollector,
   )
   await execute(
     VFRStableDAI.contractName,
     { from: deployer, log: true },
     'updateWithdrawFee',
-    strategyConfig.withdrawFee
+    strategyConfig.withdrawFee,
   )
 
   return poolProxy

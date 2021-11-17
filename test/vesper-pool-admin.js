@@ -5,9 +5,9 @@ const hre = require('hardhat')
 const ethers = hre.ethers
 const { getUsers, deployContract, createStrategy } = require('./utils/setupHelper')
 const addressListFactory = hre.address.ADDRESS_LIST_FACTORY
-const Address = require('../helper/ethereum/address')
+const Address = require('../helper/mainnet/address')
 const StrategyType = require('./utils/strategyTypes')
-const VDAI = require('../helper/ethereum/poolConfig').VDAI
+const VDAI = require('../helper/mainnet/poolConfig').VDAI
 
 describe('Vesper Pool: Admin only function tests', function () {
   const oneMillion = ethers.utils.parseEther('1000000')

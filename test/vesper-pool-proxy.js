@@ -7,8 +7,8 @@ const poolOps = require('./utils/poolOps')
 const { deployContract, getUsers, createStrategy } = require('./utils/setupHelper')
 const StrategyType = require('./utils/strategyTypes')
 const addressListFactory = hre.address.ADDRESS_LIST_FACTORY
-const VDAI = require('../helper/ethereum/poolConfig').VDAI
-const MULTICALL = require('../helper/ethereum/address').MULTICALL
+const VDAI = require('../helper/mainnet/poolConfig').VDAI
+const MULTICALL = require('../helper/mainnet/address').MULTICALL
 
 describe('Vesper Pool: proxy', function () {
   const poolName = VDAI.contractName

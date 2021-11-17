@@ -3,7 +3,7 @@
 const { expect } = require('chai')
 const { getUsers } = require('../utils/setupHelper')
 const { deposit, timeTravel, rebalanceStrategy } = require('../utils/poolOps')
-const Address = require('../../helper/ethereum/address')
+const Address = require('../../helper/mainnet/address')
 const { ethers } = require('hardhat')
 
 // Earn AlphaLend strategy specific tests

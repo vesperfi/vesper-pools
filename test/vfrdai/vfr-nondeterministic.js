@@ -3,7 +3,7 @@
 const { expect } = require('chai')
 const hre = require('hardhat')
 const ethers = hre.ethers
-const { DAI, WETH } = require('../../helper/ethereum/address')
+const { DAI, WETH } = require('../../helper/mainnet/address')
 const StrategyType = require('../utils/strategyTypes')
 const { rebalance, timeTravel } = require('../utils/poolOps')
 const { swapExactToken } = require('../utils/tokenSwapper')
