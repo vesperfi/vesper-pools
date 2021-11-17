@@ -1,6 +1,7 @@
 'use strict'
 
 const { prepareConfig } = require('./config')
+const { shouldBehaveLikeStrategy } = require('../behavior/strategy')
 const { shouldBehaveLikePool } = require('../behavior/vesper-pool')
 const { shouldBehaveLikeMultiPool } = require('../behavior/vesper-multi-pool')
 const StrategyType = require('../utils/strategyTypes')
@@ -26,4 +27,5 @@ describe('vDAI Pool', function () {
   prepareConfig(strategies)
   shouldBehaveLikePool('vDai', 'DAI')
   shouldBehaveLikeMultiPool('vDai')
+  shouldBehaveLikeStrategy(0, strategies[0].type, strategies[0].name)
 })
