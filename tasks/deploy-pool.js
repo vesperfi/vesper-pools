@@ -3,7 +3,6 @@
 const del = require('del')
 const copy = require('recursive-copy')
 const fs = require('fs')
-const Address = require('../helper/ethereum/address')
 
 /* eslint-disable no-param-reassign, complexity */
 task('deploy-pool', 'Deploy vesper pool')
@@ -53,6 +52,9 @@ task('deploy-pool', 'Deploy vesper pool')
   `,
   )
   .setAction(async function ({ pool, release, deployParams = {}, poolParams = {}, strategyParams }) {
+    const network = hre.network.name
+    const Address = require(`../helper/${network}/address`)
+
     if (typeof deployParams === 'string') {
       deployParams = JSON.parse(deployParams)
     }
@@ -68,7 +70,6 @@ task('deploy-pool', 'Deploy vesper pool')
       poolParams.rewardsToken = Address.VSP
     }
 
-    const network = hre.network.name
     hre.poolConfig = require(`../helper/${network}/poolConfig`)[pool.toUpperCase()]
     // TODO There is room for improvement for whole pool deployment stuff IMO
     // TODO support multiple tokens for pool rewards

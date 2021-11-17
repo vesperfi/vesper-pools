@@ -1,7 +1,5 @@
 'use strict'
 
-const Address = require('../helper/mainnet/address')
-
 /* eslint-disable no-param-reassign, complexity */
 task('strategy-configuration', 'Prepare strategy configuration for deployment')
   .addOptionalParam(
@@ -51,6 +49,9 @@ task('strategy-configuration', 'Prepare strategy configuration for deployment')
       throw new Error('Collateral token mismatch')
     }
 
+    const network = hre.network.name
+    const Address = require(`../helper/${network}/address`)
+
     // Prepare strategy configuration for deployment
     const strategyConfig = {
       contractName: strategyParams.name,
@@ -71,7 +72,6 @@ task('strategy-configuration', 'Prepare strategy configuration for deployment')
       strategyConfig.fusePoolId = strategyParams.fusePoolId
     }
 
-    const network = hre.network.name
     console.log(`Deploying ${strategyParams.name} on ${network} with following configuration: `, strategyConfig)
 
     // Set configuration in hre
