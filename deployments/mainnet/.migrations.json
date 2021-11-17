@@ -50,5 +50,10 @@
   "veWBTC-DAI-vaDAI-1": 1635736640,
   "VEETH-DAI-migration-7": 1636651413,
   "VAETH-Migration-7": 1636667084,
-  "VAWBTC-Migration-7": 1636739362
+  "VAWBTC-Migration-7": 1636739362,
+  "vaFEI-v3.0.4_3.0.5": 1637084670,
+  "RariFuseStrategy#6-v3.0.13": 1637085028,
+  "RariFuseStrategy#18-v3.0.13": 1637091539,
+  "RariFuseStrategy#27-v3.0.13": 1637102055,
+  "vaFEI-poolRewards-v3.0.4": 1637103886
 }
