@@ -49,6 +49,7 @@ module.exports = {
   },
   paths: {
     deployments: 'deployments',
+    sources: process.env.SOURCES_DIR || './contracts',
   },
   namedAccounts: {
     deployer: process.env.DEPLOYER || 0,

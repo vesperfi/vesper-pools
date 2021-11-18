@@ -227,31 +227,40 @@ async function makeNewStrategy(oldStrategy, poolAddress, _options) {
  */
 async function setupVPool(obj, poolData, beforeCreateStrategies = null) {
   const { poolConfig, strategies, vPool, feeCollector } = poolData
-  obj.strategies = strategies
-  obj.feeCollector = feeCollector
-  obj.accountant = await deployContract('PoolAccountant')
-  obj.pool = await deployContract(poolConfig.contractName, poolConfig.poolParams)
+  const isInCache = obj.snapshot === undefined ? false : await provider.send('evm_revert', [obj.snapshot])
+  if (isInCache === true) {
+    // Recreate the snapshot after rollback, reverting deletes the previous snapshot
+    obj.snapshot = await provider.send('evm_snapshot')
+  } else {
+    obj.strategies = strategies
+    obj.feeCollector = feeCollector
+    obj.accountant = await deployContract('PoolAccountant')
+    obj.pool = await deployContract(poolConfig.contractName, poolConfig.poolParams)
 
-  await obj.accountant.init(obj.pool.address)
-  await obj.pool.initialize(...poolConfig.poolParams, obj.accountant.address, address.ADDRESS_LIST_FACTORY)
-  const options = {
-    vPool,
+    await obj.accountant.init(obj.pool.address)
+    await obj.pool.initialize(...poolConfig.poolParams, obj.accountant.address, address.ADDRESS_LIST_FACTORY)
+    const options = {
+      vPool,
+    }
+
+    if (beforeCreateStrategies !== null && typeof beforeCreateStrategies === 'function') {
+      await beforeCreateStrategies(obj)
+    }
+
+    await createStrategies(obj, options)
+    await addStrategies(obj)
+    await obj.pool.updateFeeCollector(feeCollector)
+    const collateralTokenAddress = await obj.pool.token()
+    obj.collateralToken = await ethers.getContractAt(TokenLike, collateralTokenAddress)
+    obj.swapManager = await ethers.getContractAt('ISwapManager', address.SWAP_MANAGER)
+
+    // Must wait an hour for oracles to be effective, unless they were created before the strategy
+    await provider.send('evm_increaseTime', [3600])
+    await provider.send('evm_mine')
+
+    // Save snapshot ID for reuse in consecutive tests
+    obj.snapshot = await provider.send('evm_snapshot')
   }
-
-  if (beforeCreateStrategies !== null && typeof beforeCreateStrategies === 'function') {
-    await beforeCreateStrategies(obj)
-  }
-
-  await createStrategies(obj, options)
-  await addStrategies(obj)
-  await obj.pool.updateFeeCollector(feeCollector)
-  const collateralTokenAddress = await obj.pool.token()
-  obj.collateralToken = await ethers.getContractAt(TokenLike, collateralTokenAddress)
-  obj.swapManager = await ethers.getContractAt('ISwapManager', address.SWAP_MANAGER)
-
-  // Must wait an hour for oracles to be effective, unless they were created before the strategy
-  await provider.send('evm_increaseTime', [3600])
-  await provider.send('evm_mine')
 }
 
 /**
