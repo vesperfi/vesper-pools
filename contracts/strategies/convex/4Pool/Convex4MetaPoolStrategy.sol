@@ -2,28 +2,23 @@
 
 pragma solidity 0.8.3;
 
-import "../../interfaces/convex/IConvex.sol";
-import "../../interfaces/convex/IConvexToken.sol";
-import "../curve/CrvPoolStrategyBase.sol";
-import "./ConvexStrategyBase.sol";
+import "../../curve/4Pool/Crv4MetaPoolStrategy.sol";
+import "../ConvexStrategyBase.sol";
 
-/// @title This strategy will deposit collateral token in Curve 3Pool and stake lp token to convex.
-abstract contract ConvexStrategy is CrvPoolStrategyBase, ConvexStrategyBase {
+/// @title This strategy will deposit collateral token in Curve 4MetaPool and stake lp token to convex.
+abstract contract Convex4MetaPoolStrategy is Crv4MetaPoolStrategy, ConvexStrategyBase {
     using SafeERC20 for IERC20;
 
     constructor(
         address _pool,
-        address _threePool,
-        address _threeCrv,
-        address _gauge,
         address _swapManager,
+        address _metapool,
+        address _gauge,
         uint256 _collateralIdx,
-        uint256 _convexPoolId,
-        // No. of pooled tokens in the pool
-        uint256 _n
+        uint256 _convexPoolId
     )
-        CrvPoolStrategyBase(_pool, _threePool, _threeCrv, _gauge, _swapManager, _collateralIdx, _n)
-        ConvexStrategyBase(_threeCrv, _convexPoolId)
+        Crv4MetaPoolStrategy(_pool, _swapManager, _metapool, _gauge, _collateralIdx)
+        ConvexStrategyBase(_metapool, _convexPoolId)
     {
         reservedToken[CVX] = true;
         oracleRouterIdx = 0;
@@ -69,39 +64,23 @@ abstract contract ConvexStrategy is CrvPoolStrategyBase, ConvexStrategyBase {
 
     function _claimRewardsAndConvertTo(address _toToken) internal virtual override {
         require(Rewards(cvxCrvRewards).getReward(address(this), isClaimExtras), "reward-claim-failed");
-        uint256 amt = IERC20(CRV).balanceOf(address(this));
-        if (amt != 0) {
+        uint256 _amt = IERC20(CVX).balanceOf(address(this));
+        if (_amt != 0) {
             uint256 minAmtOut;
             if (swapSlippage < 10000) {
-                (uint256 minWethOut, bool isValid) = _consultOracle(CRV, WETH, amt);
-                (uint256 _minAmtOut, bool isValidTwo) = _consultOracle(WETH, _toToken, minWethOut);
-                require(isValid, "stale-crv-oracle");
-                require(isValidTwo, "stale-collateral-oracle");
-                minAmtOut = _calcAmtOutAfterSlippage(_minAmtOut, swapSlippage);
-            }
-            _safeSwap(CRV, _toToken, amt, minAmtOut);
-        }
-
-        amt = IERC20(CVX).balanceOf(address(this));
-        if (amt != 0) {
-            uint256 minAmtOut;
-            if (swapSlippage < 10000) {
-                (uint256 minWethOut, bool isValid) = _consultOracle(CVX, WETH, amt);
+                (uint256 minWethOut, bool isValid) = _consultOracle(CVX, WETH, _amt);
                 (uint256 _minAmtOut, bool isValidTwo) = _consultOracle(WETH, _toToken, minWethOut);
                 require(isValid, "stale-cvx-oracle");
                 require(isValidTwo, "stale-collateral-oracle");
                 minAmtOut = _calcAmtOutAfterSlippage(_minAmtOut, swapSlippage);
             }
-            _safeSwap(CVX, _toToken, amt, minAmtOut);
+            _safeSwap(CVX, _toToken, _amt, minAmtOut);
         }
+        super._claimRewardsAndConvertTo(_toToken);
     }
 
     function claimableRewards() public view override returns (uint256 total) {
         total = Rewards(cvxCrvRewards).earned(address(this));
-    }
-
-    function claimableRewardsCVX() public view returns (uint256 total) {
-        total = _calculateCVXRewards(claimableRewards());
     }
 
     function totalStaked() public view override returns (uint256 total) {
@@ -114,12 +93,5 @@ abstract contract ConvexStrategy is CrvPoolStrategyBase, ConvexStrategyBase {
 
     function totalValue() public view virtual override returns (uint256 _value) {
         _value = super.totalValue();
-        uint256 _claimableCVX = claimableRewardsCVX();
-        if (_claimableCVX != 0) {
-            (, uint256 _wethOutput, ) = swapManager.bestOutputFixedInput(CVX, WETH, _claimableCVX);
-            (, uint256 _rewardAsCollateral, ) =
-                swapManager.bestOutputFixedInput(WETH, address(collateralToken), _wethOutput);
-            if (_rewardAsCollateral != 0) _value += _rewardAsCollateral;
-        }
     }
 }

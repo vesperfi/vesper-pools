@@ -1,0 +1,35 @@
+name: vMIM with Convex 2Pool 
+on:
+  pull_request:
+    paths:
+      - "test/vmim/crv-cvx-2pool.js"
+      - "contracts/strategies/Strategy.sol"
+      - "contracts/strategies/curve/CrvBase.sol"
+      - "contracts/strategies/convex/ConvexStrategyBase.sol"
+      - "contracts/strategies/convex/2Pool/Convex2PoolStrategy.sol"
+      - "contracts/strategies/convex/2Pool/Convex2PoolStrategyMIMUSTPool.sol"
+
+jobs:
+  vmim-convex2p-strategy-test:
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.NODE_URL }}
+    strategy:
+      matrix:
+        node: [14]
+    steps:
+      - uses: actions/checkout@v2.3.1
+        with:
+          submodules: true
+      - run: cat "${GITHUB_WORKSPACE}/.github/env.properties" >> $GITHUB_ENV
+
+      - name: Use Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node }}
+
+      - name: Run npm install with node v${{ matrix.node }}
+        run: npm install
+
+      - name: Running tests for vMIM with Convex 2Pool
+        run: npm test "test/vmim/crv-cvx-2pool.js"

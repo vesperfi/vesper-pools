@@ -31,7 +31,7 @@ describe('vMIM Pool with Crv4PoolStrategy', function () {
       feeCollector: feeAcct.address,
       strategies: [
         {
-          name: 'Crv4PoolStrategyMIMPoolMIM',
+          name: 'Crv4MetaPoolStrategyMIMPoolMIM',
           type: StrategyType.CURVE,
           config: strategyConfig,
           feeCollector: feeAcct.address,
