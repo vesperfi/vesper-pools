@@ -52,8 +52,9 @@ task('deploy-pool', 'Deploy vesper pool')
   `,
   )
   .setAction(async function ({ pool, release, deployParams = {}, poolParams = {}, strategyParams }) {
-    const network = hre.network.name
-    const Address = require(`../helper/${network}/address`)
+    const hreNetwork = hre.network.name
+    const helperNetwork = hreNetwork === 'localhost' ? 'mainnet' : hreNetwork
+    const Address = require(`../helper/${helperNetwork}/address`)
 
     if (typeof deployParams === 'string') {
       deployParams = JSON.parse(deployParams)
@@ -70,18 +71,18 @@ task('deploy-pool', 'Deploy vesper pool')
       poolParams.rewardsToken = Address.VSP
     }
 
-    hre.poolConfig = require(`../helper/${network}/poolConfig`)[pool.toUpperCase()]
+    hre.poolConfig = require(`../helper/${helperNetwork}/poolConfig`)[pool.toUpperCase()]
     // TODO There is room for improvement for whole pool deployment stuff IMO
     // TODO support multiple tokens for pool rewards
     hre.poolConfig.rewardsToken = poolParams.rewardsToken
     await run('strategy-configuration', { strategyParams })
 
-    const networkDir = `./deployments/${network}`
+    const networkDir = `./deployments/${hreNetwork}`
     let deployer = process.env.DEPLOYER
     if (deployer && deployer.startsWith('ledger')) {
       deployer = deployer.split('ledger://')[1]
     }
-    console.log(`${deployer} is deploying/updating ${pool} on ${network} with deployParams`, deployParams)
+    console.log(`${deployer} is deploying/updating ${pool} on ${hreNetwork} with deployParams`, deployParams)
     pool = pool.toLowerCase()
     const poolDir = `${networkDir}/${pool}`
     const globalDir = `${networkDir}/global`

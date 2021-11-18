@@ -49,8 +49,9 @@ task('strategy-configuration', 'Prepare strategy configuration for deployment')
       throw new Error('Collateral token mismatch')
     }
 
-    const network = hre.network.name
-    const Address = require(`../helper/${network}/address`)
+    const hreNetwork = hre.network.name
+    const helperNetwork = hreNetwork === 'localhost' ? 'mainnet' : hreNetwork
+    const Address = require(`../helper/${helperNetwork}/address`)
 
     // Prepare strategy configuration for deployment
     const strategyConfig = {
@@ -72,7 +73,7 @@ task('strategy-configuration', 'Prepare strategy configuration for deployment')
       strategyConfig.fusePoolId = strategyParams.fusePoolId
     }
 
-    console.log(`Deploying ${strategyParams.name} on ${network} with following configuration: `, strategyConfig)
+    console.log(`Deploying ${strategyParams.name} on ${hreNetwork} with following configuration: `, strategyConfig)
 
     // Set configuration in hre
     hre.strategyConfig = strategyConfig

@@ -106,7 +106,8 @@ task('create-release', 'Create release file from deploy data')
   .addParam('pool', 'Vesper pool name')
   .addParam('release', 'Vesper release semantic version, i.e 1.2.3')
   .setAction(async function ({ pool, release }) {
-    const network = hre.network.name
+    const hreNetwork = hre.network.name
+    const network = hreNetwork === 'localhost' ? 'mainnet' : hreNetwork
     const networkDir = `./deployments/${network}`
 
     console.log('Task args are', pool, release)
