@@ -108,6 +108,13 @@ const PoolConfig = {
     withdrawFee: 60,
     feeCollector: Address.FEE_COLLECTOR,
   },
+  VADPI: {
+    contractName: 'VPool',
+    poolParams: ['vaDPI Pool', 'vaDPI', Address.DPI],
+    addressListFactory: Address.ADDRESS_LIST_FACTORY,
+    withdrawFee: 60,
+    feeCollector: Address.FEE_COLLECTOR,
+  },
 }
 
 module.exports = Object.freeze(PoolConfig)

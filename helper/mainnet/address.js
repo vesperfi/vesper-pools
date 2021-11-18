@@ -24,6 +24,7 @@ const Address = {
   vWBTC: '0x4B2e76EbBc9f2923d83F5FBDe695D8733db1a17B',
   vaETH: '0xd1C117319B3595fbc39b471AB1fd485629eb05F2',
   WBTC: '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599',
+  DPI: '0x1494ca1f11d487c2bbe4543e90080aeba4ba3c2b',
 }
 
 module.exports = Object.freeze(Address)
