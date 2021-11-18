@@ -356,6 +356,26 @@
           "RariFuseStrategy#27": "0x187C51C9803424efe1Cbe62cFFc0D99B6912c0F6",
           "RariFuseStrategy#6": "0x0a46A9716b4632A57863d52123c5c10FDF9e10F8"
         }
+      },
+      "vafrax": {
+        "pool": {
+          "proxy": "0xc14900dFB1Aa54e7674e1eCf9ce02b3b35157ba5",
+          "implementation": "0xB0582CcAD2E265924E3E75539a84717449396d66",
+          "poolAccountant": {
+            "proxy": "0xC0A7EB8B23512ecD0e9F8f51e3FAe7Cf9530b212",
+            "implementation": "0xCD6bF2b8DA112AB77C42Fc96AbF4218dCB71fD35"
+          }
+        },
+        "poolRewards": {
+          "proxy": "0xf1D4EB7183bA624a4a198376560DF0De20d99941",
+          "implementation": "0x92574eD22C0b3961e240dBa1EbA02F6f30fd066C"
+        },
+        "strategies": {
+          "RariFuseStrategy#18": "0xeCF139cF1a5D902b191818F182b48f0301CA0bD6",
+          "RariFuseStrategy#36": "0x13AECC59A88A65F02E053eEce29d743a952D6f1e",
+          "RariFuseStrategy#6": "0x463C835f2959c52F99D65b5E712F3806c7E6A46F",
+          "RariFuseStrategy#7": "0xf95fb643c7b26afe64a6daf7e2b84d9eda6559bb"
+        }
       }
     }
   }
