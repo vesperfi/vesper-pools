@@ -94,6 +94,13 @@ const PoolConfig = {
     withdrawFee: 60,
     feeCollector: Address.FEE_COLLECTOR,
   },
+  VAFRAX: {
+    contractName: 'VPool',
+    poolParams: ['vaFRAX Pool', 'vaFRAX', Address.FRAX],
+    addressListFactory: Address.ADDRESS_LIST_FACTORY,
+    withdrawFee: 60,
+    feeCollector: Address.FEE_COLLECTOR,
+  },
   VFRStableDAI: {
     contractName: 'VFRStablePool',
     poolParams: ['vfrsDAI Pool', 'vfrsDAI', Address.DAI],
