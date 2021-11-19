@@ -377,6 +377,21 @@
           "RariFuseStrategy#7": "0xf95fb643c7b26afe64a6daf7e2b84d9eda6559bb"
         }
       },
+      "vadpi": {
+        "pool": {
+          "proxyAdmin": "0xd9A5df2877a42460E9055C4134946668dfcf51f8",
+          "proxy": "0x9b91ab47cefC35dbe4DDCC7983fFA1fB40795663",
+          "implementation": "0xF9C786E0e3CB4fa330fD6D2A4b110d18A6B69C08",
+          "poolAccountant": {
+            "proxyAdmin": "0xd9A5df2877a42460E9055C4134946668dfcf51f8",
+            "proxy": "0x4E713d74957C167f2Ddbdca46DadD51946c80fE9",
+            "implementation": "0xEcC32E3a073AFac838C0D1C02EBfEBdA8fD46641"
+          }
+        },
+        "strategies": {
+          "AlphaLendStrategyDPI": "0xef9a768880b4996cddB8C24a26F4b00d6e8ed35E"
+        }
+      },
       "vaalusd": {
         "pool": {
           "proxyAdmin": "0xd9A5df2877a42460E9055C4134946668dfcf51f8",
