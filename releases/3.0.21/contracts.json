@@ -388,6 +388,11 @@
             "implementation": "0xEcC32E3a073AFac838C0D1C02EBfEBdA8fD46641"
           }
         },
+        "poolRewards": {
+          "proxyAdmin": "0xd9A5df2877a42460E9055C4134946668dfcf51f8",
+          "proxy": "0x23C901667706116B4a7c87B4A2eFe7185B849175",
+          "implementation": "0x77898fAC78B6931107C2ee00f0Dab51Cb0cB91f8"
+        },
         "strategies": {
           "AlphaLendStrategyDPI": "0xef9a768880b4996cddB8C24a26F4b00d6e8ed35E"
         }
