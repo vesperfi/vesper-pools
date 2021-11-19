@@ -376,6 +376,28 @@
           "RariFuseStrategy#6": "0x463C835f2959c52F99D65b5E712F3806c7E6A46F",
           "RariFuseStrategy#7": "0xf95fb643c7b26afe64a6daf7e2b84d9eda6559bb"
         }
+      },
+      "vaalusd": {
+        "pool": {
+          "proxyAdmin": "0xd9A5df2877a42460E9055C4134946668dfcf51f8",
+          "proxy": "0x8BCdd6a8168d658dFA19721eaB7470e43398Db25",
+          "implementation": "0x842547883B2CaAD101F897e6789F63d33b06030e",
+          "poolAccountant": {
+            "proxyAdmin": "0xd9A5df2877a42460E9055C4134946668dfcf51f8",
+            "proxy": "0xe25d8F3F659E2a44602eC91538F9818793fd844F",
+            "implementation": "0x82Bb186E32F5a06Bf3343B6E7CA800F180f670F9"
+          }
+        },
+        "poolRewards": {
+          "proxyAdmin": "0xd9A5df2877a42460E9055C4134946668dfcf51f8",
+          "proxy": "0xeF8737Ec1180ddaD26438e4675bCFE9773A0E8c8",
+          "implementation": "0x72DCF9bA5F5E124b393A659F1629DEf439fF1b56"
+        },
+        "strategies": {
+          "RariFuseStrategy#18": "0xf4BB5824F3e5b6314e1c0A8BE60c733B3dB53786",
+          "RariFuseStrategy#6": "0x8B3AC0f18Eae871b83b9212345E736735e6604d6",
+          "RariFuseStrategy#7": "0xc6e5505d7C501D51e9d69669b1C393079Fc426D0"
+        }
       }
     }
   }

@@ -45,7 +45,7 @@ task('strategy-configuration', 'Prepare strategy configuration for deployment')
     }
 
     // Make sure pool and strategy config has same collateral
-    if (tokenSymbol !== strategyParams.collateralToken) {
+    if (tokenSymbol.toUpperCase() !== strategyParams.collateralToken.toUpperCase()) {
       throw new Error('Collateral token mismatch')
     }
 
