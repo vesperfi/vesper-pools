@@ -52,11 +52,14 @@
   "VAETH-Migration-7": 1636667084,
   "VAWBTC-Migration-7": 1636739362,
   "vaFEI-v3.0.4_3.0.5": 1637084670,
-  "RariFuseStrategy#6-v3.0.13": 1637264604,
-  "RariFuseStrategy#18-v3.0.13": 1637273178,
+  "RariFuseStrategy#6-v3.0.13": 1637347946,
+  "RariFuseStrategy#18-v3.0.13": 1637351071,
   "RariFuseStrategy#27-v3.0.13": 1637102055,
   "vaFEI-poolRewards-v3.0.4": 1637103886,
   "vaFRAX-v3.0.4_3.0.5": 1637262946,
-  "RariFuseStrategy#7-v3.0.13": 1637271060,
-  "RariFuseStrategy#36-v3.0.13": 1637273966
+  "RariFuseStrategy#7-v3.0.13": 1637349186,
+  "RariFuseStrategy#36-v3.0.13": 1637273966,
+  "vaDPI-v3.0.4_3.0.5": 1637276759,
+  "AlphaLendStrategyDPI-v3.0.21": 1637281781,
+  "vaALUSD-v3.0.4_3.0.5": 1637342618
 }
