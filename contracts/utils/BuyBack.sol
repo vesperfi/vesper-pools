@@ -96,9 +96,6 @@ contract BuyBack is UsingSwapManager, Batchable {
 
     /// @notice Transfer VSP tokens to vVSP
     function transferVspToVVSP(uint256 _amount) public onlyKeeper {
-        if (vsp.allowance(address(this), address(vVSP)) < _amount) {
-            vsp.safeApprove(address(vVSP), type(uint256).max);
-        }
         vsp.safeTransfer(address(vVSP), _amount);
     }
 
