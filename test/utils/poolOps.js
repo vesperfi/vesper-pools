@@ -44,7 +44,7 @@ async function deposit(pool, token, amount, depositor) {
     // Also simulates 0.1% linear slippage between consecutive deposits
     if (pool.depositsCount === undefined) pool.depositsCount = 0
     else pool.depositsCount++
-    depositAmount = await swapper.getAmountsOut(parseEther(amount.toString()), [ NATIVE_TOKEN, DAI ] )
+    depositAmount = await swapper.getAmountsOut(parseEther(amount.toString()), [NATIVE_TOKEN, DAI])
     const slippage = BigNumber.from(1000).sub(pool.depositsCount)
     depositAmount = depositAmount.mul(slippage).div(1000)
     adjustBalance(token.address, depositor.address, depositAmount)
