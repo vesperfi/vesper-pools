@@ -22,7 +22,7 @@ const { advanceBlock } = require('../utils/time')
 const { getChain } = require('../utils/chains')
 const DECIMAL18 = BN.from('1000000000000000000')
 const MAX_BPS = BN.from('10000')
-async function shouldBehaveLikePool(poolName, collateralName) {
+async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false) {
   let pool, strategies, collateralToken, collateralDecimal, feeCollector, accountant
   let user1, user2, user3, user4
 
@@ -290,24 +290,38 @@ async function shouldBehaveLikePool(poolName, collateralName) {
     })
 
     describe(`Price per share of ${poolName} pool`, function () {
-      it('Should increase pool value', async function () {
-        await deposit(20, user1)
-        const value1 = await pool.totalValue()
-        await rebalance(strategies)
-        // Time travel to generate earning
-        await timeTravel(30 * 24 * 60 * 60)
-        await rebalance(strategies)
-        await rebalance(strategies)
-        const value2 = await pool.totalValue()
-        expect(value2).to.be.gt(value1, `${poolName} Pool value should increase`)
-        // Time travel to generate earning
-        await timeTravel(30 * 24 * 60 * 60)
-        await deposit(20, user3)
-        await timeTravel(30 * 24 * 60 * 60)
-        await rebalance(strategies)
-        const value3 = await pool.totalValue()
-        expect(value3).to.be.gt(value2, `${poolName} Pool value should increase`)
-      })
+      if (isEarnPool === false) {
+        it('Should increase pool value', async function () {
+          await deposit(20, user1)
+          const value1 = await pool.totalValue()
+          await rebalance(strategies)
+          // Time travel to generate earning
+          await timeTravel(30 * 24 * 60 * 60)
+          await rebalance(strategies)
+          await rebalance(strategies)
+          const value2 = await pool.totalValue()
+          expect(value2).to.be.gt(value1, `${poolName} Pool value should increase`)
+          // Time travel to generate earning
+          await timeTravel(30 * 24 * 60 * 60)
+          await deposit(20, user3)
+          await timeTravel(30 * 24 * 60 * 60)
+          await rebalance(strategies)
+          const value3 = await pool.totalValue()
+          expect(value3).to.be.gt(value2, `${poolName} Pool value should increase`)
+        })
+      } else {
+        it('Should not increase pool value', async function () {
+          await deposit(20, user1)
+          const value1 = await pool.totalValue()
+          await rebalance(strategies)
+          // Time travel to generate earning
+          await timeTravel(30 * 24 * 60 * 60)
+          await rebalance(strategies)
+          await rebalance(strategies)
+          const value2 = await pool.totalValue()
+          expect(value2).to.be.eq(value1, `${poolName} Pool value should not increase`)
+        })
+      }
     })
 
     describe(`Withdraw fee in ${poolName} pool`, function () {
@@ -378,12 +392,25 @@ async function shouldBehaveLikePool(poolName, collateralName) {
         // Another deposit
         await deposit(20, user2)
         await rebalance(strategies)
-        const feeEarned1 = await pool.balanceOf(fc)
-        expect(feeEarned1).to.be.gt(0, 'Fee collected is not correct')
-        await timeTravel()
-        await rebalance(strategies)
-        const feeEarned2 = await pool.balanceOf(fc)
-        expect(feeEarned2).to.be.gt(feeEarned1, 'Fee collected is not correct')
+
+        if (isEarnPool === false) {
+          const feeEarned1 = await pool.balanceOf(fc)
+          expect(feeEarned1).to.be.gt(0, 'Fee collected is not correct')
+          await timeTravel()
+          await rebalance(strategies)
+          const feeEarned2 = await pool.balanceOf(fc)
+          expect(feeEarned2).to.be.gt(feeEarned1, 'Fee collected is not correct')
+        } else {
+          const EarnDrip = await ethers.getContractAt('IEarnDrip', await pool.poolRewards())
+          const growToken = await ethers.getContractAt('ERC20', await EarnDrip.growToken())
+
+          const feeEarned1 = await growToken.balanceOf(fc)
+          expect(feeEarned1).to.be.gt(0, 'Fee collected is not correct')
+          await timeTravel()
+          await rebalance(strategies)
+          const feeEarned2 = await growToken.balanceOf(fc)
+          expect(feeEarned2).to.be.gt(feeEarned1, 'Fee collected is not correct')
+        }
       })
 
       it('Should rebalance when interest fee is zero', async function () {
@@ -496,7 +523,11 @@ async function shouldBehaveLikePool(poolName, collateralName) {
         await rebalance(strategies)
         const strategyParams = await pool.strategy(strategies[0].instance.address)
         const totalProfit = strategyParams._totalProfit
-        expect(totalProfit).to.be.gt(0, `Total debt of strategy in ${poolName} is wrong`)
+        if (isEarnPool === false) {
+          expect(totalProfit).to.be.gt(0, `Total debt of strategy in ${poolName} is wrong`)
+        } else {
+          expect(totalProfit).to.be.eq(0, `Total debt of strategy in ${poolName} is wrong`)
+        }
       })
     })
 
@@ -555,6 +586,67 @@ async function shouldBehaveLikePool(poolName, collateralName) {
         )
       })
     })
+
+    if (isEarnPool === true) {
+      describe(`${poolName}: Earn specific tests`, function () {
+        let earnDrip, growToken, dripToken
+
+        beforeEach(async function () {
+          earnDrip = await ethers.getContractAt('IEarnDrip', await pool.poolRewards())
+          growToken = await ethers.getContractAt('ERC20', await earnDrip.growToken())
+          const growPool = await ethers.getContractAt('IVesperPool', growToken.address)
+          dripToken = await ethers.getContractAt('ERC20', await growPool.token())
+        })
+
+        it('Earn Pool should collect profits in growToken', async function () {
+          const growTokenBalanceBefore = await growToken.balanceOf(earnDrip.address)
+
+          await deposit(20, user1)
+          await rebalance(strategies)
+          // Time travel to generate earning
+          await timeTravel(30 * 24 * 60 * 60)
+          await rebalance(strategies)
+          await rebalance(strategies)
+
+          const growTokenBalanceAfter = await growToken.balanceOf(earnDrip.address)
+
+          expect(growTokenBalanceAfter).to.be.gt(growTokenBalanceBefore, `growToken balance in ${poolName} is wrong`)
+        })
+
+        it('Users should collect profits in dripToken using claimReward', async function () {
+          const dripTokenBalanceBefore = await dripToken.balanceOf(user1.address)
+
+          await deposit(20, user1)
+          await rebalance(strategies)
+          // Time travel to generate earning
+          await timeTravel(30 * 24 * 60 * 60)
+          await rebalance(strategies)
+          await rebalance(strategies)
+          await earnDrip.claimReward(user1.address)
+
+          const dripTokenBalanceAfter = await dripToken.balanceOf(user1.address)
+
+          expect(dripTokenBalanceAfter).to.be.gt(dripTokenBalanceBefore, `dripToken balance in ${poolName} is wrong`)
+        })
+
+        it('Users should collect profits in dripToken on withdraw', async function () {
+          const dripTokenBalanceBefore = await dripToken.balanceOf(user1.address)
+
+          await deposit(20, user1)
+          await rebalance(strategies)
+          // Time travel to generate earning
+          await timeTravel(30 * 24 * 60 * 60)
+          await rebalance(strategies)
+          await rebalance(strategies)
+          const withdrawAmount = await pool.balanceOf(user1.address)
+          await pool.connect(user1.signer).withdraw(withdrawAmount)
+
+          const dripTokenBalanceAfter = await dripToken.balanceOf(user1.address)
+
+          expect(dripTokenBalanceAfter).to.be.gt(dripTokenBalanceBefore, `dripToken balance in ${poolName} is wrong`)
+        })
+      })
+    }
   })
 }
 

@@ -2,6 +2,7 @@
 
 const { ethers } = require('hardhat')
 const { prepareConfig } = require('./config')
+const { shouldBehaveLikePool } = require('../behavior/vesper-pool')
 const { shouldBehaveLikeStrategy } = require('../behavior/strategy')
 const StrategyType = require('../utils/strategyTypes')
 const Address = require('../../helper/mainnet/address')
@@ -19,6 +20,11 @@ describe('veDAI Pool', function () {
   prepareConfig(strategies)
   setupEarnDrip(Address.vWBTC)
   addInFeeWhitelist('0x0538C8bAc84E95A9dF8aC10Aad17DbE81b9E36ee')
+
+  describe('Pool Tests', function () {
+    shouldBehaveLikePool('veDai', 'DAI', true)
+  })
+
   for (let i = 0; i < strategies.length; i++) {
     shouldBehaveLikeStrategy(i, strategies[i].type, strategies[i].name)
   }
