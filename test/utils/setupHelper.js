@@ -52,6 +52,10 @@ async function unlock(_address) {
     method: 'hardhat_impersonateAccount',
     params: [_address],
   })
+  await hre.network.provider.request({
+    method: 'hardhat_setBalance',
+    params: [_address, ethers.utils.hexStripZeros(ethers.utils.parseEther('1').toHexString())],
+  })
   return ethers.getSigner(_address)
 }
 
