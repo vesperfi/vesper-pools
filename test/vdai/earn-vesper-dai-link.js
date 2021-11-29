@@ -12,13 +12,13 @@ describe('veDAI Pool', function () {
   const interestFee = '1500' // 15%
   const strategies = [
     {
-      name: 'EarnVesperStrategyDAIWETH',
+      name: 'EarnVesperStrategyDAILINK',
       type: StrategyType.EARN_VESPER,
       config: { interestFee, debtRatio: 9000, debtRate: ethers.utils.parseEther('1000000') },
     },
   ]
   prepareConfig(strategies)
-  setupEarnDrip(Address.vaETH)
+  setupEarnDrip(Address.vLINK)
   addInFeeWhitelist('0x0538C8bAc84E95A9dF8aC10Aad17DbE81b9E36ee')
 
   describe('Pool Tests', function () {
