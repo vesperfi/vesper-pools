@@ -49,9 +49,7 @@ task('strategy-configuration', 'Prepare strategy configuration for deployment')
       throw new Error('Collateral token mismatch')
     }
 
-    const hreNetwork = hre.network.name
-    const helperNetwork = hreNetwork === 'localhost' ? 'mainnet' : hreNetwork
-    const Address = require(`../helper/${helperNetwork}/address`)
+    const Address = require(`../helper/${hre.targetChain}/address`)
 
     // Prepare strategy configuration for deployment
     const strategyConfig = {
@@ -69,11 +67,30 @@ task('strategy-configuration', 'Prepare strategy configuration for deployment')
         : ethers.utils.parseUnits('1000000', tokenDecimal).toString(),
     }
 
-    if (strategyParams.fusePoolId) {
+    // Prepare maker specific configuration data
+    if (strategyParams.name.toUpperCase().includes('MAKER')) {
+      if (!strategyParams.gemJoins || !strategyParams.highWater || !strategyParams.lowWater) {
+        throw new Error('Missing Maker strategy specific configuration')
+      }
+      const maker = {
+        gemJoins: [strategyParams.gemJoins],
+        highWater: strategyParams.highWater,
+        lowWater: strategyParams.lowWater,
+      }
+      strategyConfig.maker = maker
+    }
+
+    if (strategyParams.name === 'RariFuseStrategy') {
+      if (!strategyParams.fusePoolId) {
+        throw new Error('fusePoolId is required for RariFuseStrategy')
+      }
       strategyConfig.fusePoolId = strategyParams.fusePoolId
     }
 
-    console.log(`Deploying ${strategyParams.name} on ${hreNetwork} with following configuration: `, strategyConfig)
+    console.log(
+      `Deploying ${strategyParams.name} on ${hre.network.name} for ${hre.targetChain} with following configuration: `,
+      strategyConfig,
+    )
 
     // Set configuration in hre
     hre.strategyConfig = strategyConfig

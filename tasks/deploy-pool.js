@@ -8,6 +8,7 @@ const fs = require('fs')
 task('deploy-pool', 'Deploy vesper pool')
   .addParam('pool', 'Vesper pool name')
   .addOptionalParam('release', 'Vesper release semantic version. It will create release file under /releases directory')
+  .addOptionalParam('targetChain', 'Target chain where contracts will be deployed')
   .addOptionalParam(
     'deployParams',
     `any param passed inside deployParams object will be passed to hardhat-deploy
@@ -51,10 +52,24 @@ task('deploy-pool', 'Deploy vesper pool')
   -----------------------------------------------------------------------------------------
   `,
   )
-  .setAction(async function ({ pool, release, deployParams = {}, poolParams = {}, strategyParams }) {
+  .setAction(async function ({
+    pool,
+    release,
+    targetChain = 'mainnet',
+    deployParams = {},
+    poolParams = {},
+    strategyParams,
+  }) {
     const hreNetwork = hre.network.name
-    const helperNetwork = hreNetwork === 'localhost' ? 'mainnet' : hreNetwork
-    const Address = require(`../helper/${helperNetwork}/address`)
+    // When deploying on localhost, we can provide targetChain param to support chain other than mainnet
+    if (hreNetwork !== 'localhost') {
+      targetChain = hreNetwork
+    }
+
+    // Set target chain in hre
+    hre.targetChain = targetChain
+
+    const Address = require(`../helper/${targetChain}/address`)
 
     if (typeof deployParams === 'string') {
       deployParams = JSON.parse(deployParams)
@@ -71,9 +86,8 @@ task('deploy-pool', 'Deploy vesper pool')
       poolParams.rewardsToken = Address.VSP
     }
 
-    hre.poolConfig = require(`../helper/${helperNetwork}/poolConfig`)[pool.toUpperCase()]
+    hre.poolConfig = require(`../helper/${targetChain}/poolConfig`)[pool.toUpperCase()]
     // TODO There is room for improvement for whole pool deployment stuff IMO
-    // TODO support multiple tokens for pool rewards
     hre.poolConfig.rewardsToken = poolParams.rewardsToken
     await run('strategy-configuration', { strategyParams })
 
@@ -82,7 +96,10 @@ task('deploy-pool', 'Deploy vesper pool')
     if (deployer && deployer.startsWith('ledger')) {
       deployer = deployer.split('ledger://')[1]
     }
-    console.log(`${deployer} is deploying/updating ${pool} on ${hreNetwork} with deployParams`, deployParams)
+    console.log(
+      `Running deploy script on ${hreNetwork} for '${pool} Pool on ${targetChain}' with deployPrams`,
+      deployParams,
+    )
     pool = pool.toLowerCase()
     const poolDir = `${networkDir}/${pool}`
     const globalDir = `${networkDir}/global`

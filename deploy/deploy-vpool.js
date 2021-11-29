@@ -3,8 +3,9 @@
 const Address = require('../helper/mainnet/address')
 
 const PoolAccountant = 'PoolAccountant'
+let PoolRewards = 'PoolRewards'
+const VesperEarnDrip = 'VesperEarnDrip'
 
-// TODO support multiple tokens for pool rewards
 const deployFunction = async function ({ getNamedAccounts, deployments, poolConfig }) {
   const { deploy, execute, read } = deployments
   const { deployer } = await getNamedAccounts()
@@ -45,8 +46,13 @@ const deployFunction = async function ({ getNamedAccounts, deployments, poolConf
   await execute(poolConfig.contractName, { from: deployer, log: true }, 'updateFeeCollector', poolConfig.feeCollector)
   await execute(poolConfig.contractName, { from: deployer, log: true }, 'updateWithdrawFee', poolConfig.withdrawFee)
 
+  // If we are deploying earn pools then deploy Vesper Earn Drip as PoolRewards
+  if (poolConfig.poolParams[0].includes('Earn')) {
+    PoolRewards = VesperEarnDrip
+  }
+
   // Deploy pool rewards
-  const rewardsProxy = await deploy('PoolRewards', {
+  const rewardsProxy = await deploy(PoolRewards, {
     from: deployer,
     log: true,
     // proxy deployment
@@ -56,7 +62,7 @@ const deployFunction = async function ({ getNamedAccounts, deployments, poolConf
       execute: {
         init: {
           methodName: 'initialize',
-          args: [poolProxy.address, [poolConfig.rewardsToken]],
+          args: [poolProxy.address, poolConfig.rewardsToken],
         },
       },
     },
