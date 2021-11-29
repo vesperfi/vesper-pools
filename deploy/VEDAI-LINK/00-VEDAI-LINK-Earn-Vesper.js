@@ -61,14 +61,14 @@ const deployFunction = async function ({ getNamedAccounts, deployments }) {
       execute: {
         init: {
           methodName: 'initialize',
-          args: [poolProxy.address, [Address.vaDAI, Address.VSP]],
+          args: [poolProxy.address, [Address.vLINK, Address.VSP]],
         },
       },
     },
   })
 
   await execute(VEDAI.contractName, { from: deployer, log: true }, 'updatePoolRewards', rewardsProxy.address)
-  await execute('VesperEarnDrip', { from: deployer, log: true }, 'updateGrowToken', Address.vaDAI)
+  await execute('VesperEarnDrip', { from: deployer, log: true }, 'updateGrowToken', Address.vLINK)
 
   const earnStrat = await deploy(EarnStrategy, {
     from: deployer,
@@ -78,6 +78,7 @@ const deployFunction = async function ({ getNamedAccounts, deployments }) {
 
   await execute(EarnStrategy, { from: deployer, log: true }, 'init', Address.ADDRESS_LIST_FACTORY)
   await execute(EarnStrategy, { from: deployer, log: true }, 'approveToken')
+  await execute(EarnStrategy, { from: deployer, log: true }, 'approveGrowToken')
   await execute(EarnStrategy, { from: deployer, log: true }, 'updateFeeCollector', config.feeCollector)
   // Add strategy in pool accountant
   await execute(

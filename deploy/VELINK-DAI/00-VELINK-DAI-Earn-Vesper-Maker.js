@@ -78,6 +78,7 @@ const deployFunction = async function ({ getNamedAccounts, deployments }) {
 
   await execute(EarnStrategy, { from: deployer, log: true }, 'init', Address.ADDRESS_LIST_FACTORY)
   await execute(EarnStrategy, { from: deployer, log: true }, 'approveToken')
+  await execute(EarnStrategy, { from: deployer, log: true }, 'approveGrowToken')
   await execute(EarnStrategy, { from: deployer, log: true }, 'createVault')
   await execute(EarnStrategy, { from: deployer, log: true }, 'updateFeeCollector', config.feeCollector)
   await execute(EarnStrategy, { from: deployer, log: true }, 'updateBalancingFactor', 225, 200)

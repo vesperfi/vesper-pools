@@ -18,7 +18,7 @@ describe('veDAI Pool', function () {
     },
   ]
   prepareConfig(strategies)
-  setupEarnDrip(Address.vWBTC)
+  setupEarnDrip(Address.vaWBTC)
   addInFeeWhitelist('0x0538C8bAc84E95A9dF8aC10Aad17DbE81b9E36ee')
 
   describe('Pool Tests', function () {

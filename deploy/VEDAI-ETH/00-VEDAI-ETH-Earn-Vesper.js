@@ -61,14 +61,14 @@ const deployFunction = async function ({ getNamedAccounts, deployments }) {
       execute: {
         init: {
           methodName: 'initialize',
-          args: [poolProxy.address, [Address.vaDAI, Address.VSP]],
+          args: [poolProxy.address, [Address.vaETH, Address.VSP]],
         },
       },
     },
   })
 
   await execute(VEDAI.contractName, { from: deployer, log: true }, 'updatePoolRewards', rewardsProxy.address)
-  await execute('VesperEarnDrip', { from: deployer, log: true }, 'updateGrowToken', Address.vaDAI)
+  await execute('VesperEarnDrip', { from: deployer, log: true }, 'updateGrowToken', Address.vaETH)
 
   const earnStrat = await deploy(EarnStrategy, {
     from: deployer,
