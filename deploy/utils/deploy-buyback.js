@@ -13,7 +13,13 @@ const deployFunction = async function ({ getNamedAccounts, deployments, network 
   await deploy(BuyBack, {
     from: deployer,
     log: true,
-    args: [Address.GOVERNOR, Address.NATIVE_TOKEN, Address.vVSP, Address.ADDRESS_LIST_FACTORY, Address.SWAP_MANAGER],
+    args: [
+      '0xdf826ff6518e609E4cEE86299d40611C148099d5',
+      Address.NATIVE_TOKEN,
+      Address.vVSP,
+      Address.ADDRESS_LIST_FACTORY,
+      Address.SWAP_MANAGER,
+    ],
   })
 }
 module.exports = deployFunction
