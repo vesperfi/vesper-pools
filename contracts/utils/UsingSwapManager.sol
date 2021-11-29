@@ -127,8 +127,9 @@ abstract contract UsingSwapManager is Governed {
 
     function _doInfinityApprovalIfNeeded(IERC20 _asset, uint256 _amountToSwap) internal {
         for (uint256 i = 0; i < swapManager.N_DEX(); i++) {
-            if (IERC20(_asset).allowance(address(this), address(swapManager.ROUTERS(i))) < _amountToSwap) {
-                IERC20(_asset).safeApprove(address(swapManager.ROUTERS(i)), type(uint256).max);
+            uint256 _allowance = IERC20(_asset).allowance(address(this), address(swapManager.ROUTERS(i)));
+            if (_allowance < _amountToSwap) {
+                IERC20(_asset).safeIncreaseAllowance(address(swapManager.ROUTERS(i)), type(uint256).max - _allowance);
             }
         }
     }
