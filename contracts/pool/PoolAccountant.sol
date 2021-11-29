@@ -34,7 +34,7 @@ contract PoolAccountantStorageV1 {
 contract PoolAccountant is Initializable, PoolAccountantStorageV1, Context {
     using SafeERC20 for IERC20;
 
-    string public constant VERSION = "3.0.5";
+    string public constant VERSION = "4.0.0";
     uint256 public constant MAX_BPS = 10_000;
 
     event EarningReported(

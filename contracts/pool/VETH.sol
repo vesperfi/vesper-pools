@@ -23,7 +23,15 @@ contract VETH is VPool {
     /// @dev Burns tokens/shares and returns the ETH value, after fee, of those.
     function withdrawETH(uint256 _shares) external whenNotShutdown nonReentrant {
         withdrawInETH = true;
+        _updateRewards(_msgSender());
         _withdraw(_shares);
+        withdrawInETH = false;
+    }
+
+    /// @dev Burns tokens/shares and returns the ETH value and claim rewards if any
+    function withdrawETHAndClaim(uint256 _shares) external whenNotShutdown nonReentrant {
+        withdrawInETH = true;
+        _withdrawAndClaim(_shares);
         withdrawInETH = false;
     }
 
@@ -46,7 +54,17 @@ contract VETH is VPool {
      * on the value of pool's share.
      */
     function deposit() public payable whenNotPaused nonReentrant {
+        _updateRewards(_msgSender());
+        _deposit();
+    }
+
+    /// @dev Deposit ETH and claim rewards if any
+    function depositAndClaim() external payable whenNotPaused nonReentrant {
         _claimRewards(_msgSender());
+        _deposit();
+    }
+
+    function _deposit() internal {
         uint256 _shares = _calculateShares(msg.value);
         // Wraps ETH in WETH
         TokenLike(address(token)).deposit{value: msg.value}();

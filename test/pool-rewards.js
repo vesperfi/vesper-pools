@@ -6,6 +6,7 @@ const { ethers } = require('hardhat')
 const time = require('./utils/time')
 const poolOps = require('./utils/poolOps')
 const swapper = require('./utils/tokenSwapper')
+const { adjustBalance } = require('./utils/balance')
 const { deployContract, getUsers, setupVPool } = require('./utils/setupHelper')
 const { address: Address, poolConfig, strategyConfig } = require('./utils/chains').getChainData()
 const AaveStrategyDAI = strategyConfig.AaveStrategyDAI
@@ -126,7 +127,7 @@ describe('Rewards for VDAI Pool', function () {
     it('Should claim rewards via withdraw', async function () {
       await poolOps.deposit(vdai, dai, 10, user2)
       await time.increase(34 * 24 * 60 * 60)
-      await vdai.connect(user2.signer).withdraw(await vdai.balanceOf(user2.address))
+      await vdai.connect(user2.signer).withdrawAndClaim(await vdai.balanceOf(user2.address))
       const claimable = (await poolRewards.claimable(user2.address))._claimableAmounts[0]
       expect(claimable).to.be.eq(0, 'Claimable balance after claim should be 0')
       const vspRewards = await vsp.balanceOf(user2.address)
@@ -138,7 +139,11 @@ describe('Rewards for VDAI Pool', function () {
     it('Should claim rewards via deposit', async function () {
       await poolOps.deposit(vdai, dai, 10, user2)
       await time.increase(34 * 24 * 60 * 60)
-      await poolOps.deposit(vdai, dai, 1, user2)
+      // Get DAI and call depositAndClaim
+      const amount = ethers.utils.parseEther('1000')
+      await adjustBalance(Address.DAI, user2.address, ethers.utils.parseEther('1000'))
+      await dai.connect(user2.signer).approve(vdai.address, amount)
+      await vdai.connect(user2.signer).depositAndClaim(amount)
       const claimable = (await poolRewards.claimable(user2.address))._claimableAmounts[0]
       expect(claimable).to.be.eq(0, 'Claimable balance after claim should be 0')
       const vspRewards = await vsp.balanceOf(user2.address)

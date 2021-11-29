@@ -7,7 +7,7 @@ import "./VFRPool.sol";
 
 // solhint-disable no-empty-blocks
 contract VFRStablePool is VFRPool {
-    string public constant VERSION = "3.0.4";
+    string public constant VERSION = "4.0.0";
 
     uint256 public targetAPY;
     uint256 public startTime;

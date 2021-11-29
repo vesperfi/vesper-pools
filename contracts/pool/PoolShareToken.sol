@@ -54,7 +54,16 @@ abstract contract PoolShareToken is Initializable, PoolERC20Permit, Governed, Pa
      * @param _amount ERC20 token amount.
      */
     function deposit(uint256 _amount) external virtual nonReentrant whenNotPaused {
+        _updateRewards(_msgSender());
         _deposit(_amount);
+    }
+
+    /**
+     * @notice Deposit ERC20 tokens and claim rewards if any
+     * @param _amount ERC20 token amount.
+     */
+    function depositAndClaim(uint256 _amount) external virtual nonReentrant whenNotPaused {
+        _depositAndClaim(_amount);
     }
 
     /**
@@ -83,7 +92,16 @@ abstract contract PoolShareToken is Initializable, PoolERC20Permit, Governed, Pa
      * @param _shares Pool shares. It will be in 18 decimals.
      */
     function withdraw(uint256 _shares) external virtual nonReentrant whenNotShutdown {
+        _updateRewards(_msgSender());
         _withdraw(_shares);
+    }
+
+    /**
+     * @notice Withdraw collateral and claim rewards if any
+     * @param _shares Pool shares. It will be in 18 decimals.
+     */
+    function withdrawAndClaim(uint256 _shares) external virtual nonReentrant whenNotShutdown {
+        _withdrawAndClaim(_shares);
     }
 
     /**
@@ -91,9 +109,12 @@ abstract contract PoolShareToken is Initializable, PoolERC20Permit, Governed, Pa
      * @dev Burn shares and return collateral. No withdraw fee will be assessed
      * when this function is called. Only some white listed address can call this function.
      * @param _shares Pool shares. It will be in 18 decimals.
+     * This function is deprecated, normal withdraw will check for whitelisted address
      */
     function whitelistedWithdraw(uint256 _shares) external virtual nonReentrant whenNotShutdown {
         require(IAddressList(feeWhitelist).contains(_msgSender()), Errors.NOT_WHITELISTED_ADDRESS);
+        require(_shares != 0, Errors.INVALID_SHARE_AMOUNT);
+        _claimRewards(_msgSender());
         _withdrawWithoutFee(_shares);
     }
 
@@ -201,9 +222,14 @@ abstract contract PoolShareToken is Initializable, PoolERC20Permit, Governed, Pa
         }
     }
 
+    function _updateRewards(address _account) internal {
+        if (poolRewards != address(0)) {
+            IPoolRewards(poolRewards).updateReward(_account);
+        }
+    }
+
     /// @dev Deposit incoming token and mint pool token i.e. shares.
     function _deposit(uint256 _amount) internal virtual {
-        _claimRewards(_msgSender());
         uint256 _shares = _calculateShares(_amount);
         _beforeMinting(_amount);
         _mint(_msgSender(), _shares);
@@ -211,13 +237,18 @@ abstract contract PoolShareToken is Initializable, PoolERC20Permit, Governed, Pa
         emit Deposit(_msgSender(), _shares, _amount);
     }
 
+    /// @dev Deposit token and claim rewards if any
+    function _depositAndClaim(uint256 _amount) internal {
+        _claimRewards(_msgSender());
+        _deposit(_amount);
+    }
+
     /// @dev Burns shares and returns the collateral value, after fee, of those.
     function _withdraw(uint256 _shares) internal virtual {
-        if (withdrawFee == 0) {
+        require(_shares != 0, Errors.INVALID_SHARE_AMOUNT);
+        if (withdrawFee == 0 || IAddressList(feeWhitelist).contains(_msgSender())) {
             _withdrawWithoutFee(_shares);
         } else {
-            require(_shares != 0, Errors.INVALID_SHARE_AMOUNT);
-            _claimRewards(_msgSender());
             uint256 _fee = (_shares * withdrawFee) / MAX_BPS;
             uint256 _sharesAfterFee = _shares - _fee;
             uint256 _amountWithdrawn = _beforeBurning(_sharesAfterFee);
@@ -240,10 +271,14 @@ abstract contract PoolShareToken is Initializable, PoolERC20Permit, Governed, Pa
         }
     }
 
+    /// @dev Withdraw collateral and claim rewards if any
+    function _withdrawAndClaim(uint256 _shares) internal {
+        _claimRewards(_msgSender());
+        _withdraw(_shares);
+    }
+
     /// @dev Burns shares and returns the collateral value of those.
     function _withdrawWithoutFee(uint256 _shares) internal {
-        require(_shares != 0, Errors.INVALID_SHARE_AMOUNT);
-        _claimRewards(_msgSender());
         uint256 _amountWithdrawn = _beforeBurning(_shares);
         uint256 _proportionalShares = _calculateShares(_amountWithdrawn);
         if (convertFrom18(_proportionalShares) < convertFrom18(_shares)) {
