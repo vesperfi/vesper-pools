@@ -20,7 +20,7 @@ async function shouldBehaveLikeEarnMakerStrategy(strategyIndex) {
   shouldValidateMakerCommonBehavior(strategyIndex)
   describe(`Earn MakerStrategy specific tests for strategy[${strategyIndex}]`, function () {
     beforeEach(async function () {
-      ;[user1, user2] = await getUsers()
+      ;[user1, , user2] = await getUsers()
       pool = this.pool
       strategy = this.strategies[strategyIndex]
       collateralToken = this.collateralToken

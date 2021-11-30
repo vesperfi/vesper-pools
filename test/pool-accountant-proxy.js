@@ -40,7 +40,7 @@ describe('Pool accountant proxy', function () {
     AaveStrategyDAI.feeCollector = user1.address
     strategy = await createStrategy(AaveStrategyDAI, pool.address)
 
-    await poolAccountant.connect(governor.signer).addStrategy(strategy.address, 1000, 1000, 1000)
+    await poolAccountant.connect(governor.signer).addStrategy(strategy.address, 1000, 1000, 1000, 0)
   })
 
   describe('Update proxy implementation', function () {

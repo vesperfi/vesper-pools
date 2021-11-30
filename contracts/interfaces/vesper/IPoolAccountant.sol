@@ -41,8 +41,11 @@ interface IPoolAccountant {
             uint256 _totalDebt,
             uint256 _totalLoss,
             uint256 _totalProfit,
-            uint256 _debtRatio
+            uint256 _debtRatio,
+            uint256 _externalDepositFee
         );
+
+    function externalDepositFee() external view returns (uint256);
 
     function totalDebt() external view returns (uint256);
 

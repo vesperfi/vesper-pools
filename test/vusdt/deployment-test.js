@@ -27,7 +27,7 @@ describe('vUSDT Pool', function () {
         feeCollector,
         name: strategyName,
         type: StrategyType.COMPOUND,
-        config: { interestFee, debtRatio: 9500, debtRate: ONE_MILLION },
+        config: { interestFee, debtRatio: 9500, debtRate: ONE_MILLION, externalDepositFee: 0 },
       }
       const strategyTokenAddress = await instance.token()
       strat.token = await ethers.getContractAt('CToken', strategyTokenAddress)

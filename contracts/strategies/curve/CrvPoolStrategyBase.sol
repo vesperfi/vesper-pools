@@ -352,8 +352,8 @@ abstract contract CrvPoolStrategyBase is CrvBase, Strategy {
         IVesperPool(pool).reportEarning(_profit, _loss, _payback);
         _reinvest();
         if (!depositError) {
-            uint256 depositLoss = _realizeLoss(IVesperPool(pool).totalDebtOf(address(this)));
-            if (depositLoss > _loss) IVesperPool(pool).reportLoss(depositLoss - _loss);
+            uint256 _depositLoss = _realizeLoss(IVesperPool(pool).totalDebtOf(address(this)));
+            IVesperPool(pool).reportLoss(_depositLoss);
         }
     }
 

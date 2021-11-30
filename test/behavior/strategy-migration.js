@@ -69,7 +69,7 @@ async function shouldMigrateStrategies(poolName) {
   }
 
   async function assertDepositAndWithdraw(newStrategy) {
-    await deposit(50, user2)
+    await deposit(30, user2)
     const amountBefore = await pool.balanceOf(user2.address)
     expect(amountBefore).to.be.gt(0, 'failed to deposit in pool')
     await rebalanceStrategy(newStrategy)

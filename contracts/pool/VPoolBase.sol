@@ -4,7 +4,6 @@ pragma solidity 0.8.3;
 
 import "./Errors.sol";
 import "./PoolShareToken.sol";
-import "../interfaces/vesper/IPoolAccountant.sol";
 import "../interfaces/vesper/IStrategy.sol";
 import "../interfaces/bloq/IAddressListFactory.sol";
 
@@ -191,7 +190,9 @@ abstract contract VPoolBase is PoolShareToken {
      * @param _loss Loss that strategy want to report
      */
     function reportLoss(uint256 _loss) external {
-        IPoolAccountant(poolAccountant).reportLoss(_msgSender(), _loss);
+        if (_loss != 0) {
+            IPoolAccountant(poolAccountant).reportLoss(_msgSender(), _loss);
+        }
     }
 
     /**
@@ -232,7 +233,7 @@ abstract contract VPoolBase is PoolShareToken {
     }
 
     function strategy(address _strategy)
-        external
+        public
         view
         returns (
             bool _active,
@@ -242,7 +243,8 @@ abstract contract VPoolBase is PoolShareToken {
             uint256 _totalDebt,
             uint256 _totalLoss,
             uint256 _totalProfit,
-            uint256 _debtRatio
+            uint256 _debtRatio,
+            uint256 _externalDepositFee
         )
     {
         return IPoolAccountant(poolAccountant).strategy(_strategy);
@@ -320,5 +322,6 @@ abstract contract VPoolBase is PoolShareToken {
             _balanceNow = tokensHere();
         }
         actualWithdrawn = _balanceNow < _amount ? _balanceNow : _amount;
+        require(actualWithdrawn != 0, Errors.INVALID_COLLATERAL_AMOUNT);
     }
 }

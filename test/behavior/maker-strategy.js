@@ -21,7 +21,7 @@ function shouldBehaveLikeMakerStrategy(strategyIndex) {
   shouldValidateMakerCommonBehavior(strategyIndex)
   describe(`MakerStrategy specific tests for strategy[${strategyIndex}]`, function () {
     beforeEach(async function () {
-      ;[user1, user2] = await getUsers()
+      ;[, user1, user2] = await getUsers()
       pool = this.pool
       accountant = this.accountant
       strategy = this.strategies[strategyIndex]

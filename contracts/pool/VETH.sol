@@ -65,7 +65,7 @@ contract VETH is VPool {
     }
 
     function _deposit() internal {
-        uint256 _shares = _calculateShares(msg.value);
+        uint256 _shares = calculateMintage(msg.value);
         // Wraps ETH in WETH
         TokenLike(address(token)).deposit{value: msg.value}();
         _mint(_msgSender(), _shares);

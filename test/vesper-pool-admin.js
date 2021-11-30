@@ -6,12 +6,11 @@ const ethers = hre.ethers
 const { getUsers, deployContract, createStrategy } = require('./utils/setupHelper')
 const addressListFactory = hre.address.ADDRESS_LIST_FACTORY
 
-const { address: Address, poolConfig, strategyConfig } = require('./utils/chains').getChainData()
+const { poolConfig, strategyConfig } = require('./utils/chains').getChainData()
 const VDAI = poolConfig.VDAI
 const AaveStrategyDAI = strategyConfig.AaveStrategyDAI
 
 describe('Vesper Pool: Admin only function tests', function () {
-  const oneMillion = ethers.utils.parseEther('1000000')
   let pool, strategy, accountant
   let user1, user2, user3, user4
 
@@ -149,44 +148,6 @@ describe('Vesper Pool: Admin only function tests', function () {
     })
   })
 
-  describe('Add strategy test', function () {
-    it('Should add strategy and make it active', async function () {
-      const config = AaveStrategyDAI.config
-      const tx = accountant.addStrategy(strategy.address, ...Object.values(config))
-      await expect(tx)
-        .to.emit(accountant, 'StrategyAdded')
-        .withArgs(strategy.address, config.interestFee, config.debtRatio, config.debtRate)
-      expect((await accountant.strategy(strategy.address)).active, 'Strategy should be active').to.be.true
-    })
-
-    it('Should revert if strategy is already active', async function () {
-      await accountant.addStrategy(strategy.address, ...Object.values(AaveStrategyDAI.config))
-      const tx = accountant.addStrategy(strategy.address, ...Object.values(AaveStrategyDAI.config))
-      // 15 = STRATEGY_IS_ACTIVE
-      await expect(tx).to.be.revertedWith('15', 'Strategy is already active')
-    })
-
-    it('Should revert if strategy address is zero', async function () {
-      const tx = accountant.addStrategy(Address.ZERO, ...Object.values(AaveStrategyDAI.config))
-      // 10 = INPUT_ADDRESS_IS_ZERO
-      await expect(tx).to.be.revertedWith('10', 'Strategy address is zero')
-    })
-
-    it('Should revert if debt ratio is above limit', async function () {
-      const config = { interestFee: '1500', debtRatio: '10001', debtRate: oneMillion }
-      const tx = accountant.addStrategy(strategy.address, ...Object.values(config))
-      // 18 = DEBT_RATIO_LIMIT_REACHED, Limit is 10,000
-      await expect(tx).to.be.revertedWith('18', 'Input debt ratio is above max limit')
-    })
-
-    it('Should revert if interest fee is above limit', async function () {
-      const config = { interestFee: '15000', debtRatio: '9000', debtRate: oneMillion }
-      const tx = accountant.addStrategy(strategy.address, ...Object.values(config))
-      // 11 = FEE_LIMIT_REACHED, Limit is 10,000
-      await expect(tx).to.be.revertedWith('11', 'Input interest fee is above max limit')
-    })
-  })
-
   describe('Migrate strategy', function () {
     it('Should migrate strategy', async function () {
       const config = AaveStrategyDAI.config
@@ -195,7 +156,14 @@ describe('Vesper Pool: Admin only function tests', function () {
       const tx = pool.migrateStrategy(strategy.address, newStrategy.address)
       await expect(tx)
         .to.emit(accountant, 'StrategyMigrated')
-        .withArgs(strategy.address, newStrategy.address, config.interestFee, config.debtRatio, config.debtRate)
+        .withArgs(
+          strategy.address,
+          newStrategy.address,
+          config.interestFee,
+          config.debtRatio,
+          config.debtRate,
+          config.externalDepositFee,
+        )
       expect((await accountant.strategy(newStrategy.address)).active, 'Strategy should be active').to.be.true
       expect((await accountant.strategy(strategy.address)).active, 'Old strategy should be de-active').to.be.false
     })

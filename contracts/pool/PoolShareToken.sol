@@ -11,6 +11,7 @@ import "./Errors.sol";
 import "../Governed.sol";
 import "../Pausable.sol";
 import "../interfaces/bloq/IAddressList.sol";
+import "../interfaces/vesper/IPoolAccountant.sol";
 import "../interfaces/vesper/IPoolRewards.sol";
 
 /// @title Holding pool share token
@@ -144,6 +145,17 @@ abstract contract PoolShareToken is Initializable, PoolERC20Permit, Governed, Pa
         return (totalValue() * 1e18) / totalSupply();
     }
 
+    /**
+     * @notice Calculate how much shares user will get for given amount. Also return externalDepositFee if any.
+     * @param _amount Collateral amount
+     * @return _shares Amount of share that user will get
+     */
+    function calculateMintage(uint256 _amount) public view returns (uint256 _shares) {
+        require(_amount != 0, Errors.INVALID_COLLATERAL_AMOUNT);
+        uint256 _externalDepositFee = (_amount * IPoolAccountant(poolAccountant).externalDepositFee()) / MAX_BPS;
+        _shares = _calculateShares(_amount - _externalDepositFee);
+    }
+
     /// @dev Convert from 18 decimals to token defined decimals.
     function convertFrom18(uint256 _amount) public view virtual returns (uint256) {
         return _amount / decimalConversionFactor;
@@ -205,12 +217,11 @@ abstract contract PoolShareToken is Initializable, PoolERC20Permit, Governed, Pa
     }
 
     /**
-     * @dev Calculate shares to mint based on the current share price and given amount.
+     * @dev Calculate shares to mint/burn based on the current share price and given amount.
      * @param _amount Collateral amount in collateral token defined decimals.
      * @return share amount in 18 decimal
      */
     function _calculateShares(uint256 _amount) internal view returns (uint256) {
-        require(_amount != 0, Errors.INVALID_COLLATERAL_AMOUNT);
         uint256 _share = ((_amount * 1e18) / pricePerShare());
         return _amount > ((_share * pricePerShare()) / 1e18) ? _share + 1 : _share;
     }
@@ -230,7 +241,7 @@ abstract contract PoolShareToken is Initializable, PoolERC20Permit, Governed, Pa
 
     /// @dev Deposit incoming token and mint pool token i.e. shares.
     function _deposit(uint256 _amount) internal virtual {
-        uint256 _shares = _calculateShares(_amount);
+        uint256 _shares = calculateMintage(_amount);
         _beforeMinting(_amount);
         _mint(_msgSender(), _shares);
         _afterMinting(_amount);
