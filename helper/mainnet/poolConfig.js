@@ -19,7 +19,7 @@ const PoolConfig = {
   },
   VAETH: {
     contractName: 'VETH',
-    poolParams: ['vaETH Pool', 'vaETH'],
+    poolParams: ['vaETH Pool', 'vaETH', Address.WETH],
     addressListFactory: Address.ADDRESS_LIST_FACTORY,
     withdrawFee: 60,
     feeCollector: Address.FEE_COLLECTOR,
@@ -33,7 +33,7 @@ const PoolConfig = {
   },
   VEETH_DAI: {
     contractName: 'VETH',
-    poolParams: ['veETH-DAI Earn Pool', 'veETH-DAI'],
+    poolParams: ['veETH-DAI Earn Pool', 'veETH-DAI', Address.WETH],
     addressListFactory: Address.ADDRESS_LIST_FACTORY,
     withdrawFee: 60,
     feeCollector: Address.FEE_COLLECTOR,

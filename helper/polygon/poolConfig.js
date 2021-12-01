@@ -41,6 +41,13 @@ const PoolConfig = {
     withdrawFee,
     feeCollector,
   },
+  VMATIC: {
+    contractName: 'VETH',
+    poolParams: ['vMATIC Pool', 'vMATIC', Address.WMATIC],
+    addressListFactory,
+    withdrawFee,
+    feeCollector,
+  },
 }
 
 module.exports = Object.freeze(PoolConfig)
