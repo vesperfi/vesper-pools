@@ -10,6 +10,14 @@ const deployFunction = async function ({ getNamedAccounts, deployments, poolConf
   const { deploy, execute, read } = deployments
   const { deployer } = await getNamedAccounts()
 
+  // If we are deploying earn pools then deploy Vesper Earn Drip as PoolRewards
+  if (poolConfig.poolParams[0].includes('Earn')) {
+    PoolRewards = VesperEarnDrip
+    if (poolConfig.growToken && !poolConfig.rewardsToken.includes(poolConfig.growToken)) {
+      throw new Error('Grow token should be part of rewardsToken array')
+    }
+  }
+
   // Deploy PoolAccountant. This call will deploy ProxyAdmin, proxy and PoolAccountant
   const accountantProxy = await deploy(PoolAccountant, {
     from: deployer,
@@ -46,12 +54,7 @@ const deployFunction = async function ({ getNamedAccounts, deployments, poolConf
   await execute(poolConfig.contractName, { from: deployer, log: true }, 'updateFeeCollector', poolConfig.feeCollector)
   await execute(poolConfig.contractName, { from: deployer, log: true }, 'updateWithdrawFee', poolConfig.withdrawFee)
 
-  // If we are deploying earn pools then deploy Vesper Earn Drip as PoolRewards
-  if (poolConfig.poolParams[0].includes('Earn')) {
-    PoolRewards = VesperEarnDrip
-  }
-
-  // Deploy pool rewards
+  // Deploy pool rewards (Vesper Earn drip for Earn pools)
   const rewardsProxy = await deploy(PoolRewards, {
     from: deployer,
     log: true,
@@ -70,6 +73,11 @@ const deployFunction = async function ({ getNamedAccounts, deployments, poolConf
 
   // Update pool rewards in pool
   await execute(poolConfig.contractName, { from: deployer, log: true }, 'updatePoolRewards', rewardsProxy.address)
+
+  // Update grow token in Vesper Earn Drip contract of Earn pool
+  if (poolConfig.poolParams[0].includes('Earn') && poolConfig.growToken) {
+    await execute(PoolRewards, { from: deployer, log: true }, 'updateGrowToken', poolConfig.growToken)
+  }
 
   // Prepare id of deployment, next deployment will be triggered if id is changed
   const poolVersion = await read(poolConfig.contractName, {}, 'VERSION')

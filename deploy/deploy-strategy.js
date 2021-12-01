@@ -12,6 +12,8 @@ const deployFunction = async function ({ getNamedAccounts, deployments, poolConf
 
   let strategyAlias = strategyConfig.contractName
   const constructorArgs = [poolProxy.address, strategyConfig.swapManager]
+
+  // Rari strategy requires fusePoolId
   if (strategyAlias === 'RariFuseStrategy') {
     const fusePoolId = strategyConfig.fusePoolId
     if (!fusePoolId) {
@@ -20,6 +22,7 @@ const deployFunction = async function ({ getNamedAccounts, deployments, poolConf
     constructorArgs.push(fusePoolId)
     strategyAlias = `${strategyAlias}#${fusePoolId}`
   } else if (strategyAlias.toUpperCase().includes('MAKER')) {
+    // Maker strategy of any type, EarnXXXMaker, XXXMaker
     let cm = Address.COLLATERAL_MANAGER
     if (!cm) {
       // Deploy collateral manager
@@ -29,8 +32,14 @@ const deployFunction = async function ({ getNamedAccounts, deployments, poolConf
     await read('CollateralManager', {}, 'treasury')
     constructorArgs[1] = cm
     constructorArgs[2] = strategyConfig.swapManager
+
+    // VesperMaker and EarnVesperMaker strategy require 1 extra param
+    if (strategyAlias.toUpperCase().includes('VESPER')) {
+      constructorArgs.push(strategyConfig.growPool)
+    }
   }
 
+  // Deploy strategy
   const deployed = await deploy(strategyAlias, {
     contract: strategyConfig.contractName,
     from: deployer,
@@ -43,6 +52,11 @@ const deployFunction = async function ({ getNamedAccounts, deployments, poolConf
   await execute(strategyAlias, { from: deployer, log: true }, 'approveToken')
   await execute(strategyAlias, { from: deployer, log: true }, 'updateFeeCollector', strategyConfig.feeCollector)
   await execute(strategyAlias, { from: deployer, log: true }, 'addKeeper', strategyConfig.keeper)
+
+  // For earn strategies approve grow token
+  if (strategyAlias.toUpperCase().includes('EARN')) {
+    await execute(strategyAlias, { from: deployer, log: true }, 'approveGrowToken')
+  }
 
   // Execute Maker related configuration transactions
   if (strategyAlias.toUpperCase().includes('MAKER')) {
