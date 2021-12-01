@@ -7,6 +7,7 @@ const PoolConfig = require('../../helper/mainnet/poolConfig')
 const { BigNumber: BN } = require('ethers')
 const swapper = require('../utils/tokenSwapper')
 const { ethers } = require('hardhat')
+const { shouldBehaveLikePool } = require('../behavior/vesper-pool')
 
 describe('veWBTC pool strategies', function () {
   const interestFee = '2500' // 15%
@@ -75,6 +76,10 @@ describe('veWBTC pool strategies', function () {
     for (const strategy of this.strategies) {
       await strategy.instance.approveGrowToken()
     }
+  })
+
+  describe('Pool Tests', function () {
+    shouldBehaveLikePool('veWBTC', 'WBTC', true)
   })
 
   for (let i = 0; i < strategies.length; i++) {

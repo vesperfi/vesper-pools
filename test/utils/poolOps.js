@@ -103,12 +103,37 @@ async function harvestYearn(strategy) {
 }
 
 /**
+ * Simulates harvesting in a VesperMaker strategy
+ * 1. Swaps some ethers for collateral into the underlying vPool
+ * 2. This causes vPool' pricePerShare to increase
+ *
+ * @param {object} strategy - strategy object
+ */
+async function harvestVesperMaker(strategy) {
+  const vPool = await ethers.getContractAt('IVesperPool', await strategy.instance.receiptToken())
+  const collateralTokenAddress = await vPool.token()
+
+  const signer = await ethers.provider.getSigner(strategy.signer)
+
+  if (collateralTokenAddress === NATIVE_TOKEN) {
+    const weth = await ethers.getContractAt('TokenLike', collateralTokenAddress, signer)
+    const transferAmount = ethers.utils.parseEther('5')
+    await weth.deposit({ value: transferAmount })
+    await weth.transfer(vPool.address, transferAmount)
+  } else {
+    await swapper.swapEthForToken(5, collateralTokenAddress, { signer }, vPool.address)
+  }
+}
+
+/**
  * Simulates profit in a Vesper Pool
- * As of now simulating profits behaves exactly like harvestYearn
  *
  * @param {object} strategy - strategy object
  */
 async function harvestVesper(strategy) {
+  if (strategy.type === 'earnVesperMaker') {
+    return harvestVesperMaker(strategy)
+  }
   return harvestYearn(strategy)
 }
 
@@ -127,7 +152,7 @@ async function rebalanceStrategy(strategy) {
     if (strategy.type.includes('yearn') || strategy.type.includes('Yearn')) {
       await harvestYearn(strategy)
     }
-    if (strategy.type === 'earnVesper') {
+    if (strategy.type.includes('earnVesper')) {
       await harvestVesper(strategy)
     }
     if (strategy.type.includes('alpha') || strategy.type.includes('Alpha')) {
