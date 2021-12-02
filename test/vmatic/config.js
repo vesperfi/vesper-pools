@@ -1,0 +1,38 @@
+'use strict'
+
+const { getUsers, setupVPool } = require('../utils/setupHelper')
+const StrategyType = require('../utils/strategyTypes')
+const { getChain } = require('../utils/chains')
+const PoolConfig = require(`../../helper/${getChain()}/poolConfig`)
+const { ethers } = require('hardhat')
+const ONE_MILLION = ethers.utils.parseEther('1000000')
+function prepareConfig(_strategies) {
+  const interestFee = '1500' // 15%
+  const strategies = _strategies || [
+    {
+      name: 'AaveStrategyPolygonWMATIC',
+      type: StrategyType.AAVE,
+      config: { interestFee, debtRatio: 9000, debtRate: ONE_MILLION },
+    },
+    {
+      name: 'AaveStrategyPolygonWMATIC',
+      type: StrategyType.COMPOUND,
+      config: { interestFee, debtRatio: 1000, debtRate: ONE_MILLION },
+    },
+  ]
+  beforeEach(async function () {
+    const users = await getUsers()
+    this.users = users
+    await setupVPool(this, {
+      poolConfig: PoolConfig.VMATIC,
+      feeCollector: users[7].address,
+      strategies: strategies.map((item, i) => ({
+        ...item,
+        feeCollector: users[i + 8].address, // leave first 8 users for other testing
+      })),
+    })
+  })
+  return strategies
+}
+
+module.exports = { prepareConfig }

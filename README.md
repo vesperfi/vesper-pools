@@ -66,8 +66,14 @@ Deployment will be done via custom `hardhat task deploy-pool` which behind the s
    npm run deploy -- --pool VDAI --network localhost --release 3.0.5
   ```
   > It will create `contracts.json` file at `/releases/3.0.5`
-
 * Passing any `hardhat-deploy` param
   ```bash
    npm run deploy -- --pool VDAI --network localhost --release 3.0.5 -- deploy-params '{"tags": "VDAI", gasprice: "25000000000"}'
-  ```
+   
+   npm run deploy -- --pool VAALUSD --network localhost --release 3.0.21 --deploy-params '{"tags": "deploy-vPool", "gasprice":"100000000000"}'
+
+   npm run deploy -- --pool VMATIC --network polygon --release 3.0.22 --targetchain polygon --deploy-params '{"tags": "deploy-vPool", "gasprice":"31000000000"}' --pool-params '{"rewardsToken": ["0x09C5a4BCA808bD1ba2b8E6B3aAF7442046B4ca5B"]}' 
+
+   npm run deploy -- --pool VMATIC --network polygon --release 3.0.22 --targetchain polygon --deploy-params '{"tags": "deploy-strategy", "gasprice":"30000000000"}' --strategy-params '{"name": "AaveStrategyPolygonWMATIC", "collateralToken": "WMATIC"}' 
+
+ ```

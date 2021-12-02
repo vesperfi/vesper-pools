@@ -139,7 +139,10 @@ task('create-release', 'Create release file from deploy data')
       releaseData.version = release
     }
     // We might have new network in this deployment, if not exist add empty network
-    if (!releaseData.networks[network]) {
+    if (!releaseData.networks) {
+      releaseData.networks = {}
+      releaseData.networks[network] = {}
+    } else if (!releaseData.networks[network]) {
       releaseData.networks[network] = {}
     }
     // Update pool data with latest deployment
