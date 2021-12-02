@@ -17,7 +17,7 @@ task('strategy-configuration', 'Prepare strategy configuration for deployment')
   keeper              address we want to add as keeper
   fusePoolId          Fuse pool id, if applicable
   growPool            Vesper pool address, typically vDAI, for Vesper Maker strategies
-  gemJoins            Gem Join address for Maker strategy
+  gemJoin             Gem Join address for Maker strategy
   highWater           High water mark value for Maker strategy
   lowWater            Low water mark value for Maker strategy
   -----------------------------------------------------------------------------------------
@@ -48,7 +48,6 @@ task('strategy-configuration', 'Prepare strategy configuration for deployment')
       tokenDecimal = await token.decimals()
     }
 
-    console.log(tokenSymbol)
     // Make sure pool and strategy config has same collateral
     if (tokenSymbol.toUpperCase() !== strategyParams.collateralToken.toUpperCase()) {
       throw new Error('Collateral token mismatch')
@@ -74,11 +73,11 @@ task('strategy-configuration', 'Prepare strategy configuration for deployment')
 
     // Prepare Maker strategy specific configuration data
     if (strategyParams.name.toUpperCase().includes('MAKER')) {
-      if (!strategyParams.gemJoins || !strategyParams.highWater || !strategyParams.lowWater) {
+      if (!strategyParams.gemJoin || !strategyParams.highWater || !strategyParams.lowWater) {
         throw new Error('Missing Maker strategy specific configuration')
       }
       const maker = {
-        gemJoins: [strategyParams.gemJoins],
+        gemJoin: strategyParams.gemJoin,
         highWater: strategyParams.highWater,
         lowWater: strategyParams.lowWater,
       }

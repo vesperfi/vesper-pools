@@ -1,9 +1,5 @@
 'use strict'
 
-const { ethers } = require('hardhat')
-const PoolAccountant = 'PoolAccountant'
-const CollateralManager = 'CollateralManager'
-
 const deployFunction = async function ({ getNamedAccounts, deployments, poolConfig, strategyConfig, targetChain }) {
   const Address = require(`../helper/${targetChain}/address`)
 
@@ -22,13 +18,13 @@ const deployFunction = async function ({ getNamedAccounts, deployments, poolConf
     strategyAlias = `${strategyAlias}#${fusePoolId}`
   } else if (strategyAlias.toUpperCase().includes('MAKER')) {
     // Maker strategy of any type, EarnXXXMaker, XXXMaker
-    let cm = Address.COLLATERAL_MANAGER
+    const cm = Address.COLLATERAL_MANAGER
     if (!cm) {
-      // Deploy collateral manager
-      cm = (await deploy(CollateralManager, { from: deployer, log: true })).address
+      // For migrate we expect Collateral Manager to be deployed
+      throw new Error('Collateral Manager address is missing in address.json')
     }
     // Fail fast: By reading any property we make sure deployment object exist for CollateralManager
-    await read(CollateralManager, {}, 'treasury')
+    await read('CollateralManager', {}, 'treasury')
     constructorArgs[1] = cm
     constructorArgs[2] = strategyConfig.swapManager
 
@@ -38,8 +34,11 @@ const deployFunction = async function ({ getNamedAccounts, deployments, poolConf
     }
   }
 
-  // Deploy strategy
-  const deployed = await deploy(strategyAlias, {
+  // Get old strategy. It is very important to get it first as new deploy will overwrite it
+  const oldStrategy = await deployments.get(strategyAlias)
+
+  // Deploy new version strategy
+  const newStrategy = await deploy(strategyAlias, {
     contract: strategyConfig.contractName,
     from: deployer,
     log: true,
@@ -59,32 +58,19 @@ const deployFunction = async function ({ getNamedAccounts, deployments, poolConf
 
   // Execute Maker related configuration transactions
   if (strategyAlias.toUpperCase().includes('MAKER')) {
-    const config = strategyConfig.maker
-    // Check whether gemJoin already added(or old version) in CM or not
-    const collateralType = await (await ethers.getContractAt('GemJoinLike', config.gemJoin)).ilk()
-    const gemJoinInCM = await read(CollateralManager, {}, 'mcdGemJoin', collateralType)
-    if (gemJoinInCM !== config.gemJoin) {
-      await execute('CollateralManager', { from: deployer, log: true }, 'addGemJoin', [config.gemJoin])
-    }
-    await execute(strategyAlias, { from: deployer, log: true }, 'createVault')
-    await execute(
-      strategyAlias,
-      { from: deployer, log: true },
-      'updateBalancingFactor',
-      config.highWater,
-      config.lowWater,
-    )
+    const { highWater, lowWater } = strategyConfig.maker
+    await execute(strategyAlias, { from: deployer, log: true }, 'updateBalancingFactor', highWater, lowWater)
   }
 
-  // Add strategy in pool accountant
+  console.log(`Migrating ${strategyAlias} from ${oldStrategy.address} to ${newStrategy.address}`)
+
+  // Migrate strategy
   await execute(
-    PoolAccountant,
+    poolConfig.contractName,
     { from: deployer, log: true },
-    'addStrategy',
-    deployed.address,
-    strategyConfig.interestFee,
-    strategyConfig.debtRatio,
-    strategyConfig.debtRate,
+    'migrateStrategy',
+    oldStrategy.address,
+    newStrategy.address,
   )
 
   const strategyVersion = await read(strategyAlias, {}, 'VERSION')
@@ -92,4 +78,4 @@ const deployFunction = async function ({ getNamedAccounts, deployments, poolConf
   return true
 }
 module.exports = deployFunction
-module.exports.tags = ['deploy-strategy']
+module.exports.tags = ['migrate-strategy']
