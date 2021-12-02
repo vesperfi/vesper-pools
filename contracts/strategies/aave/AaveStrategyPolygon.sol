@@ -84,9 +84,9 @@ abstract contract AaveStrategyPolygon is Strategy {
     function _beforeMigration(address _newStrategy) internal override {}
 
     /// @notice Claim Aave rewards and convert to _toToken.
-    function _claimRewardsAndConvertTo(address _toToken) internal override {
+    function _claimRewardsAndConvertTo(address _toToken) internal virtual override {
         uint256 _rewardAmount = _claimRewards();
-        if (_rewardAmount != 0) {
+        if (_rewardAmount != 0 && rewardToken != _toToken) {
             _safeSwap(rewardToken, _toToken, _rewardAmount, 1);
         }
     }

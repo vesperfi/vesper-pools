@@ -40,6 +40,7 @@ module.exports = {
       url: process.env.NODE_URL,
       chainId: 137,
       gas: 11700000,
+      accounts: { mnemonic: process.env.MNEMONIC || junk },
     },
     avalanche: {
       url: process.env.NODE_URL,
