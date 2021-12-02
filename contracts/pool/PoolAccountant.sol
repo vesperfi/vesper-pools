@@ -58,13 +58,7 @@ contract PoolAccountant is Initializable, Context, PoolAccountantStorageV2 {
         uint256 debtRate,
         uint256 externalDepositFee
     );
-    event StrategyRemoved(
-        address indexed strategy,
-        uint256 interestFee,
-        uint256 debtRatio,
-        uint256 debtRate,
-        uint256 externalDepositFee
-    );
+    event StrategyRemoved(address indexed strategy);
     event StrategyMigrated(
         address indexed oldStrategy,
         address indexed newStrategy,
@@ -163,12 +157,10 @@ contract PoolAccountant is Initializable, Context, PoolAccountantStorageV2 {
      */
     function removeStrategy(uint256 _index) external onlyGovernor {
         address _strategy = strategies[_index];
-        // Read storage once to save gas
-        StrategyConfig memory _strategyConfig = strategy[_strategy];
-        require(_strategyConfig.active, Errors.STRATEGY_IS_NOT_ACTIVE);
-        require(_strategyConfig.totalDebt == 0, Errors.TOTAL_DEBT_IS_NOT_ZERO);
+        require(strategy[_strategy].active, Errors.STRATEGY_IS_NOT_ACTIVE);
+        require(strategy[_strategy].totalDebt == 0, Errors.TOTAL_DEBT_IS_NOT_ZERO);
         // Adjust totalDebtRatio
-        totalDebtRatio -= _strategyConfig.debtRatio;
+        totalDebtRatio -= strategy[_strategy].debtRatio;
         // Remove strategy
         delete strategy[_strategy];
         strategies[_index] = strategies[strategies.length - 1];
@@ -183,13 +175,7 @@ contract PoolAccountant is Initializable, Context, PoolAccountantStorageV2 {
             }
         }
         withdrawQueue = _withdrawQueue;
-        emit StrategyRemoved(
-            _strategy,
-            _strategyConfig.interestFee,
-            _strategyConfig.debtRatio,
-            _strategyConfig.debtRate,
-            _strategyConfig.externalDepositFee
-        );
+        emit StrategyRemoved(_strategy);
 
         // Recalculate pool level externalDepositFee.
         _recalculatePoolExternalDepositFee();
@@ -201,13 +187,12 @@ contract PoolAccountant is Initializable, Context, PoolAccountantStorageV2 {
      * @param _externalDepositFee New external deposit fee
      */
     function updateExternalDepositFee(address _strategy, uint256 _externalDepositFee) external onlyGovernor {
-        // Read storage once to save gas
-        StrategyConfig memory _strategyConfig = strategy[_strategy];
-        require(_strategyConfig.active, Errors.STRATEGY_IS_NOT_ACTIVE);
+        require(strategy[_strategy].active, Errors.STRATEGY_IS_NOT_ACTIVE);
         require(_externalDepositFee <= MAX_BPS, Errors.FEE_LIMIT_REACHED);
+        uint256 _oldExternalDepositFee = strategy[_strategy].externalDepositFee;
         // Write to storage
         strategy[_strategy].externalDepositFee = _externalDepositFee;
-        emit UpdatedExternalDepositFee(_strategy, _strategyConfig.externalDepositFee, _externalDepositFee);
+        emit UpdatedExternalDepositFee(_strategy, _oldExternalDepositFee, _externalDepositFee);
 
         // Recalculate pool level externalDepositFee.
         _recalculatePoolExternalDepositFee();
@@ -254,11 +239,9 @@ contract PoolAccountant is Initializable, Context, PoolAccountantStorageV2 {
      * @param _debtRatio New debt ratio
      */
     function updateDebtRatio(address _strategy, uint256 _debtRatio) external onlyMaintainer {
-        // Read storage once to save gas
-        StrategyConfig memory _strategyConfig = strategy[_strategy];
-        require(_strategyConfig.active, Errors.STRATEGY_IS_NOT_ACTIVE);
+        require(strategy[_strategy].active, Errors.STRATEGY_IS_NOT_ACTIVE);
         // Update totalDebtRatio
-        totalDebtRatio = (totalDebtRatio - _strategyConfig.debtRatio) + _debtRatio;
+        totalDebtRatio = (totalDebtRatio - strategy[_strategy].debtRatio) + _debtRatio;
         require(totalDebtRatio <= MAX_BPS, Errors.DEBT_RATIO_LIMIT_REACHED);
         // Write to storage
         strategy[_strategy].debtRatio = _debtRatio;
@@ -463,8 +446,9 @@ contract PoolAccountant is Initializable, Context, PoolAccountantStorageV2 {
         // calculate poolExternalDepositFee and weightedFee for each strategy
         if (totalDebtRatio != 0) {
             for (uint256 i = 0; i < _len; i++) {
-                StrategyConfig memory _strategy = strategy[strategies[i]];
-                _externalDepositFee += (_strategy.externalDepositFee * _strategy.debtRatio) / totalDebtRatio;
+                _externalDepositFee +=
+                    (strategy[strategies[i]].externalDepositFee * strategy[strategies[i]].debtRatio) /
+                    totalDebtRatio;
             }
         }
 
