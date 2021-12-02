@@ -9,49 +9,17 @@ task('deploy-pool', 'Deploy vesper pool')
   .addParam('pool', 'Vesper pool name')
   .addOptionalParam('release', 'Vesper release semantic version. It will create release file under /releases directory')
   .addOptionalParam('targetChain', 'Target chain where contracts will be deployed')
-  .addOptionalParam(
-    'deployParams',
-    `any param passed inside deployParams object will be passed to hardhat-deploy
-  -----------------------------------------------------------------------------------------
-  deploy-scripts      override deploy script folder path
-  export              export current network deployments
-  export-all          export all deployments into one file
-  gasprice            gas price to use for transactions
-  no-compile          disable pre compilation
-  no-impersonation    do not impersonate unknown accounts
-  reset               whether to delete deployments files first
-  silent              whether to remove log
-  tags                specify which deploy script to execute via tags, separated by commas
-  watch               redeploy on every change of contract or deploy script
-  write               whether to write deployments to file
-  -----------------------------------------------------------------------------------------
-  `,
-  )
+  .addOptionalParam('deployParams', "Run 'npx hardhat deploy --help' to see all supported params")
   .addOptionalParam(
     'poolParams',
     `any param passed inside poolParams object will be used to prepare pool configuration
   -----------------------------------------------------------------------------------------
   rewardsToken        Rewards token address for poolRewards
+  growToken           Grow token address for Vesper earn drip, if applicable
   -----------------------------------------------------------------------------------------
   `,
   )
-  .addOptionalParam(
-    'strategyParams',
-    `any param passed inside strategyParam object will be used to prepare strategy configuration
-  -----------------------------------------------------------------------------------------
-  name                strategy contract name
-  collateralToken     name of pool collateral token
-  interestFee         interest fee of this strategy
-  debtRatio           debt ratio for this strategy
-  debtRate            debt rate of this strategy
-  swapManager         swap manager address
-  addressListFactory  factory address
-  feeCollector        fee collector address
-  keeper              address we want to add as keeper
-  fusePoolId          Fuse pool id, if applicable
-  -----------------------------------------------------------------------------------------
-  `,
-  )
+  .addOptionalParam('strategyParams', "Run 'npx hardhat strategy-configuration --help' to see all supported params")
   .setAction(async function ({
     pool,
     release,
@@ -83,12 +51,12 @@ task('deploy-pool', 'Deploy vesper pool')
       poolParams = JSON.parse(poolParams)
     } else {
       console.log('Using VSP as default pool rewards token')
-      poolParams.rewardsToken = Address.VSP
+      poolParams.rewardsToken = [Address.VSP]
     }
 
-    hre.poolConfig = require(`../helper/${targetChain}/poolConfig`)[pool.toUpperCase()]
-    // TODO There is room for improvement for whole pool deployment stuff IMO
-    hre.poolConfig.rewardsToken = poolParams.rewardsToken
+    const poolConfig = require(`../helper/${targetChain}/poolConfig`)[pool.toUpperCase()]
+    hre.poolConfig = { ...poolConfig, ...poolParams }
+
     await run('strategy-configuration', { strategyParams })
 
     const networkDir = `./deployments/${hreNetwork}`

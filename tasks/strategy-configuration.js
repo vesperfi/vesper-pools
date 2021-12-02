@@ -16,6 +16,10 @@ task('strategy-configuration', 'Prepare strategy configuration for deployment')
   feeCollector        fee collector address
   keeper              address we want to add as keeper
   fusePoolId          Fuse pool id, if applicable
+  growPool            Vesper pool address, typically vDAI, for Vesper Maker strategies
+  gemJoins            Gem Join address for Maker strategy
+  highWater           High water mark value for Maker strategy
+  lowWater            Low water mark value for Maker strategy
   -----------------------------------------------------------------------------------------
   `,
   )
@@ -44,6 +48,7 @@ task('strategy-configuration', 'Prepare strategy configuration for deployment')
       tokenDecimal = await token.decimals()
     }
 
+    console.log(tokenSymbol)
     // Make sure pool and strategy config has same collateral
     if (tokenSymbol.toUpperCase() !== strategyParams.collateralToken.toUpperCase()) {
       throw new Error('Collateral token mismatch')
@@ -67,7 +72,7 @@ task('strategy-configuration', 'Prepare strategy configuration for deployment')
         : ethers.utils.parseUnits('1000000', tokenDecimal).toString(),
     }
 
-    // Prepare maker specific configuration data
+    // Prepare Maker strategy specific configuration data
     if (strategyParams.name.toUpperCase().includes('MAKER')) {
       if (!strategyParams.gemJoins || !strategyParams.highWater || !strategyParams.lowWater) {
         throw new Error('Missing Maker strategy specific configuration')
@@ -78,6 +83,14 @@ task('strategy-configuration', 'Prepare strategy configuration for deployment')
         lowWater: strategyParams.lowWater,
       }
       strategyConfig.maker = maker
+
+      // If strategy is VesperMaker or EarnVesperMaker
+      if (strategyParams.name.toUpperCase().includes('VESPER')) {
+        if (!strategyParams.growPool) {
+          throw new Error('Vesper grow pool address is required for Vesper Maker strategy')
+        }
+        strategyConfig.growPool = strategyParams.growPool
+      }
     }
 
     if (strategyParams.name === 'RariFuseStrategy') {
