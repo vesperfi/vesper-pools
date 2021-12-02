@@ -419,6 +419,26 @@
           "RariFuseStrategy#6": "0x8B3AC0f18Eae871b83b9212345E736735e6604d6",
           "RariFuseStrategy#7": "0xc6e5505d7C501D51e9d69669b1C393079Fc426D0"
         }
+      },
+      "vedai_wbtc": {
+        "pool": {
+          "proxyAdmin": "0xd9A5df2877a42460E9055C4134946668dfcf51f8",
+          "proxy": "0x35B225880df01cde935Db463D0e70a9e737D516E",
+          "implementation": "0xBd7aE7A3792bE08a7c0F482070308760EA64DB39",
+          "poolAccountant": {
+            "proxyAdmin": "0xd9A5df2877a42460E9055C4134946668dfcf51f8",
+            "proxy": "0x75619E9F479f9415630d21dDc99919da47c0a737",
+            "implementation": "0xad947C580F8d9Ed576222E172573d491774A5E68"
+          }
+        },
+        "poolRewards": {
+          "proxyAdmin": "0xd9A5df2877a42460E9055C4134946668dfcf51f8",
+          "proxy": "0x7465E30ed5487d62a158625cf38Ae0E9a5Ea733B",
+          "implementation": "0xF8051D7D3551F834308b49F4a547C2c403Bf4217"
+        },
+        "strategies": {
+          "EarnVesperStrategyDAIWBTC": "0x9B11078F5e8345d074498a83C4f9824942F796d3"
+        }
       }
     }
   }
