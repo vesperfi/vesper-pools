@@ -20,6 +20,8 @@ const { BigNumber: BN } = require('ethers')
 const { ethers } = require('hardhat')
 const { advanceBlock } = require('../utils/time')
 const { getChain } = require('../utils/chains')
+const { NATIVE_TOKEN } = require(`../../helper/${getChain()}/address`)
+
 const DECIMAL18 = BN.from('1000000000000000000')
 const MAX_BPS = BN.from('10000')
 async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false) {
@@ -510,8 +512,9 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
         expect(totalDebtAfter).to.be.lt(totalDebtBefore, `Total debt of ${poolName} is wrong after withdraw`)
         await rebalance(strategies)
         totalDebtAfter = await pool.totalDebt()
-        expect(totalDebtAfter).to.be.lte(
-          maxTotalDebt,
+        // Allow ~5 decimals tolerance
+        expect(totalDebtAfter.div(100000)).to.be.lte(
+          maxTotalDebt.div(100000),
           `Total debt of ${poolName} is wrong after withdraw and rebalance`,
         )
       })
@@ -614,24 +617,28 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
         })
 
         it('Users should collect profits in dripToken using claimReward', async function () {
-          const dripTokenBalanceBefore = await dripToken.balanceOf(user1.address)
-
           await deposit(20, user1)
+
+          const dripTokenBalanceBefore =
+            dripToken.address === NATIVE_TOKEN
+              ? await ethers.provider.getBalance(user1.address)
+              : await dripToken.balanceOf(user1.address)
+
           await rebalance(strategies)
           // Time travel to generate earning
           await timeTravel(30 * 24 * 60 * 60)
           await rebalance(strategies)
           await rebalance(strategies)
           await earnDrip.claimReward(user1.address)
-
-          const dripTokenBalanceAfter = await dripToken.balanceOf(user1.address)
+          const dripTokenBalanceAfter =
+            dripToken.address === NATIVE_TOKEN
+              ? await ethers.provider.getBalance(user1.address)
+              : await dripToken.balanceOf(user1.address)
 
           expect(dripTokenBalanceAfter).to.be.gt(dripTokenBalanceBefore, `dripToken balance in ${poolName} is wrong`)
         })
 
         it('Users should collect profits in dripToken on withdraw', async function () {
-          const dripTokenBalanceBefore = await dripToken.balanceOf(user1.address)
-
           await deposit(20, user1)
           await rebalance(strategies)
           // Time travel to generate earning
@@ -639,9 +646,24 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
           await rebalance(strategies)
           await rebalance(strategies)
           const withdrawAmount = await pool.balanceOf(user1.address)
-          await pool.connect(user1.signer).withdraw(withdrawAmount)
 
-          const dripTokenBalanceAfter = await dripToken.balanceOf(user1.address)
+          let dripTokenBalanceBefore =
+            dripToken.address === NATIVE_TOKEN
+              ? await ethers.provider.getBalance(user1.address)
+              : await dripToken.balanceOf(user1.address)
+
+          await timeTravel(7 * 24 * 60 * 60)
+
+          const withdrawTx = await (await pool.connect(user1.signer).withdraw(withdrawAmount)).wait()
+
+          if (dripToken.address === NATIVE_TOKEN) {
+            dripTokenBalanceBefore = dripTokenBalanceBefore.sub(withdrawTx.cumulativeGasUsed)
+          }
+
+          const dripTokenBalanceAfter =
+            dripToken.address === NATIVE_TOKEN
+              ? await ethers.provider.getBalance(user1.address)
+              : await dripToken.balanceOf(user1.address)
 
           expect(dripTokenBalanceAfter).to.be.gt(dripTokenBalanceBefore, `dripToken balance in ${poolName} is wrong`)
         })

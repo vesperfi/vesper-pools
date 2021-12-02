@@ -8,6 +8,8 @@ const swapper = require('../utils/tokenSwapper')
 const { BigNumber: BN } = require('ethers')
 const { ethers } = require('hardhat')
 const { shouldBehaveLikeStrategy } = require('../behavior/strategy')
+const { shouldBehaveLikePool } = require('../behavior/vesper-pool')
+
 describe('vETH pool strategies', function () {
   const interestFee = '1500' // 15%
   const ONE_MILLION = ethers.utils.parseEther('1000000')
@@ -75,6 +77,10 @@ describe('vETH pool strategies', function () {
     for (const strategy of this.strategies) {
       await strategy.instance.approveGrowToken()
     }
+  })
+
+  describe('Pool Tests', function () {
+    shouldBehaveLikePool('veETH', 'ETH', true)
   })
 
   for (let i = 0; i < strategies.length; i++) {

@@ -14,13 +14,7 @@ const { shouldBehaveLikeCreamStrategy } = require('../behavior/cream-strategy')
 const { shouldBehaveLikeCrvStrategy } = require('../behavior/crv-strategy')
 const { shouldBehaveLikeEarnMakerStrategy } = require('../behavior/earn-maker-strategy')
 const { shouldBehaveLikeEarnVesperMakerStrategy } = require('../behavior/earn-vesper-maker-strategy')
-const { shouldBehaveLikeEarnCompoundStrategy } = require('../behavior/earn-compound-strategy')
 const { shouldBehaveLikeEarnCreamStrategy } = require('../behavior/earn-cream-strategy')
-const { shouldBehaveLikeEarnAaveStrategy } = require('../behavior/earn-aave-strategy')
-const { shouldBehaveLikeEarnRariFuseStrategy } = require('../behavior/earn-rari-fuse-strategy')
-const { shouldBehaveLikeEarnAlphaLendStrategy } = require('../behavior/earn-alpha-lend-strategy')
-const { shouldBehaveLikeEarnYearnStrategy } = require('../behavior/earn-yearn-strategy')
-const { shouldBehaveLikeEarnCrvStrategy } = require('../behavior/earn-crv-strategy')
 const { shouldBehaveLikeRariFuseStrategy } = require('./rari-fuse-strategy')
 const { shouldBehaveLikeEarnVesperStrategy } = require('../behavior/earn-vesper-strategy')
 const swapper = require('../utils/tokenSwapper')
@@ -43,13 +37,7 @@ function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
     [StrategyType.CURVE]: shouldBehaveLikeCrvStrategy,
     [StrategyType.EARN_MAKER]: shouldBehaveLikeEarnMakerStrategy,
     [StrategyType.EARN_VESPER_MAKER]: shouldBehaveLikeEarnVesperMakerStrategy,
-    [StrategyType.EARN_COMPOUND]: shouldBehaveLikeEarnCompoundStrategy,
     [StrategyType.EARN_CREAM]: shouldBehaveLikeEarnCreamStrategy,
-    [StrategyType.EARN_AAVE]: shouldBehaveLikeEarnAaveStrategy,
-    [StrategyType.EARN_RARI_FUSE]: shouldBehaveLikeEarnRariFuseStrategy,
-    [StrategyType.EARN_ALPHA_LEND]: shouldBehaveLikeEarnAlphaLendStrategy,
-    [StrategyType.EARN_YEARN]: shouldBehaveLikeEarnYearnStrategy,
-    [StrategyType.EARN_CURVE]: shouldBehaveLikeEarnCrvStrategy,
     [StrategyType.EARN_VESPER]: shouldBehaveLikeEarnVesperStrategy,
     [StrategyType.RARI_FUSE]: shouldBehaveLikeRariFuseStrategy,
   }

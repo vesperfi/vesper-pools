@@ -9,7 +9,7 @@ const { shouldValidateMakerCommonBehaviour } = require('./maker-common')
 async function shouldBehaveLikeEarnMakerStrategy(strategyIndex) {
   let pool, strategy
   let collateralToken, cm
-  let user1, user2, earnDrip
+  let user1, user2
   async function updateRate() {
     await executeIfExist(strategy.instance.token.exchangeRateCurrent)
     // Update rate using Jug drip
@@ -36,8 +36,6 @@ async function shouldBehaveLikeEarnMakerStrategy(strategyIndex) {
         proxyAdmin.address,
         initData,
       ])
-      // Get implementation from proxy
-      earnDrip = await ethers.getContractAt('VesperEarnDrip', proxy.address)
       await pool.updatePoolRewards(proxy.address)
     })
 
@@ -59,22 +57,6 @@ async function shouldBehaveLikeEarnMakerStrategy(strategyIndex) {
           const feeBalanceAfter = await dai.balanceOf(fc)
           expect(feeBalanceAfter).to.be.gt(feeBalanceBefore, 'Fee should increase')
         })
-      })
-
-      it('Should increase dai balance on rebalance', async function () {
-        await deposit(pool, collateralToken, 40, user2)
-        await strategy.instance.rebalance()
-        const dai = await ethers.getContractAt('ERC20', Address.DAI)
-        const tokenBalanceBefore = await dai.balanceOf(earnDrip.address)
-        await timeTravel(10 * 24 * 60 * 60, 'compound')
-        await strategy.instance.rebalance()
-        const tokenBalanceAfter = await dai.balanceOf(earnDrip.address)
-        expect(tokenBalanceAfter).to.be.gt(tokenBalanceBefore, 'Should increase dai balance in aave maker strategy')
-        await timeTravel()
-        const withdrawAmount = await pool.balanceOf(user2.address)
-        await pool.connect(user2.signer).withdrawETH(withdrawAmount)
-        const earnedDai = await dai.balanceOf(user2.address)
-        expect(earnedDai).to.be.gt(0, 'No dai earned')
       })
 
       it('Should increase vault debt on rebalance', async function () {

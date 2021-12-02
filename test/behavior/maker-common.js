@@ -79,7 +79,7 @@ function shouldValidateMakerCommonBehaviour(strategyIndex) {
 
     it('Verify convertFrom18 is implemented correctly', async function () {
       const expected = ethers.utils.parseUnits('1', collateralDecimal)
-      const actual = await strategy.convertFrom18(DECIMAL18)
+      const actual = await strategy.instance.convertFrom18(DECIMAL18)
       expect(actual).to.be.equal(expected, 'Conversion from 18 is wrong')
     })
 
