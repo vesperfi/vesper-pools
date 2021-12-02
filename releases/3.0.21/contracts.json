@@ -439,6 +439,45 @@
         "strategies": {
           "EarnVesperStrategyDAIWBTC": "0x9B11078F5e8345d074498a83C4f9824942F796d3"
         }
+      },
+      "vedai_eth": {
+        "pool": {
+          "proxy": "0xabfF8F065318a8CF0dE66Bd1E90E976381859Ef0",
+          "implementation": "0x61bF33417E7FBA8E9D8b024EFD437e274056599B",
+          "poolAccountant": {
+            "proxy": "0x6f466F8bf346b10D28d13379bBa420748dAEA70f",
+            "implementation": "0x651e0916Ef10885406EB5ec98f5768F2F578c87d"
+          }
+        },
+        "poolRewards": {
+          "proxy": "0x228cDF26FDC1c648590895a0e81f2b9e76B1B3D2",
+          "implementation": "0x1c282eF2a23CF5C40DAF482785B0188ce3A3eaad"
+        },
+        "strategies": {
+          "EarnVesperStrategyDAIWETH": "0xD9e153F629A55992f5Fc699442e50E386e3336B0"
+        }
+      }
+    },
+    "localhost": {
+      "vedai_eth": {
+        "pool": {
+          "proxyAdmin": "0x51A1ceB83B83F1985a81C295d1fF28Afef186E02",
+          "proxy": "0x202CCe504e04bEd6fC0521238dDf04Bc9E8E15aB",
+          "implementation": "0x0355B7B8cb128fA5692729Ab3AAa199C1753f726",
+          "poolAccountant": {
+            "proxyAdmin": "0x51A1ceB83B83F1985a81C295d1fF28Afef186E02",
+            "proxy": "0x8198f5d8F8CfFE8f9C413d98a0A55aEB8ab9FbB7",
+            "implementation": "0x36b58F5C1969B7b6591D752ea6F5486D069010AB"
+          }
+        },
+        "poolRewards": {
+          "proxyAdmin": "0x51A1ceB83B83F1985a81C295d1fF28Afef186E02",
+          "proxy": "0x4EE6eCAD1c2Dae9f525404De8555724e3c35d07B",
+          "implementation": "0x172076E0166D1F9Cc711C77Adf8488051744980C"
+        },
+        "strategies": {
+          "EarnVesperStrategyDAIWETH": "0x2B0d36FACD61B71CC05ab8F3D2355ec3631C0dd5"
+        }
       }
     }
   }
