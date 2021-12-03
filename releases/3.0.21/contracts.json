@@ -456,27 +456,23 @@
         "strategies": {
           "EarnVesperStrategyDAIWETH": "0xD9e153F629A55992f5Fc699442e50E386e3336B0"
         }
-      }
-    },
-    "localhost": {
-      "vedai_eth": {
+      },
+      "vausdc": {
         "pool": {
-          "proxyAdmin": "0x51A1ceB83B83F1985a81C295d1fF28Afef186E02",
-          "proxy": "0x202CCe504e04bEd6fC0521238dDf04Bc9E8E15aB",
-          "implementation": "0x0355B7B8cb128fA5692729Ab3AAa199C1753f726",
+          "proxy": "0xa8b607Aa09B6A2E306F93e74c282Fb13f6A80452",
+          "implementation": "0xff97999A82bBee3F2A2FabF0b1F96CE472Bb0532",
           "poolAccountant": {
-            "proxyAdmin": "0x51A1ceB83B83F1985a81C295d1fF28Afef186E02",
-            "proxy": "0x8198f5d8F8CfFE8f9C413d98a0A55aEB8ab9FbB7",
-            "implementation": "0x36b58F5C1969B7b6591D752ea6F5486D069010AB"
+            "proxy": "0xa9aF8f4202996528D23d913378F92EF932eeE400",
+            "implementation": "0xce0Ae51DEA9fCBF44dC076638D2DEcD028E19659"
           }
         },
         "poolRewards": {
-          "proxyAdmin": "0x51A1ceB83B83F1985a81C295d1fF28Afef186E02",
-          "proxy": "0x4EE6eCAD1c2Dae9f525404De8555724e3c35d07B",
-          "implementation": "0x172076E0166D1F9Cc711C77Adf8488051744980C"
+          "proxy": "0x2F59B0F98A08E733C66dFB42Bd8E366dC2cfedA6",
+          "implementation": "0x7a75d934ecd0Dffae11592E7E6955C8186273b1c"
         },
         "strategies": {
-          "EarnVesperStrategyDAIWETH": "0x2B0d36FACD61B71CC05ab8F3D2355ec3631C0dd5"
+          "RariFuseStrategy#18": "0x3f46812E5b11A1b88B7b757b3caFF965e458f380",
+          "RariFuseStrategy#6": "0xA92F21CF2923cd634922d193fC8eEaf05CBefb65"
         }
       }
     }
