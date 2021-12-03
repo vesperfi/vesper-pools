@@ -6,8 +6,12 @@ import "../../interfaces/aave/IAaveV1.sol";
 import "../Strategy.sol";
 
 /// @dev This strategy will deposit collateral token in Aave and earn interest.
-abstract contract AaveV1Strategy is Strategy {
+contract AaveV1Strategy is Strategy {
     using SafeERC20 for IERC20;
+
+    // solhint-disable-next-line var-name-mixedcase
+    string public NAME;
+    string public constant VERSION = "3.0.22";
 
     AaveAddressesProvider public aaveAddressesProvider =
         AaveAddressesProvider(0x24a42fD28C976A61Df5D00D0599C34c4f90748c8);
@@ -19,12 +23,14 @@ abstract contract AaveV1Strategy is Strategy {
     constructor(
         address _pool,
         address _swapManager,
-        address _receiptToken
+        address _receiptToken,
+        string memory _name
     ) Strategy(_pool, _swapManager, _receiptToken) {
         require(_receiptToken != address(0), "aToken-address-is-zero");
         aToken = AToken(_receiptToken);
         aaveLendingPool = AavePool(aaveAddressesProvider.getLendingPool());
         aaveLendingPoolCore = AavePoolCore(aaveAddressesProvider.getLendingPoolCore());
+        NAME = _name;
     }
 
     /**

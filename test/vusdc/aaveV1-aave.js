@@ -1,28 +1,19 @@
 'use strict'
 const { prepareConfig } = require('./config')
 const { shouldBehaveLikeStrategy } = require('../behavior/strategy')
-const StrategyType = require('../utils/strategyTypes')
-const { ethers } = require('hardhat')
-const ONE_MILLION = ethers.utils.parseEther('1000000')
+
+const { strategyConfig } = require('../utils/chains').getChainData()
+const AaveStrategyUSDC = strategyConfig.AaveStrategyUSDC
+const AaveV1StrategyUSDC = strategyConfig.AaveV1StrategyUSDC
 
 describe('vUSDC with aaveV1 and aave strategies', function () {
-  const _interestFee = '1500' // 15%
-  const _strategies = [
-    {
-      name: 'AaveStrategyUSDC',
-      type: StrategyType.AAVE,
-      config: { _interestFee, debtRatio: 4000, debtRate: ONE_MILLION },
-    },
-    {
-      name: 'AaveV1StrategyUSDC',
-      type: StrategyType.AAVE_V1,
-      config: { _interestFee, debtRatio: 4000, debtRate: ONE_MILLION },
-    },
-  ]
+  AaveStrategyUSDC.config.debtRatio = 4000
+  AaveV1StrategyUSDC.config.debtRatio = 4000
+  const _strategies = [AaveStrategyUSDC, AaveV1StrategyUSDC]
 
   const strategies = prepareConfig(_strategies)
 
   for (let i = 0; i < strategies.length; i++) {
-    shouldBehaveLikeStrategy(i, strategies[i].type, strategies[i].name)
+    shouldBehaveLikeStrategy(i, strategies[i].type, strategies[i].contract)
   }
 })

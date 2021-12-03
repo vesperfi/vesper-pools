@@ -14,6 +14,9 @@ const Address = {
   WBTC: '0x50b7545627a5162F82A992c33b87aDc75187B218',
   FEE_COLLECTOR: '0xAdB5ef0CA9029b340bCCDEf005aef442C7F91C96',
   MULTICALL: '0x98e2060F672FD1656a07bc12D7253b5e41bF3876',
+  Aave: {
+    avDAI: '0x47AFa96Cdc9fAb46904A55a6ad4bf6660B53c38a',
+  },
 }
 
 module.exports = Object.freeze(Address)
