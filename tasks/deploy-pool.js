@@ -57,8 +57,6 @@ task('deploy-pool', 'Deploy vesper pool')
     const poolConfig = require(`../helper/${targetChain}/poolConfig`)[pool.toUpperCase()]
     hre.poolConfig = { ...poolConfig, ...poolParams }
 
-    // TODO There is room for improvement for whole pool deployment stuff IMO
-    hre.poolConfig.rewardsToken = poolParams.rewardsToken
     await run('strategy-configuration', { strategyParams })
 
     const networkDir = `./deployments/${hreNetwork}`
