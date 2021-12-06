@@ -126,6 +126,7 @@
     },
     "mainnet": {
       "collateralManager": "0xaBC64889601F01e7B26277Ef8756250d6ABf8c18",
+      "vspBuyBack": "0x9bcdf1130b20856f86267074de136c5902e314fe",
       "vuni": {
         "pool": {
           "proxyAdmin": "0x19A02f3512BdF78114B3c50f7d22a34b1B2798cA",
