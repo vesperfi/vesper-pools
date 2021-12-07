@@ -66,7 +66,7 @@ abstract contract Earn is Strategy {
     /**
      * @notice Send this earning to drip contract.
      */
-    function _forwardEarning() internal {
+    function _forwardEarning() internal virtual {
         (, uint256 _interestFee, , , , , , ) = IVesperPool(pool).strategy(address(this));
         address _dripContract = IVesperPool(pool).poolRewards();
         uint256 _earned = IERC20(dripToken).balanceOf(address(this));

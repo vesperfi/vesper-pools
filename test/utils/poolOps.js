@@ -10,6 +10,7 @@ const StrategyType = require('../utils/strategyTypes')
 const { parseEther } = require('@ethersproject/units')
 const { adjustBalance } = require('./balance')
 const { getChain } = require('../utils/chains')
+const address = require('../../helper/mainnet/address')
 const { NATIVE_TOKEN, DAI, MIM } = require(`../../helper/${getChain()}/address`)
 
 async function executeIfExist(fn) {
@@ -56,6 +57,33 @@ async function deposit(pool, token, amount, depositor) {
     await pool.connect(depositor.signer).deposit(depositAmount)
   }
   return depositAmount
+}
+
+// eslint-disable-next-line max-params
+async function timeTravel(
+  seconds = 6 * 60 * 60,
+  blocks = 25,
+  strategyType = '',
+  underlayStrategy = '',
+  strategies = [],
+) {
+  const timeTravelFn = async function () {
+    await provider.send('evm_increaseTime', [seconds])
+    await provider.send('evm_mine')
+  }
+  const blockMineFn = async function () {
+    for (let i = 0; i < blocks; i++) {
+      await provider.send('evm_mine')
+    }
+  }
+  let isCompoundStrategy = strategyType.includes('compound') || underlayStrategy.includes('compound')
+  strategies.forEach(function (strategy) {
+    if (strategy.type.includes('compound')) {
+      isCompoundStrategy = true
+    }
+  })
+
+  return isCompoundStrategy ? blockMineFn() : timeTravelFn()
 }
 
 async function bringAboveWater(strategy, amount) {
@@ -134,6 +162,13 @@ async function harvestVesper(strategy) {
   if (strategy.type === 'earnVesperMaker') {
     return harvestVesperMaker(strategy)
   }
+  if (strategy.type.includes('earnVesper')) {
+    const dripToken = await strategy.instance.dripToken()
+    if (dripToken === ethers.utils.getAddress(address.VSP)) {
+      // wait 24hrs between rebalance due to vVSP's lock period
+      await timeTravel(3600 * 24)
+    }
+  }
   return harvestYearn(strategy)
 }
 
@@ -185,33 +220,6 @@ async function rebalance(strategies) {
     txs.push(tx)
   }
   return txs
-}
-
-// eslint-disable-next-line max-params
-async function timeTravel(
-  seconds = 6 * 60 * 60,
-  blocks = 25,
-  strategyType = '',
-  underlayStrategy = '',
-  strategies = [],
-) {
-  const timeTravelFn = async function () {
-    await provider.send('evm_increaseTime', [seconds])
-    await provider.send('evm_mine')
-  }
-  const blockMineFn = async function () {
-    for (let i = 0; i < blocks; i++) {
-      await provider.send('evm_mine')
-    }
-  }
-  let isCompoundStrategy = strategyType.includes('compound') || underlayStrategy.includes('compound')
-  strategies.forEach(function (strategy) {
-    if (strategy.type.includes('compound')) {
-      isCompoundStrategy = true
-    }
-  })
-
-  return isCompoundStrategy ? blockMineFn() : timeTravelFn()
 }
 
 /**
