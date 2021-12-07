@@ -6,12 +6,13 @@ import "../CompoundStrategy.sol";
 import "../../VFR.sol";
 
 // solhint-disable no-empty-blocks
-abstract contract CompoundStableStrategy is CompoundStrategy, VFR {
+contract CompoundStableStrategy is CompoundStrategy, VFR {
     constructor(
         address _pool,
         address _swapManager,
-        address _receiptToken
-    ) CompoundStrategy(_pool, _swapManager, _receiptToken) {}
+        address _receiptToken,
+        string memory _name
+    ) CompoundStrategy(_pool, _swapManager, _receiptToken, _name) {}
 
     function _realizeProfit(uint256 _totalDebt) internal override returns (uint256 _profit) {
         _profit = _handleStableProfit(pool, super._realizeProfit(_totalDebt));

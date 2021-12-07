@@ -101,39 +101,182 @@ const StrategyConfig = {
   },
 
   CompoundStrategyDAI: {
-    contract: 'CompoundStrategyDAI',
+    contract: 'CompoundStrategy',
     type: StrategyTypes.COMPOUND,
     constructorArgs: {
       swapManager,
+      receiptToken: Address.Compound.cDAI,
+      strategyName: 'CompoundStrategyDAI',
+    },
+    config,
+  },
+
+  CompoundStrategyETH: {
+    contract: 'CompoundStrategyETH',
+    type: StrategyTypes.COMPOUND,
+    constructorArgs: {
+      swapManager,
+      receiptToken: Address.Compound.cETH,
+      strategyName: 'CompoundStrategyETH',
     },
     config,
   },
 
   CompoundStrategyUNI: {
-    contract: 'CompoundStrategyUNI',
+    contract: 'CompoundStrategy',
     type: StrategyTypes.COMPOUND,
     constructorArgs: {
       swapManager,
+      receiptToken: Address.Compound.cUNI,
+      strategyName: 'CompoundStrategyUNI',
     },
     config,
   },
 
   CompoundStrategyUSDC: {
-    contract: 'CompoundStrategyUSDC',
+    contract: 'CompoundStrategy',
     type: StrategyTypes.COMPOUND,
     constructorArgs: {
       swapManager,
+      receiptToken: Address.Compound.cUSDC,
+      strategyName: 'CompoundStrategyUSDC',
     },
     config: { interestFee, debtRatio: 0, debtRate: ethers.utils.parseUnits('1000000', 6) },
   },
 
   CompoundStrategyUSDT: {
-    contract: 'CompoundStrategyUSDT',
+    contract: 'CompoundStrategy',
     type: StrategyTypes.COMPOUND,
     constructorArgs: {
       swapManager,
+      receiptToken: Address.Compound.cUSDT,
+      strategyName: 'CompoundStrategyUSDT',
     },
     config: { interestFee, debtRatio: 0, debtRate: ethers.utils.parseUnits('1000000', 6) },
+  },
+
+  CompoundStrategyWBTC: {
+    contract: 'CompoundStrategy',
+    type: StrategyTypes.COMPOUND,
+    constructorArgs: {
+      swapManager,
+      receiptToken: Address.Compound.cWBTC,
+      strategyName: 'CompoundStrategyWBTC',
+    },
+    config: { interestFee, debtRatio: 0, debtRate: ethers.utils.parseUnits('1000000', 8) },
+  },
+
+  EarnCompoundStrategyETH: {
+    contract: 'EarnCompoundStrategyETH',
+    type: StrategyTypes.EARN_COMPOUND,
+    constructorArgs: {
+      swapManager,
+      receiptToken: Address.Compound.cETH,
+      dripToken: Address.DAI,
+      strategyName: 'EarnCompoundStrategyETH',
+    },
+    config,
+  },
+
+  EarnCompoundStrategyWBTC: {
+    contract: 'EarnCompoundStrategy',
+    type: StrategyTypes.EARN_COMPOUND,
+    constructorArgs: {
+      swapManager,
+      receiptToken: Address.Compound.cWBTC,
+      dripToken: Address.DAI,
+      name: 'EarnCompoundStrategyWBTC',
+    },
+    config: { interestFee, debtRatio: 0, debtRate: ethers.utils.parseUnits('1000000', 8) },
+  },
+
+  CompoundCoverageStrategyDAI: {
+    contract: 'CompoundCoverageStrategy',
+    type: StrategyTypes.COMPOUND,
+    constructorArgs: {
+      swapManager,
+      receiptToken: Address.Compound.cDAI,
+      strategyName: 'CompoundCoverageStrategyDAI',
+    },
+    config,
+  },
+
+  CompoundStableStrategyDAI: {
+    contract: 'CompoundStableStrategy',
+    type: StrategyTypes.COMPOUND,
+    constructorArgs: {
+      swapManager,
+      receiptToken: Address.Compound.cDAI,
+      strategyName: 'CompoundStableStrategyDAI',
+    },
+    config,
+  },
+
+  CompoundLeverageStrategyETH: {
+    contract: 'CompoundLeverageStrategyETH',
+    type: StrategyTypes.COMPOUND_LEVERAGE,
+    constructorArgs: {
+      swapManager,
+      receiptToken: Address.Compound.cETH,
+      strategyName: 'CompoundLeverageStrategyETH',
+    },
+    config,
+  },
+
+  CompoundLeverageStrategyUNI: {
+    contract: 'CompoundLeverageStrategy',
+    type: StrategyTypes.COMPOUND_LEVERAGE,
+    constructorArgs: {
+      swapManager,
+      receiptToken: Address.Compound.cUNI,
+      strategyName: 'CompoundLeverageStrategyUNI',
+    },
+    config,
+  },
+
+  RariFuseStrategy: {
+    contract: 'RariFuseStrategy',
+    type: StrategyTypes.RARI_FUSE,
+    constructorArgs: {
+      swapManager,
+      fusePoolId: 23, // default
+      strategyName: 'RariFuseStrategy',
+    },
+    config,
+  },
+
+  RariFuseStrategyETH: {
+    contract: 'RariFuseStrategyETH',
+    type: StrategyTypes.RARI_FUSE,
+    constructorArgs: {
+      swapManager,
+      fusePoolId: 23, // default
+      strategyName: 'RariFuseStrategyETH',
+    },
+    config,
+  },
+  EarnRariFuseStrategy: {
+    contract: 'EarnRariFuseStrategy',
+    type: StrategyTypes.RARI_FUSE,
+    constructorArgs: {
+      swapManager,
+      fusePoolId: 23, // default,
+      dripToken: Address.DAI,
+      strategyName: 'EarnRariFuseStrategy',
+    },
+    config,
+  },
+
+  EarnRariFuseStrategyETH: {
+    contract: 'EarnRariFuseStrategyETH',
+    type: StrategyTypes.RARI_FUSE,
+    constructorArgs: {
+      swapManager,
+      fusePoolId: 23, // default
+      dripToken: Address.DAI,
+      strategyName: 'EarnRariFuseStrategyETH',
+    },
+    config,
   },
 }
 

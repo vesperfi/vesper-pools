@@ -9,8 +9,9 @@ const { advanceBlock } = require('../utils/time')
 const COMP = '0xc00e94Cb662C3520282E6f5717214004A7f26888'
 const COMPTROLLER = '0x3d9819210A31b4961b30EF54bE2aeD79B9c9Cd3B'
 const cETH = '0x4Ddc2D193948926D02f9B1fE9e1daa0718270ED5'
-const { ethers } = require('hardhat')
 const hre = require('hardhat')
+const { ethers } = hre
+
 const { BigNumber: BN } = require('ethers')
 const DECIMAL18 = BN.from('1000000000000000000')
 
@@ -41,10 +42,10 @@ function shouldBehaveLikeCompoundStrategy(strategyIndex) {
     })
 
     it('Should get total value', async function () {
-      deposit(pool, collateralToken, 1, user1)
+      await deposit(pool, collateralToken, 1, user1)
       await strategy.rebalance()
       const totalValue = await strategy.totalValue()
-      expect(totalValue).to.be.equal(0, 'Total tokens should be zero')
+      expect(totalValue).to.be.gt(0, 'Total tokens should be > zero')
     })
 
     it('Should claim COMP when rebalance is called', async function () {

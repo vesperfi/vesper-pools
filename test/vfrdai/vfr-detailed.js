@@ -4,45 +4,24 @@ const { expect } = require('chai')
 const { ethers } = require('hardhat')
 
 const { DAI } = require('../../helper/mainnet/address')
-const StrategyType = require('../utils/strategyTypes')
 const { rebalance, timeTravel } = require('../utils/poolOps')
 const { adjustBalance } = require('../utils/balance')
 const { deposit, withdraw, isCloseEnough, prepareConfig } = require('../utils/vfr-common')
-
+const { strategyConfig } = require('../utils/chains').getChainData()
 const { parseEther } = ethers.utils
-
-const ONE_MILLION = parseEther('1000000')
 
 describe('VFR DAI Detailed tests (non-deterministic)', function () {
   let daiGiver, user1, user2, user3
   let stablePool, stableStrategies, coveragePool, coverageStrategies
   let collateralToken
 
-  const stableStrategyConfigs = [
-    {
-      name: 'CompoundStableStrategyDAI',
-      type: StrategyType.COMPOUND,
-      config: { interestFee: 1500, debtRatio: 5000, debtRate: ONE_MILLION },
-    },
-    {
-      name: 'CompoundStableStrategyDAI',
-      type: StrategyType.COMPOUND,
-      config: { interestFee: 1500, debtRatio: 5000, debtRate: ONE_MILLION },
-    },
-  ]
+  const stableStrategy = strategyConfig.CompoundStableStrategyDAI
+  stableStrategy.config.debtRatio = 5000
+  const stableStrategyConfigs = [stableStrategy, stableStrategy]
 
-  const coverageStrategyConfigs = [
-    {
-      name: 'CompoundCoverageStrategyDAI',
-      type: StrategyType.COMPOUND,
-      config: { interestFee: 1500, debtRatio: 5000, debtRate: ONE_MILLION },
-    },
-    {
-      name: 'CompoundCoverageStrategyDAI',
-      type: StrategyType.COMPOUND,
-      config: { interestFee: 1500, debtRatio: 5000, debtRate: ONE_MILLION },
-    },
-  ]
+  const coverageStrategy = strategyConfig.CompoundCoverageStrategyDAI
+  coverageStrategy.config.debtRatio = 5000
+  const coverageStrategyConfigs = [coverageStrategy, coverageStrategy]
 
   before(async function () {
     await prepareConfig(stableStrategyConfigs, coverageStrategyConfigs)

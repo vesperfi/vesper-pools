@@ -10,8 +10,12 @@ import "../../FlashLoanHelper.sol";
 
 /// @title This strategy will deposit collateral token in Compound and based on position
 /// it will borrow same collateral token. It will use borrowed asset as supply and borrow again.
-abstract contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
+contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
     using SafeERC20 for IERC20;
+
+    // solhint-disable-next-line var-name-mixedcase
+    string public NAME;
+    string public constant VERSION = "3.0.22";
 
     uint256 internal constant MAX_BPS = 10_000; //100%
     uint256 public minBorrowRatio = 5_000; // 50%
@@ -32,10 +36,12 @@ abstract contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
     constructor(
         address _pool,
         address _swapManager,
-        address _receiptToken
+        address _receiptToken,
+        string memory _name
     ) Strategy(_pool, _swapManager, _receiptToken) {
         require(_receiptToken != address(0), "cToken-address-is-zero");
         cToken = CToken(_receiptToken);
+        NAME = _name;
     }
 
     /**

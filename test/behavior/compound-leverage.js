@@ -164,7 +164,7 @@ function shouldBehaveLikeCompoundLeverageStrategy(strategyIndex) {
       await strategy.connect(governor.signer).rebalance()
       await advanceBlock(100)
       const borrowRatioBefore = await strategy.currentBorrowRatio()
-      await strategy.connect(governor.signer).updateBorrowRatio(5500, 6500)
+      await strategy.connect(governor.signer).updateBorrowRatio(4500, 5500)
       const newMinBorrowRatio = await strategy.minBorrowRatio()
       const minBorrowRatio = await strategy.minBorrowRatio()
       await strategy.connect(governor.signer).rebalance()
@@ -186,7 +186,7 @@ function shouldBehaveLikeCompoundLeverageStrategy(strategyIndex) {
       await strategy.connect(governor.signer).rebalance()
       const borrowBefore = await token.callStatic.borrowBalanceCurrent(strategy.address)
       expect(borrowBefore).to.gt(0, 'Borrow amount should be > 0')
-      await strategy.connect(governor.signer).updateBorrowRatio(0, 6000)
+      await strategy.connect(governor.signer).updateBorrowRatio(0, 5500)
       await strategy.connect(governor.signer).rebalance()
       const borrowAfter = await token.callStatic.borrowBalanceCurrent(strategy.address)
       expect(borrowAfter).to.eq(0, 'Borrow amount should be = 0')
@@ -265,7 +265,7 @@ function shouldBehaveLikeCompoundLeverageStrategy(strategyIndex) {
       console.log('APY for ETH::', calculateAPY(pricePerShare, blockElapsed))
 
       console.log('\nUpdating borrow limit and calculating APY again')
-      await strategy.connect(governor.signer).updateBorrowRatio(6000, 6500)
+      await strategy.connect(governor.signer).updateBorrowRatio(5000, 5500)
       blockNumberStart = (await ethers.provider.getBlock()).number
       minBorrowRatio = await strategy.minBorrowRatio()
       console.log('Borrowing upto', minBorrowRatio.toNumber() / 100, '% of collateral')

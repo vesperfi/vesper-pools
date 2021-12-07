@@ -7,18 +7,17 @@ function prepareConfig(_strategies) {
   let strategies = _strategies
 
   if (!strategies) {
-    const strategy1 = strategyConfig.CompoundStrategyWBTC
-    const strategy2 = strategyConfig.CompoundStrategyWBTC
-    strategy1.config.debtRatio = 4500
-    strategy2.config.debtRatio = 4500
+    const strategy1 = strategyConfig.AaveMakerStrategyETH
+    const strategy2 = strategyConfig.CompoundMakerStrategyETH
+    strategy1.config.debtRatio = 5200
+    strategy2.config.debtRatio = 4700
     strategies = [strategy1, strategy2]
   }
-
   beforeEach(async function () {
     const users = await getUsers()
     this.users = users
     await setupVPool(this, {
-      poolConfig: poolConfig.VAWBTC,
+      poolConfig: poolConfig.VAETH,
       feeCollector: users[7].address,
       strategies: strategies.map((item, i) => ({
         ...item,

@@ -4,7 +4,6 @@ const { expect } = require('chai')
 const { ethers } = require('hardhat')
 
 const { DAI, WETH } = require('../../helper/mainnet/address')
-const StrategyType = require('../utils/strategyTypes')
 const { rebalance, timeTravel } = require('../utils/poolOps')
 const { swapExactToken } = require('../utils/tokenSwapper')
 const { adjustBalance } = require('../utils/balance')
@@ -19,11 +18,11 @@ const {
   prepareConfig,
   stablePoolIsWithinTarget,
 } = require('../utils/vfr-common')
+const { strategyConfig } = require('../utils/chains').getChainData()
 
 const { parseEther } = ethers.utils
 
 const ONE = parseEther('1')
-const ONE_MILLION = parseEther('1000000')
 const COMP = '0xc00e94cb662c3520282e6f5717214004a7f26888'
 
 describe('VFR DAI Deterministic', function () {
@@ -55,31 +54,13 @@ describe('VFR DAI Deterministic', function () {
   }
 
   // It's very easy to set up deterministic behavior with Compound strategies
-  const stableStrategyConfigs = [
-    {
-      name: 'CompoundStableStrategyDAI',
-      type: StrategyType.COMPOUND,
-      config: { interestFee: 1500, debtRatio: 5000, debtRate: ONE_MILLION },
-    },
-    {
-      name: 'CompoundStableStrategyDAI',
-      type: StrategyType.COMPOUND,
-      config: { interestFee: 1500, debtRatio: 5000, debtRate: ONE_MILLION },
-    },
-  ]
+  const stableStrategy = strategyConfig.CompoundStableStrategyDAI
+  stableStrategy.config.debtRatio = 5000
+  const stableStrategyConfigs = [stableStrategy, stableStrategy]
 
-  const coverageStrategyConfigs = [
-    {
-      name: 'CompoundCoverageStrategyDAI',
-      type: StrategyType.COMPOUND,
-      config: { interestFee: 1500, debtRatio: 5000, debtRate: ONE_MILLION },
-    },
-    {
-      name: 'CompoundCoverageStrategyDAI',
-      type: StrategyType.COMPOUND,
-      config: { interestFee: 1500, debtRatio: 5000, debtRate: ONE_MILLION },
-    },
-  ]
+  const coverageStrategy = strategyConfig.CompoundCoverageStrategyDAI
+  coverageStrategy.config.debtRatio = 5000
+  const coverageStrategyConfigs = [coverageStrategy, coverageStrategy]
 
   before(async function () {
     await prepareConfig(stableStrategyConfigs, coverageStrategyConfigs)

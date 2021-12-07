@@ -6,7 +6,7 @@ import "../RariFuseStrategy.sol";
 import "../../Earn.sol";
 
 /// @title This strategy will deposit collateral token in RariFuse and earn drip in an another token.
-abstract contract EarnRariFuseStrategy is RariFuseStrategy, Earn {
+contract EarnRariFuseStrategy is RariFuseStrategy, Earn {
     using SafeERC20 for IERC20;
 
     // solhint-disable no-empty-blocks
@@ -14,8 +14,9 @@ abstract contract EarnRariFuseStrategy is RariFuseStrategy, Earn {
         address _pool,
         address _swapManager,
         uint256 _fusePoolId,
-        address _dripToken
-    ) RariFuseStrategy(_pool, _swapManager, _fusePoolId) Earn(_dripToken) {}
+        address _dripToken,
+        string memory _name
+    ) RariFuseStrategy(_pool, _swapManager, _fusePoolId, _name) Earn(_dripToken) {}
 
     // solhint-enable no-empty-blocks
 

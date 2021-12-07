@@ -6,8 +6,12 @@ import "../Strategy.sol";
 import "../../interfaces/compound/ICompound.sol";
 
 /// @title This strategy will deposit collateral token in Compound and earn interest.
-abstract contract CompoundStrategy is Strategy {
+contract CompoundStrategy is Strategy {
     using SafeERC20 for IERC20;
+
+    // solhint-disable-next-line var-name-mixedcase
+    string public NAME;
+    string public constant VERSION = "3.0.22";
 
     CToken internal cToken;
     address internal constant COMP = 0xc00e94Cb662C3520282E6f5717214004A7f26888;
@@ -16,11 +20,13 @@ abstract contract CompoundStrategy is Strategy {
     constructor(
         address _pool,
         address _swapManager,
-        address _receiptToken
+        address _receiptToken,
+        string memory _name
     ) Strategy(_pool, _swapManager, _receiptToken) {
         require(_receiptToken != address(0), "cToken-address-is-zero");
         cToken = CToken(_receiptToken);
         swapSlippage = 10000; // disable oracles on reward swaps by default
+        NAME = _name;
     }
 
     /**

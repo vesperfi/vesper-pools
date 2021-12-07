@@ -151,7 +151,7 @@ const PoolConfig = {
     feeCollector: Address.FEE_COLLECTOR,
   },
   VFRCoverageDAI: {
-    contractName: 'VFRCoveragePool',
+    contractName: 'VFRPool',
     poolParams: ['vfrcDAI Pool', 'vfrcDAI', Address.DAI],
     addressListFactory: Address.ADDRESS_LIST_FACTORY,
     withdrawFee: 60,

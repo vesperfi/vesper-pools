@@ -2,9 +2,8 @@
 
 const { ethers } = require('hardhat')
 
-const { DAI } = require('../../helper/mainnet/address')
-const PoolConfig = require('../../helper/mainnet/poolConfig')
-const { deployContract, getUsers, setupVPool } = require('./setupHelper')
+const { poolConfig, address: Address } = require('../utils/chains').getChainData()
+const { deployContract, getUsers, setupVPool } = require('./setupHelper_new')
 
 const { hexlify, parseEther, solidityKeccak256, zeroPad } = ethers.utils
 
@@ -17,7 +16,7 @@ function prepareConfig(stableStrategies, coverageStrategies) {
 
     this.stable = {}
     await setupVPool(this.stable, {
-      poolConfig: PoolConfig.VFRStableDAI,
+      poolConfig: poolConfig.VFRStableDAI,
       feeCollector: users[7].address,
       strategies: stableStrategies.map((item, i) => ({
         ...item,
@@ -28,7 +27,7 @@ function prepareConfig(stableStrategies, coverageStrategies) {
 
     this.coverage = {}
     await setupVPool(this.coverage, {
-      poolConfig: PoolConfig.VFRCoverageDAI,
+      poolConfig: poolConfig.VFRCoverageDAI,
       feeCollector: users[7].address,
       strategies: coverageStrategies.map((item, i) => ({
         ...item,
@@ -65,7 +64,7 @@ async function adjustDaiBalance(address, balance) {
   const value = hexlify(zeroPad(parseEther(balance.toString()).toHexString(), 32))
 
   // Hack the balance by directly setting the EVM storage
-  await ethers.provider.send('hardhat_setStorageAt', [DAI, index, value])
+  await ethers.provider.send('hardhat_setStorageAt', [Address.DAI, index, value])
   await ethers.provider.send('evm_mine', [])
 }
 

@@ -148,8 +148,6 @@ async function createStrategy(strategy, poolAddress, options = {}) {
     instance = await createMakerStrategy(poolAddress, strategy.name, options)
   } else if (strategyType === StrategyType.VESPER_MAKER || strategyType === StrategyType.EARN_VESPER_MAKER) {
     instance = await createVesperMakerStrategy(poolAddress, strategy.name, options)
-  } else if (strategyType === StrategyType.RARI_FUSE || strategyType === StrategyType.EARN_RARI_FUSE) {
-    instance = await deployContract(strategy.name, [poolAddress, address.SWAP_MANAGER, strategy.fusePoolId])
   } else {
     instance = await deployContract(strategy.contract, [poolAddress, ...Object.values(strategy.constructorArgs)])
   }

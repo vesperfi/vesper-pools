@@ -9,8 +9,6 @@ import "../../interfaces/rari-fuse/IFusePoolDirectory.sol";
 /// @title This strategy will deposit collateral token in a Rari Fuse Pool and earn interest.
 contract RariFuseStrategy is CompoundStrategy {
     using SafeERC20 for IERC20;
-    string public constant NAME = "RariFuse-Strategy";
-    string public constant VERSION = "3.0.13";
     uint256 public fusePoolId;
     address private constant FUSE_POOL_DIRECTORY = 0x835482FE0532f169024d5E9410199369aAD5C77E;
     event FusePoolChanged(uint256 indexed newFusePoolId, address indexed oldCToken, address indexed newCToken);
@@ -18,8 +16,16 @@ contract RariFuseStrategy is CompoundStrategy {
     constructor(
         address _pool,
         address _swapManager,
-        uint256 _fusePoolId
-    ) CompoundStrategy(_pool, _swapManager, _cTokenByUnderlying(_fusePoolId, address(IVesperPool(_pool).token()))) {
+        uint256 _fusePoolId,
+        string memory _name
+    )
+        CompoundStrategy(
+            _pool,
+            _swapManager,
+            _cTokenByUnderlying(_fusePoolId, address(IVesperPool(_pool).token())),
+            _name
+        )
+    {
         fusePoolId = _fusePoolId;
     }
 
