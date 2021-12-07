@@ -27,3 +27,5 @@ coverage.json
 #deployment
 deployments/localhost/*
 deployments/*/failed
+
+*~

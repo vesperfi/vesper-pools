@@ -495,6 +495,23 @@
           "RariFuseStrategy#18": "0x3f46812E5b11A1b88B7b757b3caFF965e458f380",
           "RariFuseStrategy#6": "0xA92F21CF2923cd634922d193fC8eEaf05CBefb65"
         }
+      },
+      "vedai_dpi": {
+        "pool": {
+          "proxy": "0xe4Fe646A43DAEC8323922cA3e4Fe782d70805d93",
+          "implementation": "0x672e5873D99E16081d4C5f1C1668cBbC7620C881",
+          "poolAccountant": {
+            "proxy": "0x8b41B47078dc38Be3d1eecf5A3d9B241ebAECdA1",
+            "implementation": "0x7BcEAe57C71C71a65fAA29353fBeB512BA5864D9"
+          }
+        },
+        "poolRewards": {
+          "proxy": "0xf6aa8d4F13feAF94a5F558c07D75580B3C9Ccc9E",
+          "implementation": "0xef5D81CAF50A54F9185E5b1EF2036193F8f7A53a"
+        },
+        "strategies": {
+          "EarnVesperStrategyDAIDPI": "0x612fD30e2d7dd963a1513CBf781eB5dFE8A55Fb8"
+        }
       }
     }
   }
