@@ -8,21 +8,15 @@ import "../../../interfaces/token/IToken.sol";
 // solhint-disable no-empty-blocks
 /// @title Deposit ETH/WETH in Alpha Lend and earn interest in DAI.
 contract EarnAlphaLendStrategyETH is EarnAlphaLendStrategy {
-    string public constant NAME = "Earn-Alpha-Lend-Strategy-ETH";
-    string public constant VERSION = "3.0.5";
-
     TokenLike internal constant WETH_TOKEN = TokenLike(WETH);
 
-    // ibETHv2 = 0xeEa3311250FE4c3268F8E684f7C87A82fF183Ec1
-    // DAI = 0x6b175474e89094c44da98b954eedeac495271d0f
-    constructor(address _pool, address _swapManager)
-        EarnAlphaLendStrategy(
-            _pool,
-            _swapManager,
-            0xeEa3311250FE4c3268F8E684f7C87A82fF183Ec1, // ibETHv2
-            0x6B175474E89094C44Da98b954EedeAC495271d0F // DAI
-        )
-    {}
+    constructor(
+        address _pool,
+        address _swapManager,
+        address _receiptToken,
+        address _dripToken,
+        string memory _name
+    ) EarnAlphaLendStrategy(_pool, _swapManager, _receiptToken, _dripToken, _name) {}
 
     receive() external payable {
         require((_msgSender() == address(safeBox)) || (_msgSender() == WETH), "invalid-eth-sender");

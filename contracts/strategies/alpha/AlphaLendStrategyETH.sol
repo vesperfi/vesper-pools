@@ -9,14 +9,14 @@ import "../../interfaces/token/IToken.sol";
 
 /// @title Deposit ETH in Alpha and earn interest.
 contract AlphaLendStrategyETH is AlphaLendStrategy {
-    string public constant NAME = "Alpha-Lend-Strategy-ETH";
-    string public constant VERSION = "3.0.0";
     TokenLike internal constant WETH_TOKEN = TokenLike(WETH);
 
-    // ibETHv2 = 0xeEa3311250FE4c3268F8E684f7C87A82fF183Ec1
-    constructor(address _pool, address _swapManager)
-        AlphaLendStrategy(_pool, _swapManager, 0xeEa3311250FE4c3268F8E684f7C87A82fF183Ec1)
-    {}
+    constructor(
+        address _pool,
+        address _swapManager,
+        address _receiptToken,
+        string memory _name
+    ) AlphaLendStrategy(_pool, _swapManager, _receiptToken, _name) {}
 
     receive() external payable {
         require((_msgSender() == address(safeBox)) || (_msgSender() == WETH), "invalid-eth-sender");

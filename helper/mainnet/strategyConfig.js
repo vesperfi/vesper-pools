@@ -82,7 +82,7 @@ const StrategyConfig = {
     type: StrategyTypes.AAVE_V1,
     constructorArgs: {
       swapManager,
-      receiptToken: Address.Aave.aUSDCV1,
+      receiptToken: Address.Aave.aUSDCv1,
       strategyName: 'AaveV1StrategyUSDC',
     },
     config: { interestFee, debtRatio: 0, debtRate: ethers.utils.parseUnits('1000000', 6) },
@@ -275,6 +275,73 @@ const StrategyConfig = {
       fusePoolId: 23, // default
       dripToken: Address.DAI,
       strategyName: 'EarnRariFuseStrategyETH',
+    },
+    config,
+  },
+
+  AlphaLendStrategyDAI: {
+    contract: 'AlphaLendStrategy',
+    type: StrategyTypes.ALPHA_LEND,
+    constructorArgs: {
+      swapManager,
+      receiptToken: Address.Alpha.ibDAIv2,
+      strategyName: 'AlphaLendStrategyDAI',
+    },
+    config,
+  },
+
+  AlphaLendStrategyDPI: {
+    contract: 'AlphaLendStrategy',
+    type: StrategyTypes.ALPHA_LEND,
+    constructorArgs: {
+      swapManager,
+      receiptToken: Address.Alpha.ibDPIv2,
+      strategyName: 'AlphaLendStrategyDPI',
+    },
+    config,
+  },
+
+  AlphaLendStrategyETH: {
+    contract: 'AlphaLendStrategyETH',
+    type: StrategyTypes.ALPHA_LEND,
+    constructorArgs: {
+      swapManager,
+      receiptToken: Address.Alpha.ibETHv2,
+      strategyName: 'AlphaLendStrategyETH',
+    },
+    config,
+  },
+
+  AlphaLendStrategyUSDC: {
+    contract: 'AlphaLendStrategy',
+    type: StrategyTypes.ALPHA_LEND,
+    constructorArgs: {
+      swapManager,
+      receiptToken: Address.Alpha.ibUSDCv2,
+      strategyName: 'AlphaLendStrategyUSDC',
+    },
+    config: { interestFee, debtRatio: 0, debtRate: ethers.utils.parseUnits('1000000', 6) },
+  },
+
+  AlphaLendStrategyUSDT: {
+    contract: 'AlphaLendStrategy',
+    type: StrategyTypes.ALPHA_LEND,
+    constructorArgs: {
+      swapManager,
+      receiptToken: Address.Alpha.ibUSDTv2,
+      strategyName: 'AlphaLendStrategyUSDT',
+    },
+    config: { interestFee, debtRatio: 0, debtRate: ethers.utils.parseUnits('1000000', 6) },
+  },
+
+  EarnAlphaLendStrategyETH: {
+    contract: 'EarnAlphaLendStrategyETH',
+    type: StrategyTypes.EARN_ALPHA_LEND,
+    constructorArgs: {
+      swapManager,
+      receiptToken: Address.Alpha.ibETHv2,
+      dripToken: Address.DAI,
+      strategyName: 'EarnAlphaLendStrategyETH',
     },
     config,
   },
