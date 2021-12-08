@@ -5,11 +5,10 @@ const { ethers } = require('hardhat')
 
 const time = require('./utils/time')
 const poolOps = require('./utils/poolOps')
-const { deployContract, getUsers, setupVPool } = require('./utils/setupHelper')
-const StrategyType = require('./utils/strategyTypes')
-const PoolConfig = require('../helper/mainnet/poolConfig')
 const swapper = require('./utils/tokenSwapper')
-const Address = require('../helper/mainnet/address')
+const { deployContract, getUsers, setupVPool } = require('./utils/setupHelper_new')
+const { address: Address, poolConfig, strategyConfig } = require('./utils/chains').getChainData()
+const AaveStrategyDAI = strategyConfig.AaveStrategyDAI
 
 const TOTAL_REWARD = ethers.utils.parseUnits('150000')
 const REWARD_DURATION = 30 * 24 * 60 * 60
@@ -21,20 +20,13 @@ describe('Rewards for VDAI Pool', function () {
   const notifySignature = 'notifyRewardAmount(address,uint256,uint256)'
   const notifyMultiSignature = 'notifyRewardAmount(address[],uint256[],uint256[])'
 
-  const ONE_MILLION = ethers.utils.parseUnits('1000000', 'ether')
-  const interestFee = '1500' // 15%
-  const strategies = [
-    {
-      name: 'AaveStrategyDAI',
-      type: StrategyType.AAVE,
-      config: { interestFee, debtRatio: 9000, debtRate: ONE_MILLION },
-    },
-  ]
+  AaveStrategyDAI.config.debtRatio = 9000
+  const strategies = [AaveStrategyDAI]
   beforeEach(async function () {
     const users = await getUsers()
     ;[governor, user1, user2, user3] = users
     await setupVPool(this, {
-      poolConfig: PoolConfig.VDAI,
+      poolConfig: poolConfig.VDAI,
       feeCollector: users[7].address,
       strategies: strategies.map((item, i) => ({
         ...item,

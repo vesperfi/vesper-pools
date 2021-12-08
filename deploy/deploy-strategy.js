@@ -4,6 +4,7 @@ const { ethers } = require('hardhat')
 const PoolAccountant = 'PoolAccountant'
 const CollateralManager = 'CollateralManager'
 
+/* eslint-disable complexity */
 const deployFunction = async function ({ getNamedAccounts, deployments, poolConfig, strategyConfig, targetChain }) {
   const Address = require(`../helper/${targetChain}/address`)
 
@@ -13,7 +14,20 @@ const deployFunction = async function ({ getNamedAccounts, deployments, poolConf
   const poolProxy = await deployments.get(poolConfig.contractName)
 
   let strategyAlias = strategyConfig.contractName
+
   const constructorArgs = [poolProxy.address, strategyConfig.swapManager]
+
+  // NOTICE:: This is temporary fix, future version will always read alias from strategy config
+  // TODO Once sol update is done, read whole constructorArgs object from strategy cofig
+  if (strategyAlias.startsWith('EarnAaveStrategy') || strategyAlias.startsWith('AaveStrategy')) {
+    strategyAlias = strategyConfig.alias
+    // Push receiptToken, dripToken(only for earnAave) and strategyName. This has to be in this order
+    constructorArgs.push(strategyConfig.receiptToken)
+    if (strategyAlias.startsWith('EarnAaveStrategy')) {
+      constructorArgs.push(strategyConfig.dripToken)
+    }
+    constructorArgs.push(strategyAlias)
+  }
 
   // Rari strategy requires fusePoolId
   if (strategyAlias === 'RariFuseStrategy') {

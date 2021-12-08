@@ -3,22 +3,19 @@
 const { expect } = require('chai')
 const hre = require('hardhat')
 const ethers = hre.ethers
-const { getUsers, deployContract, createStrategy } = require('./utils/setupHelper')
+const { getUsers, deployContract, createStrategy } = require('./utils/setupHelper_new')
 const addressListFactory = hre.address.ADDRESS_LIST_FACTORY
-const Address = require('../helper/mainnet/address')
-const StrategyType = require('./utils/strategyTypes')
-const VDAI = require('../helper/mainnet/poolConfig').VDAI
+
+const { address: Address, poolConfig, strategyConfig } = require('./utils/chains').getChainData()
+const VDAI = poolConfig.VDAI
+const AaveStrategyDAI = strategyConfig.AaveStrategyDAI
 
 describe('Vesper Pool: Admin only function tests', function () {
   const oneMillion = ethers.utils.parseEther('1000000')
   let pool, strategy, accountant
   let user1, user2, user3, user4
 
-  const strategyConfig = {
-    name: 'AaveStrategyDAI',
-    type: StrategyType.AAVE,
-    config: { interestFee: '1500', debtRatio: 9000, debtRate: oneMillion },
-  }
+  AaveStrategyDAI.config.debtRatio = 9000
 
   beforeEach(async function () {
     const users = await getUsers()
@@ -29,8 +26,8 @@ describe('Vesper Pool: Admin only function tests', function () {
     await accountant.init(pool.address)
     await pool.initialize(...VDAI.poolParams, accountant.address, addressListFactory)
 
-    strategyConfig.feeCollector = user4.address
-    strategy = await createStrategy(strategyConfig, pool.address, { addressListFactory })
+    AaveStrategyDAI.feeCollector = user4.address
+    strategy = await createStrategy(AaveStrategyDAI, pool.address)
   })
 
   describe('Update keeper list', function () {
@@ -154,7 +151,7 @@ describe('Vesper Pool: Admin only function tests', function () {
 
   describe('Add strategy test', function () {
     it('Should add strategy and make it active', async function () {
-      const config = strategyConfig.config
+      const config = AaveStrategyDAI.config
       const tx = accountant.addStrategy(strategy.address, ...Object.values(config))
       await expect(tx)
         .to.emit(accountant, 'StrategyAdded')
@@ -163,14 +160,14 @@ describe('Vesper Pool: Admin only function tests', function () {
     })
 
     it('Should revert if strategy is already active', async function () {
-      await accountant.addStrategy(strategy.address, ...Object.values(strategyConfig.config))
-      const tx = accountant.addStrategy(strategy.address, ...Object.values(strategyConfig.config))
+      await accountant.addStrategy(strategy.address, ...Object.values(AaveStrategyDAI.config))
+      const tx = accountant.addStrategy(strategy.address, ...Object.values(AaveStrategyDAI.config))
       // 15 = STRATEGY_IS_ACTIVE
       await expect(tx).to.be.revertedWith('15', 'Strategy is already active')
     })
 
     it('Should revert if strategy address is zero', async function () {
-      const tx = accountant.addStrategy(Address.ZERO, ...Object.values(strategyConfig.config))
+      const tx = accountant.addStrategy(Address.ZERO, ...Object.values(AaveStrategyDAI.config))
       // 10 = INPUT_ADDRESS_IS_ZERO
       await expect(tx).to.be.revertedWith('10', 'Strategy address is zero')
     })
@@ -192,9 +189,9 @@ describe('Vesper Pool: Admin only function tests', function () {
 
   describe('Migrate strategy', function () {
     it('Should migrate strategy', async function () {
-      const config = strategyConfig.config
+      const config = AaveStrategyDAI.config
       await accountant.addStrategy(strategy.address, ...Object.values(config))
-      const newStrategy = await createStrategy(strategyConfig, pool.address, { addressListFactory })
+      const newStrategy = await createStrategy(AaveStrategyDAI, pool.address, { addressListFactory })
       const tx = pool.migrateStrategy(strategy.address, newStrategy.address)
       await expect(tx)
         .to.emit(accountant, 'StrategyMigrated')
@@ -204,34 +201,34 @@ describe('Vesper Pool: Admin only function tests', function () {
     })
 
     it('Should migrate strategy and replace in strategies array', async function () {
-      await accountant.addStrategy(strategy.address, ...Object.values(strategyConfig.config))
-      const newStrategy = await createStrategy(strategyConfig, pool.address, { addressListFactory })
+      await accountant.addStrategy(strategy.address, ...Object.values(AaveStrategyDAI.config))
+      const newStrategy = await createStrategy(AaveStrategyDAI, pool.address, { addressListFactory })
       expect(await accountant.strategies(0)).to.be.eq(strategy.address, 'strategies[0] should be old strategy')
       await pool.migrateStrategy(strategy.address, newStrategy.address)
       expect(await accountant.strategies(0)).to.be.eq(newStrategy.address, 'strategies[0] should be new strategy')
     })
 
     it('Should revert if strategy is invalid', async function () {
-      await accountant.addStrategy(strategy.address, ...Object.values(strategyConfig.config))
+      await accountant.addStrategy(strategy.address, ...Object.values(AaveStrategyDAI.config))
       const pool2 = await deployContract(VDAI.contractName, VDAI.poolParams)
-      const newStrategy = await createStrategy(strategyConfig, pool2.address, { addressListFactory })
+      const newStrategy = await createStrategy(AaveStrategyDAI, pool2.address, { addressListFactory })
       const tx = pool.migrateStrategy(strategy.address, newStrategy.address)
       // 17 = INVALID_STRATEGY
       await expect(tx).to.be.revertedWith('17', 'Strategies has different pool')
     })
 
     it('Should revert if old strategy is not active', async function () {
-      const newStrategy = await createStrategy(strategyConfig, pool.address, { addressListFactory })
+      const newStrategy = await createStrategy(AaveStrategyDAI, pool.address, { addressListFactory })
       const tx = pool.migrateStrategy(strategy.address, newStrategy.address)
       // 16 = STRATEGY_IS_NOT_ACTIVE
       await expect(tx).to.be.revertedWith('16', 'Old strategy is not active')
     })
 
     it('Should revert if new strategy is active', async function () {
-      const config = strategyConfig.config
+      const config = AaveStrategyDAI.config
       config.debtRatio = '5000'
       await accountant.addStrategy(strategy.address, ...Object.values(config))
-      const newStrategy = await createStrategy(strategyConfig, pool.address, { addressListFactory })
+      const newStrategy = await createStrategy(AaveStrategyDAI, pool.address, { addressListFactory })
       config.debtRatio = '4000'
       await accountant.addStrategy(newStrategy.address, ...Object.values(config))
       const tx = pool.migrateStrategy(strategy.address, newStrategy.address)

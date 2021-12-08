@@ -53,12 +53,16 @@ task('strategy-configuration', 'Prepare strategy configuration for deployment')
       throw new Error('Collateral token mismatch')
     }
 
+    // TODO use getChainData
     const Address = require(`../helper/${hre.targetChain}/address`)
+    const alias = `${strategyParams.name}${strategyParams.collateralToken}`
 
     // Prepare strategy configuration for deployment
     const strategyConfig = {
       contractName: strategyParams.name,
+      alias,
       swapManager: strategyParams.swapManager ? strategyParams.swapManager : Address.SWAP_MANAGER,
+
       addressListFactory: strategyParams.addressListFactory
         ? strategyParams.addressListFactory
         : Address.ADDRESS_LIST_FACTORY,
@@ -69,6 +73,17 @@ task('strategy-configuration', 'Prepare strategy configuration for deployment')
       debtRate: strategyParams.debtRate
         ? strategyParams.debtRate
         : ethers.utils.parseUnits('1000000', tokenDecimal).toString(),
+    }
+
+    // NOTICE:: This is temporary fix, Once solidity cleanup for strategies is done, this file will look very different
+    // TODO once sol update is done, read strategy data from strategyConfig
+    if (strategyParams.name.startsWith('EarnAaveStrategy') || strategyParams.name.startsWith('AaveStrategy')) {
+      const config = require(`../helper/${hre.targetChain}/strategyConfig`)
+      // Add receipt token
+      strategyConfig.receiptToken = config[alias].constructorArgs.receiptToken
+      if (strategyParams.name.startsWith('EarnAaveStrategy')) {
+        strategyConfig.dripToken = config[alias].constructorArgs.dripToken
+      }
     }
 
     // Prepare Maker strategy specific configuration data

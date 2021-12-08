@@ -1,23 +1,31 @@
 'use strict'
 
-const { prepareConfig } = require('./config')
+const { getUsers, setupVPool, setupEarnDrip } = require('../utils/setupHelper_new')
 const { shouldBehaveLikeStrategy } = require('../behavior/strategy')
-const { setupEarnDrip } = require('../utils/setupHelper')
-const StrategyType = require('../utils/strategyTypes')
-const { ethers } = require('hardhat')
 const { shouldBehaveLikePool } = require('../behavior/vesper-pool')
 
+const { poolConfig, strategyConfig } = require('../utils/chains').getChainData()
+const EarnAaveStrategyWETH = strategyConfig.EarnAaveStrategyWETH
+
 describe('veETH pool strategies', function () {
-  const interestFee = '2500' // 15%
-  const ONE_MILLION = ethers.utils.parseEther('1000000')
-  const strategies = [
-    {
-      name: 'EarnAaveStrategyWETH',
-      type: StrategyType.EARN_AAVE,
-      config: { interestFee, debtRatio: 9000, debtRate: ONE_MILLION },
-    },
-  ]
-  prepareConfig(strategies)
+  EarnAaveStrategyWETH.config.interestFee = '2500' // 25%
+  EarnAaveStrategyWETH.config.debtRatio = '9000' // 90%
+
+  const strategies = [EarnAaveStrategyWETH]
+  // TODO use config.js once it's update to latest configuration
+  // prepareConfig(strategies)
+  beforeEach(async function () {
+    const users = await getUsers()
+    this.users = users
+    await setupVPool(this, {
+      poolConfig: poolConfig.VAETH,
+      feeCollector: users[7].address,
+      strategies: strategies.map((item, i) => ({
+        ...item,
+        feeCollector: users[i + 8].address, // leave first 8 users for other testing
+      })),
+    })
+  })
   setupEarnDrip()
 
   describe('Pool Tests', function () {
@@ -25,6 +33,6 @@ describe('veETH pool strategies', function () {
   })
 
   for (let i = 0; i < strategies.length; i++) {
-    shouldBehaveLikeStrategy(i, strategies[i].type, strategies[i].name)
+    shouldBehaveLikeStrategy(i, strategies[i].type, strategies[i].contract)
   }
 })

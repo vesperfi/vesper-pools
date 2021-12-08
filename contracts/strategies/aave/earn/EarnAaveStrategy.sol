@@ -7,7 +7,7 @@ import "../../Earn.sol";
 import "../../../interfaces/vesper/IPoolRewards.sol";
 
 /// @title This strategy will deposit collateral token in Aave and earn drip in an another token.
-abstract contract EarnAaveStrategy is AaveStrategy, Earn {
+contract EarnAaveStrategy is AaveStrategy, Earn {
     using SafeERC20 for IERC20;
 
     // solhint-disable no-empty-blocks
@@ -15,8 +15,9 @@ abstract contract EarnAaveStrategy is AaveStrategy, Earn {
         address _pool,
         address _swapManager,
         address _receiptToken,
-        address _dripToken
-    ) AaveStrategy(_pool, _swapManager, _receiptToken) Earn(_dripToken) {}
+        address _dripToken,
+        string memory _strategyName
+    ) AaveStrategy(_pool, _swapManager, _receiptToken, _strategyName) Earn(_dripToken) {}
 
     // solhint-enable no-empty-blocks
 

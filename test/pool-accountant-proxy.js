@@ -1,25 +1,19 @@
 'use strict'
 
 const { expect } = require('chai')
-const hre = require('hardhat')
-const ethers = hre.ethers
-const { getUsers, deployContract, createStrategy } = require('./utils/setupHelper')
-const addressListFactory = hre.address.ADDRESS_LIST_FACTORY
-const StrategyType = require('./utils/strategyTypes')
-const VDAI = require('../helper/mainnet/poolConfig').VDAI
-const MULTICALL = require('../helper/mainnet/address').MULTICALL
-
+const { ethers } = require('hardhat')
+const { getUsers, deployContract, createStrategy } = require('./utils/setupHelper_new')
+const { address, poolConfig, strategyConfig } = require('./utils/chains').getChainData()
+const VDAI = poolConfig.VDAI
+const AaveStrategyDAI = strategyConfig.AaveStrategyDAI
+const MULTICALL = address.MULTICALL
+const addressListFactory = address.ADDRESS_LIST_FACTORY
 describe('Pool accountant proxy', function () {
-  const oneMillion = ethers.utils.parseEther('1000000')
   let pool, strategy, poolAccountant, poolAccountantImpl
   let governor, user1
   let proxyAdmin, proxy
 
-  const strategyConfig = {
-    name: 'AaveStrategyDAI',
-    type: StrategyType.AAVE,
-    config: { interestFee: '1500', debtRatio: 9000, debtRate: oneMillion },
-  }
+  AaveStrategyDAI.config.debtRatio = 9000
 
   beforeEach(async function () {
     const users = await getUsers()
@@ -43,8 +37,8 @@ describe('Pool accountant proxy', function () {
 
     await pool.initialize(...VDAI.poolParams, poolAccountant.address, addressListFactory)
 
-    strategyConfig.feeCollector = user1.address
-    strategy = await createStrategy(strategyConfig, pool.address, { addressListFactory })
+    AaveStrategyDAI.feeCollector = user1.address
+    strategy = await createStrategy(AaveStrategyDAI, pool.address)
 
     await poolAccountant.connect(governor.signer).addStrategy(strategy.address, 1000, 1000, 1000)
   })
