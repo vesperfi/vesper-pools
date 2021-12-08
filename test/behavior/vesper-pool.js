@@ -405,10 +405,11 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
         } else {
           const EarnDrip = await ethers.getContractAt('IEarnDrip', await pool.poolRewards())
           const growToken = await ethers.getContractAt('ERC20', await EarnDrip.growToken())
-
+          await rebalance(strategies)
           const feeEarned1 = await growToken.balanceOf(fc)
           expect(feeEarned1).to.be.gt(0, 'Fee collected is not correct')
           await timeTravel()
+          await rebalance(strategies)
           await rebalance(strategies)
           const feeEarned2 = await growToken.balanceOf(fc)
           expect(feeEarned2).to.be.gt(feeEarned1, 'Fee collected is not correct')
