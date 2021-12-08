@@ -1,49 +1,21 @@
 'use strict'
 
-/* eslint-disable no-console */
-const { ethers } = require('hardhat')
+const { prepareConfig } = require('./config')
 const { shouldBehaveLikePool } = require('../behavior/vesper-pool')
 const { shouldBehaveLikeStrategy } = require('../behavior/strategy')
-const { reset } = require('../utils/poolOps')
-const StrategyType = require('../utils/strategyTypes')
-const PoolConfig = require('../../helper/mainnet/poolConfig')
-const { setupVPool, getUsers } = require('../utils/setupHelper')
-
-const ONE_MILLION = ethers.utils.parseEther('1000000')
+const { strategyConfig } = require('../utils/chains').getChainData()
 
 describe('vDAI Pool with Crv4PoolStrategy', function () {
-  let feeAcct
-
-  before(async function () {
-    const users = await getUsers()
-    this.users = users
-    feeAcct = users[9]
-  })
-
-  beforeEach(async function () {
-    const interestFee = '1500' // 15%
-    const strategyConfig = { interestFee, debtRatio: 10000, debtRate: ONE_MILLION }
-
-    await setupVPool(this, {
-      poolConfig: PoolConfig.VDAI,
-      feeCollector: feeAcct.address,
-      strategies: [
-        {
-          name: 'Convex4PoolStrategySUSDPoolDAI',
-          type: StrategyType.CURVE,
-          config: strategyConfig,
-          feeCollector: feeAcct.address,
-        },
-      ],
-    })
-  })
+  const strategy1 = strategyConfig.Convex4PoolStrategySUSDPoolDAI
+  strategy1.config.debtRatio = 10000
+  const strategies = [strategy1]
+  prepareConfig(strategies)
 
   describe('Pool Tests', function () {
     shouldBehaveLikePool('vDai', 'DAI')
   })
 
   describe('Strategy Tests', function () {
-    after(reset)
-    shouldBehaveLikeStrategy(0, StrategyType.CURVE, 'Convex4PoolStrategySUSDPoolDAI')
+    shouldBehaveLikeStrategy(0, strategies[0].type, strategies[0].contract)
   })
 })

@@ -390,13 +390,13 @@ const StrategyConfig = {
     config,
   },
 
-  ConvexSBTCStrategyWBTC: {
-    contract: 'ConvexSBTCStrategy',
+  ConvexSBTCPoolStrategyWBTC: {
+    contract: 'ConvexSBTCPoolStrategy',
     type: StrategyTypes.CURVE,
     constructorArgs: {
       swapManager,
       collateralIdx: 1,
-      strategyName: 'ConvexSBTCStrategyWBTC',
+      strategyName: 'ConvexSBTCPoolStrategyWBTC',
     },
     config: { interestFee, debtRatio: 0, debtRate: ethers.utils.parseUnits('1000000', 8) },
   },
@@ -456,24 +456,24 @@ const StrategyConfig = {
     config: { interestFee, debtRatio: 0, debtRate: ethers.utils.parseUnits('1000000', 6) },
   },
 
-  CrvsBTCStrategyWBTC: {
-    contract: 'CrvsBTCStrategy',
+  CrvSBTCPoolStrategyWBTC: {
+    contract: 'CrvSBTCPoolStrategy',
     type: StrategyTypes.CURVE,
     constructorArgs: {
       swapManager,
       collateralIdx: 1,
-      strategyName: 'CrvsBTCStrategyWBTC',
+      strategyName: 'CrvSBTCPoolStrategyWBTC',
     },
     config: { interestFee, debtRatio: 0, debtRate: ethers.utils.parseUnits('1000000', 8) },
   },
 
-  EarnCrvsBTCStrategyWBTC: {
-    contract: 'EarnCrvsBTCStrategy',
-    type: StrategyTypes.CURVE,
+  EarnCrvSBTCPoolStrategyWBTC: {
+    contract: 'EarnCrvSBTCPoolStrategy',
+    type: StrategyTypes.EARN_CURVE,
     constructorArgs: {
       swapManager,
       dripToken: Address.DAI,
-      strategyName: 'EarnCrvsBTCStrategyWBTC',
+      strategyName: 'EarnCrvSBTCPoolStrategyWBTC',
     },
     config,
   },

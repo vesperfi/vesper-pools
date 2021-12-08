@@ -1,22 +1,17 @@
 'use strict'
 
 const { prepareConfig } = require('./config')
-const { shouldBehaveLikeStrategy } = require('../behavior/strategy')
-const { setupEarnDrip } = require('../utils/setupHelper')
-const StrategyType = require('../utils/strategyTypes')
-const { ethers } = require('hardhat')
 const { shouldBehaveLikePool } = require('../behavior/vesper-pool')
+const { shouldBehaveLikeStrategy } = require('../behavior/strategy')
+const { setupEarnDrip } = require('../utils/setupHelper_new')
+const { strategyConfig } = require('../utils/chains').getChainData()
 
 describe('veWBTC pool strategies', function () {
-  const interestFee = '2500' // 15%
-  const ONE_MILLION = ethers.utils.parseEther('1000000')
-  const strategies = [
-    {
-      name: 'EarnCrvsBTCStrategyWBTC',
-      type: StrategyType.EARN_CURVE,
-      config: { interestFee, debtRatio: 9000, debtRate: ONE_MILLION },
-    },
-  ]
+  const strategy1 = strategyConfig.EarnCrvSBTCPoolStrategyWBTC
+  strategy1.config.interestFee = 2500
+  strategy1.config.debtRatio = 9000
+  const strategies = [strategy1]
+
   prepareConfig(strategies)
   setupEarnDrip()
 
@@ -25,6 +20,6 @@ describe('veWBTC pool strategies', function () {
   })
 
   for (let i = 0; i < strategies.length; i++) {
-    shouldBehaveLikeStrategy(i, strategies[i].type, strategies[i].name)
+    shouldBehaveLikeStrategy(i, strategies[i].type, strategies[i].contract)
   }
 })

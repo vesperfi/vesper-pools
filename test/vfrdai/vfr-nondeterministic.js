@@ -3,16 +3,15 @@
 const { expect } = require('chai')
 const hre = require('hardhat')
 const ethers = hre.ethers
-const { DAI, WETH } = require('../../helper/mainnet/address')
-const StrategyType = require('../utils/strategyTypes')
+
 const { rebalance, timeTravel } = require('../utils/poolOps')
 const { swapExactToken } = require('../utils/tokenSwapper')
 const { adjustBalance } = require('../utils/balance')
 const { deposit, fundBuffer, isCloseEnough, prepareConfig } = require('../utils/vfr-common')
-
+const { address: Address, strategyConfig } = require('../utils/chains').getChainData()
+const DAI = Address.DAI
+const WETH = Address.WETH
 const { formatEther, parseEther } = ethers.utils
-
-const ONE_MILLION = parseEther('1000000')
 const CDAI = '0x5d3a536e4d6dbd6114cc1ead35777bab948e3643'
 
 describe('VFR DAI Non-deterministic', function () {
@@ -21,31 +20,18 @@ describe('VFR DAI Non-deterministic', function () {
   let collateralToken, buffer
 
   // Deterministic behavior with Convex strategies is a bit more involved
-  const stableStrategyConfigs = [
-    {
-      name: 'ConvexStableStrategyDAI',
-      type: StrategyType.CURVE,
-      config: { interestFee: 1500, debtRatio: 5000, debtRate: ONE_MILLION },
-    },
-    {
-      name: 'CompoundStableStrategyDAI',
-      type: StrategyType.COMPOUND,
-      config: { interestFee: 1500, debtRatio: 5000, debtRate: ONE_MILLION },
-    },
-  ]
 
-  const coverageStrategyConfigs = [
-    {
-      name: 'CompoundCoverageStrategyDAI',
-      type: StrategyType.COMPOUND,
-      config: { interestFee: 1500, debtRatio: 5000, debtRate: ONE_MILLION },
-    },
-    {
-      name: 'ConvexCoverageStrategyDAI',
-      type: StrategyType.CURVE,
-      config: { interestFee: 1500, debtRatio: 5000, debtRate: ONE_MILLION },
-    },
-  ]
+  const stableStrategy1 = strategyConfig.ConvexStable3PoolStrategyDAI
+  stableStrategy1.config.debtRatio = 5000
+  const stableStrategy2 = strategyConfig.CompoundStableStrategyDAI
+  stableStrategy2.config.debtRatio = 5000
+  const stableStrategyConfigs = [stableStrategy1, stableStrategy2]
+
+  const coverageStrategy1 = strategyConfig.ConvexCoverage3poolStrategyDAI
+  coverageStrategy1.config.debtRatio = 5000
+  const coverageStrategy2 = strategyConfig.CompoundCoverageStrategyDAI
+  coverageStrategy2.config.debtRatio = 5000
+  const coverageStrategyConfigs = [coverageStrategy1, coverageStrategy2]
 
   before(async function () {
     await prepareConfig(stableStrategyConfigs, coverageStrategyConfigs)

@@ -5,7 +5,7 @@ pragma solidity 0.8.3;
 import "./ConvexStrategy.sol";
 
 //solhint-disable no-empty-blocks
-contract ConvexSBTCStrategyWBTC is ConvexStrategy {
+contract ConvexSBTCStrategy is ConvexStrategy {
     address private constant THREEPOOL = 0x7fC77b5c7614E1533320Ea6DDc2Eb61fa00A9714;
     address private constant THREECRV = 0x075b1bb99792c9E1041bA13afEf80C91a1e70fB3;
     address private constant GAUGE = 0x705350c4BcD35c9441419DdD5d2f097d7a55410F;

@@ -2,11 +2,11 @@
 
 pragma solidity 0.8.3;
 
-import "../CrvsBTCPoolStrategy.sol";
+import "../CrvSBTCPoolStrategy.sol";
 import "../../../Earn.sol";
 
 //solhint-disable no-empty-blocks
-contract EarnCrvsBTCStrategy is CrvsBTCPoolStrategy, Earn {
+contract EarnCrvSBTCPoolStrategy is CrvSBTCPoolStrategy, Earn {
     using SafeERC20 for IERC20;
 
     constructor(
@@ -14,7 +14,7 @@ contract EarnCrvsBTCStrategy is CrvsBTCPoolStrategy, Earn {
         address _swapManager,
         address _dripToken,
         string memory _name
-    ) CrvsBTCPoolStrategy(_pool, _swapManager, 1, _name) Earn(_dripToken) {}
+    ) CrvSBTCPoolStrategy(_pool, _swapManager, 1, _name) Earn(_dripToken) {}
 
     function rebalance() external override(Strategy, CrvPoolStrategyBase) onlyKeeper {
         (uint256 _profit, uint256 _loss, uint256 _payback) = _generateReport();
@@ -34,8 +34,8 @@ contract EarnCrvsBTCStrategy is CrvsBTCPoolStrategy, Earn {
         CrvPoolStrategyBase._claimRewardsAndConvertTo(_toToken);
     }
 
-    function _setupOracles() internal override(Strategy, CrvsBTCPoolStrategy) {
-        CrvsBTCPoolStrategy._setupOracles();
+    function _setupOracles() internal override(Strategy, CrvSBTCPoolStrategy) {
+        CrvSBTCPoolStrategy._setupOracles();
     }
 
     function _generateReport()
