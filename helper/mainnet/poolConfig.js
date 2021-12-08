@@ -164,6 +164,13 @@ const PoolConfig = {
     withdrawFee: 60,
     feeCollector: Address.FEE_COLLECTOR,
   },
+  VALINK: {
+    contractName: 'VPool',
+    poolParams: ['vaLINK Pool', 'vaLINK', Address.LINK],
+    addressListFactory: Address.ADDRESS_LIST_FACTORY,
+    withdrawFee: 60,
+    feeCollector: Address.FEE_COLLECTOR,
+  },
 }
 
 module.exports = Object.freeze(PoolConfig)
