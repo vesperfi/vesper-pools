@@ -5,6 +5,9 @@ const { ethers, deployments } = require('hardhat')
 const { getChain } = require('./utils/chains')
 const Address = require(`../helper/${getChain()}/address`)
 
+// `From deploy/utils/buyback.js` script
+const GOVERNOR = '0xdf826ff6518e609E4cEE86299d40611C148099d5'
+
 describe('Buyback', function () {
   let snapshotId
   let governor
@@ -21,7 +24,7 @@ describe('Buyback', function () {
   beforeEach(async function () {
     snapshotId = await ethers.provider.send('evm_snapshot', [])
     ;[, someAccount] = await ethers.getSigners()
-    governor = await unlock(Address.GOVERNOR)
+    governor = await unlock(GOVERNOR)
     feeCollector = await unlock(Address.FEE_COLLECTOR)
     vspHolder = await unlock(Address.vVSP)
 
@@ -31,6 +34,7 @@ describe('Buyback', function () {
     buyback = await ethers.getContractAt('BuyBack', buyBackAddress)
 
     await buyback.addInKeepersList(feeCollector.address)
+    await buyback.connect(governor).updateSwapSlippage(10000) // 100% slippage for test purpose
 
     buyback = buyback.connect(feeCollector)
     keepers = await ethers.getContractAt('IAddressList', await buyback.keepers(), feeCollector)
