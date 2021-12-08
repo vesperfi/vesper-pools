@@ -9,7 +9,7 @@ import "../../Strategy.sol";
 import "../CrvPoolStrategyBase.sol";
 
 /// @title This strategy will deposit collateral token in Curve 3Pool and earn interest.
-abstract contract CrvsBTCPoolStrategy is CrvPoolStrategyBase {
+contract CrvsBTCPoolStrategy is CrvPoolStrategyBase {
     address private constant THREEPOOL = 0x7fC77b5c7614E1533320Ea6DDc2Eb61fa00A9714;
     address private constant THREECRV = 0x075b1bb99792c9E1041bA13afEf80C91a1e70fB3;
     address private constant GAUGE = 0x705350c4BcD35c9441419DdD5d2f097d7a55410F;
@@ -17,16 +17,13 @@ abstract contract CrvsBTCPoolStrategy is CrvPoolStrategyBase {
     constructor(
         address _pool,
         address _swapManager,
-        uint256 _collateralIdx
-    ) CrvPoolStrategyBase(_pool, THREEPOOL, THREECRV, GAUGE, _swapManager, _collateralIdx, 3) {
+        uint256 _collateralIdx,
+        string memory _name
+    ) CrvPoolStrategyBase(_pool, THREEPOOL, THREECRV, GAUGE, _swapManager, _collateralIdx, 3, _name) {
         require(
             IStableSwapV2(THREEPOOL).coins(int128(uint128(_collateralIdx))) == address(IVesperPool(_pool).token()),
             "collateral-mismatch"
         );
-    }
-
-    function convertFrom18(uint256 amount) public pure virtual override returns (uint256) {
-        return amount / (10**10);
     }
 
     function _init(address _crvPool, uint256 _n) internal virtual override {

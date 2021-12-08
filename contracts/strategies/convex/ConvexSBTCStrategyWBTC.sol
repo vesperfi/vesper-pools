@@ -6,19 +6,20 @@ import "./ConvexStrategy.sol";
 
 //solhint-disable no-empty-blocks
 contract ConvexSBTCStrategyWBTC is ConvexStrategy {
-    string public constant NAME = "Curve-Convex-sBTC-Strategy";
-    string public constant VERSION = "3.0.14";
     address private constant THREEPOOL = 0x7fC77b5c7614E1533320Ea6DDc2Eb61fa00A9714;
     address private constant THREECRV = 0x075b1bb99792c9E1041bA13afEf80C91a1e70fB3;
     address private constant GAUGE = 0x705350c4BcD35c9441419DdD5d2f097d7a55410F;
+    // Convex Pool ID for sBTC pool
+    uint256 internal constant CONVEX_POOL_ID = 7;
+    // No. of pooled tokens in the Pool
+    uint256 private constant N = 3;
 
-    constructor(address _pool, address _swapManager)
-        ConvexStrategy(_pool, THREEPOOL, THREECRV, GAUGE, _swapManager, 1, 7, 3)
-    {}
-
-    function convertFrom18(uint256 amount) public pure override returns (uint256) {
-        return amount / (10**10);
-    }
+    constructor(
+        address _pool,
+        address _swapManager,
+        uint256 _collateralIdx,
+        string memory _name
+    ) ConvexStrategy(_pool, THREEPOOL, THREECRV, GAUGE, _swapManager, _collateralIdx, CONVEX_POOL_ID, N, _name) {}
 
     function _setupOracles() internal virtual override {
         swapManager.createOrUpdateOracle(CVX, WETH, oraclePeriod, SUSHISWAP_ROUTER_INDEX);

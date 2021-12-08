@@ -345,6 +345,182 @@ const StrategyConfig = {
     },
     config,
   },
+
+  Convex2PoolStrategyMIMUSTPoolMIM: {
+    contract: 'Convex2PoolStrategyMIMUSTPool',
+    type: StrategyTypes.CURVE,
+    constructorArgs: {
+      swapManager,
+      collateralIdx: 0,
+      strategyName: 'Convex2PoolStrategyMIMUSTPoolMIM',
+    },
+    config,
+  },
+
+  Convex3PoolStrategyDAI: {
+    contract: 'Convex3PoolStrategy',
+    type: StrategyTypes.CURVE,
+    constructorArgs: {
+      swapManager,
+      collateralIdx: 0,
+      strategyName: 'Convex3PoolStrategyDAI',
+    },
+    config,
+  },
+
+  ConvexCoverage3poolStrategyDAI: {
+    contract: 'ConvexCoverage3poolStrategy',
+    type: StrategyTypes.CURVE,
+    constructorArgs: {
+      swapManager,
+      collateralIdx: 0,
+      strategyName: 'ConvexCoverage3poolStrategyDAI',
+    },
+    config,
+  },
+
+  ConvexStable3PoolStrategyDAI: {
+    contract: 'ConvexStable3PoolStrategy',
+    type: StrategyTypes.CURVE,
+    constructorArgs: {
+      swapManager,
+      collateralIdx: 0,
+      strategyName: 'ConvexStable3PoolStrategyDAI',
+    },
+    config,
+  },
+
+  ConvexSBTCStrategyWBTC: {
+    contract: 'ConvexSBTCStrategy',
+    type: StrategyTypes.CURVE,
+    constructorArgs: {
+      swapManager,
+      collateralIdx: 1,
+      strategyName: 'ConvexSBTCStrategyWBTC',
+    },
+    config: { interestFee, debtRatio: 0, debtRate: ethers.utils.parseUnits('1000000', 8) },
+  },
+
+  Convex4MetaPoolStrategyMIMPoolMIM: {
+    contract: 'Convex4MetaPoolStrategyMIMPool',
+    type: StrategyTypes.CURVE,
+    constructorArgs: {
+      swapManager,
+      collateralIdx: 0,
+      strategyName: 'Convex4MetaPoolStrategyMIMPoolMIM',
+    },
+    config,
+  },
+
+  Convex4PoolStrategySUSDPoolDAI: {
+    contract: 'Convex4PoolStrategySUSDPool',
+    type: StrategyTypes.CURVE,
+    constructorArgs: {
+      swapManager,
+      collateralIdx: 0,
+      strategyName: 'Convex4PoolStrategySUSDPoolDAI',
+    },
+    config,
+  },
+
+  Crv2PoolStrategyMIMUSTPoolMIM: {
+    contract: 'Crv2PoolStrategyMIMUSTPool',
+    type: StrategyTypes.CURVE,
+    constructorArgs: {
+      swapManager,
+      collateralIdx: 0,
+      strategyName: 'Crv2PoolStrategyMIMUSTPoolMIM',
+    },
+    config,
+  },
+
+  Crv3PoolStrategyDAI: {
+    contract: 'Crv3PoolStrategy',
+    type: StrategyTypes.CURVE,
+    constructorArgs: {
+      swapManager,
+      collateralIdx: 0,
+      strategyName: 'Crv3PoolStrategyDAI',
+    },
+    config,
+  },
+
+  Crv3PoolStrategyUSDC: {
+    contract: 'Crv3PoolStrategy',
+    type: StrategyTypes.CURVE,
+    constructorArgs: {
+      swapManager,
+      collateralIdx: 1,
+      strategyName: 'Crv3PoolStrategyUSDC',
+    },
+    config: { interestFee, debtRatio: 0, debtRate: ethers.utils.parseUnits('1000000', 6) },
+  },
+
+  CrvsBTCStrategyWBTC: {
+    contract: 'CrvsBTCStrategy',
+    type: StrategyTypes.CURVE,
+    constructorArgs: {
+      swapManager,
+      collateralIdx: 1,
+      strategyName: 'CrvsBTCStrategyWBTC',
+    },
+    config: { interestFee, debtRatio: 0, debtRate: ethers.utils.parseUnits('1000000', 8) },
+  },
+
+  EarnCrvsBTCStrategyWBTC: {
+    contract: 'EarnCrvsBTCStrategy',
+    type: StrategyTypes.CURVE,
+    constructorArgs: {
+      swapManager,
+      dripToken: Address.DAI,
+      strategyName: 'EarnCrvsBTCStrategyWBTC',
+    },
+    config,
+  },
+
+  Crv4MetaPoolStrategyMIMPoolDAI: {
+    contract: 'Crv4MetaPoolStrategyMIMPool',
+    type: StrategyTypes.CURVE,
+    constructorArgs: {
+      swapManager,
+      collateralIdx: 1,
+      strategyName: 'Crv4MetaPoolStrategyMIMPoolDAI',
+    },
+    config,
+  },
+
+  Crv4MetaPoolStrategyMIMPoolMIM: {
+    contract: 'Crv4MetaPoolStrategyMIMPool',
+    type: StrategyTypes.CURVE,
+    constructorArgs: {
+      swapManager,
+      collateralIdx: 0,
+      strategyName: 'Crv4MetaPoolStrategyMIMPoolMIM',
+    },
+    config,
+  },
+
+  Crv4PoolStrategySUSDPoolDAI: {
+    contract: 'Crv4PoolStrategySUSDPool',
+    type: StrategyTypes.CURVE,
+    constructorArgs: {
+      swapManager,
+      collateralIdx: 0,
+      strategyName: 'Crv4PoolStrategySUSDPoolDAI',
+    },
+    config,
+  },
+
+  CrvA3PoolStrategyDAI: {
+    contract: 'CrvA3PoolStrategy',
+    type: StrategyTypes.CURVE,
+    constructorArgs: {
+      swapManager,
+      collateralIdx: 0,
+      strategyName: 'CrvA3PoolStrategyDAI',
+    },
+    config,
+  },
 }
 
 module.exports = Object.freeze(StrategyConfig)

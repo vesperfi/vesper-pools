@@ -10,7 +10,7 @@ import "../../Strategy.sol";
 import "../CrvPoolStrategyBase.sol";
 
 /// @title This strategy will deposit collateral token in Curve 3Pool and earn interest.
-abstract contract CrvA3PoolStrategy is CrvPoolStrategyBase {
+contract CrvA3PoolStrategy is CrvPoolStrategyBase {
     using SafeERC20 for IERC20;
     uint256 private constant N = 3;
     address private constant CRV_POOL = 0xDeBF20617708857ebe4F679508E7b7863a8A8EeE;
@@ -22,8 +22,9 @@ abstract contract CrvA3PoolStrategy is CrvPoolStrategyBase {
     constructor(
         address _pool,
         address _swapManager,
-        uint256 _collateralIdx
-    ) CrvPoolStrategyBase(_pool, CRV_POOL, LP, GAUGE, _swapManager, _collateralIdx, N) {
+        uint256 _collateralIdx,
+        string memory _name
+    ) CrvPoolStrategyBase(_pool, CRV_POOL, LP, GAUGE, _swapManager, _collateralIdx, N, _name) {
         require(IStableSwap3xUnderlying(CRV_POOL).lp_token() == LP, "receipt-token-mismatch");
         require(
             IStableSwap3xUnderlying(CRV_POOL).underlying_coins(_collateralIdx) == address(IVesperPool(_pool).token()),
@@ -148,7 +149,7 @@ abstract contract CrvA3PoolStrategy is CrvPoolStrategyBase {
             depositAmounts[collIdx] = amt;
             uint256 minLpAmount =
                 ((amt * _getSafeUsdRate()) / crvPool.get_virtual_price()) * 10**(18 - coinDecimals[collIdx]);
-            // solhint-disable-next-line no-empty-blocks
+            // solhint-disable no-empty-blocks
             try
                 IStableSwap3xUnderlying(address(crvPool)).add_liquidity(depositAmounts, minLpAmount, true)
             {} catch Error(string memory reason) {

@@ -16,9 +16,10 @@ abstract contract Convex2PoolStrategy is Crv2PoolStrategy, ConvexStrategyBase {
         address _crvLp,
         address _crvGauge,
         uint256 _collateralIdx,
-        uint256 _convexPoolId
+        uint256 _convexPoolId,
+        string memory _name
     )
-        Crv2PoolStrategy(_pool, _swapManager, _crvPool, _crvLp, _crvGauge, _collateralIdx)
+        Crv2PoolStrategy(_pool, _swapManager, _crvPool, _crvLp, _crvGauge, _collateralIdx, _name)
         ConvexStrategyBase(_crvLp, _convexPoolId)
     {
         reservedToken[CVX] = true;

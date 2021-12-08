@@ -12,8 +12,9 @@ contract EarnCrvsBTCStrategy is CrvsBTCPoolStrategy, Earn {
     constructor(
         address _pool,
         address _swapManager,
-        address _dripToken
-    ) CrvsBTCPoolStrategy(_pool, _swapManager, 1) Earn(_dripToken) {}
+        address _dripToken,
+        string memory _name
+    ) CrvsBTCPoolStrategy(_pool, _swapManager, 1, _name) Earn(_dripToken) {}
 
     function rebalance() external override(Strategy, CrvPoolStrategyBase) onlyKeeper {
         (uint256 _profit, uint256 _loss, uint256 _payback) = _generateReport();

@@ -24,8 +24,9 @@ abstract contract Crv4MetaPoolStrategy is CrvPoolStrategyBase {
         address _swapManager,
         address _metapool,
         address _gauge,
-        uint256 _collateralIdx
-    ) CrvPoolStrategyBase(_pool, _metapool, _metapool, _gauge, _swapManager, _collateralIdx, N) {
+        uint256 _collateralIdx,
+        string memory _name
+    ) CrvPoolStrategyBase(_pool, _metapool, _metapool, _gauge, _swapManager, _collateralIdx, N, _name) {
         address[8] memory _coins = IMetapoolFactory(FACTORY).get_underlying_coins(_metapool);
 
         require(ILiquidityGaugeV2(_gauge).lp_token() == _metapool, "invalid-gauge");

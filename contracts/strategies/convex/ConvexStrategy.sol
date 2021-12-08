@@ -20,9 +20,10 @@ abstract contract ConvexStrategy is CrvPoolStrategyBase, ConvexStrategyBase {
         uint256 _collateralIdx,
         uint256 _convexPoolId,
         // No. of pooled tokens in the pool
-        uint256 _n
+        uint256 _n,
+        string memory _name
     )
-        CrvPoolStrategyBase(_pool, _threePool, _threeCrv, _gauge, _swapManager, _collateralIdx, _n)
+        CrvPoolStrategyBase(_pool, _threePool, _threeCrv, _gauge, _swapManager, _collateralIdx, _n, _name)
         ConvexStrategyBase(_threeCrv, _convexPoolId)
     {
         reservedToken[CVX] = true;
