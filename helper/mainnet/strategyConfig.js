@@ -21,6 +21,17 @@ const StrategyConfig = {
     config,
   },
 
+  AaveStrategyDPI: {
+    contract: 'AaveStrategy',
+    type: StrategyTypes.AAVE,
+    constructorArgs: {
+      swapManager,
+      receiptToken: Address.Aave.aDPI,
+      strategyName: 'AaveStrategyDPI',
+    },
+    config,
+  },
+
   AaveStrategyFEI: {
     contract: 'AaveStrategy',
     type: StrategyTypes.AAVE,
