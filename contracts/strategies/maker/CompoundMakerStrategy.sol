@@ -7,7 +7,7 @@ import "../../interfaces/compound/ICompound.sol";
 
 /// @dev This strategy will deposit collateral token in Maker, borrow Dai and
 /// deposit borrowed DAI in Compound to earn interest.
-abstract contract CompoundMakerStrategy is MakerStrategy {
+contract CompoundMakerStrategy is MakerStrategy {
     using SafeERC20 for IERC20;
 
     address internal constant COMP = 0xc00e94Cb662C3520282E6f5717214004A7f26888;
@@ -19,8 +19,9 @@ abstract contract CompoundMakerStrategy is MakerStrategy {
         address _cm,
         address _swapManager,
         address _receiptToken,
-        bytes32 _collateralType
-    ) MakerStrategy(_pool, _cm, _swapManager, _receiptToken, _collateralType) {
+        bytes32 _collateralType,
+        string memory _name
+    ) MakerStrategy(_pool, _cm, _swapManager, _receiptToken, _collateralType, _name) {
         require(_receiptToken != address(0), "cToken-address-is-zero");
         cToken = CToken(_receiptToken);
     }

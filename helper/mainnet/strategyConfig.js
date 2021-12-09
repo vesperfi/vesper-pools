@@ -312,6 +312,17 @@ const StrategyConfig = {
     config,
   },
 
+  AlphaLendStrategyLINK: {
+    contract: 'AlphaLendStrategy',
+    type: StrategyTypes.ALPHA_LEND,
+    constructorArgs: {
+      swapManager,
+      receiptToken: Address.Alpha.ibLINKv2,
+      strategyName: 'AlphaLendStrategyLINK',
+    },
+    config,
+  },
+
   AlphaLendStrategyUSDC: {
     contract: 'AlphaLendStrategy',
     type: StrategyTypes.ALPHA_LEND,
@@ -520,6 +531,131 @@ const StrategyConfig = {
       strategyName: 'CrvA3PoolStrategyDAI',
     },
     config,
+  },
+
+  AaveMakerStrategyETH: {
+    contract: 'AaveMakerStrategy',
+    type: StrategyTypes.AAVE_MAKER,
+    constructorArgs: {
+      swapManager,
+      receiptToken: Address.Aave.aDAI,
+      collateralType: ethers.utils.formatBytes32String('ETH-A'),
+      strategyName: 'AaveMakerStrategyETH',
+    },
+    config,
+  },
+
+  CompoundMakerStrategyETH: {
+    contract: 'CompoundMakerStrategy',
+    type: StrategyTypes.COMPOUND_MAKER,
+    constructorArgs: {
+      swapManager,
+      receiptToken: Address.Compound.cDAI,
+      collateralType: ethers.utils.formatBytes32String('ETH-C'),
+      strategyName: 'CompoundMakerStrategyETH',
+    },
+    config,
+  },
+
+  CompoundMakerStrategyUNI: {
+    contract: 'CompoundMakerStrategy',
+    type: StrategyTypes.COMPOUND_MAKER,
+    constructorArgs: {
+      swapManager,
+      receiptToken: Address.Compound.cDAI,
+      collateralType: ethers.utils.formatBytes32String('UNI-A'),
+      strategyName: 'CompoundMakerStrategyUNI',
+    },
+    config,
+  },
+
+  VesperMakerStrategyETH: {
+    contract: 'VesperMakerStrategy',
+    type: StrategyTypes.VESPER_MAKER,
+    constructorArgs: {
+      swapManager,
+      receiptToken: Address.vaDAI,
+      collateralType: ethers.utils.formatBytes32String('ETH-C'),
+      strategyName: 'VesperMakerStrategyETH',
+    },
+    config,
+  },
+
+  VesperMakerStrategyWBTC: {
+    contract: 'VesperMakerStrategy',
+    type: StrategyTypes.VESPER_MAKER,
+    constructorArgs: {
+      swapManager,
+      receiptToken: Address.vaDAI,
+      collateralType: ethers.utils.formatBytes32String('WBTC-A'),
+      strategyName: 'VesperMakerStrategyWBTC',
+    },
+    config: { interestFee, debtRatio: 0, debtRate: ethers.utils.parseUnits('1000000', 8) },
+  },
+
+  EarnAaveMakerStrategyETH: {
+    contract: 'EarnAaveMakerStrategy',
+    type: StrategyTypes.EARN_MAKER,
+    constructorArgs: {
+      swapManager,
+      receiptToken: Address.Aave.aDAI,
+      collateralType: ethers.utils.formatBytes32String('ETH-C'),
+      dripToken: Address.DAI,
+      strategyName: 'EarnAaveMakerStrategyETH',
+    },
+    config,
+  },
+
+  EarnCompoundMakerStrategyETH: {
+    contract: 'EarnCompoundMakerStrategy',
+    type: StrategyTypes.EARN_MAKER,
+    constructorArgs: {
+      swapManager,
+      receiptToken: Address.Compound.cDAI,
+      collateralType: ethers.utils.formatBytes32String('ETH-C'),
+      dripToken: Address.DAI,
+      strategyName: 'EarnCompoundMakerStrategyETH',
+    },
+    config,
+  },
+
+  EarnVesperMakerStrategyETH: {
+    contract: 'EarnVesperMakerStrategy',
+    type: StrategyTypes.EARN_VESPER_MAKER,
+    constructorArgs: {
+      swapManager,
+      receiptToken: Address.vaDAI,
+      collateralType: ethers.utils.formatBytes32String('ETH-C'),
+      dripToken: Address.DAI,
+      strategyName: 'EarnVesperMakerStrategyETH',
+    },
+    config,
+  },
+
+  EarnVesperMakerStrategyLINK: {
+    contract: 'EarnVesperMakerStrategy',
+    type: StrategyTypes.EARN_VESPER_MAKER,
+    constructorArgs: {
+      swapManager,
+      receiptToken: Address.vaDAI,
+      collateralType: ethers.utils.formatBytes32String('LINK-A'),
+      dripToken: Address.DAI,
+      strategyName: 'EarnVesperMakerStrategyLINK',
+    },
+    config,
+  },
+
+  EarnVesperMakerStrategyWBTC: {
+    contract: 'EarnVesperMakerStrategy',
+    type: StrategyTypes.EARN_VESPER_MAKER,
+    constructorArgs: {
+      swapManager,
+      receiptToken: Address.vaDAI,
+      collateralType: ethers.utils.formatBytes32String('WBTC-A'),
+      dripToken: Address.DAI,
+      strategyName: 'EarnVesperMakerStrategyWBTC',
+    },
+    config: { interestFee, debtRatio: 0, debtRate: ethers.utils.parseUnits('1000000', 8) },
   },
 }
 

@@ -1,6 +1,6 @@
 'use strict'
 
-const { prepareConfig } = require('./config_new')
+const { prepareConfig } = require('./config')
 const { shouldBehaveLikePool } = require('../behavior/vesper-pool')
 const { shouldBehaveLikeStrategy } = require('../behavior/strategy')
 const { shouldMigrateStrategies } = require('../behavior/strategy-migration_new')

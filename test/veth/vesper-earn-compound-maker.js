@@ -2,20 +2,15 @@
 
 const { prepareConfig } = require('./config')
 const { shouldBehaveLikeStrategy } = require('../behavior/strategy')
-const StrategyType = require('../utils/strategyTypes')
-const { ethers } = require('hardhat')
-describe('vETH pool strategies', function () {
-  const interestFee = '2500' // 15%
-  const ONE_MILLION = ethers.utils.parseEther('1000000')
-  const strategies = [
-    {
-      name: 'EarnCompoundMakerStrategyETH',
-      type: StrategyType.EARN_MAKER,
-      config: { interestFee, debtRatio: 9000, debtRate: ONE_MILLION },
-    },
-  ]
+const { strategyConfig } = require('../utils/chains').getChainData()
+
+describe('vETH pool EarnCompoundMakerStrategyETH strategy', function () {
+  const strategy = strategyConfig.EarnCompoundMakerStrategyETH
+  strategy.config.interestFee = 2500
+  strategy.config.debtRatio = 9000
+  const strategies = [strategy]
   prepareConfig(strategies)
   for (let i = 0; i < strategies.length; i++) {
-    shouldBehaveLikeStrategy(i, strategies[i].type, strategies[i].name)
+    shouldBehaveLikeStrategy(i, strategies[i].type, strategies[i].contract)
   }
 })

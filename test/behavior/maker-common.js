@@ -4,15 +4,13 @@ const { deposit, executeIfExist, rebalanceStrategy } = require('../utils/poolOps
 const { expect } = require('chai')
 const { ethers } = require('hardhat')
 const { BigNumber: BN } = require('ethers')
-const StrategyType = require('../utils/strategyTypes')
-const PoolConfig = require('../../helper/mainnet/poolConfig')
 const address = require('../../helper/mainnet/address')
-const { getUsers, deployContract } = require('../utils/setupHelper')
+const { getUsers, deployContract, makeNewStrategy } = require('../utils/setupHelper_new')
 const DECIMAL18 = ethers.utils.parseUnits('1', 18)
 
-function shouldValidateMakerCommonBehaviour(strategyIndex) {
-  let pool, strategy, token, newStrategy
-  let collateralToken, collateralDecimal, isUnderwater, cm, vaultNum, strategyName, swapManager
+function shouldValidateMakerCommonBehavior(strategyIndex) {
+  let pool, strategy, token
+  let collateralToken, collateralDecimal, isUnderwater, cm, vaultNum, swapManager
   let gov, user1, user2
   function convertTo18(amount) {
     const multiplier = DECIMAL18.div(BN.from('10').pow(collateralDecimal))
@@ -29,7 +27,6 @@ function shouldValidateMakerCommonBehaviour(strategyIndex) {
       ;[gov, user1, user2] = await getUsers()
       pool = this.pool
       strategy = this.strategies[strategyIndex]
-      strategyName = this.strategies[strategyIndex].name
       collateralToken = this.collateralToken
       token = this.strategies[strategyIndex].token
       isUnderwater = await strategy.instance.isUnderwater()
@@ -38,43 +35,6 @@ function shouldValidateMakerCommonBehaviour(strategyIndex) {
       // Decimal will be used for amount conversion
       collateralDecimal = await this.collateralToken.decimals()
       swapManager = this.swapManager
-
-      // New Maker Strategy
-      if (strategy.type === StrategyType.VESPER_MAKER) {
-        // Setup vPool (vDAI)
-        const vPool = await deployContract(PoolConfig.VDAI.contractName, PoolConfig.VDAI.poolParams)
-        const accountant = await deployContract('PoolAccountant')
-        await accountant.init(vPool.address)
-        await vPool.initialize(...PoolConfig.VDAI.poolParams, accountant.address, address.ADDRESS_LIST_FACTORY)
-        newStrategy = await deployContract(strategyName, [pool.address, cm.address, swapManager.address, vPool.address])
-      }
-      if (strategy.type === StrategyType.EARN_VESPER_MAKER) {
-        // Setup vPool (vDAI)
-        const vPool = await deployContract(PoolConfig.VDAI.contractName, PoolConfig.VDAI.poolParams)
-        const accountant = await deployContract('PoolAccountant')
-        await accountant.init(vPool.address)
-        await vPool.initialize(...PoolConfig.VDAI.poolParams, accountant.address, address.ADDRESS_LIST_FACTORY)
-        const vesperEarnDripImpl = await deployContract('VesperEarnDrip', [])
-        // Deploy proxy admin
-        const proxyAdmin = await deployContract('ProxyAdmin', [])
-        const initData = vesperEarnDripImpl.interface.encodeFunctionData('initialize', [
-          this.pool.address,
-          [vPool.address],
-        ])
-        // deploy proxy with logic implementation
-        const proxy = await deployContract('TransparentUpgradeableProxy', [
-          vesperEarnDripImpl.address,
-          proxyAdmin.address,
-          initData,
-        ])
-        // Get implementation from proxy
-        const earnDrip = await ethers.getContractAt('VesperEarnDrip', proxy.address)
-        await earnDrip.updateGrowToken(vPool.address)
-        await this.pool.updatePoolRewards(proxy.address)
-        newStrategy = await deployContract(strategyName, [pool.address, cm.address, swapManager.address, vPool.address])
-      } else {
-        newStrategy = await deployContract(strategyName, [pool.address, cm.address, swapManager.address])
-      }
     })
 
     it('Verify convertFrom18 is implemented correctly', async function () {
@@ -140,16 +100,20 @@ function shouldValidateMakerCommonBehaviour(strategyIndex) {
     })
 
     describe('Vault transfer', function () {
+      let newStrategy, newStrategyAddress
+      beforeEach(async function () {
+        const vPool = await ethers.getContractAt('VPool', token.address)
+        newStrategy = await makeNewStrategy(strategy, pool.address, { vPool, skipVault: true })
+        newStrategyAddress = newStrategy.instance.address
+      })
       it('Should not transfer vault ownership using any account.', async function () {
-        await expect(cm.connect(user1.signer)['transferVaultOwnership(address)'](newStrategy.address)).to.be.reverted
+        await expect(cm.connect(user1.signer)['transferVaultOwnership(address)'](newStrategyAddress)).to.be.reverted
       })
 
       it('Should transfer vault ownership on strategy migration', async function () {
         const vaultBeforeMigration = await cm.vaultNum(strategy.instance.address)
-
-        await pool.connect(gov.signer).migrateStrategy(strategy.instance.address, newStrategy.address)
-
-        const vaultAfterMigration = await cm.vaultNum(newStrategy.address)
+        await pool.connect(gov.signer).migrateStrategy(strategy.instance.address, newStrategyAddress)
+        const vaultAfterMigration = await cm.vaultNum(newStrategyAddress)
         expect(vaultNum).to.be.equal(vaultBeforeMigration, 'vault number should match for strategy and cm.')
         expect(vaultAfterMigration).to.be.equal(vaultBeforeMigration, 'vault number should be same')
 
@@ -159,11 +123,9 @@ function shouldValidateMakerCommonBehaviour(strategyIndex) {
 
       it('Should have new strategy as owner of the vault.', async function () {
         const vaultInfoBefore = await cm.getVaultInfo(strategy.instance.address)
-
-        await pool.connect(gov.signer).migrateStrategy(strategy.instance.address, newStrategy.address)
+        await pool.connect(gov.signer).migrateStrategy(strategy.instance.address, newStrategyAddress)
         await expect(cm.getVaultInfo(strategy.instance.address)).to.be.revertedWith('invalid-vault-number')
-
-        const vaultInfoAfter = await cm.getVaultInfo(newStrategy.address)
+        const vaultInfoAfter = await cm.getVaultInfo(newStrategyAddress)
         expect(vaultInfoBefore.collateralLocked).to.be.equal(vaultInfoAfter.collateralLocked)
         expect(vaultInfoBefore.daiDebt).to.be.equal(vaultInfoAfter.daiDebt)
         expect(vaultInfoBefore.collateralUsdRate).to.be.equal(vaultInfoAfter.collateralUsdRate)
@@ -235,4 +197,4 @@ function shouldValidateMakerCommonBehaviour(strategyIndex) {
   })
 }
 
-module.exports = { shouldValidateMakerCommonBehaviour }
+module.exports = { shouldValidateMakerCommonBehavior }

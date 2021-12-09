@@ -4,7 +4,7 @@ const { deposit, executeIfExist, timeTravel, rebalanceStrategy } = require('../u
 const { expect } = require('chai')
 const { ethers } = require('hardhat')
 const { getUsers, getEvent } = require('../utils/setupHelper')
-const { shouldValidateMakerCommonBehaviour } = require('./maker-common')
+const { shouldValidateMakerCommonBehavior } = require('./maker-common')
 
 function shouldBehaveLikeMakerStrategy(strategyIndex) {
   let pool, strategy, token, accountant
@@ -18,7 +18,7 @@ function shouldBehaveLikeMakerStrategy(strategyIndex) {
     const vaultType = await strategy.instance.collateralType()
     await jugLike.drip(vaultType)
   }
-  shouldValidateMakerCommonBehaviour(strategyIndex)
+  shouldValidateMakerCommonBehavior(strategyIndex)
   describe(`MakerStrategy specific tests for strategy[${strategyIndex}]`, function () {
     beforeEach(async function () {
       ;[user1, user2] = await getUsers()

@@ -6,7 +6,7 @@ const { swapEthForToken } = require('../utils/tokenSwapper')
 const { ethers } = require('hardhat')
 const { getUsers } = require('../utils/setupHelper')
 const Address = require('../../helper/mainnet/address')
-const { shouldValidateMakerCommonBehaviour } = require('./maker-common')
+const { shouldValidateMakerCommonBehavior } = require('./maker-common')
 const { shouldBehaveLikeUnderlyingVesperPoolStrategy } = require('./strategy-underlying-vesper-pool')
 
 async function shouldBehaveLikeEarnVesperMakerStrategy(strategyIndex) {
@@ -20,7 +20,7 @@ async function shouldBehaveLikeEarnVesperMakerStrategy(strategyIndex) {
     const vaultType = await strategy.instance.collateralType()
     await jugLike.drip(vaultType)
   }
-  shouldValidateMakerCommonBehaviour(strategyIndex)
+  shouldValidateMakerCommonBehavior(strategyIndex)
   shouldBehaveLikeUnderlyingVesperPoolStrategy(strategyIndex)
   describe(`MakerStrategy specific tests for strategy[${strategyIndex}]`, function () {
     beforeEach(async function () {

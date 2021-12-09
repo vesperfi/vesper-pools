@@ -3,9 +3,9 @@
 const { deposit, executeIfExist, timeTravel, rebalanceStrategy } = require('../utils/poolOps')
 const { expect } = require('chai')
 const { ethers } = require('hardhat')
-const { getUsers, deployContract } = require('../utils/setupHelper')
+const { getUsers } = require('../utils/setupHelper')
 const Address = require('../../helper/mainnet/address')
-const { shouldValidateMakerCommonBehaviour } = require('./maker-common')
+const { shouldValidateMakerCommonBehavior } = require('./maker-common')
 async function shouldBehaveLikeEarnMakerStrategy(strategyIndex) {
   let pool, strategy
   let collateralToken, cm
@@ -17,26 +17,14 @@ async function shouldBehaveLikeEarnMakerStrategy(strategyIndex) {
     const vaultType = await strategy.instance.collateralType()
     await jugLike.drip(vaultType)
   }
-  shouldValidateMakerCommonBehaviour(strategyIndex)
-  describe(`MakerStrategy specific tests for strategy[${strategyIndex}]`, function () {
+  shouldValidateMakerCommonBehavior(strategyIndex)
+  describe(`Earn MakerStrategy specific tests for strategy[${strategyIndex}]`, function () {
     beforeEach(async function () {
       ;[user1, user2] = await getUsers()
       pool = this.pool
       strategy = this.strategies[strategyIndex]
       collateralToken = this.collateralToken
       cm = strategy.instance.collateralManager
-      // Decimal will be used for amount conversion
-      const vesperEarnDripImpl = await deployContract('VesperEarnDrip', [])
-      // Deploy proxy admin
-      const proxyAdmin = await deployContract('ProxyAdmin', [])
-      const initData = vesperEarnDripImpl.interface.encodeFunctionData('initialize', [pool.address, Address.DAI])
-      // deploy proxy with logic implementation
-      const proxy = await deployContract('TransparentUpgradeableProxy', [
-        vesperEarnDripImpl.address,
-        proxyAdmin.address,
-        initData,
-      ])
-      await pool.updatePoolRewards(proxy.address)
     })
 
     describe('Earning scenario', function () {

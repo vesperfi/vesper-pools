@@ -1,30 +1,23 @@
 'use strict'
 
-const { getUsers, setupVPool } = require('../utils/setupHelper')
-const StrategyType = require('../utils/strategyTypes')
-const PoolConfig = require('../../helper/mainnet/poolConfig')
-const { ethers } = require('hardhat')
-const ONE_MILLION = ethers.utils.parseEther('1000000')
+const { getUsers, setupVPool } = require('../utils/setupHelper_new')
+const { poolConfig, strategyConfig } = require('../utils/chains').getChainData()
 
 function prepareConfig(_strategies) {
-  const interestFee = '1500' // 15%
-  const strategies = _strategies || [
-    {
-      name: 'AaveMakerStrategyETH',
-      type: StrategyType.AAVE_MAKER,
-      config: { interestFee, debtRatio: 5200, debtRate: ONE_MILLION },
-    },
-    {
-      name: 'CompoundMakerStrategyETH',
-      type: StrategyType.COMPOUND_MAKER,
-      config: { interestFee, debtRatio: 4700, debtRate: ONE_MILLION },
-    },
-  ]
+  let strategies = _strategies
+
+  if (!strategies) {
+    const strategy1 = strategyConfig.AaveMakerStrategyETH
+    const strategy2 = strategyConfig.CompoundMakerStrategyETH
+    strategy1.config.debtRatio = 5200
+    strategy2.config.debtRatio = 4700
+    strategies = [strategy1, strategy2]
+  }
   beforeEach(async function () {
     const users = await getUsers()
     this.users = users
     await setupVPool(this, {
-      poolConfig: PoolConfig.VAETH,
+      poolConfig: poolConfig.VAETH,
       feeCollector: users[7].address,
       strategies: strategies.map((item, i) => ({
         ...item,

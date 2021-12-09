@@ -1,6 +1,6 @@
 'use strict'
 
-const { prepareConfig } = require('./config_new')
+const { prepareConfig } = require('./config')
 const { shouldBehaveLikePool } = require('../behavior/vesper-pool')
 const { shouldBehaveLikeStrategy } = require('../behavior/strategy')
 const { strategyConfig } = require('../utils/chains').getChainData()
@@ -12,5 +12,5 @@ describe('vETH Pool', function () {
 
   prepareConfig(strategies)
   shouldBehaveLikePool('vEth', 'ETH')
-  shouldBehaveLikeStrategy(0, strategies[0].type, strategies[0].name)
+  shouldBehaveLikeStrategy(0, strategies[0].type, strategies[0].contract)
 })

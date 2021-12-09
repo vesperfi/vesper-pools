@@ -8,8 +8,9 @@ const ethers = hre.ethers
 const provider = hre.waffle.provider
 const { BigNumber: BN } = require('ethers')
 const StrategyType = require('./strategyTypes')
-const Address = require('../../helper/mainnet/address')
-const { getChain } = require('./chains')
+const chainData = require('../utils/chains').getChainData()
+const Address = chainData.address
+hre.address = Address
 
 const mcdEthAJoin = '0x2F0b23f53734252Bda2277357e97e1517d6B042A'
 const mcdEthCJoin = '0xF04a5cC80B1E94C69B48f5ee68a08CD2F09A7c3E'
@@ -23,8 +24,7 @@ const IVesperPool = 'IVesperPoolTest'
 const CToken = 'CToken'
 const TokenLike = 'TokenLikeTest'
 const CollateralManager = 'CollateralManager'
-const address = require(`../../helper/${getChain()}/address`)
-hre.address = address
+
 /**
  * @typedef {object} User
  * @property {any} signer - ethers.js signer instance of user
@@ -85,22 +85,53 @@ async function addStrategies(obj) {
   }
 }
 
+async function setupVDAIPool() {
+  const vDAI = chainData.poolConfig.VDAI
+  const vPool = await deployContract(vDAI.contractName, vDAI.poolParams)
+  const accountant = await deployContract('PoolAccountant')
+  await accountant.init(vPool.address)
+  await vPool.initialize(...vDAI.poolParams, accountant.address, Address.ADDRESS_LIST_FACTORY)
+  return vPool
+}
+
+/**
+ * Setup Vesper Earn Drip Pool for testing
+ *
+ /**
+ * Create strategies instances and set it in test class object
+ *
+ * @param {object}  obj Test class object
+ * @param {object} options optional parameters
+ */
+async function setupEarnDrip(obj, options) {
+  for (const strategy of obj.strategies) {
+    if (strategy.type.toUpperCase().includes('EARN')) {
+      const growPool = options.growPool ? options.growPool : await setupVDAIPool()
+      const vesperEarnDrip = await deployContract('VesperEarnDrip', [])
+      await vesperEarnDrip.initialize(obj.pool.address, [growPool.address])
+      await vesperEarnDrip.updateGrowToken(growPool.address)
+      await obj.pool.updatePoolRewards(vesperEarnDrip.address)
+      break
+    }
+  }
+}
+
 /**
  * Create and configure Aave Maker strategy. Also update test class object with required data.
  *
+ * @param {object} strategy  Strategy config object
  * @param {object} poolAddress Pool address
- * @param {object} strategyName  Strategy name
  * @param {object} options - optional parameters
  * @returns {object} Strategy instance
  */
-async function createMakerStrategy(poolAddress, strategyName, options) {
+async function createMakerStrategy(strategy, poolAddress, options) {
   const collateralManager = options.collateralManager
     ? options.collateralManager
     : await deployContract(CollateralManager)
-  const strategyInstance = await deployContract(strategyName, [
+  const strategyInstance = await deployContract(strategy.contract, [
     poolAddress,
     collateralManager.address,
-    address.SWAP_MANAGER,
+    ...Object.values(strategy.constructorArgs),
   ])
   if (!options.skipVault) {
     await strategyInstance.createVault()
@@ -113,20 +144,40 @@ async function createMakerStrategy(poolAddress, strategyName, options) {
 /**
  * Create and configure Vesper Maker Strategy. Also update test class object with required data.
  *
+ * @param {object} strategy  Strategy config object
  * @param {object} poolAddress pool address
- * @param {object} strategyName Strategy name
  * @param {object} options extra params
  * @returns {object} Strategy instance
  */
-async function createVesperMakerStrategy(poolAddress, strategyName, options) {
-  const collateralManager = await deployContract(CollateralManager)
-  const strategyInstance = await deployContract(strategyName, [
+async function createVesperMakerStrategy(strategy, poolAddress, options) {
+  // For Earn VesperMaker, make sure growToken and receiptToken aka vPool is same
+  if (strategy.type.toUpperCase().includes('EARN')) {
+    const pool = await ethers.getContractAt('VPool', poolAddress)
+    const earnDrip = await ethers.getContractAt('VesperEarnDrip', await pool.poolRewards())
+    const growToken = await earnDrip.growToken()
+    if (!options.vPool || growToken !== options.vPool.address) {
+      options.vPool = await ethers.getContractAt('VPool', growToken)
+    }
+  }
+  // For VesperMaker if no vPool and then deploy one vDAI pool
+  if (!options.vPool) {
+    options.vPool = await setupVDAIPool()
+  }
+  // For test purpose we will not use receiptToken defined in config. Update vPool in config
+  strategy.constructorArgs.receiptToken = options.vPool.address
+
+  const collateralManager = options.collateralManager
+    ? options.collateralManager
+    : await deployContract(CollateralManager)
+
+  const strategyInstance = await deployContract(strategy.contract, [
     poolAddress,
     collateralManager.address,
-    address.SWAP_MANAGER,
-    options.vPool.address,
+    ...Object.values(strategy.constructorArgs),
   ])
-  await strategyInstance.createVault()
+  if (!options.skipVault) {
+    await strategyInstance.createVault()
+  }
   strategyInstance.collateralManager = collateralManager
   await Promise.all([strategyInstance.updateBalancingFactor(300, 250), collateralManager.addGemJoin(gemJoins)])
 
@@ -145,13 +196,13 @@ async function createStrategy(strategy, poolAddress, options = {}) {
     strategyType === StrategyType.AAVE_MAKER ||
     strategyType === StrategyType.COMPOUND_MAKER
   ) {
-    instance = await createMakerStrategy(poolAddress, strategy.name, options)
+    instance = await createMakerStrategy(strategy, poolAddress, options)
   } else if (strategyType === StrategyType.VESPER_MAKER || strategyType === StrategyType.EARN_VESPER_MAKER) {
-    instance = await createVesperMakerStrategy(poolAddress, strategy.name, options)
+    instance = await createVesperMakerStrategy(strategy, poolAddress, options)
   } else {
     instance = await deployContract(strategy.contract, [poolAddress, ...Object.values(strategy.constructorArgs)])
   }
-  await instance.init(address.ADDRESS_LIST_FACTORY)
+  await instance.init(Address.ADDRESS_LIST_FACTORY)
   await instance.approveToken()
   await instance.updateFeeCollector(strategy.feeCollector)
   const strategyTokenAddress = await instance.token()
@@ -175,6 +226,12 @@ async function createStrategy(strategy, poolAddress, options = {}) {
   } else {
     strategy.token = await ethers.getContractAt(strategyTokenName, strategyTokenAddress)
   }
+
+  if (strategyType.toUpperCase().includes('EARN')) {
+    await instance.approveGrowToken()
+  }
+  // This is now a required setup step
+  await instance.setupOracles()
   return instance
 }
 /**
@@ -184,11 +241,9 @@ async function createStrategy(strategy, poolAddress, options = {}) {
  * @param {object} options optional parameters
  */
 async function createStrategies(obj, options) {
+  await setupEarnDrip(obj, options)
   for (const strategy of obj.strategies) {
-    const instance = await createStrategy(strategy, obj.pool.address, options)
-    strategy.instance = instance
-    // This is now a required setup step
-    await strategy.instance.setupOracles()
+    strategy.instance = await createStrategy(strategy, obj.pool.address, options)
   }
 }
 
@@ -243,7 +298,7 @@ async function setupVPool(obj, poolData, beforeCreateStrategies = null) {
     obj.pool = await deployContract(poolConfig.contractName, poolConfig.poolParams)
 
     await obj.accountant.init(obj.pool.address)
-    await obj.pool.initialize(...poolConfig.poolParams, obj.accountant.address, address.ADDRESS_LIST_FACTORY)
+    await obj.pool.initialize(...poolConfig.poolParams, obj.accountant.address, Address.ADDRESS_LIST_FACTORY)
     const options = {
       vPool,
     }
@@ -257,7 +312,7 @@ async function setupVPool(obj, poolData, beforeCreateStrategies = null) {
     await obj.pool.updateFeeCollector(feeCollector)
     const collateralTokenAddress = await obj.pool.token()
     obj.collateralToken = await ethers.getContractAt(TokenLike, collateralTokenAddress)
-    obj.swapManager = await ethers.getContractAt('ISwapManager', address.SWAP_MANAGER)
+    obj.swapManager = await ethers.getContractAt('ISwapManager', Address.SWAP_MANAGER)
 
     // Must wait an hour for oracles to be effective, unless they were created before the strategy
     await provider.send('evm_increaseTime', [3600])
@@ -291,34 +346,6 @@ async function getEvent(txnObj, contractInstance, eventName) {
   })
   // Find 1st event
   return decodedEvents.find(event => !!event)
-}
-
-/**
- * Setup Vesper Earn Drip Pool for testing
- *
- * @param {string} growPool - address of the grow pool where drip is deposited
- */
-async function setupEarnDrip(growPool = Address.vDAI) {
-  beforeEach(async function () {
-    const vesperEarnDripImpl = await deployContract('VesperEarnDrip', [])
-    // Deploy proxy admin
-    const proxyAdmin = await deployContract('ProxyAdmin', [])
-    const initData = vesperEarnDripImpl.interface.encodeFunctionData('initialize', [this.pool.address, [growPool]])
-    // deploy proxy with logic implementation
-    const proxy = await deployContract('TransparentUpgradeableProxy', [
-      vesperEarnDripImpl.address,
-      proxyAdmin.address,
-      initData,
-    ])
-    // Get implementation from proxy
-    this.earnDrip = await ethers.getContractAt('VesperEarnDrip', proxy.address)
-    await this.earnDrip.updateGrowToken(growPool)
-    await this.pool.updatePoolRewards(proxy.address)
-
-    for (const strategy of this.strategies) {
-      await strategy.instance.approveGrowToken()
-    }
-  })
 }
 
 /**
