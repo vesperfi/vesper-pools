@@ -2,7 +2,7 @@ name: vETH with Maker strategies
 on:
   pull_request:
     paths:
-      - "test/veth/aave_maker-compound_maker.js"
+      - "test/veth/aave-maker-compound-maker.js"
       - "contracts/strategies/Strategy.sol"
       - "contracts/strategies/maker/MakerStrategy.sol"
       - "contracts/strategies/maker/CollateralManager.sol"
@@ -35,4 +35,4 @@ jobs:
         run: npm install
 
       - name: Running vETH with Aave Maker and Compound Maker
-        run: npm test "test/veth/aave_maker-compound_maker.js"
+        run: npm test "test/veth/aave-maker-compound-maker.js"
