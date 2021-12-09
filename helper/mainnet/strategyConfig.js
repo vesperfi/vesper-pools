@@ -87,7 +87,14 @@ const StrategyConfig = {
     },
     config: { interestFee, debtRatio: 0, debtRate: ethers.utils.parseUnits('1000000', 6) },
   },
-
+  EarnVesperStrategyDAIVSPDAI: {
+    contract: 'EarnVesperStrategyDAIVSP',
+    type: StrategyTypes.EARN_VESPER,
+    constructorArgs: {
+      swapManager,
+    },
+    config,
+  },
   EarnAaveStrategyWETH: {
     contract: 'EarnAaveStrategy',
     type: StrategyTypes.EARN_AAVE,
