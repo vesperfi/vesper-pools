@@ -803,6 +803,7 @@ const StrategyConfig = {
       swapManager,
       receiptToken: Address.vaDAI,
       dripToken: Address.DPI,
+      vsp: Address.VSP,
       strategyName: 'EarnVesperStrategyDAIDPI',
     },
     config: { ...config },
@@ -860,6 +861,34 @@ const StrategyConfig = {
       dripToken: Address.WETH,
       vsp: Address.VSP,
       strategyName: 'EarnVesperStrategyDAIWETH',
+    },
+    config: { ...config },
+    setup: { ...setup },
+  },
+
+  EarnVesperStrategyETHDAI: {
+    contract: 'EarnVesperStrategy',
+    type: StrategyTypes.EARN_VESPER,
+    constructorArgs: {
+      swapManager,
+      receiptToken: Address.vaETH,
+      dripToken: Address.DAI,
+      vsp: Address.VSP,
+      strategyName: 'EarnVesperStrategyETHDAI',
+    },
+    config: { ...config },
+    setup: { ...setup },
+  },
+
+  EarnVesperStrategyWBTCDAI: {
+    contract: 'EarnVesperStrategy',
+    type: StrategyTypes.EARN_VESPER,
+    constructorArgs: {
+      swapManager,
+      receiptToken: Address.vaWBTC,
+      dripToken: Address.DAI,
+      vsp: Address.VSP,
+      strategyName: 'EarnVesperStrategyWBTCDAI',
     },
     config: { ...config },
     setup: { ...setup },
