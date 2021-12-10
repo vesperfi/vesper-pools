@@ -80,6 +80,13 @@ const PoolConfig = {
     withdrawFee: 60,
     feeCollector: Address.FEE_COLLECTOR,
   },
+  VEDAI_VSP: {
+    contractName: 'VPool',
+    poolParams: ['veDAI-VSP Earn Pool', 'veDAI-VSP', Address.DAI],
+    addressListFactory: Address.ADDRESS_LIST_FACTORY,
+    withdrawFee: 60,
+    feeCollector: Address.FEE_COLLECTOR,
+  },
   VLINK: {
     contractName: 'VPool',
     poolParams: ['vLINK Pool', 'vLINK', Address.LINK],
