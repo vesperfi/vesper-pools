@@ -13,5 +13,5 @@ describe('vUSDC Pool', function () {
 
   prepareConfig(strategies)
   shouldBehaveLikePool('vUSDC', 'USDC')
-  shouldBehaveLikeStrategy(0, strategies[0].type, strategies[0].name)
+  shouldBehaveLikeStrategy(0, strategies[0].type, strategies[0].contract)
 })

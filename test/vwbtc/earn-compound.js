@@ -2,7 +2,6 @@
 
 const { prepareConfig } = require('./config')
 const { shouldBehaveLikeStrategy } = require('../behavior/strategy')
-const { setupEarnDrip } = require('../utils/setupHelper_new')
 
 const { strategyConfig } = require('../utils/chains').getChainData()
 const { shouldBehaveLikePool } = require('../behavior/vesper-pool')
@@ -12,7 +11,6 @@ describe('veWBTC pool strategies', function () {
   strategy.config.debtRatio = 9000
   const strategies = [strategy]
   prepareConfig(strategies)
-  setupEarnDrip()
 
   describe('Pool Tests', function () {
     shouldBehaveLikePool('veWBTC', 'WBTC', true)

@@ -46,8 +46,8 @@ async function shouldBehaveLikeMultiPool(poolName) {
 
         debt0 = await pool.totalDebtOf(strategies[0].instance.address)
         tokenHere = await pool.tokensHere()
-        expect(actualWithdrawFromS1).to.be.eq(expectedFromS1, 'Withdraw from Strategy 1 is wrong')
-        expect(debt0).to.be.eq(0, 'Withdraw from Strategy 1 is wrong')
+        expect(actualWithdrawFromS1).to.be.eq(expectedFromS1, 'Actual withdrawal from Strategy 1 is wrong')
+        expect(debt0).to.be.eq(0, 'Debt of strategy 0 is wrong')
       })
 
       it('Should be able to shuffle withdraw queue', async function () {

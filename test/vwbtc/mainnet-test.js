@@ -1,6 +1,5 @@
 'use strict'
-const { getUsers } = require('../utils/setupHelper')
-const { unlock } = require('../utils/setupHelper')
+const { getUsers, unlock } = require('../utils/setupHelper')
 const contracts = require('../../releases/3.0.16/contracts.json').networks.mainnet
 const { ethers } = require('hardhat')
 const poolConfig = require('../../helper/mainnet/poolConfig').VAWBTC

@@ -1,15 +1,19 @@
 'use strict'
 
-const { getUsers, setupVPool } = require('../utils/setupHelper_new')
+const { getUsers, setupVPool } = require('../utils/setupHelper')
 const { poolConfig, strategyConfig } = require('../utils/chains').getChainData()
-const AaveStrategyUNI = strategyConfig.AaveStrategyUNI
-const CompoundStrategyUNI = strategyConfig.CompoundStrategyUNI
 
 function prepareConfig(_strategies) {
-  AaveStrategyUNI.config.debtRatio = 4000
-  CompoundStrategyUNI.config.debtRatio = 4000
+  let strategies = _strategies
 
-  const strategies = _strategies || [AaveStrategyUNI, CompoundStrategyUNI]
+  if (!strategies) {
+    const strategy1 = strategyConfig.AaveStrategyUNI
+    const strategy2 = strategyConfig.CompoundStrategyUNI
+    strategy1.config.debtRatio = 4000
+    strategy2.config.debtRatio = 4000
+    strategies = [strategy1, strategy2]
+  }
+
   beforeEach(async function () {
     const users = await getUsers()
     this.users = users

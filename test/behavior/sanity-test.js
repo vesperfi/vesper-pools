@@ -1,7 +1,7 @@
 'use strict'
 
 const { unlock } = require('../utils/setupHelper')
-const { deposit: _deposit, totalDebtOfAllStrategy, reset } = require('../utils/poolOps')
+const { deposit: _deposit, totalDebtOfAllStrategy } = require('../utils/poolOps')
 const time = require('../utils/time')
 const chaiAlmost = require('chai-almost')
 const chai = require('chai')
@@ -32,7 +32,6 @@ async function shouldDoSanityTest(poolName, collateralName) {
       }
     }
   }
-  afterEach(reset)
 
   describe(`${poolName} basic operation tests`, function () {
     beforeEach(async function () {

@@ -3,7 +3,7 @@
 const { ethers } = require('hardhat')
 
 const { poolConfig, address: Address } = require('../utils/chains').getChainData()
-const { deployContract, getUsers, setupVPool } = require('./setupHelper_new')
+const { deployContract, getUsers, setupVPool } = require('./setupHelper')
 
 const { hexlify, parseEther, solidityKeccak256, zeroPad } = ethers.utils
 

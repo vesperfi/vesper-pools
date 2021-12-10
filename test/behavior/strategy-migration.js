@@ -7,7 +7,7 @@ const { expect } = require('chai')
 
 async function shouldMigrateStrategies(poolName) {
   let pool, strategies, collateralToken
-  let user1, user2, gov
+  let user1, user2, user3, gov
   const options = { skipVault: true, addressListFactory: '0xded8217De022706A191eE7Ee0Dc9df1185Fb5dA3' }
 
   async function deposit(amount, depositor) {
@@ -54,17 +54,17 @@ async function shouldMigrateStrategies(poolName) {
       // new strategy will have less receipt tokens due to deleverage at migration
       expect(receiptTokenAfter2).to.be.lt(
         receiptTokenBefore,
-        `${poolName} receipt  token balance of new strategy after migration is not correct`,
+        `${poolName} receipt token balance of new strategy after migration is not correct`,
       )
     } else {
       expect(receiptTokenAfter2).to.be.gte(
         receiptTokenBefore,
-        `${poolName} receipt  token balance of new strategy after migration is not correct`,
+        `${poolName} receipt token balance of new strategy after migration is not correct`,
       )
     }
     expect(receiptTokenAfter).to.be.eq(
       0,
-      `${poolName} receipt  token balance of new strategy after migration is not correct`,
+      `${poolName} receipt token balance of old strategy after migration is not correct`,
     )
   }
 
@@ -79,10 +79,10 @@ async function shouldMigrateStrategies(poolName) {
   }
 
   async function assertTotalDebt(newStrategy) {
-    await deposit(40, user2)
+    await deposit(40, user3)
     await rebalanceStrategy(newStrategy)
     const totalDebtBefore = await pool.totalDebtOf(newStrategy.instance.address)
-    await deposit(50, user2)
+    await deposit(50, user3)
     await rebalanceStrategy(newStrategy)
     const totalDebtAfter = await pool.totalDebtOf(newStrategy.instance.address)
     expect(totalDebtAfter).to.be.gt(totalDebtBefore, `Total debt of strategy in ${poolName} is wrong`)
@@ -106,7 +106,7 @@ async function shouldMigrateStrategies(poolName) {
 
   describe(`${poolName} Strategy Migration`, function () {
     beforeEach(async function () {
-      ;[gov, user1, user2] = this.users
+      ;[gov, user1, user2, user3] = this.users
       pool = this.pool
       strategies = this.strategies
       collateralToken = this.collateralToken

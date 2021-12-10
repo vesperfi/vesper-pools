@@ -3,7 +3,7 @@
 const { prepareConfig } = require('./config')
 const { shouldBehaveLikePool } = require('../behavior/vesper-pool')
 const { shouldBehaveLikeStrategy } = require('../behavior/strategy')
-const { shouldMigrateStrategies } = require('../behavior/strategy-migration_new')
+const { shouldMigrateStrategies } = require('../behavior/strategy-migration')
 const { strategyConfig } = require('../utils/chains').getChainData()
 
 describe('vETH Pool with Compound Leverage Strategy', function () {

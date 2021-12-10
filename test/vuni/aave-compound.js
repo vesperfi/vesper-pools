@@ -1,6 +1,6 @@
 'use strict'
 
-const { shouldMigrateStrategies } = require('../behavior/strategy-migration_new')
+const { shouldMigrateStrategies } = require('../behavior/strategy-migration')
 const { shouldBehaveLikeStrategy } = require('../behavior/strategy')
 const { prepareConfig } = require('./config')
 

@@ -1,6 +1,6 @@
 'use strict'
 
-const { getUsers, setupVPool } = require('../utils/setupHelper_new')
+const { getUsers, setupVPool } = require('../utils/setupHelper')
 const { poolConfig, strategyConfig } = require('../utils/chains').getChainData()
 
 function prepareConfig(_strategies) {

@@ -10,15 +10,13 @@ const { shouldBehaveLikeCompoundStrategy } = require('../behavior/compound-strat
 const { shouldBehaveLikeCompoundXYStrategy } = require('../behavior/compound-xy')
 const { shouldBehaveLikeCompoundLeverageStrategy } = require('../behavior/compound-leverage')
 const { shouldBehaveLikeMakerStrategy } = require('../behavior/maker-strategy')
-const { shouldBehaveLikeCreamStrategy } = require('../behavior/cream-strategy')
 const { shouldBehaveLikeCrvStrategy } = require('../behavior/crv-strategy')
 const { shouldBehaveLikeEarnMakerStrategy } = require('../behavior/earn-maker-strategy')
 const { shouldBehaveLikeEarnVesperMakerStrategy } = require('../behavior/earn-vesper-maker-strategy')
-const { shouldBehaveLikeEarnCreamStrategy } = require('../behavior/earn-cream-strategy')
 const { shouldBehaveLikeRariFuseStrategy } = require('./rari-fuse-strategy')
 const { shouldBehaveLikeEarnVesperStrategy } = require('../behavior/earn-vesper-strategy')
 const swapper = require('../utils/tokenSwapper')
-const { deposit, rebalanceStrategy, reset } = require('../utils/poolOps')
+const { deposit, rebalanceStrategy } = require('../utils/poolOps')
 const { advanceBlock } = require('../utils/time')
 const StrategyType = require('../utils/strategyTypes')
 const addressListFactory = hre.address.ADDRESS_LIST_FACTORY
@@ -33,11 +31,9 @@ function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
     [StrategyType.COMPOUND_MAKER]: shouldBehaveLikeMakerStrategy,
     [StrategyType.COMPOUND_XY]: shouldBehaveLikeCompoundXYStrategy,
     [StrategyType.COMPOUND_LEVERAGE]: shouldBehaveLikeCompoundLeverageStrategy,
-    [StrategyType.CREAM]: shouldBehaveLikeCreamStrategy,
     [StrategyType.CURVE]: shouldBehaveLikeCrvStrategy,
     [StrategyType.EARN_MAKER]: shouldBehaveLikeEarnMakerStrategy,
     [StrategyType.EARN_VESPER_MAKER]: shouldBehaveLikeEarnVesperMakerStrategy,
-    [StrategyType.EARN_CREAM]: shouldBehaveLikeEarnCreamStrategy,
     [StrategyType.EARN_VESPER]: shouldBehaveLikeEarnVesperStrategy,
     [StrategyType.RARI_FUSE]: shouldBehaveLikeRariFuseStrategy,
   }
@@ -45,7 +41,7 @@ function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
   const ANY_ERC20 = hre.address.ANY_ERC20
   const shouldBehaveLikeSpecificStrategy = behaviors[type]
 
-  describe(`${strategyName} Strategy common behaviour tests`, function () {
+  describe(`${strategyName} Strategy common behavior tests`, function () {
     beforeEach(async function () {
       const users = await getUsers()
       ;[owner, user1, user2, user3, user4, user5] = users
@@ -163,7 +159,7 @@ function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
       })
 
       it('Should not change total value on collateral token deposit', async function () {
-        deposit(pool, collateralToken, 1, user1)
+        await deposit(pool, collateralToken, 1, user1)
         const totalValue = await strategy.totalValue()
         expect(totalValue).to.be.equal('0', 'Total tokens should be zero')
       })
@@ -183,7 +179,6 @@ function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
       // })
 
       it('Should increase total value after rebalance', async function () {
-        await rebalanceStrategy(this.strategies[strategyIndex]) // rebalance to handle under water
         await deposit(pool, collateralToken, 10, user1)
         const totalValueBefore = await strategy.totalValue()
         const totalDebtBefore = await pool.totalDebtOf(strategy.address)
@@ -191,7 +186,6 @@ function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
         await strategy.rebalance()
         await advanceBlock(50)
         expect(await strategy.totalValue()).to.be.gt(totalValueBefore, 'Total value should increase')
-        await reset()
       })
 
       it('Should generate EarningReported event', async function () {

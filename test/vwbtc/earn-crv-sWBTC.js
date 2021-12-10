@@ -3,7 +3,6 @@
 const { prepareConfig } = require('./config')
 const { shouldBehaveLikePool } = require('../behavior/vesper-pool')
 const { shouldBehaveLikeStrategy } = require('../behavior/strategy')
-const { setupEarnDrip } = require('../utils/setupHelper_new')
 const { strategyConfig } = require('../utils/chains').getChainData()
 
 describe('veWBTC pool strategies', function () {
@@ -13,7 +12,6 @@ describe('veWBTC pool strategies', function () {
   const strategies = [strategy1]
 
   prepareConfig(strategies)
-  setupEarnDrip()
 
   describe('Pool Tests', function () {
     shouldBehaveLikePool('veWBTC', 'WBTC', true)

@@ -49,7 +49,8 @@ function shouldBehaveLikeMakerStrategy(strategyIndex) {
 
       describe('Interest fee calculation via Jug Drip', function () {
         it('Should earn interest fee', async function () {
-          const feeBalanceBefore = await pool.balanceOf(strategy.instance.address)
+          const feeCollector = await strategy.instance.feeCollector()
+          const feeBalanceBefore = await pool.balanceOf(feeCollector)
           const totalSupplyBefore = await pool.totalSupply()
           await deposit(pool, collateralToken, 50, user2)
 
@@ -57,7 +58,7 @@ function shouldBehaveLikeMakerStrategy(strategyIndex) {
           await timeTravel()
           await updateRate()
 
-          const feeBalanceAfter = await pool.balanceOf(strategy.instance.address)
+          const feeBalanceAfter = await pool.balanceOf(feeCollector)
           expect(feeBalanceAfter).to.be.gt(feeBalanceBefore, 'Fee should increase')
 
           const totalSupplyAfter = await pool.totalSupply()

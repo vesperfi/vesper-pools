@@ -2,7 +2,7 @@
 
 const { prepareConfig } = require('./config')
 const { shouldBehaveLikePool } = require('../behavior/vesper-pool')
-const { shouldBehaveLikeMultiPool } = require('../behavior/vesper-multi-pool_new')
+const { shouldBehaveLikeMultiPool } = require('../behavior/vesper-multi-pool')
 const { strategyConfig } = require('../utils/chains').getChainData()
 
 const strategy1 = strategyConfig.AaveStrategyPolygonDAI

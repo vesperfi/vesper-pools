@@ -1,15 +1,15 @@
 'use strict'
 
-const { getUsers, setupVPool } = require('../utils/setupHelper_new')
+const { getUsers, setupVPool } = require('../utils/setupHelper')
 const { poolConfig, strategyConfig } = require('../utils/chains').getChainData()
 
 function prepareConfig(_strategies) {
   let strategies = _strategies
   if (!strategies) {
-    const strategy1 = strategyConfig.AlphaLendStrategyLINK
-    const strategy2 = strategyConfig.AlphaLendStrategyLINK
+    const strategy1 = strategyConfig.AaveStrategyLINK
+    const strategy2 = strategyConfig.CompoundStrategyLINK
     strategy1.config.debtRatio = 9000
-    strategy2.config.debtRatio = 0
+    strategy2.config.debtRatio = 1000
     strategies = [strategy1, strategy2]
   }
 

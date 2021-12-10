@@ -5,7 +5,7 @@ const { expect } = require('chai')
 const { ethers } = require('hardhat')
 const { BigNumber: BN } = require('ethers')
 const address = require('../../helper/mainnet/address')
-const { getUsers, deployContract, makeNewStrategy } = require('../utils/setupHelper_new')
+const { getUsers, deployContract, makeNewStrategy } = require('../utils/setupHelper')
 const DECIMAL18 = ethers.utils.parseUnits('1', 18)
 
 function shouldValidateMakerCommonBehavior(strategyIndex) {
