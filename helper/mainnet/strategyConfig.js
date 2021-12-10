@@ -234,6 +234,18 @@ const StrategyConfig = {
     config,
   },
 
+  CompoundXYStrategyETH: {
+    contract: 'CompoundXYStrategyETH',
+    type: StrategyTypes.COMPOUND_XY,
+    constructorArgs: {
+      swapManager,
+      receiptToken: Address.Compound.cETH,
+      borrowCToken: Address.Compound.cWBTC,
+      strategyName: 'CompoundXYStrategyETH',
+    },
+    config,
+  },
+
   RariFuseStrategy: {
     contract: 'RariFuseStrategy',
     type: StrategyTypes.RARI_FUSE,
