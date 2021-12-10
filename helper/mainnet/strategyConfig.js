@@ -234,6 +234,17 @@ const StrategyConfig = {
     config,
   },
 
+  CompoundLeverageStrategyLINK: {
+    contract: 'CompoundLeverageStrategy',
+    type: StrategyTypes.COMPOUND_LEVERAGE,
+    constructorArgs: {
+      swapManager,
+      receiptToken: Address.Compound.cLINK,
+      strategyName: 'CompoundLeverageStrategyLINK',
+    },
+    config,
+  },
+
   CompoundXYStrategyETH: {
     contract: 'CompoundXYStrategyETH',
     type: StrategyTypes.COMPOUND_XY,
@@ -589,6 +600,18 @@ const StrategyConfig = {
       receiptToken: Address.vaDAI,
       collateralType: ethers.utils.formatBytes32String('ETH-C'),
       strategyName: 'VesperMakerStrategyETH',
+    },
+    config,
+  },
+
+  VesperMakerStrategyLINK: {
+    contract: 'VesperMakerStrategy',
+    type: StrategyTypes.VESPER_MAKER,
+    constructorArgs: {
+      swapManager,
+      receiptToken: Address.vaDAI,
+      collateralType: ethers.utils.formatBytes32String('LINK-A'),
+      strategyName: 'VesperMakerStrategyLINK',
     },
     config,
   },
