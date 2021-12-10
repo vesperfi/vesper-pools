@@ -1,22 +1,15 @@
 'use strict'
 
-const { ethers } = require('hardhat')
 const { prepareConfig } = require('./config')
 const { shouldBehaveLikePool } = require('../behavior/vesper-pool')
 const { shouldBehaveLikeStrategy } = require('../behavior/strategy')
-const StrategyType = require('../utils/strategyTypes')
+const { strategyConfig } = require('../utils/chains').getChainData()
 
-describe('vDAI Pool', function () {
-  const interestFee = '1500' // 15%
-  const strategies = [
-    {
-      name: 'YearnStrategyDAI',
-      type: StrategyType.YEARN,
-      config: { interestFee, debtRatio: 9000, debtRate: ethers.utils.parseEther('1000000') },
-    },
-  ]
-
+describe('vDAI Pool with YearnStrategyDAI', function () {
+  const strategy = strategyConfig.YearnStrategyDAI
+  strategy.config.debtRatio = 9000
+  const strategies = [strategy]
   prepareConfig(strategies)
-  shouldBehaveLikePool('vDai', 'DAI')
-  shouldBehaveLikeStrategy(0, strategies[0].type, strategies[0].name)
+  shouldBehaveLikePool('vDAI', 'DAI')
+  shouldBehaveLikeStrategy(0, strategies[0].type, strategies[0].contract)
 })

@@ -8,15 +8,16 @@ import "../../../interfaces/vesper/IVesperPool.sol";
 /// @title This Earn strategy will deposit collateral token in a Vesper Grow Pool
 /// and converts the yield to another Drip Token
 // solhint-disable no-empty-blocks
-abstract contract EarnVesperStrategy is VesperStrategy, Earn {
+contract EarnVesperStrategy is VesperStrategy, Earn {
     using SafeERC20 for IERC20;
 
     constructor(
         address _pool,
         address _swapManager,
         address _receiptToken,
-        address _dripToken
-    ) VesperStrategy(_pool, _swapManager, _receiptToken) Earn(_dripToken) {}
+        address _dripToken,
+        string memory _name
+    ) VesperStrategy(_pool, _swapManager, _receiptToken, _name) Earn(_dripToken) {}
 
     /// @notice Approve all required tokens
     function _approveToken(uint256 _amount) internal virtual override(VesperStrategy, Strategy) {

@@ -6,7 +6,7 @@
 const hre = require('hardhat')
 const ethers = hre.ethers
 const provider = hre.waffle.provider
-const { BigNumber: BN } = require('ethers')
+const { smock } = require('@defi-wonderland/smock')
 const StrategyType = require('./strategyTypes')
 const chainData = require('../utils/chains').getChainData()
 const Address = chainData.address
@@ -30,6 +30,12 @@ const CollateralManager = 'CollateralManager'
  * @property {any} signer - ethers.js signer instance of user
  * @property {string} address - user account address
  */
+
+async function executeIfExist(fn) {
+  if (typeof fn === 'function') {
+    await fn()
+  }
+}
 
 /**
  *  Get all users from node
@@ -207,11 +213,9 @@ async function createStrategy(strategy, poolAddress, options = {}) {
   await instance.updateFeeCollector(strategy.feeCollector)
   const strategyTokenAddress = await instance.token()
   const strategyTokenName =
-    strategyType === StrategyType.VESPER_MAKER
+    strategyType === StrategyType.VESPER_MAKER || strategyType === StrategyType.EARN_VESPER
       ? IVesperPool
-      : strategyType.includes('compound') ||
-        strategyType === StrategyType.EARN_COMPOUND ||
-        strategyType === StrategyType.EARN_CREAM
+      : strategyType.includes('compound') || strategyType === StrategyType.EARN_COMPOUND
       ? CToken
       : TokenLike
 
@@ -225,11 +229,16 @@ async function createStrategy(strategy, poolAddress, options = {}) {
     }
   } else {
     strategy.token = await ethers.getContractAt(strategyTokenName, strategyTokenAddress)
+    if (strategyTokenName === IVesperPool) {
+      // Mock feeWhitelist to withdraw without fee in case of Earn Vesper strategies
+      const mock = await smock.fake('IAddressList', { address: await strategy.token.feeWhitelist() })
+      // Pretend any address is whitelisted for withdraw without fee
+      mock.contains.returns(true)
+    }
   }
+  // Earn strategies require call to approveGrowToken
+  await executeIfExist(instance.approveGrowToken)
 
-  if (strategyType.toUpperCase().includes('EARN')) {
-    await instance.approveGrowToken()
-  }
   // This is now a required setup step
   await instance.setupOracles()
   return instance
@@ -283,9 +292,9 @@ async function makeNewStrategy(oldStrategy, poolAddress, _options) {
  *
  * @param {object} obj Current calling object aka 'this'
  * @param {PoolData} poolData Data for pool setup
- * @param {Function} beforeCreateStrategies Optional function hook to execute ops before strategy creation
+ * @param {object} options optional data
  */
-async function setupVPool(obj, poolData, beforeCreateStrategies = null) {
+async function setupVPool(obj, poolData, options = {}) {
   const { poolConfig, strategies, vPool, feeCollector } = poolData
   const isInCache = obj.snapshot === undefined ? false : await provider.send('evm_revert', [obj.snapshot])
   if (isInCache === true) {
@@ -299,13 +308,7 @@ async function setupVPool(obj, poolData, beforeCreateStrategies = null) {
 
     await obj.accountant.init(obj.pool.address)
     await obj.pool.initialize(...poolConfig.poolParams, obj.accountant.address, Address.ADDRESS_LIST_FACTORY)
-    const options = {
-      vPool,
-    }
-
-    if (beforeCreateStrategies !== null && typeof beforeCreateStrategies === 'function') {
-      await beforeCreateStrategies(obj)
-    }
+    options.vPool = vPool
 
     await createStrategies(obj, options)
     await addStrategies(obj)
@@ -359,7 +362,7 @@ async function addInFeeWhitelist(pool) {
     const vaDai = await ethers.getContractAt('VPool', pool)
     const keeperList = await ethers.getContractAt('IAddressList', await vaDai.keepers())
     const keeper = (await keeperList.at(0))[0]
-    const amount = BN.from(10).mul(BN.from('1000000000000000000'))
+    const amount = ethers.utils.parseEther('10')
     await hre.network.provider.send('hardhat_setBalance', [keeper, amount.toHexString()])
     const feeWhitelist = await vaDai.feeWhitelist()
     const signer = await unlock(keeper)

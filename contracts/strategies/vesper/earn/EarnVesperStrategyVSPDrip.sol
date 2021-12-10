@@ -6,10 +6,18 @@ import "./EarnVesperStrategy.sol";
 
 // solhint-disable no-empty-blocks
 /// @title Earn Vesper Strategy adjusted for vVSP timelock
-abstract contract EarnVesperStrategyVSPDrip is EarnVesperStrategy {
+contract EarnVesperStrategyVSPDrip is EarnVesperStrategy {
     using SafeERC20 for IERC20;
 
     bool public transferToDripContract = false;
+
+    constructor(
+        address _pool,
+        address _swapManager,
+        address _receiptToken,
+        address _dripToken,
+        string memory _name
+    ) EarnVesperStrategy(_pool, _swapManager, _receiptToken, _dripToken, _name) {}
 
     /**
      * @notice Empty implementation, VSP rewards don't need to be converted.

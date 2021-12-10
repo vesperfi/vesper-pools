@@ -5,4 +5,6 @@ import "../interfaces/vesper/IVesperPool.sol";
 
 interface IVesperPoolTest is IVesperPool {
     function strategies(uint256) external view returns (address);
+
+    function feeWhitelist() external view returns (address);
 }

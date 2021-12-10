@@ -6,7 +6,7 @@ import "../YearnStrategy.sol";
 import "../../Earn.sol";
 
 /// @title This strategy will deposit collateral token in Yearn and earn drip in an another token.
-abstract contract EarnYearnStrategy is YearnStrategy, Earn {
+contract EarnYearnStrategy is YearnStrategy, Earn {
     using SafeERC20 for IERC20;
 
     // solhint-disable no-empty-blocks
@@ -14,8 +14,9 @@ abstract contract EarnYearnStrategy is YearnStrategy, Earn {
         address _pool,
         address _swapManager,
         address _receiptToken,
-        address _dripToken
-    ) YearnStrategy(_pool, _swapManager, _receiptToken) Earn(_dripToken) {}
+        address _dripToken,
+        string memory _name
+    ) YearnStrategy(_pool, _swapManager, _receiptToken, _name) Earn(_dripToken) {}
 
     function _realizeProfit(uint256 _totalDebt) internal virtual override(Strategy, YearnStrategy) returns (uint256) {
         uint256 _collateralBalance = _getCollateralBalance();

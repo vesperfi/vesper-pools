@@ -20,7 +20,6 @@ describe('VFR DAI Non-deterministic', function () {
   let collateralToken, buffer
 
   // Deterministic behavior with Convex strategies is a bit more involved
-
   const stableStrategy1 = strategyConfig.ConvexStable3PoolStrategyDAI
   stableStrategy1.config.debtRatio = 5000
   const stableStrategy2 = strategyConfig.CompoundStableStrategyDAI

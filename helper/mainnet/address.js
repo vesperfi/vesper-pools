@@ -57,6 +57,11 @@ const Address = {
     cUSDT: '0xf650C3d88D12dB855b8bf7D11Be6C55A4e07dCC9',
     cWBTC: '0xccF4429DB6322D5C611ee964527D42E5d685DD6a',
   },
+  Yearn: {
+    yvDAI: '0xdA816459F1AB5631232FE5e97a05BBBb94970c95',
+    yvUSDC: '0x5f18C75AbDAe578b483E5F43f12a39cF75b973a9',
+    yvWETH: '0xa258C4606Ca8206D8aA700cE2143D7db854D168c',
+  },
 }
 
 module.exports = Object.freeze(Address)

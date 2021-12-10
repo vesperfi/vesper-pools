@@ -23,6 +23,7 @@ const StrategyType = {
   RARI_FUSE: 'rariFuse',
   COMPOUND_XY: 'compoundXY',
   COMPOUND_LEVERAGE: 'compoundLeverage',
+  VESPER: 'vesper',
 }
 
 module.exports = Object.freeze(StrategyType)

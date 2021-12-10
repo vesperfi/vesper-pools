@@ -1,41 +1,25 @@
 'use strict'
 
-const hre = require('hardhat')
-const ethers = hre.ethers
-const { parseEther } = ethers.utils
-const StrategyType = require('../utils/strategyTypes')
-
+const { ethers } = require('hardhat')
 const { prepareConfig } = require('../utils/vfr-common')
 const { shouldBehaveLikeVFRPool } = require('../behavior/vfr-pool')
 const { smock } = require('@defi-wonderland/smock')
-const address = require('../../helper/mainnet/address')
 
-const ONE_MILLION = parseEther('1000000')
+const { address: Address, strategyConfig } = require('../utils/chains').getChainData()
 
 describe('VFR DAI Vesper', function () {
-  const stableStrategyConfigs = [
-    {
-      name: 'VesperStableStrategyDAI',
-      type: StrategyType.EARN_VESPER,
-      config: { interestFee: 1500, debtRatio: 5000, debtRate: ONE_MILLION },
-    },
-    {
-      name: 'VesperStableStrategyDAI',
-      type: StrategyType.EARN_VESPER,
-      config: { interestFee: 1500, debtRatio: 5000, debtRate: ONE_MILLION },
-    },
-  ]
+  const stableStrategy1 = strategyConfig.VesperStableStrategyDAI
+  stableStrategy1.config.debtRatio = 5000
+  const stableStrategy2 = strategyConfig.VesperStableStrategyDAI
+  stableStrategy2.config.debtRatio = 5000
+  const stableStrategyConfigs = [stableStrategy1, stableStrategy2]
 
-  const coverageStrategyConfigs = [
-    {
-      name: 'VesperCoverageStrategyDAI',
-      type: StrategyType.EARN_VESPER,
-      config: { interestFee: 1500, debtRatio: 5000, debtRate: ONE_MILLION },
-    },
-  ]
+  const coverageStrategy1 = strategyConfig.VesperCoverageStrategyDAI
+  coverageStrategy1.config.debtRatio = 5000
+  const coverageStrategyConfigs = [coverageStrategy1]
 
   before(async function () {
-    const vaDAI = await ethers.getContractAt('VPool', address.vaDAI)
+    const vaDAI = await ethers.getContractAt('VPool', Address.vaDAI)
     const mock = await smock.fake('IAddressList', { address: await vaDAI.feeWhitelist() })
     // Pretend stable and coverage strategies are whitelisted for withdraw without fee
     mock.contains.returns(true)
