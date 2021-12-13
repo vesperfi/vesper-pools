@@ -512,6 +512,20 @@
         "strategies": {
           "EarnVesperStrategyDAIDPI": "0x612fD30e2d7dd963a1513CBf781eB5dFE8A55Fb8"
         }
+      },
+      "vedai_vsp": {
+        "pool": {
+          "proxy": "0x8209f3a03730c035163B4414c1545a3137D5B402",
+          "implementation": "0x6140201607CaB79Fa83A699a735352A98198fa93",
+          "poolAccountant": {
+            "proxy": "0x92d10283E3f1e894B5eA9C69fee98d6848f179Ef",
+            "implementation": "0x65084519AEd2c3883e435b0e8e279777eAf789E2"
+          }
+        },
+        "poolRewards": {
+          "proxy": "0x525fd19d7E9B5191C27EC61B0b59c150c1FD9E2D",
+          "implementation": "0x5fe5deEf0718ba4098B1662F33d33ec7dEa45489"
+        }
       }
     }
   }
