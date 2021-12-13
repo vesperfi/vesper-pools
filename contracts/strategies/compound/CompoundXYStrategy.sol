@@ -12,10 +12,6 @@ import "../../interfaces/token/IToken.sol";
 abstract contract CompoundXYStrategy is Strategy {
     using SafeERC20 for IERC20;
 
-    // solhint-disable-next-line var-name-mixedcase
-    string public NAME;
-    string public constant VERSION = "3.0.22";
-
     uint256 internal constant MAX_BPS = 10_000; //100%
     uint256 public minBorrowRatio = 4_500; // 45%
     uint256 public maxBorrowRatio = 6_000; // 60%
@@ -42,8 +38,7 @@ abstract contract CompoundXYStrategy is Strategy {
         address _pool,
         address _swapManager,
         address _receiptToken,
-        address _borrowCToken,
-        string memory _name
+        address _borrowCToken
     ) Strategy(_pool, _swapManager, _receiptToken) {
         require(_receiptToken != address(0), "cToken-address-is-zero");
         supplyCToken = CToken(_receiptToken);
@@ -57,7 +52,6 @@ abstract contract CompoundXYStrategy is Strategy {
         (, uint256 _collateralFactorMantissa, ) = COMPTROLLER.markets(_receiptToken);
         minBorrowLimit = (minBorrowRatio * 1e18) / _collateralFactorMantissa;
         maxBorrowLimit = (maxBorrowRatio * 1e18) / _collateralFactorMantissa;
-        NAME = _name;
     }
 
     /**

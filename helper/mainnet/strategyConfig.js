@@ -240,7 +240,7 @@ const StrategyConfig = {
     constructorArgs: {
       swapManager,
       receiptToken: Address.Compound.cETH,
-      strategyName: 'CompoundLeverageStrategyETH',
+      // There is no strategy name param in Compound Leverage
     },
     config: Object.assign({}, config),
   },
@@ -251,7 +251,7 @@ const StrategyConfig = {
     constructorArgs: {
       swapManager,
       receiptToken: Address.Compound.cUNI,
-      strategyName: 'CompoundLeverageStrategyUNI',
+      // There is no strategy name param in Compound Leverage
     },
     config: Object.assign({}, config),
   },
@@ -262,7 +262,7 @@ const StrategyConfig = {
     constructorArgs: {
       swapManager,
       receiptToken: Address.Compound.cLINK,
-      strategyName: 'CompoundLeverageStrategyLINK',
+      // There is no strategy name param in Compound Leverage
     },
     config: Object.assign({}, config),
   },
@@ -274,7 +274,7 @@ const StrategyConfig = {
       swapManager,
       receiptToken: Address.Compound.cETH,
       borrowCToken: Address.Compound.cWBTC,
-      strategyName: 'CompoundXYStrategyETH',
+      // There is no strategy name param in Compound XY
     },
     config: Object.assign({}, config),
   },

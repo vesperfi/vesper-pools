@@ -164,17 +164,17 @@ function shouldBehaveLikeCompoundLeverageStrategy(strategyIndex) {
       await strategy.connect(governor.signer).rebalance()
       await advanceBlock(100)
       const borrowRatioBefore = await strategy.currentBorrowRatio()
-      await strategy.connect(governor.signer).updateBorrowRatio(4500, 5500)
+      await strategy.connect(governor.signer).updateBorrowRatio(5100, 5500)
       const newMinBorrowRatio = await strategy.minBorrowRatio()
-      const minBorrowRatio = await strategy.minBorrowRatio()
+      expect(newMinBorrowRatio).to.eq(5100, 'Min borrow limit is wrong')
+
       await strategy.connect(governor.signer).rebalance()
       await token.exchangeRateCurrent()
       const borrowRatioAfter = await strategy.currentBorrowRatio()
       expect(borrowRatioAfter).to.gt(borrowRatioBefore, 'Borrow ratio after should be greater')
-      expect(borrowRatioAfter).to.eq(minBorrowRatio, 'Borrow should be >= min borrow ratio')
-      expect(newMinBorrowRatio).to.eq(5500, 'Min borrow limit is wrong')
+      expect(borrowRatioAfter).to.eq(newMinBorrowRatio, 'Borrow should be >= min borrow ratio')
 
-      let tx = strategy.connect(governor.signer).updateBorrowRatio(5500, 7501)
+      let tx = strategy.connect(governor.signer).updateBorrowRatio(5500, 9500)
       await expect(tx).to.revertedWith('invalid-max-borrow-limit')
 
       tx = strategy.connect(governor.signer).updateBorrowRatio(5500, 5000)
