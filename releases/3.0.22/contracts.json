@@ -525,6 +525,9 @@
         "poolRewards": {
           "proxy": "0x525fd19d7E9B5191C27EC61B0b59c150c1FD9E2D",
           "implementation": "0x5fe5deEf0718ba4098B1662F33d33ec7dEa45489"
+        },
+        "strategies": {
+          "EarnVesperStrategyDAIVSP": "0xDc1046DBb73E7BE8C0B2B72A4987522D425bc93C"
         }
       }
     }
