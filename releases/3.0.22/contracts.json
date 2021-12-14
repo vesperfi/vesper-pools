@@ -416,7 +416,8 @@
           "implementation": "0x77898fAC78B6931107C2ee00f0Dab51Cb0cB91f8"
         },
         "strategies": {
-          "AlphaLendStrategyDPI": "0xef9a768880b4996cddB8C24a26F4b00d6e8ed35E"
+          "AlphaLendStrategyDPI": "0xef9a768880b4996cddB8C24a26F4b00d6e8ed35E",
+          "AaveStrategyDPI": "0x09c21F950ECB6b714E08D4411764C5036E53EBA9"
         }
       },
       "vaalusd": {
