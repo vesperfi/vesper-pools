@@ -1,60 +1,34 @@
 'use strict'
 
-/* eslint-disable no-console */
 const { expect } = require('chai')
-const { ethers } = require('hardhat')
+const { prepareConfig } = require('./config')
 const { shouldBehaveLikePool } = require('../behavior/vesper-pool')
 const { shouldBehaveLikeStrategy } = require('../behavior/strategy')
-const { deposit, timeTravel, reset } = require('../utils/poolOps')
-const StrategyType = require('../utils/strategyTypes')
-const PoolConfig = require('../../helper/mainnet/poolConfig')
-const { setupVPool, getUsers } = require('../utils/setupHelper')
-
-const ONE_MILLION = ethers.utils.parseEther('1000000')
+const { deposit, timeTravel } = require('../utils/poolOps')
+const { strategyConfig } = require('../utils/chains').getChainData()
 
 describe('vaWBTC Pool with CrvsBTCStrategy', function () {
-  let pool, collateralToken, strategy, user1, user2, user3, feeAcct
-
-  before(async function () {
-    const users = await getUsers()
-    this.users = users
-    ;[, user1, user2, user3] = users
-    feeAcct = users[9]
-  })
-
-  beforeEach(async function () {
-    const interestFee = '1500' // 15%
-    const strategyConfig = { interestFee, debtRatio: 10000, debtRate: ONE_MILLION }
-
-    await setupVPool(this, {
-      poolConfig: PoolConfig.VAWBTC,
-      feeCollector: feeAcct.address,
-      strategies: [
-        {
-          name: 'CrvsBTCStrategyWBTC',
-          type: StrategyType.CURVE,
-          config: strategyConfig,
-          feeCollector: feeAcct.address,
-        },
-      ],
-    })
-
-    pool = this.pool
-    collateralToken = this.collateralToken
-    strategy = this.strategies[0].instance
-  })
+  const strategy1 = strategyConfig.CrvSBTCPoolStrategyWBTC
+  strategy1.config.debtRatio = 10000
+  const strategies = [strategy1]
+  prepareConfig(strategies)
 
   describe('Pool Tests', function () {
     shouldBehaveLikePool('vaWBTC', 'WBTC')
   })
 
   describe('Strategy Tests', function () {
-    after(reset)
-    shouldBehaveLikeStrategy(0, StrategyType.CURVE, 'CrvsBTCStrategyWBTC')
+    shouldBehaveLikeStrategy(0, strategies[0].type, strategies[0].contract)
   })
 
-  describe('CrvsBTCStrategyWBTC: WBTC Functionality', function () {
-    afterEach(reset)
+  describe('CrvSBTCPoolStrategyWBTC: WBTC Functionality', function () {
+    let pool, collateralToken, strategy, user1, user2, user3
+    beforeEach(async function () {
+      ;[, user1, user2, user3] = this.users
+      pool = this.pool
+      collateralToken = this.collateralToken
+      strategy = this.strategies[0].instance
+    })
     it('Should calculate fees properly and reflect those in share price', async function () {
       await deposit(pool, collateralToken, 20, user1)
       await strategy.rebalance()

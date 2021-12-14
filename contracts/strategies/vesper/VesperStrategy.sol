@@ -7,16 +7,23 @@ import "../Strategy.sol";
 /// @title This Strategy will deposit collateral token in a Vesper Grow Pool
 abstract contract VesperStrategy is Strategy {
     using SafeERC20 for IERC20;
+
+    // solhint-disable-next-line var-name-mixedcase
+    string public NAME;
+    string public constant VERSION = "3.0.22";
+
     address internal constant VSP = 0x1b40183EFB4Dd766f11bDa7A7c3AD8982e998421;
     IVesperPool internal immutable vToken;
 
     constructor(
         address _pool,
         address _swapManager,
-        address _receiptToken
+        address _receiptToken,
+        string memory _name
     ) Strategy(_pool, _swapManager, _receiptToken) {
         require(_receiptToken != address(0), "vToken-address-is-zero");
         vToken = IVesperPool(_receiptToken);
+        NAME = _name;
     }
 
     /**

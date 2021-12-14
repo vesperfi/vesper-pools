@@ -2,7 +2,7 @@ name: veETH-DAI with Aave
 on:
   pull_request:
     paths:
-      - "test/veth/vesper-earn-aave.js"
+      - "test/veth/earn-aave.js"
       - "contracts/strategies/Strategy.sol"
       - "contracts/strategies/aave/AaveCore.sol"
       - "contracts/strategies/aave/AaveStrategy.sol"
@@ -31,5 +31,5 @@ jobs:
       - name: Run npm install with node v${{ matrix.node }}
         run: npm install
 
-      - name: Running vETH-DAI with Aave
-        run: npm test "test/veth/vesper-earn-aave.js"
+      - name: Running veETH-DAI with Aave
+        run: npm test "test/veth/earn-aave.js"

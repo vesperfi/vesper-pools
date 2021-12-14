@@ -7,7 +7,7 @@ import "../../Earn.sol";
 import "../../../interfaces/vesper/IPoolRewards.sol";
 
 /// @title This strategy will deposit collateral token in Compound and earn drip in an another token.
-abstract contract EarnCompoundStrategy is CompoundStrategy, Earn {
+contract EarnCompoundStrategy is CompoundStrategy, Earn {
     using SafeERC20 for IERC20;
 
     // solhint-disable no-empty-blocks
@@ -15,8 +15,9 @@ abstract contract EarnCompoundStrategy is CompoundStrategy, Earn {
         address _pool,
         address _swapManager,
         address _receiptToken,
-        address _dripToken
-    ) CompoundStrategy(_pool, _swapManager, _receiptToken) Earn(_dripToken) {}
+        address _dripToken,
+        string memory _name
+    ) CompoundStrategy(_pool, _swapManager, _receiptToken, _name) Earn(_dripToken) {}
 
     // solhint-enable no-empty-blocks
 

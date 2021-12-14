@@ -3,17 +3,14 @@
 const { expect } = require('chai')
 const hre = require('hardhat')
 const ethers = hre.ethers
-const { DAI, WETH } = require('../../helper/mainnet/address')
-const StrategyType = require('../utils/strategyTypes')
+
 const { rebalance, timeTravel } = require('../utils/poolOps')
-const { swapExactToken } = require('../utils/tokenSwapper')
 const { adjustBalance } = require('../utils/balance')
 const { deposit, fundBuffer, isCloseEnough, prepareConfig } = require('../utils/vfr-common')
-
+const { address: Address, strategyConfig } = require('../utils/chains').getChainData()
+const DAI = Address.DAI
+const cDAI = Address.Compound.cDAI
 const { formatEther, parseEther } = ethers.utils
-
-const ONE_MILLION = parseEther('1000000')
-const CDAI = '0x5d3a536e4d6dbd6114cc1ead35777bab948e3643'
 
 describe('VFR DAI Non-deterministic', function () {
   let daiGiver, user1, user2, user3
@@ -21,31 +18,17 @@ describe('VFR DAI Non-deterministic', function () {
   let collateralToken, buffer
 
   // Deterministic behavior with Convex strategies is a bit more involved
-  const stableStrategyConfigs = [
-    {
-      name: 'ConvexStableStrategyDAI',
-      type: StrategyType.CURVE,
-      config: { interestFee: 1500, debtRatio: 5000, debtRate: ONE_MILLION },
-    },
-    {
-      name: 'CompoundStableStrategyDAI',
-      type: StrategyType.COMPOUND,
-      config: { interestFee: 1500, debtRatio: 5000, debtRate: ONE_MILLION },
-    },
-  ]
+  const stableStrategy1 = strategyConfig.ConvexStable3PoolStrategyDAI
+  stableStrategy1.config.debtRatio = 5000
+  const stableStrategy2 = strategyConfig.CompoundStableStrategyDAI
+  stableStrategy2.config.debtRatio = 5000
+  const stableStrategyConfigs = [stableStrategy1, stableStrategy2]
 
-  const coverageStrategyConfigs = [
-    {
-      name: 'CompoundCoverageStrategyDAI',
-      type: StrategyType.COMPOUND,
-      config: { interestFee: 1500, debtRatio: 5000, debtRate: ONE_MILLION },
-    },
-    {
-      name: 'ConvexCoverageStrategyDAI',
-      type: StrategyType.CURVE,
-      config: { interestFee: 1500, debtRatio: 5000, debtRate: ONE_MILLION },
-    },
-  ]
+  const coverageStrategy1 = strategyConfig.ConvexCoverage3poolStrategyDAI
+  coverageStrategy1.config.debtRatio = 5000
+  const coverageStrategy2 = strategyConfig.CompoundCoverageStrategyDAI
+  coverageStrategy2.config.debtRatio = 5000
+  const coverageStrategyConfigs = [coverageStrategy1, coverageStrategy2]
 
   before(async function () {
     await prepareConfig(stableStrategyConfigs, coverageStrategyConfigs)
@@ -57,9 +40,11 @@ describe('VFR DAI Non-deterministic', function () {
     for (const user of [user1, user2, user3]) {
       // Clear the DAI balance of users
       await adjustBalance(DAI, user.address, 0)
+      await adjustBalance(cDAI, user.address, 0)
     }
     // Fund the DAI giver account
     await adjustBalance(DAI, daiGiver.address, ethers.utils.parseEther('1000000'))
+    await adjustBalance(cDAI, daiGiver.address, ethers.utils.parseEther('1000000'))
 
     stablePool = this.stable.pool
     coveragePool = this.coverage.pool
@@ -85,10 +70,14 @@ describe('VFR DAI Non-deterministic', function () {
       let predictedAPY = await stablePool.predictedAPY()
       if (predictedAPY < parseEther('0.05')) {
         const needed = await stablePool.amountToReachTarget(stableStrategies[0].instance.address)
-
+        const strategyAmount = needed.div(2)
         const dai = await ethers.getContractAt('ERC20', DAI)
-        await dai.connect(daiGiver.signer).transfer(stableStrategies[0].instance.address, needed.div(2))
-        await swapExactToken(needed.div(2), [DAI, WETH, CDAI], daiGiver, stableStrategies[1].instance.address)
+        await dai.connect(daiGiver.signer).transfer(stableStrategies[0].instance.address, strategyAmount)
+
+        const cDai = await ethers.getContractAt('CToken', cDAI)
+        // Convert required DAI amount to cDAI
+        const cDaiAmount = strategyAmount.mul(parseEther('1')).div(await cDai.exchangeRateStored())
+        await cDai.connect(daiGiver.signer).transfer(stableStrategies[1].instance.address, cDaiAmount)
 
         await stablePool.checkpoint()
         predictedAPY = await stablePool.predictedAPY()
@@ -111,10 +100,10 @@ describe('VFR DAI Non-deterministic', function () {
       await dai.connect(daiGiver.signer).transfer(stableStrategies[0].instance.address, needed)
 
       // Manipulate cDAI balance in strategy to report loss
-      const cDAI = await ethers.getContractAt('ERC20', CDAI)
-      const cDAIBal = await cDAI.balanceOf(stableStrategies[1].instance.address)
+      const cDai = await ethers.getContractAt('ERC20', cDAI)
+      const cDaiBal = await cDai.balanceOf(stableStrategies[1].instance.address)
       // Update balance to report 100000 wei loss
-      await adjustBalance(CDAI, stableStrategies[1].instance.address, cDAIBal.sub(100000))
+      await adjustBalance(cDAI, stableStrategies[1].instance.address, cDaiBal.sub(100000))
 
       await stablePool.checkpoint()
       const predictedAPY = await stablePool.predictedAPY()

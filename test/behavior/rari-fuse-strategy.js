@@ -4,7 +4,7 @@ const { expect } = require('chai')
 const { getUsers } = require('../utils/setupHelper')
 const { deposit, rebalanceStrategy } = require('../utils/poolOps')
 
-// Cream strategy specific tests
+// Rari Fuse strategy specific tests
 function shouldBehaveLikeRariFuseStrategy(strategyIndex) {
   let strategy, user1, pool, collateralToken
   describe('RariFuseStrategy specific tests', function () {

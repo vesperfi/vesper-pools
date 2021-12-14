@@ -2,7 +2,7 @@ name: veWBTC-DAI with Curve sBTC
 on:
   pull_request:
     paths:
-      - "test/vwbtc/vesper-earn-crv-sWBTC.js"
+      - "test/vwbtc/earn-crv-sWBTC.js"
       - "contracts/strategies/Strategy.sol"
       - "contracts/strategies/curve/CrvBase.sol"
       - "contracts/strategies/curve/Crv3x.sol"
@@ -32,5 +32,5 @@ jobs:
       - name: Run npm install with node v${{ matrix.node }}
         run: npm install
 
-      - name: Running vWBTC-DAI with Compound
-        run: npm test "test/vwbtc/vesper-earn-crv-sWBTC.js"
+      - name: Running veWBTC-DAI with Curve sBTC
+        run: npm test "test/vwbtc/earn-crv-sWBTC.js"

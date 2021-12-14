@@ -10,7 +10,7 @@ import "../../FlashLoanHelper.sol";
 
 /// @title This strategy will deposit collateral token in Compound and based on position
 /// it will borrow same collateral token. It will use borrowed asset as supply and borrow again.
-abstract contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
+contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
     using SafeERC20 for IERC20;
 
     uint256 internal constant MAX_BPS = 10_000; //100%

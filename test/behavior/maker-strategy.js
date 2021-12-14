@@ -4,7 +4,7 @@ const { deposit, executeIfExist, timeTravel, rebalanceStrategy } = require('../u
 const { expect } = require('chai')
 const { ethers } = require('hardhat')
 const { getUsers, getEvent } = require('../utils/setupHelper')
-const { shouldValidateMakerCommonBehaviour } = require('./maker-common')
+const { shouldValidateMakerCommonBehavior } = require('./maker-common')
 
 function shouldBehaveLikeMakerStrategy(strategyIndex) {
   let pool, strategy, token, accountant
@@ -18,7 +18,7 @@ function shouldBehaveLikeMakerStrategy(strategyIndex) {
     const vaultType = await strategy.instance.collateralType()
     await jugLike.drip(vaultType)
   }
-  shouldValidateMakerCommonBehaviour(strategyIndex)
+  shouldValidateMakerCommonBehavior(strategyIndex)
   describe(`MakerStrategy specific tests for strategy[${strategyIndex}]`, function () {
     beforeEach(async function () {
       ;[user1, user2] = await getUsers()
@@ -49,7 +49,8 @@ function shouldBehaveLikeMakerStrategy(strategyIndex) {
 
       describe('Interest fee calculation via Jug Drip', function () {
         it('Should earn interest fee', async function () {
-          const feeBalanceBefore = await pool.balanceOf(strategy.instance.address)
+          const feeCollector = await strategy.instance.feeCollector()
+          const feeBalanceBefore = await pool.balanceOf(feeCollector)
           const totalSupplyBefore = await pool.totalSupply()
           await deposit(pool, collateralToken, 50, user2)
 
@@ -57,7 +58,7 @@ function shouldBehaveLikeMakerStrategy(strategyIndex) {
           await timeTravel()
           await updateRate()
 
-          const feeBalanceAfter = await pool.balanceOf(strategy.instance.address)
+          const feeBalanceAfter = await pool.balanceOf(feeCollector)
           expect(feeBalanceAfter).to.be.gt(feeBalanceBefore, 'Fee should increase')
 
           const totalSupplyAfter = await pool.totalSupply()

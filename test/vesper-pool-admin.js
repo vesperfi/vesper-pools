@@ -3,7 +3,7 @@
 const { expect } = require('chai')
 const hre = require('hardhat')
 const ethers = hre.ethers
-const { getUsers, deployContract, createStrategy } = require('./utils/setupHelper_new')
+const { getUsers, deployContract, createStrategy } = require('./utils/setupHelper')
 const addressListFactory = hre.address.ADDRESS_LIST_FACTORY
 
 const { address: Address, poolConfig, strategyConfig } = require('./utils/chains').getChainData()

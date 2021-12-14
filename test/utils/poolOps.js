@@ -184,13 +184,13 @@ async function rebalanceStrategy(strategy) {
     if (strategy.type.includes('Maker')) {
       await bringAboveWater(strategy, 10)
     }
-    if (strategy.type.includes('yearn') || strategy.type.includes('Yearn')) {
+    if (strategy.type.toUpperCase().includes('YEARN')) {
       await harvestYearn(strategy)
     }
-    if (strategy.type.includes('earnVesper')) {
+    if (strategy.type.includes('earnVesper') || strategy.type.includes('vesper')) {
       await harvestVesper(strategy)
     }
-    if (strategy.type.includes('alpha') || strategy.type.includes('Alpha')) {
+    if (strategy.type.toUpperCase().includes('ALPHA')) {
       // Alpha SafeBox has a cToken - this method calls exchangeRateCurrent on the cToken
       await strategy.instance.updateTokenRate()
     }
@@ -237,17 +237,4 @@ async function totalDebtOfAllStrategy(strategies, pool) {
   return totalDebt
 }
 
-async function reset() {
-  // eslint-disable-next-line
-  console.log('Resetting Network...')
-  await provider.send('hardhat_reset', [
-    {
-      forking: {
-        jsonRpcUrl: process.env.NODE_URL,
-        blockNumber: process.env.BLOCK_NUMBER ? parseInt(process.env.BLOCK_NUMBER) : undefined,
-      },
-    },
-  ])
-}
-
-module.exports = { deposit, rebalance, rebalanceStrategy, totalDebtOfAllStrategy, executeIfExist, timeTravel, reset }
+module.exports = { deposit, rebalance, rebalanceStrategy, totalDebtOfAllStrategy, executeIfExist, timeTravel }

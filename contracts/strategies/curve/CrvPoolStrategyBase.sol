@@ -13,6 +13,10 @@ import "./CrvBase.sol";
 abstract contract CrvPoolStrategyBase is CrvBase, Strategy {
     using SafeERC20 for IERC20;
 
+    // solhint-disable-next-line var-name-mixedcase
+    string public NAME;
+    string public constant VERSION = "3.0.22";
+
     mapping(address => bool) internal reservedToken;
 
     uint256 public immutable collIdx;
@@ -24,6 +28,7 @@ abstract contract CrvPoolStrategyBase is CrvBase, Strategy {
     bool public depositError;
 
     uint256 public crvSlippage = 10; // 10000 is 100%; 10 is 0.1%
+    uint256 public decimalConversionFactor; // It will be used in converting value to/from 18 decimals
 
     // No. of pooled tokens in the Pool
     uint256 internal immutable n;
@@ -38,7 +43,8 @@ abstract contract CrvPoolStrategyBase is CrvBase, Strategy {
         address _crvGauge,
         address _swapManager,
         uint256 _collateralIdx,
-        uint256 _n
+        uint256 _n,
+        string memory _name
     )
         CrvBase(_crvPool, _crvLp, _crvGauge) // 3Pool Manager
         Strategy(_pool, _swapManager, _crvLp)
@@ -50,6 +56,11 @@ abstract contract CrvPoolStrategyBase is CrvBase, Strategy {
         reservedToken[CRV] = true;
         collIdx = _collateralIdx;
         _init(_crvPool, _n);
+
+        // Assuming token supports 18 or less decimals. _init will initialize coins array
+        uint256 _decimals = IERC20Metadata(coins[_collateralIdx]).decimals();
+        decimalConversionFactor = 10**(18 - _decimals);
+        NAME = _name;
     }
 
     function updateCrvSlippage(uint256 _newCrvSlippage) external onlyGovernor {
@@ -59,7 +70,9 @@ abstract contract CrvPoolStrategyBase is CrvBase, Strategy {
     }
 
     /// @dev Convert from 18 decimals to token defined decimals.
-    function convertFrom18(uint256 amount) public pure virtual returns (uint256);
+    function convertFrom18(uint256 _amount) public view returns (uint256) {
+        return _amount / decimalConversionFactor;
+    }
 
     /// @dev Check whether given token is reserved or not. Reserved tokens are not allowed to sweep.
     function isReservedToken(address _token) public view override returns (bool) {

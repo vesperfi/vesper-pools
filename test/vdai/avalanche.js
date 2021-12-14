@@ -16,5 +16,5 @@ describe('vDAI Pool', function () {
   prepareConfig(strategies)
   shouldBehaveLikePool('vDai', 'DAI')
   shouldBehaveLikeMultiPool('vDai')
-  shouldBehaveLikeStrategy(0, strategies[0].type, strategies[0].name)
+  shouldBehaveLikeStrategy(0, strategies[0].type, strategies[0].contract)
 })

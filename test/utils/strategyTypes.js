@@ -9,11 +9,9 @@ const StrategyType = {
   VESPER_MAKER: 'vesperMaker',
   EARN_VESPER_MAKER: 'earnVesperMaker',
   CURVE: 'curve',
-  CREAM: 'cream',
   YEARN: 'yearn',
   EARN_MAKER: 'earnMaker',
   EARN_COMPOUND: 'earnCompound',
-  EARN_CREAM: 'earnCream',
   EARN_AAVE: 'earnAave',
   EARN_RARI_FUSE: 'earnRariFuse',
   EARN_ALPHA_LEND: 'earnAlphaLend',
@@ -23,6 +21,7 @@ const StrategyType = {
   RARI_FUSE: 'rariFuse',
   COMPOUND_XY: 'compoundXY',
   COMPOUND_LEVERAGE: 'compoundLeverage',
+  VESPER: 'vesper',
 }
 
 module.exports = Object.freeze(StrategyType)

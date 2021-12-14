@@ -28,8 +28,9 @@ abstract contract Crv4PoolStrategy is CrvPoolStrategyBase {
         address _crvPool,
         address _crvLp,
         address _gauge,
-        uint256 _collateralIdx
-    ) CrvPoolStrategyBase(_pool, _crvPool, _crvLp, _gauge, _swapManager, _collateralIdx, N) {
+        uint256 _collateralIdx,
+        string memory _name
+    ) CrvPoolStrategyBase(_pool, _crvPool, _crvLp, _gauge, _swapManager, _collateralIdx, N, _name) {
         require(IDeposit4x(_crvDeposit).token() == _crvLp, "invalid-deposit-contract");
 
         crvDeposit = _crvDeposit;

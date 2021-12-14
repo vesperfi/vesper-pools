@@ -1,6 +1,5 @@
 'use strict'
-const { getUsers } = require('./utils/setupHelper')
-const { unlock } = require('./utils/setupHelper')
+const { getUsers, unlock } = require('./utils/setupHelper')
 const { expect } = require('chai')
 const { ethers } = require('hardhat')
 const { BigNumber } = require('ethers')

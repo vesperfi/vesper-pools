@@ -8,19 +8,13 @@ import "../../../interfaces/token/IToken.sol";
 // solhint-disable no-empty-blocks
 /// @title Deposit ETH/WETH in RariFuse and earn interest in DAI.
 contract EarnRariFuseStrategyETH is EarnRariFuseStrategy {
-    // DAI = 0x6b175474e89094c44da98b954eedeac495271d0f
     constructor(
         address _pool,
         address _swapManager,
-        uint256 _fusePoolId
-    )
-        EarnRariFuseStrategy(
-            _pool,
-            _swapManager,
-            _fusePoolId,
-            0x6B175474E89094C44Da98b954EedeAC495271d0F // DAI
-        )
-    {}
+        uint256 _fusePoolId,
+        address _dripToken,
+        string memory _name
+    ) EarnRariFuseStrategy(_pool, _swapManager, _fusePoolId, _dripToken, _name) {}
 
     function migrateFusePool(uint256 _newPoolId) external override onlyKeeper {
         address _newCToken = _cTokenByUnderlying(_newPoolId, address(collateralToken));

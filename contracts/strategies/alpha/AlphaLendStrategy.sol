@@ -6,8 +6,12 @@ import "../Strategy.sol";
 import "../../interfaces/alpha/ISafeBox.sol";
 
 /// @title This strategy will deposit collateral token in Alpha SafeBox (ibXYZv2) and earn interest.
-abstract contract AlphaLendStrategy is Strategy {
+contract AlphaLendStrategy is Strategy {
     using SafeERC20 for IERC20;
+
+    // solhint-disable-next-line var-name-mixedcase
+    string public NAME;
+    string public constant VERSION = "3.0.22";
 
     address internal constant ALPHA = 0xa1faa113cbE53436Df28FF0aEe54275c13B40975;
     ISafeBox internal safeBox;
@@ -16,11 +20,13 @@ abstract contract AlphaLendStrategy is Strategy {
     constructor(
         address _pool,
         address _swapManager,
-        address _safeBox
-    ) Strategy(_pool, _swapManager, _safeBox) {
-        safeBox = ISafeBox(_safeBox);
+        address _receiptToken,
+        string memory _name
+    ) Strategy(_pool, _swapManager, _receiptToken) {
+        safeBox = ISafeBox(_receiptToken);
         ibDecimals = safeBox.decimals();
         _setupCheck(_pool);
+        NAME = _name;
     }
 
     function _setupCheck(address _pool) internal view virtual {

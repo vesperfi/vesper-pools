@@ -9,7 +9,7 @@ import "../../Strategy.sol";
 import "../CrvPoolStrategyBase.sol";
 
 /// @title This strategy will deposit collateral token in Curve 3Pool and earn interest.
-abstract contract Crv3PoolStrategy is CrvPoolStrategyBase {
+contract Crv3PoolStrategy is CrvPoolStrategyBase {
     // No. of pooled tokens in the Pool
     uint256 private constant N = 3;
 
@@ -20,8 +20,9 @@ abstract contract Crv3PoolStrategy is CrvPoolStrategyBase {
     constructor(
         address _pool,
         address _swapManager,
-        uint256 _collateralIdx
-    ) CrvPoolStrategyBase(_pool, THREEPOOL, THREECRV, GAUGE, _swapManager, _collateralIdx, N) {
+        uint256 _collateralIdx,
+        string memory _name
+    ) CrvPoolStrategyBase(_pool, THREEPOOL, THREECRV, GAUGE, _swapManager, _collateralIdx, N, _name) {
         require(
             IStableSwap3xUnderlying(THREEPOOL).coins(_collateralIdx) == address(IVesperPool(_pool).token()),
             "collateral-mismatch"

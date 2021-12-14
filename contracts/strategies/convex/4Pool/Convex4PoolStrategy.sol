@@ -17,9 +17,10 @@ abstract contract Convex4PoolStrategy is Crv4PoolStrategy, ConvexStrategyBase {
         address _crvLp,
         address _gauge,
         uint256 _collateralIdx,
-        uint256 _convexPoolId
+        uint256 _convexPoolId,
+        string memory _name
     )
-        Crv4PoolStrategy(_pool, _swapManager, _crvDeposit, _crvPool, _crvLp, _gauge, _collateralIdx)
+        Crv4PoolStrategy(_pool, _swapManager, _crvDeposit, _crvPool, _crvLp, _gauge, _collateralIdx, _name)
         ConvexStrategyBase(_crvLp, _convexPoolId)
     {
         reservedToken[CVX] = true;

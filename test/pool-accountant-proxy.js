@@ -2,7 +2,7 @@
 
 const { expect } = require('chai')
 const { ethers } = require('hardhat')
-const { getUsers, deployContract, createStrategy } = require('./utils/setupHelper_new')
+const { getUsers, deployContract, createStrategy } = require('./utils/setupHelper')
 const { address, poolConfig, strategyConfig } = require('./utils/chains').getChainData()
 const VDAI = poolConfig.VDAI
 const AaveStrategyDAI = strategyConfig.AaveStrategyDAI

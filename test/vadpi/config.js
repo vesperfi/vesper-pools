@@ -1,26 +1,21 @@
 'use strict'
 
 const { getUsers, setupVPool } = require('../utils/setupHelper')
-const StrategyType = require('../utils/strategyTypes')
-const { getChain } = require('../utils/chains')
-const PoolConfig = require(`../../helper/${getChain()}/poolConfig`)
-const { ethers } = require('hardhat')
+const { poolConfig, strategyConfig } = require('../utils/chains').getChainData()
 
 function prepareConfig(_strategies) {
-  const interestFee = '1500' // 15%
-  const strategies = _strategies || [
-    {
-      name: 'AlphaLendStrategyDPI',
-      type: StrategyType.ALPHA_LEND,
-      config: { interestFee, debtRatio: 9000, debtRate: ethers.utils.parseEther('1000000') },
-    },
-  ]
+  let strategies = _strategies
+  if (!strategies) {
+    const strategy1 = strategyConfig.AlphaLendStrategyDPI
+    strategy1.config.debtRatio = 9000
+    strategies = [strategy1]
+  }
 
   beforeEach(async function () {
     const users = await getUsers()
     this.users = users
     await setupVPool(this, {
-      poolConfig: PoolConfig.VADPI,
+      poolConfig: poolConfig.VADPI,
       feeCollector: users[7].address,
       strategies: strategies.map((item, i) => ({
         ...item,

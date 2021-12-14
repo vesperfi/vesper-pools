@@ -6,7 +6,7 @@ import "../AlphaLendStrategy.sol";
 import "../../Earn.sol";
 
 /// @title This strategy will deposit collateral token in Alpha Homora and earn drip in an another token.
-abstract contract EarnAlphaLendStrategy is AlphaLendStrategy, Earn {
+contract EarnAlphaLendStrategy is AlphaLendStrategy, Earn {
     using SafeERC20 for IERC20;
 
     // solhint-disable no-empty-blocks
@@ -14,8 +14,9 @@ abstract contract EarnAlphaLendStrategy is AlphaLendStrategy, Earn {
         address _pool,
         address _swapManager,
         address _receiptToken,
-        address _dripToken
-    ) AlphaLendStrategy(_pool, _swapManager, _receiptToken) Earn(_dripToken) {}
+        address _dripToken,
+        string memory _name
+    ) AlphaLendStrategy(_pool, _swapManager, _receiptToken, _name) Earn(_dripToken) {}
 
     function _setupOracles() internal override(Strategy, AlphaLendStrategy) {
         AlphaLendStrategy._setupOracles();

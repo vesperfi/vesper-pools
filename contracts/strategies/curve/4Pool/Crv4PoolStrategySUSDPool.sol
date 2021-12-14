@@ -5,7 +5,7 @@ pragma solidity 0.8.3;
 import "./Crv4PoolStrategy.sol";
 
 //solhint-disable no-empty-blocks
-abstract contract Crv4PoolStrategySUSDPool is Crv4PoolStrategy {
+contract Crv4PoolStrategySUSDPool is Crv4PoolStrategy {
     // SUSD LP Token
     address internal constant CRV_LP = 0xC25a3A3b969415c80451098fa907EC722572917F;
     // SUSD Pool
@@ -18,6 +18,7 @@ abstract contract Crv4PoolStrategySUSDPool is Crv4PoolStrategy {
     constructor(
         address _pool,
         address _swapManager,
-        uint256 _collateralIdx
-    ) Crv4PoolStrategy(_pool, _swapManager, CRV_DEPOSIT, CRV_POOL, CRV_LP, GAUGE, _collateralIdx) {}
+        uint256 _collateralIdx,
+        string memory _name
+    ) Crv4PoolStrategy(_pool, _swapManager, CRV_DEPOSIT, CRV_POOL, CRV_LP, GAUGE, _collateralIdx, _name) {}
 }

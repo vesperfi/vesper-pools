@@ -10,7 +10,7 @@ import "../../../interfaces/vesper/IPoolRewards.sol";
 
 /// @dev This strategy will deposit collateral token in Maker, borrow Dai and
 /// deposit borrowed DAI in Aave to earn interest.
-abstract contract EarnAaveMakerStrategy is AaveMakerStrategy, Earn {
+contract EarnAaveMakerStrategy is AaveMakerStrategy, Earn {
     //solhint-disable no-empty-blocks
     constructor(
         address _pool,
@@ -18,8 +18,9 @@ abstract contract EarnAaveMakerStrategy is AaveMakerStrategy, Earn {
         address _swapManager,
         address _receiptToken,
         bytes32 _collateralType,
-        address _dripToken
-    ) AaveMakerStrategy(_pool, _cm, _swapManager, _receiptToken, _collateralType) Earn(_dripToken) {}
+        address _dripToken,
+        string memory _name
+    ) AaveMakerStrategy(_pool, _cm, _swapManager, _receiptToken, _collateralType, _name) Earn(_dripToken) {}
 
     //solhint-enable no-empty-blocks
 

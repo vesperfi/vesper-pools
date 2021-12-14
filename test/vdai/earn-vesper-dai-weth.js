@@ -1,31 +1,21 @@
 'use strict'
 
-const { ethers } = require('hardhat')
 const { prepareConfig } = require('./config')
 const { shouldBehaveLikePool } = require('../behavior/vesper-pool')
 const { shouldBehaveLikeStrategy } = require('../behavior/strategy')
-const StrategyType = require('../utils/strategyTypes')
-const Address = require('../../helper/mainnet/address')
-const { setupEarnDrip, addInFeeWhitelist } = require('../utils/setupHelper')
+const { address: Address, strategyConfig } = require('../utils/chains').getChainData()
 
-describe('veDAI Pool', function () {
-  const interestFee = '1500' // 15%
-  const strategies = [
-    {
-      name: 'EarnVesperStrategyDAIWETH',
-      type: StrategyType.EARN_VESPER,
-      config: { interestFee, debtRatio: 9000, debtRate: ethers.utils.parseEther('1000000') },
-    },
-  ]
-  prepareConfig(strategies)
-  setupEarnDrip(Address.vaETH)
-  addInFeeWhitelist('0x0538C8bAc84E95A9dF8aC10Aad17DbE81b9E36ee')
+describe('veDAI Pool with EarnVesperStrategyDAIWETH', function () {
+  const strategy1 = strategyConfig.EarnVesperStrategyDAIWETH
+  strategy1.config.debtRatio = 9000
+  const strategies = [strategy1]
+  prepareConfig(strategies, { growPool: { address: Address.vaETH } })
 
   describe('Pool Tests', function () {
-    shouldBehaveLikePool('veDai', 'DAI', true)
+    shouldBehaveLikePool('veDAI', 'DAI', true)
   })
 
   for (let i = 0; i < strategies.length; i++) {
-    shouldBehaveLikeStrategy(i, strategies[i].type, strategies[i].name)
+    shouldBehaveLikeStrategy(i, strategies[i].type, strategies[i].contract)
   }
 })

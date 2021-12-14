@@ -1,6 +1,6 @@
 'use strict'
 
-const { deposit: _deposit, totalDebtOfAllStrategy, reset } = require('../utils/poolOps')
+const { deposit: _deposit, totalDebtOfAllStrategy } = require('../utils/poolOps')
 const time = require('../utils/time')
 const chaiAlmost = require('chai-almost')
 const chai = require('chai')
@@ -25,7 +25,6 @@ async function shouldDoSanityEarnTest(poolName, collateralName) {
     const multiplier = DECIMAL18.div(BN.from(10).pow(collateralDecimal))
     return BN.from(amount).mul(multiplier)
   }
-  afterEach(reset)
 
   describe(`${poolName} basic operation tests`, function () {
     beforeEach(async function () {

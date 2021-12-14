@@ -1,31 +1,24 @@
 'use strict'
 
 const { getUsers, setupVPool } = require('../utils/setupHelper')
-const StrategyType = require('../utils/strategyTypes')
-const { getChain } = require('../utils/chains')
-const PoolConfig = require(`../../helper/${getChain()}/poolConfig`)
-const { ethers } = require('hardhat')
-const ONE_MILLION = ethers.utils.parseEther('100000000')
+const { poolConfig, strategyConfig } = require('../utils/chains').getChainData()
 
 function prepareConfig(_strategies) {
-  const interestFee = '1500' // 15%
-  const strategies = _strategies || [
-    {
-      name: 'EarnCompoundStrategyWBTC',
-      type: StrategyType.EARN_COMPOUND,
-      config: { interestFee, debtRatio: 4500, debtRate: ONE_MILLION },
-    },
-    {
-      name: 'CompoundStrategyWBTC',
-      type: StrategyType.COMPOUND,
-      config: { interestFee, debtRatio: 4500, debtRate: ONE_MILLION },
-    },
-  ]
+  let strategies = _strategies
+
+  if (!strategies) {
+    const strategy1 = strategyConfig.CompoundStrategyWBTC
+    const strategy2 = strategyConfig.CompoundStrategyWBTC
+    strategy1.config.debtRatio = 4500
+    strategy2.config.debtRatio = 4500
+    strategies = [strategy1, strategy2]
+  }
+
   beforeEach(async function () {
     const users = await getUsers()
     this.users = users
     await setupVPool(this, {
-      poolConfig: PoolConfig.VAWBTC,
+      poolConfig: poolConfig.VAWBTC,
       feeCollector: users[7].address,
       strategies: strategies.map((item, i) => ({
         ...item,

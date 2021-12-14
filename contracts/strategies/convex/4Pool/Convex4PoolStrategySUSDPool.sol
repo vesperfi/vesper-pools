@@ -5,7 +5,7 @@ pragma solidity 0.8.3;
 import "./Convex4PoolStrategy.sol";
 
 //solhint-disable no-empty-blocks
-abstract contract Convex4PoolStrategySUSDPool is Convex4PoolStrategy {
+contract Convex4PoolStrategySUSDPool is Convex4PoolStrategy {
     // SUSD LP Token
     address internal constant CRV_LP = 0xC25a3A3b969415c80451098fa907EC722572917F;
     // SUSD Pool
@@ -20,6 +20,19 @@ abstract contract Convex4PoolStrategySUSDPool is Convex4PoolStrategy {
     constructor(
         address _pool,
         address _swapManager,
-        uint256 _collateralIdx
-    ) Convex4PoolStrategy(_pool, _swapManager, CRV_DEPOSIT, CRV_POOL, CRV_LP, GAUGE, _collateralIdx, CONVEX_POOL_ID) {}
+        uint256 _collateralIdx,
+        string memory _name
+    )
+        Convex4PoolStrategy(
+            _pool,
+            _swapManager,
+            CRV_DEPOSIT,
+            CRV_POOL,
+            CRV_LP,
+            GAUGE,
+            _collateralIdx,
+            CONVEX_POOL_ID,
+            _name
+        )
+    {}
 }

@@ -6,7 +6,7 @@ const { ethers } = require('hardhat')
 const time = require('./utils/time')
 const poolOps = require('./utils/poolOps')
 const swapper = require('./utils/tokenSwapper')
-const { deployContract, getUsers, setupVPool } = require('./utils/setupHelper_new')
+const { deployContract, getUsers, setupVPool } = require('./utils/setupHelper')
 const { address: Address, poolConfig, strategyConfig } = require('./utils/chains').getChainData()
 const AaveStrategyDAI = strategyConfig.AaveStrategyDAI
 
