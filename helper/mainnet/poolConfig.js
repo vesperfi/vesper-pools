@@ -12,7 +12,7 @@ const PoolConfig = {
   VDAI: {
     contractName: 'VPool',
     poolParams: ['vDAI Pool', 'vDAI', Address.DAI],
-    setup: { ...setup },
+    setup: { ...setup }, // Shallow copy
     rewards: { ...rewards },
   },
   VADAI: {

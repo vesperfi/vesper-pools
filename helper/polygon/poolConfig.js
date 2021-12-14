@@ -2,51 +2,45 @@
 
 const Address = require('./address')
 
-const { ADDRESS_LIST_FACTORY: addressListFactory, FEE_COLLECTOR: feeCollector } = Address
-const withdrawFee = 60
+const setup = { addressListFactory: Address.ADDRESS_LIST_FACTORY, feeCollector: Address.FEE_COLLECTOR, withdrawFee: 60 }
+const rewards = { contract: 'PoolRewards', tokens: [Address.VSP] }
 
 const PoolConfig = {
   VDAI: {
     contractName: 'VPool',
     poolParams: ['vDAI Pool', 'vDAI', Address.DAI],
-    addressListFactory,
-    withdrawFee,
-    feeCollector,
+    setup: { ...setup }, // Shallow copy
+    rewards: { ...rewards },
   },
   VUSDC: {
     contractName: 'VPool',
     poolParams: ['vUSDC Pool', 'vUSDC', Address.USDC],
-    addressListFactory,
-    withdrawFee,
-    feeCollector,
+    setup: { ...setup },
+    rewards: { ...rewards },
   },
   VUSDT: {
     contractName: 'VPool',
     poolParams: ['vUSDT Pool', 'vUSDT', Address.USDT],
-    addressListFactory,
-    withdrawFee,
-    feeCollector,
+    setup: { ...setup },
+    rewards: { ...rewards },
   },
   VWETH: {
     contractName: 'VPool',
     poolParams: ['vWETH Pool', 'vWETH', Address.WETH],
-    addressListFactory,
-    withdrawFee,
-    feeCollector,
+    setup: { ...setup },
+    rewards: { ...rewards },
   },
   VWBTC: {
     contractName: 'VPool',
     poolParams: ['vWBTC Pool', 'vWBTC', Address.WBTC],
-    addressListFactory,
-    withdrawFee,
-    feeCollector,
+    setup: { ...setup },
+    rewards: { ...rewards },
   },
   VMATIC: {
     contractName: 'VETH',
     poolParams: ['vMATIC Pool', 'vMATIC', Address.WMATIC],
-    addressListFactory,
-    withdrawFee,
-    feeCollector,
+    setup: { ...setup },
+    rewards: { ...rewards },
   },
 }
 

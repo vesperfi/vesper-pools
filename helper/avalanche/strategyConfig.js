@@ -6,7 +6,12 @@ const StrategyTypes = require('../../test/utils/strategyTypes')
 
 const swapManager = Address.SWAP_MANAGER
 const interestFee = '1500' // 15%
-const config = { interestFee, debtRatio: 0, debtRate: ethers.utils.parseEther('1000000') }
+const config = { interestFee, debtRatio: 0, debtRate: ethers.utils.parseEther('1000000').toString() }
+const setup = {
+  addressListFactory: Address.ADDRESS_LIST_FACTORY,
+  feeCollector: Address.FEE_COLLECTOR,
+  keepers: [Address.KEEPER],
+}
 
 // TODO update setup to remove strategy type, once done remove type from heres too
 const StrategyConfig = {
@@ -18,7 +23,8 @@ const StrategyConfig = {
       receiptToken: Address.Aave.avDAI,
       strategyName: 'AaveStrategyAvalancheDAI',
     },
-    config,
+    config: { ...config }, // Shallow copy
+    setup: { ...setup },
   },
 }
 

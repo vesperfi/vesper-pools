@@ -44,6 +44,9 @@ function validatePoolConfig(poolConfig) {
     if (poolConfig.rewards.contract !== 'PoolRewards') {
       throw new Error('Wrong contract name for Rewards Pool')
     }
+    if (!poolConfig.rewards.tokens.length) {
+      throw new Error('Rewards token is required')
+    }
   }
 }
 

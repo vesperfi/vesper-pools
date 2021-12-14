@@ -25,7 +25,7 @@ const StrategyConfig = {
       receiptToken: Address.Aave.aDAI,
       strategyName: 'AaveStrategyDAI',
     },
-    config: { ...config },
+    config: { ...config }, // Shallow copy
     setup: { ...setup },
   },
 
