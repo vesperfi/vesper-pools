@@ -6,7 +6,12 @@ const StrategyTypes = require('../../test/utils/strategyTypes')
 
 const swapManager = Address.SWAP_MANAGER
 const interestFee = '1500' // 15%
-const config = { interestFee, debtRatio: 0, debtRate: ethers.utils.parseEther('1000000') }
+const config = { interestFee, debtRatio: 0, debtRate: ethers.utils.parseEther('1000000').toString() }
+const setup = {
+  addressListFactory: Address.ADDRESS_LIST_FACTORY,
+  feeCollector: Address.FEE_COLLECTOR,
+  keepers: [Address.KEEPER],
+}
 
 // TODO update setup to remove strategy type, once done remove type from heres too
 const StrategyConfig = {
@@ -18,7 +23,8 @@ const StrategyConfig = {
       receiptToken: Address.Aave.amDAI,
       strategyName: 'AaveStrategyPolygonDAI',
     },
-    config,
+    config: { ...config }, // Shallow copy
+    setup: { ...setup },
   },
 
   AaveStrategyPolygonUSDC: {
@@ -30,6 +36,7 @@ const StrategyConfig = {
       strategyName: 'AaveStrategyPolygonUSDC',
     },
     config: { interestFee, debtRatio: 0, debtRate: ethers.utils.parseUnits('1000000', 6) },
+    setup: { ...setup },
   },
 
   AaveStrategyPolygonUSDT: {
@@ -41,6 +48,7 @@ const StrategyConfig = {
       strategyName: 'AaveStrategyPolygonUSDT',
     },
     config: { interestFee, debtRatio: 0, debtRate: ethers.utils.parseUnits('1000000', 6) },
+    setup: { ...setup },
   },
 
   AaveStrategyPolygonWBTC: {
@@ -52,6 +60,7 @@ const StrategyConfig = {
       strategyName: 'AaveStrategyPolygonWBTC',
     },
     config: { interestFee, debtRatio: 0, debtRate: ethers.utils.parseUnits('1000000', 8) },
+    setup: { ...setup },
   },
 
   AaveStrategyPolygonWETH: {
@@ -62,7 +71,8 @@ const StrategyConfig = {
       receiptToken: Address.Aave.amWETH,
       strategyName: 'AaveStrategyPolygonWETH',
     },
-    config,
+    config: { ...config },
+    setup: { ...setup },
   },
 
   AaveStrategyPolygonWMATIC: {
@@ -73,7 +83,8 @@ const StrategyConfig = {
       receiptToken: Address.Aave.amWMATIC,
       strategyName: 'AaveStrategyPolygonWMATIC',
     },
-    config,
+    config: { ...config },
+    setup: { ...setup },
   },
 }
 
