@@ -3,21 +3,11 @@
 const Address = require('../helper/mainnet/address')
 
 const PoolAccountant = 'PoolAccountant'
-let PoolRewards = 'PoolRewards'
-const VesperEarnDrip = 'VesperEarnDrip'
 
 const deployFunction = async function ({ getNamedAccounts, deployments, poolConfig }) {
   const { deploy, execute, read } = deployments
   const { deployer } = await getNamedAccounts()
-
-  // If we are deploying earn pools then deploy Vesper Earn Drip as PoolRewards
-  if (poolConfig.poolParams[0].includes('Earn')) {
-    PoolRewards = VesperEarnDrip
-    if (poolConfig.growToken && !poolConfig.rewardsToken.includes(poolConfig.growToken)) {
-      throw new Error('Grow token should be part of rewardsToken array')
-    }
-  }
-
+  const setup = poolConfig.setup
   // Deploy PoolAccountant. This call will deploy ProxyAdmin, proxy and PoolAccountant
   const accountantProxy = await deploy(PoolAccountant, {
     from: deployer,
@@ -39,7 +29,7 @@ const deployFunction = async function ({ getNamedAccounts, deployments, poolConf
       execute: {
         init: {
           methodName: 'initialize',
-          args: [...poolConfig.poolParams, accountantProxy.address, poolConfig.addressListFactory],
+          args: [...poolConfig.poolParams, accountantProxy.address, setup.addressListFactory],
         },
       },
     },
@@ -51,11 +41,12 @@ const deployFunction = async function ({ getNamedAccounts, deployments, poolConf
   }
 
   // Update pool fee collector and withdraw fee
-  await execute(poolConfig.contractName, { from: deployer, log: true }, 'updateFeeCollector', poolConfig.feeCollector)
-  await execute(poolConfig.contractName, { from: deployer, log: true }, 'updateWithdrawFee', poolConfig.withdrawFee)
+  await execute(poolConfig.contractName, { from: deployer, log: true }, 'updateFeeCollector', setup.feeCollector)
+  await execute(poolConfig.contractName, { from: deployer, log: true }, 'updateWithdrawFee', setup.withdrawFee)
 
+  const rewards = poolConfig.rewards
   // Deploy pool rewards (Vesper Earn drip for Earn pools)
-  const rewardsProxy = await deploy(PoolRewards, {
+  const rewardsProxy = await deploy(rewards.contract, {
     from: deployer,
     log: true,
     // proxy deployment
@@ -65,7 +56,7 @@ const deployFunction = async function ({ getNamedAccounts, deployments, poolConf
       execute: {
         init: {
           methodName: 'initialize',
-          args: [poolProxy.address, poolConfig.rewardsToken],
+          args: [poolProxy.address, rewards.tokens],
         },
       },
     },
@@ -75,8 +66,8 @@ const deployFunction = async function ({ getNamedAccounts, deployments, poolConf
   await execute(poolConfig.contractName, { from: deployer, log: true }, 'updatePoolRewards', rewardsProxy.address)
 
   // Update grow token in Vesper Earn Drip contract of Earn pool
-  if (poolConfig.poolParams[0].includes('Earn') && poolConfig.growToken) {
-    await execute(PoolRewards, { from: deployer, log: true }, 'updateGrowToken', poolConfig.growToken)
+  if (poolConfig.poolParams[0].includes('Earn')) {
+    await execute(rewards.contract, { from: deployer, log: true }, 'updateGrowToken', rewards.growToken)
   }
 
   // Prepare id of deployment, next deployment will be triggered if id is changed

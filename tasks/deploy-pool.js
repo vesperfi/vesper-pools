@@ -1,8 +1,51 @@
 'use strict'
 
+const _ = require('lodash')
 const del = require('del')
 const copy = require('recursive-copy')
 const fs = require('fs')
+
+// Validate given keys exists in given object
+function validateObject(object, keys) {
+  keys.forEach(function (key) {
+    if (!_.has(object, key)) {
+      throw new Error(`${key} is missing in pool config`)
+    }
+  })
+}
+
+function validatePoolConfig(poolConfig) {
+  const topLevelKeys = ['contractName', 'poolParams', 'setup', 'rewards']
+  // Validate top level properties in config object
+  validateObject(poolConfig, topLevelKeys)
+
+  // Validate pool params
+  if (poolConfig.poolParams.length !== 3) {
+    throw new Error('Incorrect pool params. Pool name, symbol and token are required')
+  }
+
+  // Validate setup in config object
+  const setupKeys = ['addressListFactory', 'feeCollector', 'withdrawFee']
+  validateObject(poolConfig.setup, setupKeys)
+
+  // Validate rewards in config object
+  let rewardsKeys = ['contract', 'tokens']
+  if (poolConfig.poolParams[0].includes('Earn')) {
+    rewardsKeys = ['contract', 'tokens', 'growToken']
+    validateObject(poolConfig.rewards, rewardsKeys)
+    if (!poolConfig.rewards.tokens.includes(poolConfig.rewards.growToken)) {
+      throw new Error('Grow token should be part of tokens array in rewards config')
+    }
+    if (poolConfig.rewards.contract !== 'VesperEarnDrip') {
+      throw new Error('Wrong contract name for Earn Rewards pool')
+    }
+  } else {
+    validateObject(poolConfig.rewards, rewardsKeys)
+    if (poolConfig.rewards.contract !== 'PoolRewards') {
+      throw new Error('Wrong contract name for Rewards Pool')
+    }
+  }
+}
 
 /* eslint-disable no-param-reassign, complexity */
 task('deploy-pool', 'Deploy vesper pool')
@@ -10,24 +53,8 @@ task('deploy-pool', 'Deploy vesper pool')
   .addOptionalParam('release', 'Vesper release semantic version. It will create release file under /releases directory')
   .addOptionalParam('targetChain', 'Target chain where contracts will be deployed')
   .addOptionalParam('deployParams', "Run 'npx hardhat deploy --help' to see all supported params")
-  .addOptionalParam(
-    'poolParams',
-    `any param passed inside poolParams object will be used to prepare pool configuration
-  -----------------------------------------------------------------------------------------
-  rewardsToken        Rewards token address for poolRewards
-  growToken           Grow token address for Vesper earn drip, if applicable
-  -----------------------------------------------------------------------------------------
-  `,
-  )
-  .addOptionalParam('strategyParams', "Run 'npx hardhat strategy-configuration --help' to see all supported params")
-  .setAction(async function ({
-    pool,
-    release,
-    targetChain = 'mainnet',
-    deployParams = {},
-    poolParams = {},
-    strategyParams,
-  }) {
+  .addOptionalParam('strategyName', 'Vesper strategy name to deploy')
+  .setAction(async function ({ pool, release, targetChain = 'mainnet', deployParams = {}, strategyName }) {
     const hreNetwork = hre.network.name
     // When deploying on localhost, we can provide targetChain param to support chain other than mainnet
     if (hreNetwork !== 'localhost') {
@@ -37,8 +64,6 @@ task('deploy-pool', 'Deploy vesper pool')
     // Set target chain in hre
     hre.targetChain = targetChain
 
-    const Address = require(`../helper/${targetChain}/address`)
-
     if (typeof deployParams === 'string') {
       deployParams = JSON.parse(deployParams)
     }
@@ -47,17 +72,16 @@ task('deploy-pool', 'Deploy vesper pool')
       deployParams.tags = pool
     }
 
-    if (typeof poolParams === 'string') {
-      poolParams = JSON.parse(poolParams)
-    } else {
-      console.log('Using VSP as default pool rewards token')
-      poolParams.rewardsToken = [Address.VSP]
-    }
-
     const poolConfig = require(`../helper/${targetChain}/poolConfig`)[pool.toUpperCase()]
-    hre.poolConfig = { ...poolConfig, ...poolParams }
+    // Fail fast
+    if (!poolConfig) {
+      throw new Error(`Missing pool configuration in /helper/${targetChain}/poolConfig file`)
+    }
+    validatePoolConfig(poolConfig)
+    // Set pool config in hre to use later in deploy scripts
+    hre.poolConfig = poolConfig
 
-    await run('strategy-configuration', { strategyParams })
+    await run('strategy-configuration', { strategyName, targetChain })
 
     const networkDir = `./deployments/${hreNetwork}`
     let deployer = process.env.DEPLOYER

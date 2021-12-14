@@ -1,121 +1,92 @@
 'use strict'
+const _ = require('lodash')
 
-/* eslint-disable no-param-reassign, complexity */
-task('strategy-configuration', 'Prepare strategy configuration for deployment')
-  .addOptionalParam(
-    'strategyParams',
-    `any param passed inside strategyParam object will be used to prepare strategy configuration
-  -----------------------------------------------------------------------------------------
-  name                strategy contract name
-  collateralToken     name of pool collateral token
-  interestFee         interest fee of this strategy
-  debtRatio           debt ratio for this strategy
-  debtRate            debt rate of this strategy
-  swapManager         swap manager address
-  addressListFactory  factory address
-  feeCollector        fee collector address
-  keeper              address we want to add as keeper
-  fusePoolId          Fuse pool id, if applicable
-  growPool            Vesper pool address, typically vDAI, for Vesper Maker strategies
-  gemJoin             Gem Join address for Maker strategy
-  highWater           High water mark value for Maker strategy
-  lowWater            Low water mark value for Maker strategy
-  -----------------------------------------------------------------------------------------
-  `,
-  )
-  .setAction(async function ({ strategyParams }) {
-    // Parse string data as JSON
-    if (typeof strategyParams === 'string') {
-      strategyParams = JSON.parse(strategyParams)
+// Prepare constructor args keys
+function getConstructorArgKeys(strategyName) {
+  // Most of the strategies has these keys
+  let keys = ['swapManager', 'receiptToken', 'strategyName']
+
+  if (strategyName.includes('RariFuse')) {
+    // fusePoolId replaces receiptToken
+    keys = ['swapManager', 'fusePoolId', 'strategyName']
+  } else if (strategyName.includes('Convex') || strategyName.includes('Crv')) {
+    // collateralIdx replaces receiptToken
+    keys = ['swapManager', 'collateralIdx', 'strategyName']
+  } else if (strategyName.includes('CompoundLeverage')) {
+    // No strategy name
+    keys = ['swapManager', 'receiptToken']
+  } else if (strategyName.includes('CompoundXY')) {
+    // Has borrowCToken but no strategy name
+    keys = ['swapManager', 'receiptToken', 'borrowCToken']
+  }
+
+  // Separate conditions
+  // Any combination of Earn strategies
+  if (strategyName.includes('Earn')) {
+    if (strategyName === 'EarnCrvSBTCPoolStrategyWBTC') {
+      keys = ['swapManager', 'dripToken', 'strategyName']
     } else {
+      keys.push('dripToken')
+    }
+  }
+  // Any combination of Maker strategies
+  if (strategyName.includes('Maker')) {
+    keys.push('collateralType')
+  }
+  return keys
+}
+
+// Validate given keys exists in given object
+function validateObject(object, keys) {
+  keys.forEach(function (key) {
+    if (!_.has(object, key)) {
+      throw new Error(`${key} is missing in strategy config`)
+    }
+  })
+}
+
+function validateStrategyConfig(strategyName, strategyConfig) {
+  const topLevelKeys = ['contract', 'type', 'constructorArgs', 'config']
+  // Validate top level properties in config object
+  validateObject(strategyConfig, topLevelKeys)
+  // Validate Strategy config. It will be added in PoolAccountant
+  const configKeys = ['interestFee', 'debtRatio', 'debtRate']
+  validateObject(strategyConfig.config, configKeys)
+  // Validate constructor args
+  validateObject(strategyConfig.constructorArgs, getConstructorArgKeys(strategyName))
+  // Validate setup config
+  const setupKeys = ['addressListFactory', 'feeCollector', 'keepers']
+  validateObject(strategyConfig.setup, setupKeys)
+  // Validate Maker config
+  if (strategyName.includes('Maker')) {
+    const makerKeys = ['gemJoin', 'highWater', 'lowWater']
+    validateObject(strategyConfig.setup.maker, makerKeys)
+  }
+}
+
+task('strategy-configuration', 'Prepare strategy configuration for deployment')
+  .addOptionalParam('strategyName', 'Name of strategy to deploy')
+  .addOptionalParam('targetChain', 'Target chain where contracts will be deployed')
+  .setAction(async function ({ strategyName, targetChain = hre.targetChain }) {
+    if (!strategyName) {
       // not deploying strategy
-      hre.strategyConfig = {}
       return
     }
-    // Make sure collateral token name is provided
-    if (!strategyParams.collateralToken) {
-      throw new Error('CollateralToken is missing in strategy configuration data')
+    const fileName = `../helper/${targetChain}/strategyConfig`
+    const strategyConfig = require(fileName)[strategyName]
+    if (!strategyConfig) {
+      throw new Error(`Missing strategy configuration in ${fileName}.js`)
     }
 
-    const poolConfig = hre.poolConfig
-    let tokenSymbol = 'ETH'
-    let tokenDecimal = 18
+    validateStrategyConfig(strategyName, strategyConfig)
 
-    // If 3rd param exist, overwrite symbol and decimal.
-    if (poolConfig.poolParams[2]) {
-      const token = await ethers.getContractAt('ERC20', poolConfig.poolParams[2])
-      tokenSymbol = await token.symbol()
-      tokenDecimal = await token.decimals()
-    }
-
-    // Make sure pool and strategy config has same collateral
-    if (tokenSymbol.toUpperCase() !== strategyParams.collateralToken.toUpperCase()) {
-      throw new Error('Collateral token mismatch')
-    }
-
-    // TODO use getChainData
-    const Address = require(`../helper/${hre.targetChain}/address`)
-    const alias = `${strategyParams.name}${strategyParams.collateralToken}`
-
-    // Prepare strategy configuration for deployment
-    const strategyConfig = {
-      contractName: strategyParams.name,
-      alias,
-      swapManager: strategyParams.swapManager ? strategyParams.swapManager : Address.SWAP_MANAGER,
-
-      addressListFactory: strategyParams.addressListFactory
-        ? strategyParams.addressListFactory
-        : Address.ADDRESS_LIST_FACTORY,
-      keeper: strategyParams.keeper ? strategyParams.keeper : Address.KEEPER,
-      feeCollector: strategyParams.feeCollector ? strategyParams.feeCollector : Address.FEE_COLLECTOR,
-      interestFee: strategyParams.interestFee ? strategyParams.interestFee : '1500',
-      debtRatio: strategyParams.debtRatio ? strategyParams.debtRatio : '0',
-      debtRate: strategyParams.debtRate
-        ? strategyParams.debtRate
-        : ethers.utils.parseUnits('1000000', tokenDecimal).toString(),
-    }
-
-    // NOTICE:: This is temporary fix, Once solidity cleanup for strategies is done, this file will look very different
-    // TODO once sol update is done, read strategy data from strategyConfig
-    if (strategyParams.name.startsWith('EarnAaveStrategy') || strategyParams.name.startsWith('AaveStrategy')) {
-      const config = require(`../helper/${hre.targetChain}/strategyConfig`)
-      // Add receipt token
-      strategyConfig.receiptToken = config[alias].constructorArgs.receiptToken
-      if (strategyParams.name.startsWith('EarnAaveStrategy')) {
-        strategyConfig.dripToken = config[alias].constructorArgs.dripToken
-      }
-    }
-
-    // Prepare Maker strategy specific configuration data
-    if (strategyParams.name.toUpperCase().includes('MAKER')) {
-      if (!strategyParams.gemJoin || !strategyParams.highWater || !strategyParams.lowWater) {
-        throw new Error('Missing Maker strategy specific configuration')
-      }
-      const maker = {
-        gemJoin: strategyParams.gemJoin,
-        highWater: strategyParams.highWater,
-        lowWater: strategyParams.lowWater,
-      }
-      strategyConfig.maker = maker
-
-      // If strategy is VesperMaker or EarnVesperMaker
-      if (strategyParams.name.toUpperCase().includes('VESPER')) {
-        if (!strategyParams.growPool) {
-          throw new Error('Vesper grow pool address is required for Vesper Maker strategy')
-        }
-        strategyConfig.growPool = strategyParams.growPool
-      }
-    }
-
-    if (strategyParams.name === 'RariFuseStrategy') {
-      if (!strategyParams.fusePoolId) {
-        throw new Error('fusePoolId is required for RariFuseStrategy')
-      }
-      strategyConfig.fusePoolId = strategyParams.fusePoolId
+    strategyConfig.alias = strategyName
+    if (strategyName.includes('RariFuse')) {
+      strategyConfig.alias = `${strategyConfig.alias}#${strategyConfig.constructorArgs.fusePoolId}`
     }
 
     console.log(
-      `Deploying ${strategyParams.name} on ${hre.network.name} for ${hre.targetChain} with following configuration: `,
+      `Deploying ${strategyName} on ${hre.network.name} for ${hre.targetChain} with following configuration: `,
       strategyConfig,
     )
 

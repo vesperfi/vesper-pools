@@ -4,8 +4,10 @@ const { ethers } = require('hardhat')
 const PoolAccountant = 'PoolAccountant'
 const CollateralManager = 'CollateralManager'
 
-/* eslint-disable complexity */
 const deployFunction = async function ({ getNamedAccounts, deployments, poolConfig, strategyConfig, targetChain }) {
+  if (!strategyConfig) {
+    throw new Error('Strategy configuration object is not created.')
+  }
   const Address = require(`../helper/${targetChain}/address`)
 
   const { deploy, execute, read } = deployments
@@ -13,92 +15,84 @@ const deployFunction = async function ({ getNamedAccounts, deployments, poolConf
 
   const poolProxy = await deployments.get(poolConfig.contractName)
 
-  let strategyAlias = strategyConfig.contractName
+  const strategyAlias = strategyConfig.alias
 
-  const constructorArgs = [poolProxy.address, strategyConfig.swapManager]
+  const constructorArgs = [poolProxy.address, ...Object.values(strategyConfig.constructorArgs)]
 
-  // NOTICE:: This is temporary fix, future version will always read alias from strategy config
-  // TODO Once sol update is done, read whole constructorArgs object from strategy cofig
-  if (strategyAlias.startsWith('EarnAaveStrategy') || strategyAlias.startsWith('AaveStrategy')) {
-    strategyAlias = strategyConfig.alias
-    // Push receiptToken, dripToken(only for earnAave) and strategyName. This has to be in this order
-    constructorArgs.push(strategyConfig.receiptToken)
-    if (strategyAlias.startsWith('EarnAaveStrategy')) {
-      constructorArgs.push(strategyConfig.dripToken)
-    }
-    constructorArgs.push(strategyAlias)
-  }
-
-  // Rari strategy requires fusePoolId
-  if (strategyAlias === 'RariFuseStrategy') {
-    const fusePoolId = strategyConfig.fusePoolId
-    constructorArgs.push(fusePoolId)
-    strategyAlias = `${strategyAlias}#${fusePoolId}`
-  } else if (strategyAlias.toUpperCase().includes('MAKER')) {
+  // TODO move it to strategy-configuration?, so far read() is blocker in moving it
+  if (strategyAlias.includes('Maker')) {
     // Maker strategy of any type, EarnXXXMaker, XXXMaker
+    // TODO move this to constructorArgs?
     let cm = Address.COLLATERAL_MANAGER
     if (!cm) {
       // Deploy collateral manager
       cm = (await deploy(CollateralManager, { from: deployer, log: true })).address
     }
     // Fail fast: By reading any property we make sure deployment object exist for CollateralManager
-    await read(CollateralManager, {}, 'treasury')
-    constructorArgs[1] = cm
-    constructorArgs[2] = strategyConfig.swapManager
-
-    // VesperMaker and EarnVesperMaker strategy require 1 extra param
-    if (strategyAlias.toUpperCase().includes('VESPER')) {
-      constructorArgs.push(strategyConfig.growPool)
+    try {
+      await read(CollateralManager, {}, 'treasury')
+    } catch (e) {
+      throw new Error(`Missing Collateral Manager deployment object. 
+      If you are deploying in localhost, please copy CollateralManager.json 
+      from /deployments/${targetChain}/global to /deployments/localhost/global`)
     }
-  }
 
+    // Insert cm at index 1 in constructorArgs
+    constructorArgs.splice(1, 0, cm)
+  }
+  console.log('final constructor args', constructorArgs)
+  console.log(strategyAlias)
   // Deploy strategy
   const deployed = await deploy(strategyAlias, {
-    contract: strategyConfig.contractName,
+    contract: strategyConfig.contract,
     from: deployer,
     log: true,
     args: constructorArgs,
   })
 
-  // Execute configuration transactions
-  await execute(strategyAlias, { from: deployer, log: true }, 'init', strategyConfig.addressListFactory)
+  const setup = strategyConfig.setup
+  // Execute setup transactions
+  await execute(strategyAlias, { from: deployer, log: true }, 'init', setup.addressListFactory)
   await execute(strategyAlias, { from: deployer, log: true }, 'approveToken')
-  await execute(strategyAlias, { from: deployer, log: true }, 'updateFeeCollector', strategyConfig.feeCollector)
-  await execute(strategyAlias, { from: deployer, log: true }, 'addKeeper', strategyConfig.keeper)
+  await execute(strategyAlias, { from: deployer, log: true }, 'updateFeeCollector', setup.feeCollector)
+  for (const keeper of setup.keepers) {
+    await execute(strategyAlias, { from: deployer, log: true }, 'addKeeper', keeper)
+  }
 
   // For earn strategies approve grow token
-  if (strategyAlias.toUpperCase().includes('EARN')) {
+  if (strategyAlias.includes('Earn')) {
     await execute(strategyAlias, { from: deployer, log: true }, 'approveGrowToken')
   }
 
   // Execute Maker related configuration transactions
-  if (strategyAlias.toUpperCase().includes('MAKER')) {
-    const config = strategyConfig.maker
+  if (strategyAlias.includes('Maker')) {
+    const maker = setup.maker
     // Check whether gemJoin already added(or old version) in CM or not
-    const collateralType = await (await ethers.getContractAt('GemJoinLike', config.gemJoin)).ilk()
+    const collateralType = await (await ethers.getContractAt('GemJoinLike', maker.gemJoin)).ilk()
     const gemJoinInCM = await read(CollateralManager, {}, 'mcdGemJoin', collateralType)
-    if (gemJoinInCM !== config.gemJoin) {
-      await execute('CollateralManager', { from: deployer, log: true }, 'addGemJoin', [config.gemJoin])
+    if (gemJoinInCM !== maker.gemJoin) {
+      await execute('CollateralManager', { from: deployer, log: true }, 'addGemJoin', [maker.gemJoin])
     }
     await execute(strategyAlias, { from: deployer, log: true }, 'createVault')
     await execute(
       strategyAlias,
       { from: deployer, log: true },
       'updateBalancingFactor',
-      config.highWater,
-      config.lowWater,
+      maker.highWater,
+      maker.lowWater,
     )
   }
 
   // Add strategy in pool accountant
+  const config = strategyConfig.config
   await execute(
     PoolAccountant,
     { from: deployer, log: true },
     'addStrategy',
     deployed.address,
-    strategyConfig.interestFee,
-    strategyConfig.debtRatio,
-    strategyConfig.debtRate,
+    config.interestFee,
+    config.debtRatio,
+    config.debtRate,
   )
 
   const strategyVersion = await read(strategyAlias, {}, 'VERSION')
