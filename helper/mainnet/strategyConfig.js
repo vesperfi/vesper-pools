@@ -6,7 +6,14 @@ const StrategyTypes = require('../../test/utils/strategyTypes')
 
 const swapManager = Address.SWAP_MANAGER
 const interestFee = 1500 // 15%
-const config = { interestFee, debtRatio: 0, debtRate: ethers.utils.parseEther('1000000') }
+const config = { interestFee, debtRatio: 0, debtRate: ethers.utils.parseEther('1000000').toString() }
+const setup = {
+  addressListFactory: Address.ADDRESS_LIST_FACTORY,
+  feeCollector: Address.FEE_COLLECTOR,
+  keepers: [Address.KEEPER],
+}
+// Maker related strategies will have to add more setup config.
+// For example const maker = { gemJoin: Address.MCD_JOIN_ETH_A, highWater: 275, lowWater: 250 }
 
 // TODO update setup to remove strategy type, once done remove type from heres too
 const StrategyConfig = {
@@ -18,7 +25,8 @@ const StrategyConfig = {
       receiptToken: Address.Aave.aDAI,
       strategyName: 'AaveStrategyDAI',
     },
-    config: Object.assign({}, config), // Shallow copy
+    config: { ...config },
+    setup: { ...setup },
   },
 
   AaveStrategyDPI: {
@@ -29,7 +37,8 @@ const StrategyConfig = {
       receiptToken: Address.Aave.aDPI,
       strategyName: 'AaveStrategyDPI',
     },
-    config: Object.assign({}, config),
+    config: { ...config },
+    setup: { ...setup },
   },
 
   AaveStrategyFEI: {
@@ -40,7 +49,8 @@ const StrategyConfig = {
       receiptToken: Address.Aave.aFEI,
       strategyName: 'AaveStrategyFEI',
     },
-    config: Object.assign({}, config),
+    config: { ...config },
+    setup: { ...setup },
   },
 
   AaveStrategyLINK: {
@@ -51,7 +61,8 @@ const StrategyConfig = {
       receiptToken: Address.Aave.aLINK,
       strategyName: 'AaveStrategyLINK',
     },
-    config: Object.assign({}, config),
+    config: { ...config },
+    setup: { ...setup },
   },
 
   AaveStrategyUNI: {
@@ -62,7 +73,8 @@ const StrategyConfig = {
       receiptToken: Address.Aave.aUNI,
       strategyName: 'AaveStrategyUNI',
     },
-    config: Object.assign({}, config),
+    config: { ...config },
+    setup: { ...setup },
   },
 
   AaveStrategyUSDC: {
@@ -73,7 +85,8 @@ const StrategyConfig = {
       receiptToken: Address.Aave.aUSDC,
       strategyName: 'AaveStrategyUSDC',
     },
-    config: { interestFee, debtRatio: 0, debtRate: ethers.utils.parseUnits('1000000', 6) },
+    config: { interestFee, debtRatio: 0, debtRate: ethers.utils.parseUnits('1000000', 6).toString() },
+    setup: { ...setup },
   },
 
   AaveStrategyUSDT: {
@@ -84,7 +97,8 @@ const StrategyConfig = {
       receiptToken: Address.Aave.aUSDT,
       strategyName: 'AaveStrategyUSDT',
     },
-    config: { interestFee, debtRatio: 0, debtRate: ethers.utils.parseUnits('1000000', 6) },
+    config: { interestFee, debtRatio: 0, debtRate: ethers.utils.parseUnits('1000000', 6).toString() },
+    setup: { ...setup },
   },
 
   // Aave V1 strategy
@@ -96,7 +110,8 @@ const StrategyConfig = {
       receiptToken: Address.Aave.aUSDCv1,
       strategyName: 'AaveV1StrategyUSDC',
     },
-    config: { interestFee, debtRatio: 0, debtRate: ethers.utils.parseUnits('1000000', 6) },
+    config: { interestFee, debtRatio: 0, debtRate: ethers.utils.parseUnits('1000000', 6).toString() },
+    setup: { ...setup },
   },
   EarnVesperStrategyDAIVSPDAI: {
     contract: 'EarnVesperStrategyDAIVSP',
@@ -115,7 +130,8 @@ const StrategyConfig = {
       dripToken: Address.DAI,
       strategyName: 'EarnAaveStrategyWETH',
     },
-    config: Object.assign({}, config),
+    config: { ...config },
+    setup: { ...setup },
   },
 
   CompoundStrategyDAI: {
@@ -126,7 +142,8 @@ const StrategyConfig = {
       receiptToken: Address.Compound.cDAI,
       strategyName: 'CompoundStrategyDAI',
     },
-    config: Object.assign({}, config),
+    config: { ...config },
+    setup: { ...setup },
   },
 
   CompoundStrategyLINK: {
@@ -137,7 +154,8 @@ const StrategyConfig = {
       receiptToken: Address.Compound.cLINK,
       strategyName: 'CompoundStrategyLINK',
     },
-    config: Object.assign({}, config),
+    config: { ...config },
+    setup: { ...setup },
   },
 
   CompoundStrategyETH: {
@@ -148,7 +166,8 @@ const StrategyConfig = {
       receiptToken: Address.Compound.cETH,
       strategyName: 'CompoundStrategyETH',
     },
-    config: Object.assign({}, config),
+    config: { ...config },
+    setup: { ...setup },
   },
 
   CompoundStrategyUNI: {
@@ -159,7 +178,8 @@ const StrategyConfig = {
       receiptToken: Address.Compound.cUNI,
       strategyName: 'CompoundStrategyUNI',
     },
-    config: Object.assign({}, config),
+    config: { ...config },
+    setup: { ...setup },
   },
 
   CompoundStrategyUSDC: {
@@ -170,7 +190,8 @@ const StrategyConfig = {
       receiptToken: Address.Compound.cUSDC,
       strategyName: 'CompoundStrategyUSDC',
     },
-    config: { interestFee, debtRatio: 0, debtRate: ethers.utils.parseUnits('1000000', 6) },
+    config: { interestFee, debtRatio: 0, debtRate: ethers.utils.parseUnits('1000000', 6).toString() },
+    setup: { ...setup },
   },
 
   CompoundStrategyUSDT: {
@@ -181,7 +202,8 @@ const StrategyConfig = {
       receiptToken: Address.Compound.cUSDT,
       strategyName: 'CompoundStrategyUSDT',
     },
-    config: { interestFee, debtRatio: 0, debtRate: ethers.utils.parseUnits('1000000', 6) },
+    config: { interestFee, debtRatio: 0, debtRate: ethers.utils.parseUnits('1000000', 6).toString() },
+    setup: { ...setup },
   },
 
   CompoundStrategyWBTC: {
@@ -192,7 +214,8 @@ const StrategyConfig = {
       receiptToken: Address.Compound.cWBTC,
       strategyName: 'CompoundStrategyWBTC',
     },
-    config: { interestFee, debtRatio: 0, debtRate: ethers.utils.parseUnits('1000000', 8) },
+    config: { interestFee, debtRatio: 0, debtRate: ethers.utils.parseUnits('1000000', 8).toString() },
+    setup: { ...setup },
   },
 
   EarnCompoundStrategyETH: {
@@ -204,7 +227,8 @@ const StrategyConfig = {
       dripToken: Address.DAI,
       strategyName: 'EarnCompoundStrategyETH',
     },
-    config: Object.assign({}, config),
+    config: { ...config },
+    setup: { ...setup },
   },
 
   EarnCompoundStrategyWBTC: {
@@ -216,7 +240,8 @@ const StrategyConfig = {
       dripToken: Address.DAI,
       name: 'EarnCompoundStrategyWBTC',
     },
-    config: { interestFee, debtRatio: 0, debtRate: ethers.utils.parseUnits('1000000', 8) },
+    config: { interestFee, debtRatio: 0, debtRate: ethers.utils.parseUnits('1000000', 8).toString() },
+    setup: { ...setup },
   },
 
   CompoundCoverageStrategyDAI: {
@@ -227,7 +252,8 @@ const StrategyConfig = {
       receiptToken: Address.Compound.cDAI,
       strategyName: 'CompoundCoverageStrategyDAI',
     },
-    config: Object.assign({}, config),
+    config: { ...config },
+    setup: { ...setup },
   },
 
   CompoundStableStrategyDAI: {
@@ -238,7 +264,8 @@ const StrategyConfig = {
       receiptToken: Address.Compound.cDAI,
       strategyName: 'CompoundStableStrategyDAI',
     },
-    config: Object.assign({}, config),
+    config: { ...config },
+    setup: { ...setup },
   },
 
   CompoundLeverageStrategyETH: {
@@ -249,7 +276,8 @@ const StrategyConfig = {
       receiptToken: Address.Compound.cETH,
       // There is no strategy name param in Compound Leverage
     },
-    config: Object.assign({}, config),
+    config: { ...config },
+    setup: { ...setup },
   },
 
   CompoundLeverageStrategyUNI: {
@@ -260,7 +288,8 @@ const StrategyConfig = {
       receiptToken: Address.Compound.cUNI,
       // There is no strategy name param in Compound Leverage
     },
-    config: Object.assign({}, config),
+    config: { ...config },
+    setup: { ...setup },
   },
 
   CompoundLeverageStrategyLINK: {
@@ -271,7 +300,8 @@ const StrategyConfig = {
       receiptToken: Address.Compound.cLINK,
       // There is no strategy name param in Compound Leverage
     },
-    config: Object.assign({}, config),
+    config: { ...config },
+    setup: { ...setup },
   },
 
   CompoundXYStrategyETH: {
@@ -283,7 +313,8 @@ const StrategyConfig = {
       borrowCToken: Address.Compound.cWBTC,
       // There is no strategy name param in Compound XY
     },
-    config: Object.assign({}, config),
+    config: { ...config },
+    setup: { ...setup },
   },
 
   RariFuseStrategy: {
@@ -294,7 +325,8 @@ const StrategyConfig = {
       fusePoolId: 23, // default
       strategyName: 'RariFuseStrategy',
     },
-    config: Object.assign({}, config),
+    config: { ...config },
+    setup: { ...setup },
   },
 
   RariFuseStrategyETH: {
@@ -305,7 +337,8 @@ const StrategyConfig = {
       fusePoolId: 23, // default
       strategyName: 'RariFuseStrategyETH',
     },
-    config: Object.assign({}, config),
+    config: { ...config },
+    setup: { ...setup },
   },
   EarnRariFuseStrategy: {
     contract: 'EarnRariFuseStrategy',
@@ -316,7 +349,8 @@ const StrategyConfig = {
       dripToken: Address.DAI,
       strategyName: 'EarnRariFuseStrategy',
     },
-    config: Object.assign({}, config),
+    config: { ...config },
+    setup: { ...setup },
   },
 
   EarnRariFuseStrategyETH: {
@@ -328,7 +362,8 @@ const StrategyConfig = {
       dripToken: Address.DAI,
       strategyName: 'EarnRariFuseStrategyETH',
     },
-    config: Object.assign({}, config),
+    config: { ...config },
+    setup: { ...setup },
   },
 
   AlphaLendStrategyDAI: {
@@ -339,7 +374,8 @@ const StrategyConfig = {
       receiptToken: Address.Alpha.ibDAIv2,
       strategyName: 'AlphaLendStrategyDAI',
     },
-    config: Object.assign({}, config),
+    config: { ...config },
+    setup: { ...setup },
   },
 
   AlphaLendStrategyDPI: {
@@ -350,7 +386,8 @@ const StrategyConfig = {
       receiptToken: Address.Alpha.ibDPIv2,
       strategyName: 'AlphaLendStrategyDPI',
     },
-    config: Object.assign({}, config),
+    config: { ...config },
+    setup: { ...setup },
   },
 
   AlphaLendStrategyETH: {
@@ -361,7 +398,8 @@ const StrategyConfig = {
       receiptToken: Address.Alpha.ibETHv2,
       strategyName: 'AlphaLendStrategyETH',
     },
-    config: Object.assign({}, config),
+    config: { ...config },
+    setup: { ...setup },
   },
 
   AlphaLendStrategyLINK: {
@@ -372,7 +410,8 @@ const StrategyConfig = {
       receiptToken: Address.Alpha.ibLINKv2,
       strategyName: 'AlphaLendStrategyLINK',
     },
-    config: Object.assign({}, config),
+    config: { ...config },
+    setup: { ...setup },
   },
 
   AlphaLendStrategyUSDC: {
@@ -383,7 +422,8 @@ const StrategyConfig = {
       receiptToken: Address.Alpha.ibUSDCv2,
       strategyName: 'AlphaLendStrategyUSDC',
     },
-    config: { interestFee, debtRatio: 0, debtRate: ethers.utils.parseUnits('1000000', 6) },
+    config: { interestFee, debtRatio: 0, debtRate: ethers.utils.parseUnits('1000000', 6).toString() },
+    setup: { ...setup },
   },
 
   AlphaLendStrategyUSDT: {
@@ -394,7 +434,8 @@ const StrategyConfig = {
       receiptToken: Address.Alpha.ibUSDTv2,
       strategyName: 'AlphaLendStrategyUSDT',
     },
-    config: { interestFee, debtRatio: 0, debtRate: ethers.utils.parseUnits('1000000', 6) },
+    config: { interestFee, debtRatio: 0, debtRate: ethers.utils.parseUnits('1000000', 6).toString() },
+    setup: { ...setup },
   },
 
   EarnAlphaLendStrategyETH: {
@@ -406,7 +447,8 @@ const StrategyConfig = {
       dripToken: Address.DAI,
       strategyName: 'EarnAlphaLendStrategyETH',
     },
-    config: Object.assign({}, config),
+    config: { ...config },
+    setup: { ...setup },
   },
 
   Convex2PoolStrategyMIMUSTPoolMIM: {
@@ -417,7 +459,8 @@ const StrategyConfig = {
       collateralIdx: 0,
       strategyName: 'Convex2PoolStrategyMIMUSTPoolMIM',
     },
-    config: Object.assign({}, config),
+    config: { ...config },
+    setup: { ...setup },
   },
 
   Convex3PoolStrategyDAI: {
@@ -428,7 +471,8 @@ const StrategyConfig = {
       collateralIdx: 0,
       strategyName: 'Convex3PoolStrategyDAI',
     },
-    config: Object.assign({}, config),
+    config: { ...config },
+    setup: { ...setup },
   },
 
   ConvexCoverage3poolStrategyDAI: {
@@ -439,7 +483,8 @@ const StrategyConfig = {
       collateralIdx: 0,
       strategyName: 'ConvexCoverage3poolStrategyDAI',
     },
-    config: Object.assign({}, config),
+    config: { ...config },
+    setup: { ...setup },
   },
 
   ConvexStable3PoolStrategyDAI: {
@@ -450,7 +495,8 @@ const StrategyConfig = {
       collateralIdx: 0,
       strategyName: 'ConvexStable3PoolStrategyDAI',
     },
-    config: Object.assign({}, config),
+    config: { ...config },
+    setup: { ...setup },
   },
 
   ConvexSBTCPoolStrategyWBTC: {
@@ -461,7 +507,8 @@ const StrategyConfig = {
       collateralIdx: 1,
       strategyName: 'ConvexSBTCPoolStrategyWBTC',
     },
-    config: { interestFee, debtRatio: 0, debtRate: ethers.utils.parseUnits('1000000', 8) },
+    config: { interestFee, debtRatio: 0, debtRate: ethers.utils.parseUnits('1000000', 8).toString() },
+    setup: { ...setup },
   },
 
   Convex4MetaPoolStrategyMIMPoolMIM: {
@@ -472,7 +519,8 @@ const StrategyConfig = {
       collateralIdx: 0,
       strategyName: 'Convex4MetaPoolStrategyMIMPoolMIM',
     },
-    config: Object.assign({}, config),
+    config: { ...config },
+    setup: { ...setup },
   },
 
   Convex4PoolStrategySUSDPoolDAI: {
@@ -483,7 +531,8 @@ const StrategyConfig = {
       collateralIdx: 0,
       strategyName: 'Convex4PoolStrategySUSDPoolDAI',
     },
-    config: Object.assign({}, config),
+    config: { ...config },
+    setup: { ...setup },
   },
 
   Crv2PoolStrategyMIMUSTPoolMIM: {
@@ -494,7 +543,8 @@ const StrategyConfig = {
       collateralIdx: 0,
       strategyName: 'Crv2PoolStrategyMIMUSTPoolMIM',
     },
-    config: Object.assign({}, config),
+    config: { ...config },
+    setup: { ...setup },
   },
 
   Crv3PoolStrategyDAI: {
@@ -505,7 +555,8 @@ const StrategyConfig = {
       collateralIdx: 0,
       strategyName: 'Crv3PoolStrategyDAI',
     },
-    config: Object.assign({}, config),
+    config: { ...config },
+    setup: { ...setup },
   },
 
   Crv3PoolStrategyUSDC: {
@@ -516,7 +567,8 @@ const StrategyConfig = {
       collateralIdx: 1,
       strategyName: 'Crv3PoolStrategyUSDC',
     },
-    config: { interestFee, debtRatio: 0, debtRate: ethers.utils.parseUnits('1000000', 6) },
+    config: { interestFee, debtRatio: 0, debtRate: ethers.utils.parseUnits('1000000', 6).toString() },
+    setup: { ...setup },
   },
 
   CrvSBTCPoolStrategyWBTC: {
@@ -527,7 +579,8 @@ const StrategyConfig = {
       collateralIdx: 1,
       strategyName: 'CrvSBTCPoolStrategyWBTC',
     },
-    config: { interestFee, debtRatio: 0, debtRate: ethers.utils.parseUnits('1000000', 8) },
+    config: { interestFee, debtRatio: 0, debtRate: ethers.utils.parseUnits('1000000', 8).toString() },
+    setup: { ...setup },
   },
 
   EarnCrvSBTCPoolStrategyWBTC: {
@@ -538,7 +591,8 @@ const StrategyConfig = {
       dripToken: Address.DAI,
       strategyName: 'EarnCrvSBTCPoolStrategyWBTC',
     },
-    config: Object.assign({}, config),
+    config: { ...config },
+    setup: { ...setup },
   },
 
   Crv4MetaPoolStrategyMIMPoolDAI: {
@@ -549,7 +603,8 @@ const StrategyConfig = {
       collateralIdx: 1,
       strategyName: 'Crv4MetaPoolStrategyMIMPoolDAI',
     },
-    config: Object.assign({}, config),
+    config: { ...config },
+    setup: { ...setup },
   },
 
   Crv4MetaPoolStrategyMIMPoolMIM: {
@@ -560,7 +615,8 @@ const StrategyConfig = {
       collateralIdx: 0,
       strategyName: 'Crv4MetaPoolStrategyMIMPoolMIM',
     },
-    config: Object.assign({}, config),
+    config: { ...config },
+    setup: { ...setup },
   },
 
   Crv4PoolStrategySUSDPoolDAI: {
@@ -571,7 +627,8 @@ const StrategyConfig = {
       collateralIdx: 0,
       strategyName: 'Crv4PoolStrategySUSDPoolDAI',
     },
-    config: Object.assign({}, config),
+    config: { ...config },
+    setup: { ...setup },
   },
 
   CrvA3PoolStrategyDAI: {
@@ -582,7 +639,8 @@ const StrategyConfig = {
       collateralIdx: 0,
       strategyName: 'CrvA3PoolStrategyDAI',
     },
-    config: Object.assign({}, config),
+    config: { ...config },
+    setup: { ...setup },
   },
 
   AaveMakerStrategyETH: {
@@ -594,7 +652,8 @@ const StrategyConfig = {
       collateralType: ethers.utils.formatBytes32String('ETH-A'),
       strategyName: 'AaveMakerStrategyETH',
     },
-    config: Object.assign({}, config),
+    config: { ...config },
+    setup: { ...setup, maker: { gemJoin: Address.Maker.MCD_JOIN_ETH_A, highWater: 275, lowWater: 250 } },
   },
 
   CompoundMakerStrategyETH: {
@@ -606,7 +665,8 @@ const StrategyConfig = {
       collateralType: ethers.utils.formatBytes32String('ETH-C'),
       strategyName: 'CompoundMakerStrategyETH',
     },
-    config: Object.assign({}, config),
+    config: { ...config },
+    setup: { ...setup, maker: { gemJoin: Address.Maker.MCD_JOIN_ETH_C, highWater: 275, lowWater: 250 } },
   },
 
   CompoundMakerStrategyUNI: {
@@ -618,7 +678,8 @@ const StrategyConfig = {
       collateralType: ethers.utils.formatBytes32String('UNI-A'),
       strategyName: 'CompoundMakerStrategyUNI',
     },
-    config: Object.assign({}, config),
+    config: { ...config },
+    setup: { ...setup, maker: { gemJoin: Address.Maker.MCD_JOIN_UNI_A, highWater: 275, lowWater: 250 } },
   },
 
   VesperMakerStrategyETH: {
@@ -630,7 +691,8 @@ const StrategyConfig = {
       collateralType: ethers.utils.formatBytes32String('ETH-C'),
       strategyName: 'VesperMakerStrategyETH',
     },
-    config: Object.assign({}, config),
+    config: { ...config },
+    setup: { ...setup, maker: { gemJoin: Address.Maker.MCD_JOIN_ETH_C, highWater: 275, lowWater: 250 } },
   },
 
   VesperMakerStrategyLINK: {
@@ -642,7 +704,8 @@ const StrategyConfig = {
       collateralType: ethers.utils.formatBytes32String('LINK-A'),
       strategyName: 'VesperMakerStrategyLINK',
     },
-    config: Object.assign({}, config),
+    config: { ...config },
+    setup: { ...setup, maker: { gemJoin: Address.Maker.MCD_JOIN_LINK_A, highWater: 275, lowWater: 250 } },
   },
 
   VesperMakerStrategyWBTC: {
@@ -654,7 +717,8 @@ const StrategyConfig = {
       collateralType: ethers.utils.formatBytes32String('WBTC-A'),
       strategyName: 'VesperMakerStrategyWBTC',
     },
-    config: Object.assign({}, config),
+    config: { ...config },
+    setup: { ...setup, maker: { gemJoin: Address.Maker.MCD_JOIN_WBTC_A, highWater: 275, lowWater: 250 } },
   },
 
   EarnAaveMakerStrategyETH: {
@@ -667,7 +731,8 @@ const StrategyConfig = {
       dripToken: Address.DAI,
       strategyName: 'EarnAaveMakerStrategyETH',
     },
-    config: Object.assign({}, config),
+    config: { ...config },
+    setup: { ...setup, maker: { gemJoin: Address.Maker.MCD_JOIN_ETH_C, highWater: 275, lowWater: 250 } },
   },
 
   EarnCompoundMakerStrategyETH: {
@@ -680,7 +745,8 @@ const StrategyConfig = {
       dripToken: Address.DAI,
       strategyName: 'EarnCompoundMakerStrategyETH',
     },
-    config: Object.assign({}, config),
+    config: { ...config },
+    setup: { ...setup, maker: { gemJoin: Address.Maker.MCD_JOIN_ETH_C, highWater: 275, lowWater: 250 } },
   },
 
   EarnVesperMakerStrategyETH: {
@@ -693,7 +759,8 @@ const StrategyConfig = {
       dripToken: Address.DAI,
       strategyName: 'EarnVesperMakerStrategyETH',
     },
-    config: Object.assign({}, config),
+    config: { ...config },
+    setup: { ...setup, maker: { gemJoin: Address.Maker.MCD_JOIN_ETH_C, highWater: 275, lowWater: 250 } },
   },
 
   EarnVesperMakerStrategyLINK: {
@@ -706,7 +773,8 @@ const StrategyConfig = {
       dripToken: Address.DAI,
       strategyName: 'EarnVesperMakerStrategyLINK',
     },
-    config: Object.assign({}, config),
+    config: { ...config },
+    setup: { ...setup, maker: { gemJoin: Address.Maker.MCD_JOIN_LINK_A, highWater: 275, lowWater: 250 } },
   },
 
   EarnVesperMakerStrategyWBTC: {
@@ -719,7 +787,8 @@ const StrategyConfig = {
       dripToken: Address.DAI,
       strategyName: 'EarnVesperMakerStrategyWBTC',
     },
-    config: Object.assign({}, config),
+    config: { ...config },
+    setup: { ...setup, maker: { gemJoin: Address.Maker.MCD_JOIN_WBTC_A, highWater: 275, lowWater: 250 } },
   },
 
   EarnVesperStrategyDAIDPI: {
@@ -731,7 +800,8 @@ const StrategyConfig = {
       dripToken: Address.DPI,
       strategyName: 'EarnVesperStrategyDAIDPI',
     },
-    config: Object.assign({}, config),
+    config: { ...config },
+    setup: { ...setup },
   },
 
   EarnVesperStrategyDAILINK: {
@@ -743,7 +813,8 @@ const StrategyConfig = {
       dripToken: Address.LINK,
       strategyName: 'EarnVesperStrategyDAILINK',
     },
-    config: Object.assign({}, config),
+    config: { ...config },
+    setup: { ...setup },
   },
 
   EarnVesperStrategyDAIVSP: {
@@ -755,7 +826,8 @@ const StrategyConfig = {
       dripToken: Address.VSP,
       strategyName: 'EarnVesperStrategyDAIVSP',
     },
-    config: Object.assign({}, config),
+    config: { ...config },
+    setup: { ...setup },
   },
 
   EarnVesperStrategyDAIWBTC: {
@@ -767,7 +839,8 @@ const StrategyConfig = {
       dripToken: Address.WBTC,
       strategyName: 'EarnVesperStrategyDAIWBTC',
     },
-    config: Object.assign({}, config),
+    config: { ...config },
+    setup: { ...setup },
   },
 
   EarnVesperStrategyDAIWETH: {
@@ -779,7 +852,8 @@ const StrategyConfig = {
       dripToken: Address.WETH,
       strategyName: 'EarnVesperStrategyDAIWETH',
     },
-    config: Object.assign({}, config),
+    config: { ...config },
+    setup: { ...setup },
   },
 
   VesperCoverageStrategyDAI: {
@@ -790,7 +864,8 @@ const StrategyConfig = {
       receiptToken: Address.vaDAI,
       strategyName: 'VesperCoverageStrategyDAI',
     },
-    config: Object.assign({}, config),
+    config: { ...config },
+    setup: { ...setup },
   },
 
   VesperStableStrategyDAI: {
@@ -801,7 +876,8 @@ const StrategyConfig = {
       receiptToken: Address.vaDAI,
       strategyName: 'VesperStableStrategyDAI',
     },
-    config: Object.assign({}, config),
+    config: { ...config },
+    setup: { ...setup },
   },
 
   YearnStrategyDAI: {
@@ -812,7 +888,8 @@ const StrategyConfig = {
       receiptToken: Address.Yearn.yvDAI,
       strategyName: 'YearnStrategyDAI',
     },
-    config: Object.assign({}, config),
+    config: { ...config },
+    setup: { ...setup },
   },
 
   YearnStrategyUSDC: {
@@ -823,7 +900,8 @@ const StrategyConfig = {
       receiptToken: Address.Yearn.yvUSDC,
       strategyName: 'YearnStrategyUSDC',
     },
-    config: { interestFee, debtRatio: 0, debtRate: ethers.utils.parseUnits('1000000', 6) },
+    config: { interestFee, debtRatio: 0, debtRate: ethers.utils.parseUnits('1000000', 6).toString() },
+    setup: { ...setup },
   },
 
   EarnYearnStrategyETH: {
@@ -835,7 +913,8 @@ const StrategyConfig = {
       dripToken: Address.DAI,
       strategyName: 'EarnYearnStrategyETH',
     },
-    config: Object.assign({}, config),
+    config: { ...config },
+    setup: { ...setup },
   },
 }
 
