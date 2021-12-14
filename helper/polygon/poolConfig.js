@@ -4,6 +4,8 @@ const Address = require('./address')
 
 const setup = { addressListFactory: Address.ADDRESS_LIST_FACTORY, feeCollector: Address.FEE_COLLECTOR, withdrawFee: 60 }
 const rewards = { contract: 'PoolRewards', tokens: [Address.VSP] }
+// Earn pool will have extra data in 'rewards' object. Below is default value for 'rewards' object for Earn pools
+const earnRewards = { contract: 'VesperEarnDrip', tokens: [Address.vaDAI, Address.VSP], growToken: Address.vaDAI }
 
 const PoolConfig = {
   VDAI: {
@@ -41,6 +43,18 @@ const PoolConfig = {
     poolParams: ['vMATIC Pool', 'vMATIC', Address.WMATIC],
     setup: { ...setup },
     rewards: { ...rewards },
+  },
+  VEDAI_WETH: {
+    contractName: 'VPool',
+    poolParams: ['veDAI-WETH Earn Pool', 'veDAI-WETH', Address.DAI],
+    setup: { ...setup },
+    rewards: { ...earnRewards, tokens: [Address.VWETH, Address.VSP], growToken: Address.VWETH },
+  },
+  VEDAI_WBTC: {
+    contractName: 'VPool',
+    poolParams: ['veDAI-WBTC Earn Pool', 'veDAI-WBTC', Address.DAI],
+    setup: { ...setup },
+    rewards: { ...earnRewards, tokens: [Address.VWBTC, Address.VSP], growToken: Address.VWBTC },
   },
 }
 

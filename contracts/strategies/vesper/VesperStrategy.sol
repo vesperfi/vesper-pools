@@ -12,18 +12,20 @@ abstract contract VesperStrategy is Strategy {
     string public NAME;
     string public constant VERSION = "3.0.22";
 
-    address internal constant VSP = 0x1b40183EFB4Dd766f11bDa7A7c3AD8982e998421;
+    address internal immutable vsp;
     IVesperPool internal immutable vToken;
 
     constructor(
         address _pool,
         address _swapManager,
         address _receiptToken,
+        address _vsp,
         string memory _name
     ) Strategy(_pool, _swapManager, _receiptToken) {
         require(_receiptToken != address(0), "vToken-address-is-zero");
         vToken = IVesperPool(_receiptToken);
         NAME = _name;
+        vsp = _vsp;
     }
 
     /**
@@ -43,7 +45,7 @@ abstract contract VesperStrategy is Strategy {
         collateralToken.safeApprove(pool, _amount);
         collateralToken.safeApprove(address(vToken), _amount);
         for (uint256 i = 0; i < swapManager.N_DEX(); i++) {
-            IERC20(VSP).safeApprove(address(swapManager.ROUTERS(i)), _amount);
+            IERC20(vsp).safeApprove(address(swapManager.ROUTERS(i)), _amount);
         }
     }
 
@@ -77,9 +79,9 @@ abstract contract VesperStrategy is Strategy {
 
     /// @notice Claim VSP rewards in underlying Grow Pool, if any
     function _claimRewardsAndConvertTo(address _toToken) internal virtual override {
-        uint256 _vspAmount = IERC20(VSP).balanceOf(address(this));
+        uint256 _vspAmount = IERC20(vsp).balanceOf(address(this));
         if (_vspAmount != 0) {
-            _safeSwap(VSP, _toToken, _vspAmount, 1);
+            _safeSwap(vsp, _toToken, _vspAmount, 1);
         }
     }
 

@@ -16,8 +16,9 @@ contract EarnVesperStrategyVSPDrip is EarnVesperStrategy {
         address _swapManager,
         address _receiptToken,
         address _dripToken,
+        address _vsp,
         string memory _name
-    ) EarnVesperStrategy(_pool, _swapManager, _receiptToken, _dripToken, _name) {}
+    ) EarnVesperStrategy(_pool, _swapManager, _receiptToken, _dripToken, _vsp, _name) {}
 
     /**
      * @notice Empty implementation, VSP rewards don't need to be converted.
