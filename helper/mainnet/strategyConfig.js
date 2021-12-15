@@ -281,7 +281,7 @@ const StrategyConfig = {
   },
 
   CompoundLeverageStrategyUNI: {
-    contract: 'CompoundLeverageStrategy',
+    contract: 'CompoundLeverageStrategyUNI',
     type: StrategyTypes.COMPOUND_LEVERAGE,
     constructorArgs: {
       swapManager,
@@ -293,7 +293,7 @@ const StrategyConfig = {
   },
 
   CompoundLeverageStrategyLINK: {
-    contract: 'CompoundLeverageStrategy',
+    contract: 'CompoundLeverageStrategyLINK',
     type: StrategyTypes.COMPOUND_LEVERAGE,
     constructorArgs: {
       swapManager,
