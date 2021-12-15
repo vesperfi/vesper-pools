@@ -39,7 +39,7 @@ contract VesperEarnDrip is PoolRewards {
         for (uint256 i = 0; i < _len; i++) {
             uint256 _claimableAmount = _claimable(rewardTokens[i], _account, _totalSupply, _balance);
             if (rewardTokens[i] == growToken) {
-                _claimableAmount = (IVesperPool(growToken).pricePerShare() * _claimableAmount) / 1e18;
+                _claimableAmount = _calculateRewardInDripToken(growToken, _claimableAmount);
             }
             _claimableAmounts[i] = _claimableAmount;
         }
@@ -87,7 +87,8 @@ contract VesperEarnDrip is PoolRewards {
     ) internal override {
         if (_rewardToken == growToken) {
             // Calculate reward in drip token
-            uint256 _rewardInDripToken = (IVesperPool(_rewardToken).pricePerShare() * _reward) / 1e18;
+            uint256 _rewardInDripToken = _calculateRewardInDripToken(_rewardToken, _reward);
+            // (IVesperPool(_rewardToken).pricePerShare() * _reward) / 1e18;
             // If reward in drip token is non zero
             if (_rewardInDripToken != 0) {
                 // Mark reward as claimed
@@ -110,5 +111,20 @@ contract VesperEarnDrip is PoolRewards {
             // Behave as normal PoolRewards, no unwrap needed
             super._claimReward(_rewardToken, _account, _reward);
         }
+    }
+
+    /// @dev Here _rewardToken AKA growToken is Vesper Grow Pool which can be V2 or V3 pool.
+    /// V2 and V3 pool has different signature to read price per share
+    function _calculateRewardInDripToken(address _rewardToken, uint256 _reward) private view returns (uint256) {
+        uint256 _pricePerShare;
+        // Try reading price per share using V3 pool signature, if this fails it will go in catch
+        try IVesperPool(_rewardToken).pricePerShare() returns (uint256 _pricePerShareV3) {
+            _pricePerShare = _pricePerShareV3;
+        } catch {
+            // If try fails, read price per share using V2 pool signature
+            _pricePerShare = IVesperPool(_rewardToken).getPricePerShare();
+        }
+        // Calculate reward in dripToken, as _reward is share of Grow Pool AKA growToken AKA _rewardToken
+        return (_pricePerShare * _reward) / 1e18;
     }
 }
