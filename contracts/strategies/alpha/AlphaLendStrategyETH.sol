@@ -9,8 +9,6 @@ import "../../interfaces/token/IToken.sol";
 
 /// @title Deposit ETH in Alpha and earn interest.
 contract AlphaLendStrategyETH is AlphaLendStrategy {
-    TokenLike internal constant WETH_TOKEN = TokenLike(WETH);
-
     constructor(
         address _pool,
         address _swapManager,
@@ -29,7 +27,7 @@ contract AlphaLendStrategyETH is AlphaLendStrategy {
     function claimUTokenReward(uint256 amount, bytes32[] memory proof) external override onlyKeeper {
         safeBox.claim(amount, proof);
         uint256 uBalance = address(this).balance;
-        WETH_TOKEN.deposit{value: uBalance}();
+        TokenLike(WETH).deposit{value: uBalance}();
         IVesperPool(pool).reportEarning(uBalance, 0, 0);
     }
 
@@ -37,12 +35,12 @@ contract AlphaLendStrategyETH is AlphaLendStrategy {
     function _reinvest() internal override {
         uint256 _collateralBalance = collateralToken.balanceOf(address(this));
         if (_collateralBalance != 0) {
-            WETH_TOKEN.withdraw(_collateralBalance);
+            TokenLike(WETH).withdraw(_collateralBalance);
             safeBox.deposit{value: _collateralBalance}();
         }
     }
 
     function _afterDownstreamWithdrawal() internal override {
-        WETH_TOKEN.deposit{value: address(this).balance}();
+        TokenLike(WETH).deposit{value: address(this).balance}();
     }
 }

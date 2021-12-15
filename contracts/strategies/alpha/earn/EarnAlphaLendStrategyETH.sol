@@ -8,8 +8,6 @@ import "../../../interfaces/token/IToken.sol";
 // solhint-disable no-empty-blocks
 /// @title Deposit ETH/WETH in Alpha Lend and earn interest in DAI.
 contract EarnAlphaLendStrategyETH is EarnAlphaLendStrategy {
-    TokenLike internal constant WETH_TOKEN = TokenLike(WETH);
-
     constructor(
         address _pool,
         address _swapManager,
@@ -29,7 +27,7 @@ contract EarnAlphaLendStrategyETH is EarnAlphaLendStrategy {
     function claimUTokenReward(uint256 amount, bytes32[] memory proof) external override onlyKeeper {
         safeBox.claim(amount, proof);
         uint256 _uBalance = address(this).balance;
-        WETH_TOKEN.deposit{value: _uBalance}();
+        TokenLike(WETH).deposit{value: _uBalance}();
         _convertCollateralToDrip(_uBalance);
         _forwardEarning();
     }
@@ -38,12 +36,12 @@ contract EarnAlphaLendStrategyETH is EarnAlphaLendStrategy {
     function _reinvest() internal override {
         uint256 _collateralBalance = collateralToken.balanceOf(address(this));
         if (_collateralBalance != 0) {
-            WETH_TOKEN.withdraw(_collateralBalance);
+            TokenLike(WETH).withdraw(_collateralBalance);
             safeBox.deposit{value: _collateralBalance}();
         }
     }
 
     function _afterDownstreamWithdrawal() internal override {
-        WETH_TOKEN.deposit{value: address(this).balance}();
+        TokenLike(WETH).deposit{value: address(this).balance}();
     }
 }

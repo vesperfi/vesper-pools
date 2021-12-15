@@ -37,4 +37,8 @@ interface ILiquidityGaugeV1 is ILiquidityGaugeV2 {
     function rewarded_token() external view returns (address);
 }
 
+interface ILiquidityGaugeV3 is ILiquidityGaugeV2 {
+    function claimable_reward(address addr, address token) external view override returns (uint256);
+}
+
 /* solhint-enable */

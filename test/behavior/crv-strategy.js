@@ -6,8 +6,10 @@ const { getUsers } = require('../utils/setupHelper')
 const { deposit } = require('../utils/poolOps')
 const { advanceBlock } = require('../utils/time')
 const { ethers } = require('hardhat')
+const { getChain } = require('../utils/chains')
+const Address = require(`../../helper/${getChain()}/address`)
 
-const CRV = '0xD533a949740bb3306d119CC777fa900bA034cd52'
+const { CRV } = Address
 
 // crv strategy specific tests
 function shouldBehaveLikeCrvStrategy(strategyIndex) {
@@ -43,18 +45,23 @@ function shouldBehaveLikeCrvStrategy(strategyIndex) {
       expect(totalValue).to.be.equal(0, 'Total tokens should be zero')
     })
 
-    it('Should claim CRV when rebalance is called', async function () {
-      await deposit(pool, collateralToken, 1, user1)
-      await strategy.rebalance()
-      await strategy.rebalance()
-      await advanceBlock(1000)
-      await strategy.setCheckpoint()
-      const crvAccruedBefore = await strategy.claimableRewards()
-      await strategy.rebalance()
-      const crvAccruedAfter = await strategy.claimableRewards()
-      expect(crvAccruedBefore).to.be.gt(0, 'crv accrued should be > 0 before rebalance')
-      expect(crvAccruedAfter).to.be.equal(0, 'crv accrued should be 0 after rebalance')
-    })
+    // Note: Waiting clarification from Curve team to be able to simulate
+    // multi-chain CRV reward distribution
+    // Refs: https://curve.readthedocs.io/dao-gauges-sidechain.html
+    if (getChain() === 'mainnet') {
+      it('Should claim CRV when rebalance is called', async function () {
+        await deposit(pool, collateralToken, 1, user1)
+        await strategy.rebalance()
+        await strategy.rebalance()
+        await advanceBlock(1000)
+        await strategy.setCheckpoint()
+        const crvAccruedBefore = await strategy.claimableRewards()
+        await strategy.rebalance()
+        const crvAccruedAfter = await strategy.claimableRewards()
+        expect(crvAccruedBefore).to.be.gt(0, 'crv accrued should be > 0 before rebalance')
+        expect(crvAccruedAfter).to.be.equal(0, 'crv accrued should be 0 after rebalance')
+      })
+    }
 
     it('Should liquidate CRV when claimed by external source', async function () {
       await deposit(pool, collateralToken, 1, user1)
