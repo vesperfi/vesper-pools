@@ -39,7 +39,7 @@ contract VesperEarnDrip is PoolRewards {
         for (uint256 i = 0; i < _len; i++) {
             uint256 _claimableAmount = _claimable(rewardTokens[i], _account, _totalSupply, _balance);
             if (rewardTokens[i] == growToken) {
-                _claimableAmount = (IVesperPool(growToken).pricePerShare() * _claimableAmount) / 1e18;
+                _claimableAmount = _calculateRewardInDripToken(growToken, _claimableAmount);
             }
             _claimableAmounts[i] = _claimableAmount;
         }
@@ -76,29 +76,54 @@ contract VesperEarnDrip is PoolRewards {
     }
 
     /**
-     * @notice Transfer earned rewards in DripToken.
+     * @notice Claim earned rewards in dripToken.
      * @dev Withdraws from the Grow Pool and transfers the amount to _account
+     * @dev Claim rewards only if reward in dripToken is non zero
      */
-    function _transferRewards(
+    function _claimReward(
         address _rewardToken,
         address _account,
         uint256 _reward
     ) internal override {
         if (_rewardToken == growToken) {
-            // Automatically unwraps the Grow Pool token into the dripToken
-            IERC20 _dripToken = IVesperPool(_rewardToken).token();
-            uint256 _dripBalanceBefore = _dripToken.balanceOf(address(this));
-            IVesperPool(_rewardToken).withdraw(_reward);
-            uint256 _dripTokenAmount = _dripToken.balanceOf(address(this)) - _dripBalanceBefore;
-            if (address(_dripToken) == address(WETH)) {
-                WETH.withdraw(_dripTokenAmount);
-                Address.sendValue(payable(_account), _dripTokenAmount);
-            } else {
-                _dripToken.safeTransfer(_account, _dripTokenAmount);
+            // Calculate reward in drip token
+            uint256 _rewardInDripToken = _calculateRewardInDripToken(_rewardToken, _reward);
+            // If reward in drip token is non zero
+            if (_rewardInDripToken != 0) {
+                // Mark reward as claimed
+                rewards[_rewardToken][_account] = 0;
+
+                // Automatically unwraps the Grow Pool token AKA _rewardToken into the dripToken
+                IERC20 _dripToken = IVesperPool(_rewardToken).token();
+                uint256 _dripBalanceBefore = _dripToken.balanceOf(address(this));
+                IVesperPool(_rewardToken).withdraw(_reward);
+                uint256 _dripTokenAmount = _dripToken.balanceOf(address(this)) - _dripBalanceBefore;
+                if (address(_dripToken) == address(WETH)) {
+                    WETH.withdraw(_dripTokenAmount);
+                    Address.sendValue(payable(_account), _dripTokenAmount);
+                } else {
+                    _dripToken.safeTransfer(_account, _dripTokenAmount);
+                }
+                emit DripRewardPaid(_account, address(_dripToken), _dripTokenAmount);
             }
-            emit DripRewardPaid(_account, address(_dripToken), _dripTokenAmount);
         } else {
-            super._transferRewards(_rewardToken, _account, _reward);
+            // Behave as normal PoolRewards, no unwrap needed
+            super._claimReward(_rewardToken, _account, _reward);
         }
+    }
+
+    /// @dev Here _rewardToken AKA growToken is Vesper Grow Pool which can be V2 or V3 pool.
+    /// V2 and V3 pool has different signature to read price per share
+    function _calculateRewardInDripToken(address _rewardToken, uint256 _reward) private view returns (uint256) {
+        uint256 _pricePerShare;
+        // Try reading price per share using V3 pool signature, if this fails catch block will execute
+        try IVesperPool(_rewardToken).pricePerShare() returns (uint256 _pricePerShareV3) {
+            _pricePerShare = _pricePerShareV3;
+        } catch {
+            // If try fails, read price per share using V2 pool signature
+            _pricePerShare = IVesperPool(_rewardToken).getPricePerShare();
+        }
+        // Calculate reward in dripToken, as _reward is share of Grow Pool AKA growToken AKA _rewardToken
+        return (_pricePerShare * _reward) / 1e18;
     }
 }

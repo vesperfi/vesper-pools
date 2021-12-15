@@ -4,7 +4,9 @@ const { deposit, timeTravel, rebalanceStrategy } = require('../utils/poolOps')
 const { expect } = require('chai')
 const { ethers } = require('hardhat')
 const { getUsers } = require('../utils/setupHelper')
-const Address = require('../../helper/mainnet/address')
+const { getChain } = require('../utils/chains')
+const Address = require(`../../helper/${getChain()}/address`)
+
 const { shouldBehaveLikeUnderlyingVesperPoolStrategy } = require('./strategy-underlying-vesper-pool')
 
 async function shouldBehaveLikeEarnVesperStrategy(strategyIndex) {
@@ -47,6 +49,11 @@ async function shouldBehaveLikeEarnVesperStrategy(strategyIndex) {
 
         await timeTravel(10 * 24 * 60 * 60)
         await rebalanceStrategy(strategy)
+
+        // Earn drip has custom logic for claimable, so lets test it here
+        await EarnDrip.updateReward(user1.address)
+        const claimable = await EarnDrip.claimable(user1.address)
+        expect(claimable._claimableAmounts[0]).to.gt(0, 'incorrect claimable')
 
         const tokenBalanceAfter = await growToken.balanceOf(EarnDrip.address)
         expect(tokenBalanceAfter).to.be.gt(tokenBalanceBefore, `Should increase ${growTokenSymbol} balance in EarnDrip`)
