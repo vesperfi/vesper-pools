@@ -111,11 +111,10 @@ contract PoolRewards is Initializable, IPoolRewards, ReentrancyGuard, PoolReward
             _updateReward(_rewardToken, _account, _totalSupply, _balance);
 
             // Claim rewards
-            uint256 reward = rewards[_rewardToken][_account];
-            if (reward != 0 && reward <= IERC20(_rewardToken).balanceOf(address(this))) {
-                rewards[_rewardToken][_account] = 0;
-                _transferRewards(_rewardToken, _account, reward);
-                emit RewardPaid(_account, _rewardToken, reward);
+            uint256 _reward = rewards[_rewardToken][_account];
+            if (_reward != 0 && _reward <= IERC20(_rewardToken).balanceOf(address(this))) {
+                _claimReward(_rewardToken, _account, _reward);
+                emit RewardPaid(_account, _rewardToken, _reward);
             }
         }
     }
@@ -210,6 +209,17 @@ contract PoolRewards is Initializable, IPoolRewards, ReentrancyGuard, PoolReward
         return rewards[_rewardToken][_account] + _rewardsEarnedSinceLastUpdate;
     }
 
+    function _claimReward(
+        address _rewardToken,
+        address _account,
+        uint256 _reward
+    ) internal virtual {
+        // Mark reward as claimed
+        rewards[_rewardToken][_account] = 0;
+        // Transfer reward
+        IERC20(_rewardToken).safeTransfer(_account, _reward);
+    }
+
     // There are scenarios when extending contract will override external methods and
     // end up calling internal function. Hence providing internal functions
     function _notifyRewardAmount(
@@ -285,13 +295,5 @@ contract PoolRewards is Initializable, IPoolRewards, ReentrancyGuard, PoolReward
             rewards[_rewardToken][_account] = _claimable(_rewardToken, _account, _totalSupply, _balance);
             userRewardPerTokenPaid[_rewardToken][_account] = _rewardPerTokenStored;
         }
-    }
-
-    function _transferRewards(
-        address _rewardToken,
-        address _account,
-        uint256 _reward
-    ) internal virtual {
-        IERC20(_rewardToken).safeTransfer(_account, _reward);
     }
 }
