@@ -88,7 +88,6 @@ contract VesperEarnDrip is PoolRewards {
         if (_rewardToken == growToken) {
             // Calculate reward in drip token
             uint256 _rewardInDripToken = _calculateRewardInDripToken(_rewardToken, _reward);
-            // (IVesperPool(_rewardToken).pricePerShare() * _reward) / 1e18;
             // If reward in drip token is non zero
             if (_rewardInDripToken != 0) {
                 // Mark reward as claimed
@@ -117,7 +116,7 @@ contract VesperEarnDrip is PoolRewards {
     /// V2 and V3 pool has different signature to read price per share
     function _calculateRewardInDripToken(address _rewardToken, uint256 _reward) private view returns (uint256) {
         uint256 _pricePerShare;
-        // Try reading price per share using V3 pool signature, if this fails it will go in catch
+        // Try reading price per share using V3 pool signature, if this fails catch block will execute
         try IVesperPool(_rewardToken).pricePerShare() returns (uint256 _pricePerShareV3) {
             _pricePerShare = _pricePerShareV3;
         } catch {
