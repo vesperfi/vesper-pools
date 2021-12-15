@@ -1,6 +1,6 @@
 'use strict'
 
-const Address = require('../helper/mainnet/address')
+const ethers = require('ethers')
 
 const PoolAccountant = 'PoolAccountant'
 
@@ -36,7 +36,7 @@ const deployFunction = async function ({ getNamedAccounts, deployments, poolConf
   })
 
   // Initialize PoolAccountant with pool proxy address
-  if ((await read(PoolAccountant, {}, 'pool')) === Address.ZERO) {
+  if ((await read(PoolAccountant, {}, 'pool')) === ethers.constants.AddressZero) {
     await execute(PoolAccountant, { from: deployer, log: true }, 'init', poolProxy.address)
   }
 

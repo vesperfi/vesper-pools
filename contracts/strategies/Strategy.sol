@@ -13,6 +13,11 @@ import "../interfaces/vesper/IVesperPool.sol";
 abstract contract Strategy is IStrategy, Context {
     using SafeERC20 for IERC20;
 
+    address internal constant ETH = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
+    uint256 internal constant MAX_UINT_VALUE = type(uint256).max;
+
+    // solhint-disable-next-line  var-name-mixedcase
+    address internal WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     IERC20 public immutable collateralToken;
     address public receiptToken;
     address public immutable override pool;
@@ -23,10 +28,6 @@ abstract contract Strategy is IStrategy, Context {
     uint256 public oraclePeriod = 3600; // 1h
     uint256 public oracleRouterIdx = 0; // Uniswap V2
     uint256 public swapSlippage = 10000; // 100% Don't use oracles by default
-
-    address internal constant ETH = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
-    address internal constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
-    uint256 internal constant MAX_UINT_VALUE = type(uint256).max;
 
     event UpdatedFeeCollector(address indexed previousFeeCollector, address indexed newFeeCollector);
     event UpdatedSwapManager(address indexed previousSwapManager, address indexed newSwapManager);
@@ -210,7 +211,7 @@ abstract contract Strategy is IStrategy, Context {
     function isReservedToken(address _token) public view virtual override returns (bool);
 
     /**
-     * @notice some strategy may want to prepare before doing migration. 
+     * @notice some strategy may want to prepare before doing migration.
         Example In Maker old strategy want to give vault ownership to new strategy
      * @param _newStrategy .
      */
@@ -243,7 +244,7 @@ abstract contract Strategy is IStrategy, Context {
         return (_amount * (10000 - _slippage)) / (10000);
     }
 
-    function _simpleOraclePath(address _from, address _to) internal pure returns (address[] memory path) {
+    function _simpleOraclePath(address _from, address _to) internal view returns (address[] memory path) {
         if (_from == WETH || _to == WETH) {
             path = new address[](2);
             path[0] = _from;

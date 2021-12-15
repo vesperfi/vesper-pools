@@ -14,11 +14,13 @@ import "../../interfaces/curve/IDepositZap.sol";
 abstract contract CrvBase {
     using SafeERC20 for IERC20;
 
+    address public constant CRV_MINTER = 0xd061D61a4d941c39E5453435B6345Dc261C2fcE0;
+
+    // solhint-disable-next-line  var-name-mixedcase
+    address public CRV = 0xD533a949740bb3306d119CC777fa900bA034cd52;
     IStableSwapUnderlying public immutable crvPool;
     address public immutable crvLp;
     address public immutable crvGauge;
-    address public constant CRV_MINTER = 0xd061D61a4d941c39E5453435B6345Dc261C2fcE0;
-    address public constant CRV = 0xD533a949740bb3306d119CC777fa900bA034cd52;
 
     constructor(
         address _pool,
@@ -99,11 +101,11 @@ abstract contract CrvBase {
         }
     }
 
-    function _claimCrv() internal {
+    function _claimCrv() internal virtual {
         ITokenMinter(CRV_MINTER).mint(crvGauge);
     }
 
-    function _setCheckpoint() internal {
+    function _setCheckpoint() internal virtual {
         ILiquidityGaugeV2(crvGauge).user_checkpoint(address(this));
     }
 
