@@ -208,7 +208,6 @@ async function createStrategy(strategy, poolAddress, options = {}) {
   } else {
     instance = await deployContract(strategy.contract, [poolAddress, ...Object.values(strategy.constructorArgs)])
   }
-  await instance.init(Address.ADDRESS_LIST_FACTORY)
   await instance.approveToken()
   await instance.updateFeeCollector(strategy.feeCollector)
   const strategyTokenAddress = await instance.token()

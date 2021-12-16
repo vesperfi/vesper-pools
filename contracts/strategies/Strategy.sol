@@ -4,14 +4,14 @@ pragma solidity 0.8.3;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
+import "../openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "../interfaces/bloq/ISwapManager.sol";
-import "../interfaces/bloq/IAddressList.sol";
-import "../interfaces/bloq/IAddressListFactory.sol";
 import "../interfaces/vesper/IStrategy.sol";
 import "../interfaces/vesper/IVesperPool.sol";
 
 abstract contract Strategy is IStrategy, Context {
     using SafeERC20 for IERC20;
+    using EnumerableSet for EnumerableSet.AddressSet;
 
     address internal constant ETH = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
     uint256 internal constant MAX_UINT_VALUE = type(uint256).max;
@@ -21,13 +21,14 @@ abstract contract Strategy is IStrategy, Context {
     IERC20 public immutable collateralToken;
     address public receiptToken;
     address public immutable override pool;
-    IAddressList public override keepers;
     address public override feeCollector;
     ISwapManager public swapManager;
 
     uint256 public oraclePeriod = 3600; // 1h
     uint256 public oracleRouterIdx = 0; // Uniswap V2
     uint256 public swapSlippage = 10000; // 100% Don't use oracles by default
+
+    EnumerableSet.AddressSet internal _keepers;
 
     event UpdatedFeeCollector(address indexed previousFeeCollector, address indexed newFeeCollector);
     event UpdatedSwapManager(address indexed previousSwapManager, address indexed newSwapManager);
@@ -45,6 +46,7 @@ abstract contract Strategy is IStrategy, Context {
         pool = _pool;
         collateralToken = IVesperPool(_pool).token();
         receiptToken = _receiptToken;
+        require(_keepers.add(_msgSender()), "add-keeper-failed");
     }
 
     modifier onlyGovernor {
@@ -53,7 +55,7 @@ abstract contract Strategy is IStrategy, Context {
     }
 
     modifier onlyKeeper() {
-        require(keepers.contains(_msgSender()), "caller-is-not-a-keeper");
+        require(_keepers.contains(_msgSender()), "caller-is-not-a-keeper");
         _;
     }
 
@@ -67,24 +69,12 @@ abstract contract Strategy is IStrategy, Context {
      * @param _keeperAddress keeper address to add.
      */
     function addKeeper(address _keeperAddress) external onlyGovernor {
-        require(keepers.add(_keeperAddress), "add-keeper-failed");
+        require(_keepers.add(_keeperAddress), "add-keeper-failed");
     }
 
-    /**
-     * @notice Create keeper list
-     * NOTE: Any function with onlyKeeper modifier will not work until this function is called.
-     * NOTE: Due to gas constraint this function cannot be called in constructor.
-     * @param _addressListFactory To support same code in eth side chain, user _addressListFactory as param
-     * mainnet - 0xded8217De022706A191eE7Ee0Dc9df1185Fb5dA3
-     * polygon - 0xD10D5696A350D65A9AA15FE8B258caB4ab1bF291
-     * avalanche - 0xc5CdF8CBE886FC5c1EF5CD4fdd599C975eC6BB54
-     */
-    function init(address _addressListFactory) external onlyGovernor {
-        require(address(keepers) == address(0), "keeper-list-already-created");
-        // Prepare keeper list
-        IAddressListFactory _factory = IAddressListFactory(_addressListFactory);
-        keepers = IAddressList(_factory.createList());
-        require(keepers.add(_msgSender()), "add-keeper-failed");
+    /// @notice Return list of keepers
+    function keepers() external view override returns (address[] memory) {
+        return _keepers.values();
     }
 
     /**
@@ -105,7 +95,7 @@ abstract contract Strategy is IStrategy, Context {
      * @param _keeperAddress keeper address to remove.
      */
     function removeKeeper(address _keeperAddress) external onlyGovernor {
-        require(keepers.remove(_keeperAddress), "remove-keeper-failed");
+        require(_keepers.remove(_keeperAddress), "remove-keeper-failed");
     }
 
     /**
