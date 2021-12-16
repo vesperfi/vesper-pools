@@ -16,6 +16,7 @@ contract BuyBack is UsingSwapManager, Batchable {
     address public keepers; // sol-address-list address which contains addresses of keepers
 
     event MigratedAsset(IERC20 asset, uint256 amount);
+    event VspBoughtBack(address assetIn, uint256 amountIn, uint256 vspBought);
 
     constructor(
         address _governor,
@@ -73,7 +74,10 @@ contract BuyBack is UsingSwapManager, Batchable {
                         swapSlippage
                     )
                     : 1;
+            uint256 _vspBefore = vsp.balanceOf(address(vVSP));
             _safeSwap(_tokenIn, address(vsp), _amountIn, _minAmtOut, address(vVSP));
+            uint256 _amountOut = vsp.balanceOf(address(vVSP)) - _vspBefore;
+            emit VspBoughtBack(_tokenIn, _amountIn, _amountOut);
         }
     }
 
