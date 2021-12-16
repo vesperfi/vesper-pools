@@ -9,7 +9,7 @@ abstract contract AaveStrategyAvalanche is Strategy {
     using SafeERC20 for IERC20;
     // solhint-disable-next-line var-name-mixedcase
     string public NAME;
-    string public constant VERSION = "3.0.22";
+    string public constant VERSION = "3.0.23";
 
     bytes32 private constant AAVE_PROVIDER_ID = 0x0100000000000000000000000000000000000000000000000000000000000000;
     AaveLendingPool public aaveLendingPool;
@@ -30,8 +30,8 @@ abstract contract AaveStrategyAvalanche is Strategy {
         require(_receiptToken != address(0), "aToken-address-is-zero");
         aToken = AToken(_receiptToken);
         // If there is no incentive then below call will fail
-        try AToken(_receiptToken).getIncentivesController() {
-            aaveIncentivesController = AaveIncentivesController(AToken(_receiptToken).getIncentivesController());
+        try AToken(_receiptToken).getIncentivesController() returns (address _aaveIncentivesController) {
+            aaveIncentivesController = AaveIncentivesController(_aaveIncentivesController);
         } catch {} //solhint-disable no-empty-blocks
         aaveLendingPool = AaveLendingPool(aaveAddressesProvider.getLendingPool());
         aaveProtocolDataProvider = AaveProtocolDataProvider(aaveAddressesProvider.getAddress(AAVE_PROVIDER_ID));

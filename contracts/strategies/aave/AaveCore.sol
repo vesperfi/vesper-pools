@@ -23,8 +23,8 @@ abstract contract AaveCore {
         require(_receiptToken != address(0), "aToken-address-is-zero");
         aToken = AToken(_receiptToken);
         // If there is no AAVE incentive then below call will fail
-        try AToken(_receiptToken).getIncentivesController() {
-            aaveIncentivesController = AaveIncentivesController(AToken(_receiptToken).getIncentivesController());
+        try AToken(_receiptToken).getIncentivesController() returns (address _aaveIncentivesController) {
+            aaveIncentivesController = AaveIncentivesController(_aaveIncentivesController);
         } catch {} //solhint-disable no-empty-blocks
 
         aaveLendingPool = AaveLendingPool(aaveAddressesProvider.getLendingPool());
