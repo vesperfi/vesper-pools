@@ -277,11 +277,11 @@ abstract contract VPoolBase is PoolShareToken {
         uint256 _balanceAfter;
         uint256 _balanceBefore;
         uint256 _amountWithdrawn;
-        uint256 _amountNeeded = _amount;
         uint256 _totalAmountWithdrawn;
         address[] memory _withdrawQueue = getWithdrawQueue();
         uint256 _len = _withdrawQueue.length;
         for (uint256 i; i < _len; i++) {
+            uint256 _amountNeeded = _amount - _totalAmountWithdrawn;
             address _strategy = _withdrawQueue[i];
             _debt = totalDebtOf(_strategy);
             if (_debt == 0) {
@@ -305,7 +305,6 @@ abstract contract VPoolBase is PoolShareToken {
                 // withdraw done
                 break;
             }
-            _amountNeeded = _amount - _totalAmountWithdrawn;
         }
     }
 
