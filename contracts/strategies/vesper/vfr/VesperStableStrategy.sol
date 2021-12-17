@@ -10,8 +10,9 @@ contract VesperStableStrategy is VesperStrategy, VFR {
         address _pool,
         address _swapManager,
         address _receiptToken,
+        address _vsp,
         string memory _name
-    ) VesperStrategy(_pool, _swapManager, _receiptToken, _name) {}
+    ) VesperStrategy(_pool, _swapManager, _receiptToken, _vsp, _name) {}
 
     function _realizeProfit(uint256 _totalDebt) internal override returns (uint256 _profit) {
         _profit = _handleStableProfit(pool, super._realizeProfit(_totalDebt));

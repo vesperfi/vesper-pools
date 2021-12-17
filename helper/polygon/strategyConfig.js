@@ -5,7 +5,7 @@ const Address = require('./address')
 const StrategyTypes = require('../../test/utils/strategyTypes')
 
 const swapManager = Address.SWAP_MANAGER
-const interestFee = '1500' // 15%
+const interestFee = '2000' // 20%
 const config = { interestFee, debtRatio: 0, debtRate: ethers.utils.parseEther('1000000').toString() }
 const setup = {
   addressListFactory: Address.ADDRESS_LIST_FACTORY,
@@ -82,6 +82,32 @@ const StrategyConfig = {
       swapManager,
       receiptToken: Address.Aave.amWMATIC,
       strategyName: 'AaveStrategyPolygonWMATIC',
+    },
+    config: { ...config },
+    setup: { ...setup },
+  },
+  EarnVesperStrategyDAIWETH: {
+    contract: 'EarnVesperStrategy',
+    type: StrategyTypes.EARN_VESPER,
+    constructorArgs: {
+      swapManager,
+      receiptToken: Address.VDAI,
+      dripToken: Address.WETH,
+      vsp: Address.VSP,
+      strategyName: 'EarnVesperStrategyDAIWETH',
+    },
+    config: { ...config },
+    setup: { ...setup },
+  },
+  EarnVesperStrategyDAIWBTC: {
+    contract: 'EarnVesperStrategy',
+    type: StrategyTypes.EARN_VESPER,
+    constructorArgs: {
+      swapManager,
+      receiptToken: Address.VDAI,
+      dripToken: Address.WBTC,
+      vsp: Address.VSP,
+      strategyName: 'EarnVesperStrategyDAIWBTC',
     },
     config: { ...config },
     setup: { ...setup },

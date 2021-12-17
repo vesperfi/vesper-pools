@@ -29,6 +29,11 @@ function getConstructorArgKeys(strategyName) {
       keys.push('dripToken')
     }
   }
+
+  if (strategyName.includes('Vesper')) {
+    keys.push('vsp')
+  }
+
   // Any combination of Maker strategies
   if (strategyName.includes('Maker')) {
     keys.push('collateralType')

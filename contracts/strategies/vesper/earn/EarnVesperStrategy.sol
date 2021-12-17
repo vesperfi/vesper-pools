@@ -16,15 +16,16 @@ contract EarnVesperStrategy is VesperStrategy, Earn {
         address _swapManager,
         address _receiptToken,
         address _dripToken,
+        address _vsp,
         string memory _name
-    ) VesperStrategy(_pool, _swapManager, _receiptToken, _name) Earn(_dripToken) {}
+    ) VesperStrategy(_pool, _swapManager, _receiptToken, _vsp, _name) Earn(_dripToken) {}
 
     /// @notice Approve all required tokens
     function _approveToken(uint256 _amount) internal virtual override(VesperStrategy, Strategy) {
         collateralToken.safeApprove(pool, _amount);
         collateralToken.safeApprove(address(vToken), _amount);
         for (uint256 i = 0; i < swapManager.N_DEX(); i++) {
-            IERC20(VSP).safeApprove(address(swapManager.ROUTERS(i)), _amount);
+            IERC20(vsp).safeApprove(address(swapManager.ROUTERS(i)), _amount);
             collateralToken.safeApprove(address(swapManager.ROUTERS(i)), _amount);
         }
     }
