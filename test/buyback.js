@@ -4,7 +4,8 @@ const { expect } = require('chai')
 const { ethers, deployments } = require('hardhat')
 const { getChain } = require('./utils/chains')
 const Address = require(`../helper/${getChain()}/address`)
-const swapper = require('./utils/tokenSwapper')
+const { adjustBalance } = require('./utils/balance')
+const { parseUnits } = require('ethers/lib/utils')
 
 // From `deploy/utils/buyback.js` script
 const GOVERNOR = '0xdf826ff6518e609E4cEE86299d40611C148099d5'
@@ -116,11 +117,7 @@ describe('Buyback', function () {
 
     it('should give infinity approval twice', async function () {
       // Note: Using USDC insterad of DAI because DAI doesn't decrease allowance if it's uint256(-1)
-      const amountIn = await dai.balanceOf(feeCollector.address)
-      await swapper.swapExactToken(amountIn, [dai.address, Address.WETH, usdc.address], {
-        signer: feeCollector,
-        address: feeCollector.address,
-      })
+      await adjustBalance(usdc.address, feeCollector.address, parseUnits('1000', 6))
 
       // given
       await buyback.doInfinityApproval(usdc.address)
