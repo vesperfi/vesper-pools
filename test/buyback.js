@@ -4,8 +4,10 @@ const { expect } = require('chai')
 const { ethers, deployments } = require('hardhat')
 const { getChain } = require('./utils/chains')
 const Address = require(`../helper/${getChain()}/address`)
+const { adjustBalance } = require('./utils/balance')
+const { parseUnits } = require('ethers/lib/utils')
 
-// `From deploy/utils/buyback.js` script
+// From `deploy/utils/buyback.js` script
 const GOVERNOR = '0xdf826ff6518e609E4cEE86299d40611C148099d5'
 
 describe('Buyback', function () {
@@ -17,6 +19,7 @@ describe('Buyback', function () {
   let buyback
   let vsp
   let dai
+  let usdc
   let vaDAI
   let vVSP
   let keepers
@@ -42,6 +45,7 @@ describe('Buyback', function () {
     vVSP = await ethers.getContractAt('ERC20', Address.vVSP, feeCollector)
     vsp = await ethers.getContractAt('ERC20', Address.VSP, feeCollector)
     dai = await ethers.getContractAt('ERC20', Address.DAI, feeCollector)
+    usdc = await ethers.getContractAt('ERC20', Address.USDC, feeCollector)
     vaDAI = await ethers.getContractAt('ERC20', Address.vaDAI, feeCollector)
   })
 
@@ -64,11 +68,16 @@ describe('Buyback', function () {
 
       // when
       await buyback.doInfinityApproval(dai.address)
-      await buyback.swapForVspAndTransferToVVSP(dai.address, amount)
+      const tx = await buyback.swapForVspAndTransferToVVSP(dai.address, amount)
 
       // then
       const buybackDaiAfter = await dai.balanceOf(buyback.address)
       const vVspVspAfter = await vsp.balanceOf(Address.vVSP)
+      const expectedVspBought = vVspVspAfter.sub(vVspVspBefore)
+
+      const receipt = await tx.wait()
+      const [event] = receipt.events.filter(l => l.event === 'VspBoughtBack')
+      expect(event.args).deep.eq([dai.address, amount, expectedVspBought])
 
       expect(buybackDaiAfter).eq('0')
       expect(vVspVspAfter).gt(vVspVspBefore)
@@ -77,6 +86,55 @@ describe('Buyback', function () {
     it('should revert if not keeer', async function () {
       const tx = buyback.connect(someAccount).depositAndUnwrap(vaDAI.address, '1')
       await expect(tx).revertedWith('not-a-keeper')
+    })
+  })
+
+  describe('doInfinityApproval', function () {
+    let swapManager
+    let routerAddress
+
+    beforeEach(async function () {
+      swapManager = new ethers.Contract(
+        await buyback.swapManager(),
+        ['function ROUTERS(uint256) view returns (address)'],
+        someAccount,
+      )
+
+      // Note: With the current state the `SwapManager` will use router[1]
+      routerAddress = await swapManager.ROUTERS(1)
+    })
+
+    it("should give infinity approval for swap manager's routers", async function () {
+      // given
+      expect(await dai.allowance(buyback.address, routerAddress)).eq(0)
+
+      // when
+      await buyback.doInfinityApproval(dai.address)
+
+      // then
+      expect(await dai.allowance(buyback.address, routerAddress)).eq(ethers.constants.MaxUint256)
+    })
+
+    it('should give infinity approval twice', async function () {
+      // Note: Using USDC insterad of DAI because DAI doesn't decrease allowance if it's uint256(-1)
+      await adjustBalance(usdc.address, feeCollector.address, parseUnits('1000', 6))
+
+      // given
+      await buyback.doInfinityApproval(usdc.address)
+      expect(await usdc.allowance(buyback.address, routerAddress)).eq(ethers.constants.MaxUint256)
+
+      const amount = await usdc.balanceOf(feeCollector.address)
+      expect(amount).gt(0)
+      await usdc.transfer(buyback.address, amount)
+      await buyback.swapForVspAndTransferToVVSP(usdc.address, amount)
+
+      expect(await usdc.allowance(buyback.address, routerAddress)).lt(ethers.constants.MaxUint256)
+
+      // when
+      await buyback.doInfinityApproval(usdc.address)
+
+      // then
+      expect(await usdc.allowance(buyback.address, routerAddress)).eq(ethers.constants.MaxUint256)
     })
   })
 
