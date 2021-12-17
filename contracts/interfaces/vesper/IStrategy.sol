@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity 0.8.3;
-import "../bloq/IAddressList.sol";
 
 interface IStrategy {
     function rebalance() external;
@@ -14,7 +13,7 @@ interface IStrategy {
 
     function isReservedToken(address _token) external view returns (bool);
 
-    function keepers() external view returns (IAddressList);
+    function keepers() external view returns (address[] memory);
 
     function migrate(address _newStrategy) external;
 

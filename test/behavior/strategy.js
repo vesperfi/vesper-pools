@@ -19,7 +19,6 @@ const swapper = require('../utils/tokenSwapper')
 const { deposit, rebalanceStrategy } = require('../utils/poolOps')
 const { advanceBlock } = require('../utils/time')
 const StrategyType = require('../utils/strategyTypes')
-const addressListFactory = hre.address.ADDRESS_LIST_FACTORY
 function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
   let strategy, pool, feeCollector, collateralToken, accountant
   let owner, user1, user2, user3, user4, user5
@@ -51,18 +50,6 @@ function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
       collateralToken = this.collateralToken
       feeCollector = this.strategies[strategyIndex].feeCollector
     })
-    describe('Initialize strategy', function () {
-      it('Should not re-initialize strategy', async function () {
-        await expect(strategy.init(addressListFactory)).to.be.revertedWith('keeper-list-already-created')
-      })
-
-      it('Should not re-initialize without governor role', async function () {
-        await expect(strategy.connect(user2.signer).init(addressListFactory)).to.be.revertedWith(
-          'caller-is-not-the-governor',
-        )
-      })
-    })
-
     describe('Swap token', function () {
       it('Should sweep erc20 token', async function () {
         const token = await ethers.getContractAt('ERC20', ANY_ERC20)
@@ -85,18 +72,12 @@ function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
     })
 
     describe('Keeper List', function () {
-      let keeperList, addressList
-
-      beforeEach(async function () {
-        keeperList = await strategy.keepers()
-        expect(keeperList).to.not.equal(constants.ZERO_ADDRESS, 'List creation failed')
-        addressList = await ethers.getContractAt('IAddressList', keeperList)
-      })
-
       it('Should add a new keeper', async function () {
-        expect(await addressList.length()).to.be.equal('1', 'Owner present in keeper list')
+        let keeperList = await strategy.keepers()
+        expect(keeperList.length).to.be.equal(1, 'Owner present in keeper list')
         await strategy.addKeeper(user2.address)
-        expect(await addressList.length()).to.be.equal('2', 'Keeper added successfully')
+        keeperList = await strategy.keepers()
+        expect(keeperList.length).to.be.equal(2, 'Keeper added successfully')
       })
 
       it('Should revert if keeper address already exist in list', async function () {
@@ -114,7 +95,8 @@ function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
       it('Should remove a new keeper', async function () {
         await strategy.addKeeper(user2.address)
         await strategy.removeKeeper(user2.address)
-        expect(await addressList.length()).to.be.equal('1', 'Keeper removed successfully')
+        const keeperList = await strategy.keepers()
+        expect(keeperList.length).to.be.equal(1, 'Keeper removed successfully')
       })
 
       it('Should revert if keeper address not exist in list', async function () {

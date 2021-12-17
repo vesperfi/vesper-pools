@@ -51,8 +51,8 @@ const deployFunction = async function ({ getNamedAccounts, deployments, poolConf
   })
 
   const setup = strategyConfig.setup
+
   // Execute setup transactions
-  await execute(strategyAlias, { from: deployer, log: true }, 'init', setup.addressListFactory)
   await execute(strategyAlias, { from: deployer, log: true }, 'approveToken')
   await execute(strategyAlias, { from: deployer, log: true }, 'updateFeeCollector', setup.feeCollector)
   for (const keeper of setup.keepers) {

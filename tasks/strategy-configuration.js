@@ -60,7 +60,7 @@ function validateStrategyConfig(strategyName, strategyConfig) {
   // Validate constructor args
   validateObject(strategyConfig.constructorArgs, getConstructorArgKeys(strategyName))
   // Validate setup config
-  const setupKeys = ['addressListFactory', 'feeCollector', 'keepers']
+  const setupKeys = ['feeCollector', 'keepers']
   validateObject(strategyConfig.setup, setupKeys)
   // Validate Maker config
   if (strategyName.includes('Maker')) {
