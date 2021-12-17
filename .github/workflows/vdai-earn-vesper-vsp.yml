@@ -3,11 +3,12 @@ on:
   pull_request:
     paths:
       - "test/vdai/earn-vesper-dai-vsp.js"
-      - "contracts/pool/earn/EarnDrip.sol"
+      - "contracts/pool/earn/VesperEarnDrip.sol"
       - "contracts/strategies/Strategy.sol"
       - "contracts/strategies/Earn.sol"
-      - "contracts/strategies/vesper/EarnVesperStrategy.sol"
-      - "contracts/strategies/vesper/EarnVesperStrategyDAIVSP.sol"
+      - "contracts/strategies/vesper/VesperStrategy.sol"
+      - "contracts/strategies/vesper/earn/EarnVesperStrategy.sol"
+      - "contracts/strategies/vesper/earn/EarnVesperStrategyVSPDrip.sol"
 
 jobs:
   vdai-earn-vesper-vsp:

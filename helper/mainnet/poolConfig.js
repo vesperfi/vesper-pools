@@ -73,7 +73,7 @@ const PoolConfig = {
     contractName: 'VPool',
     poolParams: ['veDAI-LINK Earn Pool', 'veDAI-LINK', Address.DAI],
     setup: { ...setup },
-    rewards: { ...earnRewards, tokens: [Address.vaLINK, Address.VSP], growToken: Address.vaLINK },
+    rewards: { ...earnRewards, tokens: [Address.vLINK, Address.VSP], growToken: Address.vLINK },
   },
   VEDAI_VSP: {
     contractName: 'VPool',
