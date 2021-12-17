@@ -11,7 +11,7 @@ contract AaveStrategy is Strategy, AaveCore {
 
     // solhint-disable-next-line var-name-mixedcase
     string public NAME;
-    string public constant VERSION = "3.0.22";
+    string public constant VERSION = "3.0.23";
 
     constructor(
         address _pool,
