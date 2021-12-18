@@ -5,7 +5,7 @@ pragma solidity 0.8.3;
 import "../../curve/2Pool/Crv2PoolStrategy.sol";
 import "../ConvexStrategyBase.sol";
 
-/// @title This strategy will deposit collateral token in Curve 4MetaPool and stake lp token to convex.
+/// @title This strategy will deposit collateral token in a Curve 2Pool and stake lp token to convex.
 abstract contract Convex2PoolStrategy is Crv2PoolStrategy, ConvexStrategyBase {
     using SafeERC20 for IERC20;
 

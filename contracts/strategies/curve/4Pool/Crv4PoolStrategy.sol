@@ -44,14 +44,17 @@ abstract contract Crv4PoolStrategy is CrvPoolStrategyBase {
     }
 
     function _init(address _crvPool, uint256 _n) internal virtual override {
-        address[] memory _coins = new address[](_n);
-        uint256[] memory _coinDecimals = new uint256[](_n);
         for (uint256 i = 0; i < _n; i++) {
-            _coins[i] = IStableSwapV2(_crvPool).coins(int128((int256(i))));
-            _coinDecimals[i] = IERC20Metadata(_coins[i]).decimals();
+            coins.push(IStableSwapV2(_crvPool).coins(int128((int256(i)))));
+            coinDecimals.push(IERC20Metadata(coins[i]).decimals());
         }
-        coins = _coins;
-        coinDecimals = _coinDecimals;
+    }
+
+    function _setupOracles() internal virtual override {
+        super._setupOracles();
+        address _rewardToken = ILiquidityGaugeV1(crvGauge).rewarded_token();
+        if (_rewardToken != address(0))
+            swapManager.createOrUpdateOracle(_rewardToken, WETH, oraclePeriod, oracleRouterIdx);
     }
 
     function _approveToken(uint256 _amount) internal virtual override {
@@ -59,7 +62,6 @@ abstract contract Crv4PoolStrategy is CrvPoolStrategyBase {
         address _rewardToken = ILiquidityGaugeV1(crvGauge).rewarded_token();
         if (_rewardToken != address(0)) {
             for (uint256 i = 0; i < swapManager.N_DEX(); i++) {
-                IERC20(_rewardToken).safeApprove(address(swapManager.ROUTERS(i)), 0);
                 IERC20(_rewardToken).safeApprove(address(swapManager.ROUTERS(i)), _amount);
             }
         }
