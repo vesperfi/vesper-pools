@@ -8,7 +8,7 @@ const { expect } = require('chai')
 async function shouldMigrateStrategies(poolName) {
   let pool, strategies, collateralToken
   let user1, user2, user3, gov
-  const options = { skipVault: true, addressListFactory: '0xded8217De022706A191eE7Ee0Dc9df1185Fb5dA3' }
+  const options = { skipVault: true }
 
   async function deposit(amount, depositor) {
     return _deposit(pool, collateralToken, amount, depositor)

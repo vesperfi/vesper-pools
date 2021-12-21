@@ -4,7 +4,7 @@ pragma solidity 0.8.3;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
-import "../openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import "../dependencies/openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "../interfaces/bloq/ISwapManager.sol";
 import "../interfaces/vesper/IStrategy.sol";
 import "../interfaces/vesper/IVesperPool.sol";
@@ -28,7 +28,7 @@ abstract contract Strategy is IStrategy, Context {
     uint256 public oracleRouterIdx = 0; // Uniswap V2
     uint256 public swapSlippage = 10000; // 100% Don't use oracles by default
 
-    EnumerableSet.AddressSet internal _keepers;
+    EnumerableSet.AddressSet private _keepers;
 
     event UpdatedFeeCollector(address indexed previousFeeCollector, address indexed newFeeCollector);
     event UpdatedSwapManager(address indexed previousSwapManager, address indexed newSwapManager);
