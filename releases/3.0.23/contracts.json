@@ -142,6 +142,26 @@
         "strategies": {
           "EarnVesperStrategyDAIWETH": "0x041550d216B0Eec58D2Cbc34798b26ba2c0f2b37"
         }
+      },
+      "vedai_wbtc": {
+        "pool": {
+          "proxyAdmin": "0xEbedFD259c9FB1F5c0ab9A9f24E79F8d80E29B23",
+          "proxy": "0x148a829492bEc827FE9638c690Ee6A71De6f1736",
+          "implementation": "0xd208121e66d017806a6f4Ec5f3Cc2CA1e887c70C",
+          "poolAccountant": {
+            "proxyAdmin": "0xEbedFD259c9FB1F5c0ab9A9f24E79F8d80E29B23",
+            "proxy": "0x3Ad8cA4b9c651D75368812F6a0F3F18282381c28",
+            "implementation": "0xcE9053Ee524dCB628e1bC387fC6e341611eD1AF2"
+          }
+        },
+        "poolRewards": {
+          "proxyAdmin": "0xEbedFD259c9FB1F5c0ab9A9f24E79F8d80E29B23",
+          "proxy": "0x3Ff584482b8D537a1D85AC539306964E5Cc0c576",
+          "implementation": "0xABf9B38a967595eDC38D0E97CE2Eb213e445BF45"
+        },
+        "strategies": {
+          "EarnVesperStrategyDAIWBTC": "0x40971A53fa57b3D26bF0c98075f81955dE78b61F"
+        }
       }
     },
     "mainnet": {
