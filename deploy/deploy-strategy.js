@@ -40,8 +40,7 @@ const deployFunction = async function ({ getNamedAccounts, deployments, poolConf
     // Insert cm at index 1 in constructorArgs
     constructorArgs.splice(1, 0, cm)
   }
-  console.log('final constructor args', constructorArgs)
-  console.log(strategyAlias)
+
   // Deploy strategy
   const deployed = await deploy(strategyAlias, {
     contract: strategyConfig.contract,
