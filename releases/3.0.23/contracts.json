@@ -122,6 +122,26 @@
         "strategies": {
           "AaveStrategyPolygonWBTC": "0xB79D6c3A7C0740eAe4daDa70B50B35A3640D1eaF"
         }
+      },
+      "vedai_weth": {
+        "pool": {
+          "proxyAdmin": "0xEbedFD259c9FB1F5c0ab9A9f24E79F8d80E29B23",
+          "proxy": "0x1A3a83d1a9a667c61DF54b109ed88da58022f12b",
+          "implementation": "0xc5CdF8CBE886FC5c1EF5CD4fdd599C975eC6BB54",
+          "poolAccountant": {
+            "proxyAdmin": "0xEbedFD259c9FB1F5c0ab9A9f24E79F8d80E29B23",
+            "proxy": "0xaD744253BD488B109435463Be50AbB24FfA3FA65",
+            "implementation": "0xd8A49C0F2B809BBD3A666cB80d391fC95AF20927"
+          }
+        },
+        "poolRewards": {
+          "proxyAdmin": "0xEbedFD259c9FB1F5c0ab9A9f24E79F8d80E29B23",
+          "proxy": "0xfE711bE66DEF585c90671b6eB767a3979cdfe007",
+          "implementation": "0x7F896DDe137fBFc0347854fAa02E243aD6F2bE93"
+        },
+        "strategies": {
+          "EarnVesperStrategyDAIWETH": "0x041550d216B0Eec58D2Cbc34798b26ba2c0f2b37"
+        }
       }
     },
     "mainnet": {
