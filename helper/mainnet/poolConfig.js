@@ -85,6 +85,12 @@ const PoolConfig = {
     withdrawFee: 60,
     feeCollector: Address.FEE_COLLECTOR,
   },
+  VEDAI_SHIB: {
+    contractName: 'VPool',
+    poolParams: ['veDAI-SHIB Earn Pool', 'veDAI-SHIB', Address.DAI],
+    setup: { ...setup },
+    rewards: { contract: 'VesperEarnDrip', tokens: [Address.vaDAI, Address.VSP] },
+  },
   VLINK: {
     contractName: 'VPool',
     poolParams: ['vLINK Pool', 'vLINK', Address.LINK],

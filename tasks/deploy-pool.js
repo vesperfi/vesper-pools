@@ -40,11 +40,8 @@ function validatePoolConfig(poolConfig, targetChain) {
   // Validate rewards in config object
   let rewardsKeys = ['contract', 'tokens']
   if (poolConfig.poolParams[0].includes('Earn')) {
-    rewardsKeys = ['contract', 'tokens', 'growToken']
+    rewardsKeys = ['contract', 'tokens']
     validateObject(poolConfig.rewards, rewardsKeys)
-    if (!poolConfig.rewards.tokens.includes(poolConfig.rewards.growToken)) {
-      throw new Error('Grow token should be part of tokens array in rewards config')
-    }
     if (poolConfig.rewards.contract !== 'VesperEarnDrip') {
       throw new Error('Wrong contract name for Earn Rewards pool')
     }
