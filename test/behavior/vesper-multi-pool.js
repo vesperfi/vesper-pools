@@ -120,7 +120,6 @@ async function shouldBehaveLikeMultiPool(poolName) {
         await rebalance(strategies)
 
         const newStrategy = await makeNewStrategy(strategies[0], pool.address, {
-          addressListFactory: hre.address.ADDRESS_LIST_FACTORY,
           swapManager: hre.address.SWAP_MANAGER,
         })
 

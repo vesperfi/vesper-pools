@@ -8,7 +8,6 @@ const swapManager = Address.SWAP_MANAGER
 const interestFee = '1500' // 15%
 const config = { interestFee, debtRatio: 0, debtRate: ethers.utils.parseEther('1000000').toString() }
 const setup = {
-  addressListFactory: Address.ADDRESS_LIST_FACTORY,
   feeCollector: Address.FEE_COLLECTOR,
   keepers: [Address.KEEPER],
 }
