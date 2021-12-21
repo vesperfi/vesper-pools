@@ -709,7 +709,7 @@ const StrategyConfig = {
       strategyName: 'VesperMakerStrategyLINK',
     },
     config: { ...config },
-    setup: { ...setup, maker: { gemJoin: Address.Maker.MCD_JOIN_LINK_A, highWater: 275, lowWater: 250 } },
+    setup: { ...setup, maker: { gemJoin: Address.Maker.MCD_JOIN_LINK_A, highWater: 250, lowWater: 225 } },
   },
 
   VesperMakerStrategyWBTC: {

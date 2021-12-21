@@ -2,6 +2,7 @@
 const _ = require('lodash')
 
 // Prepare constructor args keys
+// eslint-disable-next-line complexity
 function getConstructorArgKeys(strategyName) {
   // Most of the strategies has these keys
   let keys = ['swapManager', 'receiptToken', 'strategyName']
@@ -30,7 +31,7 @@ function getConstructorArgKeys(strategyName) {
     }
   }
 
-  if (strategyName.includes('Vesper')) {
+  if (strategyName.includes('Vesper') && !strategyName.includes('Maker')) {
     keys.push('vsp')
   }
 
