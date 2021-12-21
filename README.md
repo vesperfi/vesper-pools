@@ -53,27 +53,68 @@ Deployment will be done via custom `hardhat task deploy-pool` which behind the s
    ```bash
    npx hardhat help deploy-pool
    ```
-* Deploy VDAI pool
-  ```bash
-   npm run deploy -- --pool VDAI --network localhost
-   or
-   npx hardhat deploy-pool --pool VDAI --network localhost
-  ```
 
-* Deploy VDAI pool with release (preferred)
+* Deploy Vesper pool
+  1. Add pool configuration in `./helper/mainnet/poolConfig.js` file.
+     - Some default config for setup and rewards are already defined at top of file, override them as needed.
+     - Replace mainnet in `./helper/mainnet/poolConfig.js` with arbitrum/avalanche/polygon as needed.
+
+   Example configuration for `VDAI`
+    ```js
+     VDAI: {
+      contractName: 'VPool',
+      poolParams: ['vDAI Pool', 'vDAI', Address.DAI],
+      setup: { ...setup },
+      rewards: { ...rewards },
+    },
+    ```
+
   
+  2. Run below command to deploy pool on localhost and mainnet as target chain
   ```bash
-   npm run deploy -- --pool VDAI --network localhost --release 3.0.5
+   npm run deploy -- --pool VDAI --network localhost --deploy-params '{"tags": "deploy-vPool"}'
   ```
-  > It will create `contracts.json` file at `/releases/3.0.5`
-* Passing any `hardhat-deploy` param
+  - To deploy pool on localhost and polygon as target chain, run below command 
+  ```bash 
+  npm run deploy -- --pool VDAI --network localhost --deploy-params '{"tags": "deploy-vPool"}' --target-chain polygon
+  ```
+
+* Deploy pool with release (preferred)
+  - It will create `contracts.json` file at `/releases/3.0.15`
   ```bash
-   npm run deploy -- --pool VDAI --network localhost --release 3.0.5 -- deploy-params '{"tags": "VDAI", gasprice: "25000000000"}'
+   npm run deploy -- --pool VDAI --network localhost --release 3.0.15 --deploy-params '{"tags": "deploy-vPool"}'
+  ``` 
+
+* Deploy strategy for already deployed pool
+  1. Add strategy configuration in `./helper/mainnet/strategyConfig.js` file.
    
-   npm run deploy -- --pool VAALUSD --network localhost --release 3.0.21 --deploy-params '{"tags": "deploy-vPool", "gasprice":"100000000000"}'
+   Example configuration for `AaveStrategyDAI`
+   ```js
+     AaveStrategyDAI: {
+      contract: 'AaveStrategy',
+      type: StrategyTypes.AAVE,
+      constructorArgs: {
+        swapManager,
+        receiptToken: Address.Aave.aDAI,
+        strategyName: 'AaveStrategyDAI',
+      },
+      config: { ...config },
+      setup: { ...setup },
+    },
+   ```
+  2. Run below command to deploy `AaveStrategyDAI` for `VDAI` pool
+  ```bash
+  npm run deploy -- --pool VDAI --network localhost --release 3.0.15 --deploy-params '{"tags": "deploy-strategy"}' --strategy-name AaveStrategyDAI
+  ```
 
-   npm run deploy -- --pool VMATIC --network localhost --release 3.0.22 --targetchain polygon --deploy-params '{"tags": "deploy-vPool", "gasprice":"31000000000"}' --pool-params '{"rewardsToken": ["0x09C5a4BCA808bD1ba2b8E6B3aAF7442046B4ca5B"]}' 
+* Migrate strategy
+  ```bash
+  npm run deploy -- --pool VDAI --network localhost --release 3.0.15 --deploy-params '{"tags": "migrate-strategy"}' --strategy-name AaveStrategyDAI
+  ```
 
-   npm run deploy -- --pool VMATIC --network localhost --release 3.0.22 --targetchain polygon --deploy-params '{"tags": "deploy-strategy", "gasprice":"30000000000"}' --strategy-params '{"name": "AaveStrategyPolygonWMATIC", "collateralToken": "WMATIC"}' 
+* Pass any `hardhat-deploy` supported param within `deploy-params` object
+  ```bash
+   npm run deploy -- --pool VDAI --network localhost --release 3.0.15 --deploy-params '{"tags": "deploy-vPool", gasprice: "25000000000"}'
+  ```
 
  ```
