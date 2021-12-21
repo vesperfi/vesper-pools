@@ -4,7 +4,6 @@ const { expect } = require('chai')
 const hre = require('hardhat')
 const ethers = hre.ethers
 const { getUsers, deployContract, createStrategy } = require('./utils/setupHelper')
-const addressListFactory = hre.address.ADDRESS_LIST_FACTORY
 
 const { poolConfig, strategyConfig } = require('./utils/chains').getChainData()
 const VDAI = poolConfig.VDAI
@@ -23,52 +22,44 @@ describe('Vesper Pool: Admin only function tests', function () {
     pool = await deployContract(VDAI.contractName, VDAI.poolParams)
     accountant = await deployContract('PoolAccountant')
     await accountant.init(pool.address)
-    await pool.initialize(...VDAI.poolParams, accountant.address, addressListFactory)
+    await pool.initialize(...VDAI.poolParams, accountant.address)
 
     AaveStrategyDAI.feeCollector = user4.address
     strategy = await createStrategy(AaveStrategyDAI, pool.address)
   })
 
   describe('Update keeper list', function () {
-    let keeperList, addressList
-    beforeEach(async function () {
-      keeperList = await pool.keepers()
-      addressList = await ethers.getContractAt('IAddressList', keeperList)
-    })
-
     context('Add address in keeper list', function () {
       it('Should add address in keeper list', async function () {
-        await pool.addInList(keeperList, user1.address)
-        expect(await addressList.length()).to.be.equal('2', 'Address added successfully')
+        await pool.addKeeper(user1.address)
+        expect((await pool.keepers()).length).to.be.equal(2, 'Address added successfully')
       })
 
       it('Should revert if address already exist in list', async function () {
-        await pool.addInList(keeperList, user1.address)
-        await expect(pool.addInList(keeperList, user1.address)).to.be.revertedWith('13')
+        await pool.addKeeper(user1.address)
+        await expect(pool.addKeeper(user1.address)).to.be.revertedWith('13')
       })
     })
     context('Remove address from keeper list', function () {
       it('Should remove address from keeper list', async function () {
-        await pool.addInList(keeperList, user1.address)
-        await pool.removeFromList(keeperList, user1.address)
-        expect(await addressList.length()).to.be.equal('1', 'Address removed successfully')
+        await pool.addKeeper(user1.address)
+        await pool.removeKeeper(user1.address)
+        expect((await pool.keepers()).length).to.be.equal(1, 'Address removed successfully')
       })
 
       it('Should revert if address not in list', async function () {
-        await expect(pool.removeFromList(keeperList, user1.address)).to.be.revertedWith('14')
+        await expect(pool.removeKeeper(user1.address)).to.be.revertedWith('14')
       })
 
-      it('Should revert if non-gov users add in keeper', async function () {
-        await expect(pool.connect(user3.signer).addInList(keeperList, user1.address)).to.be.revertedWith('not-a-keeper')
+      it('Should revert if non-keeper users add in keeper', async function () {
+        await expect(pool.connect(user3.signer).addKeeper(user1.address)).to.be.revertedWith('not-a-keeper')
       })
     })
   })
 
   describe('Keeper operations', function () {
-    let keeperList
     beforeEach(async function () {
-      keeperList = await pool.keepers()
-      await pool.addInList(keeperList, user1.address)
+      await pool.addKeeper(user1.address)
     })
 
     it('Should pause pool', async function () {
@@ -112,38 +103,33 @@ describe('Vesper Pool: Admin only function tests', function () {
   })
 
   describe('Update maintainer list', function () {
-    let addressList, maintainersList, keeperList
     beforeEach(async function () {
-      keeperList = await pool.keepers()
-      await pool.addInList(keeperList, user1.address)
-      maintainersList = await pool.maintainers()
-      addressList = await ethers.getContractAt('IAddressList', maintainersList)
+      await pool.addKeeper(user1.address)
     })
 
     context('Add address in maintainer list', function () {
       it('Admin can add/remove address in maintainer list', async function () {
-        await pool.addInList(maintainersList, user2.address)
-        expect(await addressList.length()).to.be.equal('2', 'Address added successfully')
-        await pool.connect(user1.signer).removeFromList(maintainersList, user2.address)
-        expect(await addressList.length()).to.be.equal('1', 'Address removed successfully')
+        await pool.addMaintainer(user2.address)
+        expect((await pool.maintainers()).length).to.be.equal(2, 'Address added successfully')
+        await pool.connect(user1.signer).removeMaintainer(user2.address)
+        expect((await pool.maintainers()).length).to.be.equal(1, 'Address removed successfully')
       })
 
       it('Keeper can add/remove address in maintainer list', async function () {
-        await pool.connect(user1.signer).addInList(maintainersList, user3.address)
-        expect(await addressList.length()).to.be.equal('2', 'Address added successfully')
-        await pool.connect(user1.signer).removeFromList(maintainersList, user3.address)
-        expect(await addressList.length()).to.be.equal('1', 'Address removed successfully')
+        await pool.connect(user1.signer).addMaintainer(user3.address)
+        expect((await pool.maintainers()).length).to.be.equal(2, 'Address added successfully')
+
+        await pool.connect(user1.signer).removeMaintainer(user3.address)
+        expect((await pool.maintainers()).length).to.be.equal(1, 'Address removed successfully')
       })
 
       it('Should revert if address already exist in list', async function () {
-        await pool.addInList(maintainersList, user2.address)
-        await expect(pool.connect(user1.signer).addInList(maintainersList, user2.address)).to.be.revertedWith('13')
+        await pool.addMaintainer(user2.address)
+        await expect(pool.connect(user1.signer).addMaintainer(user2.address)).to.be.revertedWith('13')
       })
 
       it('Should revert if not authorized users add in maintainer', async function () {
-        await expect(pool.connect(user3.signer).addInList(maintainersList, user4.address)).to.be.revertedWith(
-          'not-a-keeper',
-        )
+        await expect(pool.connect(user3.signer).addMaintainer(user4.address)).to.be.revertedWith('not-a-keeper')
       })
     })
   })
@@ -152,7 +138,7 @@ describe('Vesper Pool: Admin only function tests', function () {
     it('Should migrate strategy', async function () {
       const config = AaveStrategyDAI.config
       await accountant.addStrategy(strategy.address, ...Object.values(config))
-      const newStrategy = await createStrategy(AaveStrategyDAI, pool.address, { addressListFactory })
+      const newStrategy = await createStrategy(AaveStrategyDAI, pool.address)
       const tx = pool.migrateStrategy(strategy.address, newStrategy.address)
       await expect(tx)
         .to.emit(accountant, 'StrategyMigrated')
@@ -170,7 +156,7 @@ describe('Vesper Pool: Admin only function tests', function () {
 
     it('Should migrate strategy and replace in strategies array', async function () {
       await accountant.addStrategy(strategy.address, ...Object.values(AaveStrategyDAI.config))
-      const newStrategy = await createStrategy(AaveStrategyDAI, pool.address, { addressListFactory })
+      const newStrategy = await createStrategy(AaveStrategyDAI, pool.address)
       expect(await accountant.strategies(0)).to.be.eq(strategy.address, 'strategies[0] should be old strategy')
       await pool.migrateStrategy(strategy.address, newStrategy.address)
       expect(await accountant.strategies(0)).to.be.eq(newStrategy.address, 'strategies[0] should be new strategy')
@@ -179,14 +165,14 @@ describe('Vesper Pool: Admin only function tests', function () {
     it('Should revert if strategy is invalid', async function () {
       await accountant.addStrategy(strategy.address, ...Object.values(AaveStrategyDAI.config))
       const pool2 = await deployContract(VDAI.contractName, VDAI.poolParams)
-      const newStrategy = await createStrategy(AaveStrategyDAI, pool2.address, { addressListFactory })
+      const newStrategy = await createStrategy(AaveStrategyDAI, pool2.address)
       const tx = pool.migrateStrategy(strategy.address, newStrategy.address)
       // 17 = INVALID_STRATEGY
       await expect(tx).to.be.revertedWith('17', 'Strategies has different pool')
     })
 
     it('Should revert if old strategy is not active', async function () {
-      const newStrategy = await createStrategy(AaveStrategyDAI, pool.address, { addressListFactory })
+      const newStrategy = await createStrategy(AaveStrategyDAI, pool.address)
       const tx = pool.migrateStrategy(strategy.address, newStrategy.address)
       // 16 = STRATEGY_IS_NOT_ACTIVE
       await expect(tx).to.be.revertedWith('16', 'Old strategy is not active')
@@ -196,7 +182,7 @@ describe('Vesper Pool: Admin only function tests', function () {
       const config = AaveStrategyDAI.config
       config.debtRatio = '5000'
       await accountant.addStrategy(strategy.address, ...Object.values(config))
-      const newStrategy = await createStrategy(AaveStrategyDAI, pool.address, { addressListFactory })
+      const newStrategy = await createStrategy(AaveStrategyDAI, pool.address)
       config.debtRatio = '4000'
       await accountant.addStrategy(newStrategy.address, ...Object.values(config))
       const tx = pool.migrateStrategy(strategy.address, newStrategy.address)

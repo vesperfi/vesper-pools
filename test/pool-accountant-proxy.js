@@ -7,7 +7,6 @@ const { address, poolConfig, strategyConfig } = require('./utils/chains').getCha
 const VDAI = poolConfig.VDAI
 const AaveStrategyDAI = strategyConfig.AaveStrategyDAI
 const MULTICALL = address.MULTICALL
-const addressListFactory = address.ADDRESS_LIST_FACTORY
 describe('Pool accountant proxy', function () {
   let pool, strategy, poolAccountant, poolAccountantImpl
   let governor, user1
@@ -34,8 +33,6 @@ describe('Pool accountant proxy', function () {
     ])
     // Get implementation from proxy
     poolAccountant = await ethers.getContractAt('PoolAccountant', proxy.address)
-
-    await pool.initialize(...VDAI.poolParams, poolAccountant.address, addressListFactory)
 
     AaveStrategyDAI.feeCollector = user1.address
     strategy = await createStrategy(AaveStrategyDAI, pool.address)

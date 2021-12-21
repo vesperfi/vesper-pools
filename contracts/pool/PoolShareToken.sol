@@ -10,14 +10,15 @@ import "./PoolStorage.sol";
 import "./Errors.sol";
 import "../Governed.sol";
 import "../Pausable.sol";
-import "../interfaces/bloq/IAddressList.sol";
 import "../interfaces/vesper/IPoolAccountant.sol";
 import "../interfaces/vesper/IPoolRewards.sol";
 
 /// @title Holding pool share token
 // solhint-disable no-empty-blocks
-abstract contract PoolShareToken is Initializable, PoolERC20Permit, Governed, Pausable, ReentrancyGuard, PoolStorageV1 {
+abstract contract PoolShareToken is Initializable, PoolERC20Permit, Governed, Pausable, ReentrancyGuard, PoolStorageV2 {
     using SafeERC20 for IERC20;
+    using EnumerableSet for EnumerableSet.AddressSet;
+
     uint256 public constant MAX_BPS = 10_000;
 
     event Deposit(address indexed owner, uint256 shares, uint256 amount);
@@ -113,7 +114,7 @@ abstract contract PoolShareToken is Initializable, PoolERC20Permit, Governed, Pa
      * This function is deprecated, normal withdraw will check for whitelisted address
      */
     function whitelistedWithdraw(uint256 _shares) external virtual nonReentrant whenNotShutdown {
-        require(IAddressList(feeWhitelist).contains(_msgSender()), Errors.NOT_WHITELISTED_ADDRESS);
+        require(_feeWhitelist.contains(_msgSender()), Errors.NOT_WHITELISTED_ADDRESS);
         require(_shares != 0, Errors.INVALID_SHARE_AMOUNT);
         _claimRewards(_msgSender());
         _withdrawWithoutFee(_shares);
@@ -257,7 +258,7 @@ abstract contract PoolShareToken is Initializable, PoolERC20Permit, Governed, Pa
     /// @dev Burns shares and returns the collateral value, after fee, of those.
     function _withdraw(uint256 _shares) internal virtual {
         require(_shares != 0, Errors.INVALID_SHARE_AMOUNT);
-        if (withdrawFee == 0 || IAddressList(feeWhitelist).contains(_msgSender())) {
+        if (withdrawFee == 0 || _feeWhitelist.contains(_msgSender())) {
             _withdrawWithoutFee(_shares);
         } else {
             uint256 _fee = (_shares * withdrawFee) / MAX_BPS;

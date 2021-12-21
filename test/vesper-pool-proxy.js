@@ -34,11 +34,7 @@ describe('Vesper Pool: proxy', function () {
     ])
     accountant = await ethers.getContractAt('PoolAccountant', accountantProxy.address)
 
-    const initData = poolImpl.interface.encodeFunctionData('initialize', [
-      ...poolParams,
-      accountantProxy.address,
-      address.ADDRESS_LIST_FACTORY,
-    ])
+    const initData = poolImpl.interface.encodeFunctionData('initialize', [...poolParams, accountantProxy.address])
     // deploy pool proxy with logic implementation
     proxy = await deployContract('TransparentUpgradeableProxy', [poolImpl.address, proxyAdmin.address, initData])
     // Get implementation from proxy

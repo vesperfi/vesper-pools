@@ -333,9 +333,8 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
         await deposit(10, user2)
         feeCollector = this.feeCollector
         await pool.updateWithdrawFee(fee)
-        // Add fee collector to fee white list
-        const target = await pool.feeWhitelist()
-        await pool.addInList(target, feeCollector)
+        // Add fee collector to fee whitelist
+        await pool.addToFeeWhitelist(feeCollector)
       })
 
       it('Should collect fee on withdraw', async function () {

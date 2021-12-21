@@ -1,11 +1,8 @@
 'use strict'
 
 const Address = require('./address')
-const setup = {
-  addressListFactory: Address.ADDRESS_LIST_FACTORY,
-  feeCollector: Address.FEE_COLLECTOR,
-  withdrawFee: 60,
-}
+const setup = { feeCollector: Address.FEE_COLLECTOR, withdrawFee: 60 }
+
 // VFR pools do not need have PoolRewards contract hence no rewards object should not set for VFR pools
 const rewards = { contract: 'PoolRewards', tokens: [Address.VSP] }
 // Earn pool will have extra data in 'rewards' object. Below is default value for 'rewards' object for Earn pools
@@ -81,9 +78,8 @@ const PoolConfig = {
   VEDAI_VSP: {
     contractName: 'VPool',
     poolParams: ['veDAI-VSP Earn Pool', 'veDAI-VSP', Address.DAI],
-    addressListFactory: Address.ADDRESS_LIST_FACTORY,
-    withdrawFee: 60,
-    feeCollector: Address.FEE_COLLECTOR,
+    setup: { ...setup },
+    rewards: { ...earnRewards, tokens: [Address.vVSP], growToken: Address.vVSP },
   },
   VEDAI_SHIB: {
     contractName: 'VPool',

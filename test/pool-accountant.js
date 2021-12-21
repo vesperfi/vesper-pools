@@ -5,7 +5,6 @@ const hre = require('hardhat')
 const ethers = hre.ethers
 const { deployContract, createStrategy } = require('./utils/setupHelper')
 const Address = require('../helper/mainnet/address')
-const addressListFactory = hre.address.ADDRESS_LIST_FACTORY
 const StrategyType = require('./utils/strategyTypes')
 const VDAI = require('../helper/mainnet/poolConfig').VDAI
 
@@ -25,10 +24,10 @@ describe('Pool accountant proxy', function () {
     pool = await deployContract(VDAI.contractName, VDAI.poolParams)
     accountant = await deployContract('PoolAccountant')
     await accountant.init(pool.address)
-    await pool.initialize(...VDAI.poolParams, accountant.address, addressListFactory)
+    await pool.initialize(...VDAI.poolParams, accountant.address)
 
     strategyConfig.feeCollector = user1.address
-    strategy = await createStrategy(strategyConfig, pool.address, { addressListFactory })
+    strategy = await createStrategy(strategyConfig, pool.address)
   })
 
   describe('Add strategy tests', function () {
@@ -139,7 +138,7 @@ describe('Pool accountant proxy', function () {
       await accountant.connect(governor).addStrategy(strategy.address, ...Object.values(strategyConfig.config))
       initialPoolExternalDepositFee = await accountant.externalDepositFee()
       config = { interestFee: 1500, debtRatio: 500, debtRate: oneMillion, externalDepositFee: 1000 }
-      strategy2 = await createStrategy({ config, ...strategyConfig }, pool.address, { addressListFactory })
+      strategy2 = await createStrategy({ config, ...strategyConfig }, pool.address)
     })
 
     it('Should calculate fee @ addStrategy', async function () {
