@@ -9,7 +9,7 @@ import "../../../interfaces/aave/IAave.sol";
 import "../../Strategy.sol";
 import "../CrvPoolStrategyBase.sol";
 
-/// @title This strategy will deposit collateral token in Curve 3Pool and earn interest.
+/// @title This strategy will deposit collateral token in Curve Aave 3Pool and earn interest.
 contract CrvA3PoolStrategy is CrvPoolStrategyBase {
     using SafeERC20 for IERC20;
     uint256 private constant N = 3;
@@ -143,15 +143,21 @@ contract CrvA3PoolStrategy is CrvPoolStrategyBase {
         IERC20(crvLp).safeApprove(crvGauge, _amount);
     }
 
-    function _depositToCurve(uint256 amt) internal override returns (bool) {
-        if (amt != 0) {
-            uint256[3] memory depositAmounts;
-            depositAmounts[collIdx] = amt;
-            uint256 minLpAmount =
-                ((amt * _getSafeUsdRate()) / crvPool.get_virtual_price()) * 10**(18 - coinDecimals[collIdx]);
+    function _depositToCurve(uint256 _amt) internal override returns (bool) {
+        if (_amt != 0) {
+            uint256[3] memory _depositAmounts;
+            _depositAmounts[collIdx] = _amt;
+            uint256 _expectedOut =
+                _calcAmtOutAfterSlippage(
+                    IStableSwap3xUnderlying(address(crvPool)).calc_token_amount(_depositAmounts, true),
+                    crvSlippage
+                );
+            uint256 _minLpAmount =
+                ((_amt * _getSafeUsdRate()) / crvPool.get_virtual_price()) * 10**(18 - coinDecimals[collIdx]);
+            if (_expectedOut > _minLpAmount) _minLpAmount = _expectedOut;
             // solhint-disable no-empty-blocks
             try
-                IStableSwap3xUnderlying(address(crvPool)).add_liquidity(depositAmounts, minLpAmount, true)
+                IStableSwap3xUnderlying(address(crvPool)).add_liquidity(_depositAmounts, _minLpAmount, true)
             {} catch Error(string memory reason) {
                 emit DepositFailed(reason);
                 return false;

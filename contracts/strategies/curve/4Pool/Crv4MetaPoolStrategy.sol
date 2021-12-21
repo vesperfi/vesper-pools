@@ -54,7 +54,6 @@ abstract contract Crv4MetaPoolStrategy is CrvPoolStrategyBase {
         for (uint256 i = 0; i < _rewardsCount; i++) {
             address _rewardToken = ILiquidityGaugeV2(crvGauge).reward_tokens(i);
             for (uint256 j = 0; j < swapManager.N_DEX(); j++) {
-                IERC20(_rewardToken).safeApprove(address(swapManager.ROUTERS(j)), 0);
                 IERC20(_rewardToken).safeApprove(address(swapManager.ROUTERS(j)), _amount);
             }
         }

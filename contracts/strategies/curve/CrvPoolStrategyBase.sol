@@ -140,14 +140,10 @@ abstract contract CrvPoolStrategyBase is CrvBase, Strategy {
     }
 
     function _init(address _crvPool, uint256 _n) internal virtual {
-        address[] memory _coins = new address[](_n);
-        uint256[] memory _coinDecimals = new uint256[](_n);
         for (uint256 i = 0; i < _n; i++) {
-            _coins[i] = IStableSwapUnderlying(_crvPool).coins(i);
-            _coinDecimals[i] = IERC20Metadata(_coins[i]).decimals();
+            coins.push(IStableSwapUnderlying(_crvPool).coins(i));
+            coinDecimals.push(IERC20Metadata(coins[i]).decimals());
         }
-        coins = _coins;
-        coinDecimals = _coinDecimals;
     }
 
     function _reinvest() internal override {

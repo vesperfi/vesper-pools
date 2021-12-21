@@ -43,6 +43,7 @@ describe('vDAI Pool with Crv3PoolStrategy', function () {
       // Time travel to generate earning
       await timeTravel(30 * 24 * 60 * 60)
       await deposit(pool, collateralToken, 20, user2)
+      await timeTravel(30 * 24 * 60 * 60)
       await strategy.rebalance()
       const price2 = await pool.pricePerShare()
       expect(price2).to.be.gt(price1, 'Share value should increase (1)')

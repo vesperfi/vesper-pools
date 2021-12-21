@@ -32,16 +32,21 @@ abstract contract Crv2PoolStrategy is CrvPoolStrategyBase {
         if (_amt != 0) {
             uint256[2] memory _depositAmounts;
             _depositAmounts[collIdx] = _amt;
-            uint256 expectedOut =
+            uint256 _expectedOut =
                 _calcAmtOutAfterSlippage(
                     IStableSwap2x(address(crvPool)).calc_token_amount(_depositAmounts, true),
                     crvSlippage
                 );
-            uint256 minLpAmount =
-                ((_amt * _getSafeUsdRate()) / crvPool.get_virtual_price()) * 10**(18 - coinDecimals[collIdx]);
-            if (expectedOut > minLpAmount) expectedOut = minLpAmount;
+            uint256 _minLpAmount =
+                _calcAmtOutAfterSlippage(
+                    ((_amt * _getSafeUsdRate()) / crvPool.get_virtual_price()) * 10**(18 - coinDecimals[collIdx]),
+                    crvSlippage
+                );
+            if (_expectedOut > _minLpAmount) {
+                _minLpAmount = _expectedOut;
+            }
             // solhint-disable-next-line no-empty-blocks
-            try IStableSwap2x(address(crvPool)).add_liquidity(_depositAmounts, expectedOut) {} catch Error(
+            try IStableSwap2x(address(crvPool)).add_liquidity(_depositAmounts, _minLpAmount) {} catch Error(
                 string memory reason
             ) {
                 emit DepositFailed(reason);

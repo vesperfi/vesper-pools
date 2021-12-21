@@ -27,14 +27,10 @@ contract CrvSBTCPoolStrategy is CrvPoolStrategyBase {
     }
 
     function _init(address _crvPool, uint256 _n) internal virtual override {
-        address[] memory _coins = new address[](_n);
-        uint256[] memory _coinDecimals = new uint256[](_n);
         for (uint256 i = 0; i < _n; i++) {
-            _coins[i] = IStableSwapV2(_crvPool).coins(int128((uint128(i))));
-            _coinDecimals[i] = IERC20Metadata(_coins[i]).decimals();
+            coins.push(IStableSwapV2(_crvPool).coins(int128((uint128(i)))));
+            coinDecimals.push(IERC20Metadata(coins[i]).decimals());
         }
-        coins = _coins;
-        coinDecimals = _coinDecimals;
     }
 
     function _setupOracles() internal virtual override {
