@@ -74,5 +74,8 @@
   "veDAI-VSP-v3.0.21_3.0.5": 1639172700,
   "EarnVesperStrategyDAIVSP-v3.0.22": 1639173766,
   "AaveStrategyDPI-v3.0.22": 1639435441,
-  "veDAI-WBTC-poolRewards-v3.0.4": 1639606865
+  "veDAI-WBTC-poolRewards-v3.0.4": 1639606865,
+  "vaLINK-v3.0.23_3.0.5": 1640129041,
+  "CompoundLeverageStrategyLINK-v3.0.22": 1640142408,
+  "VesperMakerStrategyLINK-v3.0.22": 1640175726
 }
