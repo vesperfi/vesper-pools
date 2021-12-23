@@ -9,6 +9,7 @@ require('dotenv').config()
 require('./tasks/create-release')
 require('./tasks/deploy-pool')
 require('./tasks/strategy-configuration')
+require('./tasks/deploy-upgrader')
 const junk = 'test test test test test test test test test test test junk'
 
 if (process.env.RUN_CONTRACT_SIZER === 'true') {

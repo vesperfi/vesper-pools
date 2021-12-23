@@ -118,3 +118,12 @@ Deployment will be done via custom `hardhat task deploy-pool` which behind the s
   ```
 
  ```
+
+ * Deploy `upgrader` contracts 
+  mandatory param `name`, supported values : `PoolAccountantUpgrader`, `PoolRewardsUpgrader`, `VPoolUpgrader`
+  optional param `--target-chain`, values :  `polygon`, `mainnet`, `avalanche`, `arbitrium`
+ 
+ ```bash
+  npm run deploy-upgrader -- --name PoolAccountantUpgrader --network localhost
+  npm run deploy-upgrader -- --name PoolRewardsUpgrader --network localhost --target-chain polygon
+ ```
