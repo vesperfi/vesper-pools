@@ -570,6 +570,24 @@
         "strategies": {
           "EarnVesperStrategyDAIVSP": "0xDc1046DBb73E7BE8C0B2B72A4987522D425bc93C"
         }
+      },
+      "valink": {
+        "pool": {
+          "proxy": "0xef4F4604106de23CDadfEAE08fcC34602cB475C1",
+          "implementation": "0x230F8f273E46d33361b326335Cc52749080F7602",
+          "poolAccountant": {
+            "proxy": "0x85B6944d2b0A69E781777833b3964a911EeC6167",
+            "implementation": "0x3B5180a3a9A80680E69ff1A29d8Fdfb595dbbe6d"
+          }
+        },
+        "poolRewards": {
+          "proxy": "0x68E031E6C68786cc25F0941a2F37E21BbCcBB4CB",
+          "implementation": "0x53D885224789AdBB56dC93071A878bac7FB80fAB"
+        },
+        "strategies": {
+          "CompoundLeverageStrategyLINK": "0x4634826b13A6f4edED44539a9AAE119438c1517b",
+          "VesperMakerStrategyLINK": "0x0827F18a1fAD688C5C720FC27Ef0cC00D6DAd19a"
+        }
       }
     }
   }
