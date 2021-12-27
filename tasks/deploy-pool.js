@@ -14,8 +14,17 @@ function validateObject(object, keys) {
   })
 }
 
-function validatePoolConfig(poolConfig) {
-  const topLevelKeys = ['contractName', 'poolParams', 'setup', 'rewards']
+function validatePoolConfig(poolConfig, targetChain) {
+  // Fail fast
+  if (!poolConfig) {
+    throw new Error(`Missing pool configuration in /helper/${targetChain}/poolConfig file`)
+  }
+  const topLevelKeys = ['contractName', 'poolParams', 'setup']
+  if (poolConfig.contractName.includes('VFR')) {
+    topLevelKeys.push('deploymentName')
+  } else {
+    topLevelKeys.push('rewards')
+  }
   // Validate top level properties in config object
   validateObject(poolConfig, topLevelKeys)
 
@@ -39,7 +48,7 @@ function validatePoolConfig(poolConfig) {
     if (poolConfig.rewards.contract !== 'VesperEarnDrip') {
       throw new Error('Wrong contract name for Earn Rewards pool')
     }
-  } else {
+  } else if (!poolConfig.contractName.includes('VFR')) {
     validateObject(poolConfig.rewards, rewardsKeys)
     if (poolConfig.rewards.contract !== 'PoolRewards') {
       throw new Error('Wrong contract name for Rewards Pool')
@@ -75,14 +84,20 @@ task('deploy-pool', 'Deploy vesper pool')
       deployParams.tags = pool
     }
 
-    const poolConfig = require(`../helper/${targetChain}/poolConfig`)[pool.toUpperCase()]
-    // Fail fast
-    if (!poolConfig) {
-      throw new Error(`Missing pool configuration in /helper/${targetChain}/poolConfig file`)
-    }
-    validatePoolConfig(poolConfig)
     // Set pool config in hre to use later in deploy scripts
-    hre.poolConfig = poolConfig
+    hre.poolConfig = require(`../helper/${targetChain}/poolConfig`)[pool.toUpperCase()]
+
+    if (pool.includes('VFR')) {
+      validatePoolConfig(hre.poolConfig.Coverage, targetChain)
+      validatePoolConfig(hre.poolConfig.Stable, targetChain)
+      if (strategyName && strategyName.includes('Coverage')) {
+        hre.poolConfig = require(`../helper/${targetChain}/poolConfig`)[pool.toUpperCase()].Coverage
+      } else if (strategyName && strategyName.includes('Stable')) {
+        hre.poolConfig = require(`../helper/${targetChain}/poolConfig`)[pool.toUpperCase()].Stable
+      }
+    } else {
+      validatePoolConfig(hre.poolConfig, targetChain)
+    }
 
     await run('strategy-configuration', { strategyName, targetChain })
 
