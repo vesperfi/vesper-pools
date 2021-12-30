@@ -17,6 +17,7 @@
     "build": "npm run clean && npm run compile",
     "coverage": "hardhat coverage",
     "deploy": "hardhat deploy-pool",
+    "deploy-upgrader": "hardhat deploy-upgrader",
     "fork": "hardhat node --no-deploy",
     "release": "hardhat create-release",
     "test": "hardhat test",
