@@ -16,7 +16,7 @@ function prepareConfig(stableStrategies, coverageStrategies) {
 
     this.stable = {}
     await setupVPool(this.stable, {
-      poolConfig: poolConfig.VFRStableDAI,
+      poolConfig: poolConfig.VFRDAI.Stable,
       feeCollector: users[7].address,
       strategies: stableStrategies.map((item, i) => ({
         ...item,
@@ -27,7 +27,7 @@ function prepareConfig(stableStrategies, coverageStrategies) {
 
     this.coverage = {}
     await setupVPool(this.coverage, {
-      poolConfig: poolConfig.VFRCoverageDAI,
+      poolConfig: poolConfig.VFRDAI.Coverage,
       feeCollector: users[7].address,
       strategies: coverageStrategies.map((item, i) => ({
         ...item,

@@ -1,7 +1,7 @@
+/* eslint-disable complexity */
 'use strict'
 
 const { ethers } = require('hardhat')
-const PoolAccountant = 'PoolAccountant'
 const CollateralManager = 'CollateralManager'
 
 const deployFunction = async function ({ getNamedAccounts, deployments, poolConfig, strategyConfig, targetChain }) {
@@ -13,7 +13,8 @@ const deployFunction = async function ({ getNamedAccounts, deployments, poolConf
   const { deploy, execute, read } = deployments
   const { deployer } = await getNamedAccounts()
 
-  const poolProxy = await deployments.get(poolConfig.contractName)
+  const deploymentName = poolConfig.deploymentName ? poolConfig.deploymentName : poolConfig.contractName
+  const poolProxy = await deployments.get(deploymentName)
 
   const strategyAlias = strategyConfig.alias
 
@@ -80,6 +81,13 @@ const deployFunction = async function ({ getNamedAccounts, deployments, poolConf
       maker.highWater,
       maker.lowWater,
     )
+  }
+
+  let PoolAccountant = 'PoolAccountant'
+  if (strategyAlias.includes('Coverage')) {
+    PoolAccountant = 'PoolAccountantCoverage'
+  } else if (strategyAlias.includes('Stable')) {
+    PoolAccountant = 'PoolAccountantStable'
   }
 
   // Add strategy in pool accountant
