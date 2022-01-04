@@ -823,6 +823,20 @@ const StrategyConfig = {
     setup: { ...setup },
   },
 
+  EarnVesperStrategyLINKDAI: {
+    contract: 'EarnVesperStrategy',
+    type: StrategyTypes.EARN_VESPER,
+    constructorArgs: {
+      swapManager,
+      receiptToken: Address.vaLINK,
+      dripToken: Address.DAI,
+      vsp: Address.VSP,
+      strategyName: 'EarnVesperStrategyLINKDAI',
+    },
+    config: { ...config },
+    setup: { ...setup },
+  },
+
   EarnVesperStrategyDAIVSP: {
     contract: 'EarnVesperStrategyVSPDrip',
     type: StrategyTypes.EARN_VESPER,
