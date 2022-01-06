@@ -17,17 +17,5 @@ contract Crv2PoolStrategyArbitrumUSDCUSDTPool is Crv2PoolStrategy {
         address _swapManager,
         uint256 _collateralIdx,
         string memory _name
-    ) Crv2PoolStrategy(_pool, _swapManager, CRV_POOL, CRV_LP, GAUGE, _collateralIdx, _name) {
-        WETH = 0x82aF49447D8a07e3bd95BD0d56f35241523fBab1;
-        CRV = 0x11cDb42B0EB46D95f990BeDD4695A6e3fA034978;
-        reservedToken[CRV] = true;
-    }
-
-    function _claimCrv() internal override {
-        ILiquidityGaugeV3(crvGauge).claim_rewards(address(this));
-    }
-
-    function claimableRewards() public view virtual override returns (uint256) {
-        return ILiquidityGaugeV3(crvGauge).claimable_reward(address(this), CRV);
-    }
+    ) Crv2PoolStrategy(_pool, _swapManager, CRV_POOL, CRV_LP, GAUGE, _collateralIdx, _name) {}
 }

@@ -217,14 +217,20 @@ async function createStrategy(strategy, poolAddress, options = {}) {
       : strategyType.includes('compound') || strategyType === StrategyType.EARN_COMPOUND
       ? CToken
       : TokenLike
-
-  if (strategyType.toUpperCase().includes('CURVE')) {
+  if (
+    strategyType === StrategyType.CURVE ||
+    strategyType === StrategyType.CONVEX ||
+    strategyType === StrategyType.EARN_CURVE
+  ) {
     // alias token.balanceOf to internal method for LP Balance
     strategy.token = {
       // eslint-disable-next-line no-unused-vars
       async balanceOf(intentionallyDiscarded) {
         return instance.totalLp()
       },
+    }
+    if (strategyType === StrategyType.CONVEX) {
+      await instance.setRewardTokens([])
     }
   } else {
     strategy.token = await ethers.getContractAt(strategyTokenName, strategyTokenAddress)

@@ -34,8 +34,8 @@ contract EarnCrvSBTCPoolStrategy is CrvSBTCPoolStrategy, Earn {
         CrvPoolStrategyBase._claimRewardsAndConvertTo(_toToken);
     }
 
-    function _setupOracles() internal override(Strategy, CrvSBTCPoolStrategy) {
-        CrvSBTCPoolStrategy._setupOracles();
+    function _setupOracles() internal override(Strategy, CrvPoolStrategyBase) {
+        CrvPoolStrategyBase._setupOracles();
     }
 
     function _generateReport()
@@ -48,16 +48,5 @@ contract EarnCrvSBTCPoolStrategy is CrvSBTCPoolStrategy, Earn {
         )
     {
         return CrvPoolStrategyBase._generateReport();
-    }
-
-    /// @notice Approve all required tokens
-    function _approveToken(uint256 _amount) internal virtual override(Strategy, CrvPoolStrategyBase) {
-        collateralToken.safeApprove(pool, _amount);
-        collateralToken.safeApprove(address(crvPool), _amount);
-        for (uint256 i = 0; i < swapManager.N_DEX(); i++) {
-            IERC20(CRV).safeApprove(address(swapManager.ROUTERS(i)), _amount);
-            collateralToken.safeApprove(address(swapManager.ROUTERS(i)), _amount);
-        }
-        IERC20(crvLp).safeApprove(crvGauge, _amount);
     }
 }

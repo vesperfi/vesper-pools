@@ -3,7 +3,7 @@
 pragma solidity 0.8.3;
 
 import "./ConvexCoverageStrategy.sol";
-import "../Convex3PoolStrategy.sol";
+import "../3pool/Convex3PoolStrategy.sol";
 
 //solhint-disable no-empty-blocks
 contract ConvexCoverage3poolStrategy is ConvexCoverageStrategy {

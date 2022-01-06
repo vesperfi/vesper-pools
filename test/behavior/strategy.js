@@ -31,6 +31,7 @@ function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
     [StrategyType.COMPOUND_XY]: shouldBehaveLikeCompoundXYStrategy,
     [StrategyType.COMPOUND_LEVERAGE]: shouldBehaveLikeCompoundLeverageStrategy,
     [StrategyType.CURVE]: shouldBehaveLikeCrvStrategy,
+    [StrategyType.CONVEX]: shouldBehaveLikeCrvStrategy,
     [StrategyType.EARN_MAKER]: shouldBehaveLikeEarnMakerStrategy,
     [StrategyType.EARN_VESPER_MAKER]: shouldBehaveLikeEarnVesperMakerStrategy,
     [StrategyType.EARN_VESPER]: shouldBehaveLikeEarnVesperStrategy,

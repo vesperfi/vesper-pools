@@ -457,7 +457,7 @@ const StrategyConfig = {
 
   Convex2PoolStrategyMIMUSTPoolMIM: {
     contract: 'Convex2PoolStrategyMIMUSTPool',
-    type: StrategyTypes.CURVE,
+    type: StrategyTypes.CONVEX,
     constructorArgs: {
       swapManager,
       collateralIdx: 0,
@@ -469,7 +469,7 @@ const StrategyConfig = {
 
   Convex3PoolStrategyDAI: {
     contract: 'Convex3PoolStrategy',
-    type: StrategyTypes.CURVE,
+    type: StrategyTypes.CONVEX,
     constructorArgs: {
       swapManager,
       collateralIdx: 0,
@@ -481,7 +481,7 @@ const StrategyConfig = {
 
   ConvexCoverage3poolStrategyDAI: {
     contract: 'ConvexCoverage3poolStrategy',
-    type: StrategyTypes.CURVE,
+    type: StrategyTypes.CONVEX,
     constructorArgs: {
       swapManager,
       collateralIdx: 0,
@@ -493,7 +493,7 @@ const StrategyConfig = {
 
   ConvexStable3PoolStrategyDAI: {
     contract: 'ConvexStable3PoolStrategy',
-    type: StrategyTypes.CURVE,
+    type: StrategyTypes.CONVEX,
     constructorArgs: {
       swapManager,
       collateralIdx: 0,
@@ -505,7 +505,7 @@ const StrategyConfig = {
 
   ConvexSBTCPoolStrategyWBTC: {
     contract: 'ConvexSBTCPoolStrategy',
-    type: StrategyTypes.CURVE,
+    type: StrategyTypes.CONVEX,
     constructorArgs: {
       swapManager,
       collateralIdx: 1,
@@ -517,7 +517,7 @@ const StrategyConfig = {
 
   Convex4MetaPoolStrategyMIMPoolMIM: {
     contract: 'Convex4MetaPoolStrategyMIMPool',
-    type: StrategyTypes.CURVE,
+    type: StrategyTypes.CONVEX,
     constructorArgs: {
       swapManager,
       collateralIdx: 0,
@@ -527,9 +527,21 @@ const StrategyConfig = {
     setup: { ...setup },
   },
 
+  Convex4MetaPoolStrategyFRAXPoolFRAX: {
+    contract: 'Convex4MetaPoolStrategyFRAXPool',
+    type: StrategyTypes.CONVEX,
+    constructorArgs: {
+      swapManager,
+      collateralIdx: 0,
+      strategyName: 'Convex4MetaPoolStrategyFRAXPool',
+    },
+    config: { ...config },
+    setup: { ...setup },
+  },
+
   Convex4PoolStrategySUSDPoolDAI: {
     contract: 'Convex4PoolStrategySUSDPool',
-    type: StrategyTypes.CURVE,
+    type: StrategyTypes.CONVEX,
     constructorArgs: {
       swapManager,
       collateralIdx: 0,

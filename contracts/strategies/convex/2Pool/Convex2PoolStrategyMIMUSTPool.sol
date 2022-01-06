@@ -20,5 +20,7 @@ contract Convex2PoolStrategyMIMUSTPool is Convex2PoolStrategy {
         address _swapManager,
         uint256 _collateralIdx,
         string memory _name
-    ) Convex2PoolStrategy(_pool, _swapManager, CRV_POOL, CRV_LP, GAUGE, _collateralIdx, CONVEX_POOL_ID, _name) {}
+    ) Convex2PoolStrategy(_pool, _swapManager, CRV_POOL, CRV_LP, GAUGE, _collateralIdx, CONVEX_POOL_ID, _name) {
+        oracleRouterIdx = 1;
+    }
 }

@@ -19,12 +19,7 @@ contract CrvSBTCPoolStrategy is CrvPoolStrategyBase {
         address _swapManager,
         uint256 _collateralIdx,
         string memory _name
-    ) CrvPoolStrategyBase(_pool, THREEPOOL, THREECRV, GAUGE, _swapManager, _collateralIdx, 3, _name) {
-        require(
-            IStableSwapV2(THREEPOOL).coins(int128(uint128(_collateralIdx))) == address(IVesperPool(_pool).token()),
-            "collateral-mismatch"
-        );
-    }
+    ) CrvPoolStrategyBase(_pool, THREEPOOL, THREECRV, GAUGE, _swapManager, _collateralIdx, 3, _name) {}
 
     function _init(address _crvPool, uint256 _n) internal virtual override {
         for (uint256 i = 0; i < _n; i++) {
@@ -33,15 +28,8 @@ contract CrvSBTCPoolStrategy is CrvPoolStrategyBase {
         }
     }
 
-    function _setupOracles() internal virtual override {
-        swapManager.createOrUpdateOracle(CRV, WETH, oraclePeriod, oracleRouterIdx);
-        for (int128 i = 0; i < int128(int256(n)); i++) {
-            swapManager.createOrUpdateOracle(
-                IStableSwapV2(address(crvPool)).coins(i),
-                WETH,
-                oraclePeriod,
-                oracleRouterIdx
-            );
-        }
+    function _claimRewards() internal override {
+        ITokenMinter(CRV_MINTER).mint(crvGauge);
+        ILiquidityGaugeV2(crvGauge).claim_rewards(address(this));
     }
 }

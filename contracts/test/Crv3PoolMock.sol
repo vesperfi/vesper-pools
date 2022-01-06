@@ -60,7 +60,7 @@ contract Crv3PoolMock is CrvBase {
     }
 
     function claimCrv() external {
-        _claimCrv();
+        _claimRewards();
     }
 
     // if using this contract on its own.

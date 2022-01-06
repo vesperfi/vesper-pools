@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.3;
 
-import "../ConvexStrategy.sol";
+import "../3pool/ConvexStrategy.sol";
 import "../../VFR.sol";
 
 // solhint-disable no-empty-blocks

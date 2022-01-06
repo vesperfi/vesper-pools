@@ -101,19 +101,12 @@ abstract contract CrvBase {
         }
     }
 
-    function _claimCrv() internal virtual {
+    function _claimRewards() internal virtual {
         ITokenMinter(CRV_MINTER).mint(crvGauge);
     }
 
     function _setCheckpoint() internal virtual {
         ILiquidityGaugeV2(crvGauge).user_checkpoint(address(this));
-    }
-
-    function claimableRewards() public view virtual returns (uint256) {
-        //Total Mintable - Previously minted
-        return
-            ILiquidityGaugeV2(crvGauge).integrate_fraction(address(this)) -
-            ITokenMinter(CRV_MINTER).minted(address(this), crvGauge);
     }
 
     function totalStaked() public view virtual returns (uint256 total) {
