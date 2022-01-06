@@ -605,6 +605,20 @@
         "strategies": {
           "EarnVesperStrategyDAILINK": "0xA95CcFAf088a3C3a9181915a0af3fb182055bD4a"
         }
+      },
+      "velink_dai": {
+        "pool": {
+          "proxy": "0x252c805e999115158174dFC997BF5C1342aaDfF2",
+          "implementation": "0x0c7a619132580C650AffEC611d39C346756d8e47",
+          "poolAccountant": {
+            "proxy": "0x4D25E00be9bF9C7F21F6a5DC1f6638Ca4d2c5a24",
+            "implementation": "0x5F5A656981eE80F4abaFAa0C7D4f3BD869c4C9a6"
+          }
+        },
+        "poolRewards": {
+          "proxy": "0xB2205B87e81C91539fF510Bd6E1dDBCc19BfA8C2",
+          "implementation": "0xD36AA46c07cc83939A33B1bdc88AEd37c233f3CB"
+        }
       }
     }
   }
