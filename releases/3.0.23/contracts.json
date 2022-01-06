@@ -588,6 +588,20 @@
           "CompoundLeverageStrategyLINK": "0x4634826b13A6f4edED44539a9AAE119438c1517b",
           "VesperMakerStrategyLINK": "0x0827F18a1fAD688C5C720FC27Ef0cC00D6DAd19a"
         }
+      },
+      "vedai_link": {
+        "pool": {
+          "proxy": "0x83A99dAFf5f84B278D3150A36385fCDf04a0fecf",
+          "implementation": "0xc40EcEEA583E95f9433f831c4e4283334d48112D",
+          "poolAccountant": {
+            "proxy": "0xa34dc8502d6e6c2031834608156a064991825e72",
+            "implementation": "0xD819955515976cd952F37bba4Aa5a2FDeeee9268"
+          }
+        },
+        "poolRewards": {
+          "proxy": "0x6c2b3d52262a049831E8055482631f6bfEa54300",
+          "implementation": "0x4bc77Ce73DE82138d7A1c6444a861B0689ff5EF7"
+        }
       }
     }
   }
