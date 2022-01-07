@@ -2,7 +2,6 @@ name: vDAI with Convex 4Pool
 on:
   pull_request:
     paths:
-      - "test/vdai/crv-cvx-4pool-susd.js"
       - "contracts/strategies/Strategy.sol"
       - "contracts/strategies/curve/CrvBase.sol"
       - "contracts/strategies/convex/ConvexStrategyBase.sol"
@@ -27,6 +26,3 @@ jobs:
 
       - name: Run npm install with node v${{ matrix.node }}
         run: npm install
-
-      - name: Running tests for vDAI with Curve 4Pool
-        run: npm test "test/vdai/crv-cvx-4pool-susd.js"

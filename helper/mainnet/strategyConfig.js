@@ -539,18 +539,6 @@ const StrategyConfig = {
     setup: { ...setup },
   },
 
-  Convex4PoolStrategySUSDPoolDAI: {
-    contract: 'Convex4PoolStrategySUSDPool',
-    type: StrategyTypes.CONVEX,
-    constructorArgs: {
-      swapManager,
-      collateralIdx: 0,
-      strategyName: 'Convex4PoolStrategySUSDPoolDAI',
-    },
-    config: { ...config },
-    setup: { ...setup },
-  },
-
   Crv2PoolStrategyMIMUSTPoolMIM: {
     contract: 'Crv2PoolStrategyMIMUSTPool',
     type: StrategyTypes.CURVE,
