@@ -21,12 +21,7 @@ abstract contract Crv2PoolStrategy is CrvPoolStrategyBase {
         address _crvGauge,
         uint256 _collateralIdx,
         string memory _name
-    ) CrvPoolStrategyBase(_pool, _crvPool, _crvLp, _crvGauge, _swapManager, _collateralIdx, N, _name) {
-        require(
-            IStableSwap2xUnderlying(_crvPool).coins(_collateralIdx) == address(IVesperPool(_pool).token()),
-            "collateral-mismatch"
-        );
-    }
+    ) CrvPoolStrategyBase(_pool, _crvPool, _crvLp, _crvGauge, _swapManager, _collateralIdx, N, _name) {}
 
     function _depositToCurve(uint256 _amt) internal virtual override returns (bool) {
         if (_amt != 0) {
@@ -54,5 +49,10 @@ abstract contract Crv2PoolStrategy is CrvPoolStrategyBase {
             }
         }
         return true;
+    }
+
+    function _claimRewards() internal virtual override {
+        ITokenMinter(CRV_MINTER).mint(crvGauge);
+        ILiquidityGaugeV2(crvGauge).claim_rewards(address(this));
     }
 }

@@ -25,6 +25,7 @@ abstract contract CrvPoolStrategyBase is CrvBase, Strategy {
 
     address[] public coins;
     uint256[] public coinDecimals;
+    address[] public rewardTokens;
     bool public depositError;
 
     uint256 public crvSlippage = 10; // 10000 is 100%; 10 is 0.1%
@@ -56,17 +57,48 @@ abstract contract CrvPoolStrategyBase is CrvBase, Strategy {
         reservedToken[CRV] = true;
         collIdx = _collateralIdx;
         _init(_crvPool, _n);
-
+        require(coins[_collateralIdx] == address(IVesperPool(_pool).token()), "collateral-mismatch");
         // Assuming token supports 18 or less decimals. _init will initialize coins array
         uint256 _decimals = IERC20Metadata(coins[_collateralIdx]).decimals();
         decimalConversionFactor = 10**(18 - _decimals);
         NAME = _name;
+        rewardTokens.push(CRV);
+    }
+
+    /// @dev Rewards token in gauge can be updated any time. Governor can set reward tokens
+    /// Different version of gauge has different method to read reward tokens better governor set it
+    function setRewardTokens(address[] memory _rewardTokens) external virtual onlyGovernor {
+        rewardTokens = _rewardTokens;
+        for (uint256 i = 0; i < _rewardTokens.length; i++) {
+            require(
+                _rewardTokens[i] != receiptToken &&
+                    _rewardTokens[i] != address(collateralToken) &&
+                    _rewardTokens[i] != pool &&
+                    _rewardTokens[i] != crvLp,
+                "Invalid reward token"
+            );
+            reservedToken[_rewardTokens[i]] = true;
+        }
+        _approveToken(0);
+        _approveToken(MAX_UINT_VALUE);
+        _setupOracles();
     }
 
     function updateCrvSlippage(uint256 _newCrvSlippage) external onlyGovernor {
         require(_newCrvSlippage < 10000, "invalid-slippage-value");
         emit UpdatedCrvSlippage(crvSlippage, _newCrvSlippage);
         crvSlippage - _newCrvSlippage;
+    }
+
+    /// @dev Claimable rewards estimated into pool's collateral value
+    function claimableRewardsInCollateral() public view virtual returns (uint256 rewardAsCollateral) {
+        //Total Mintable - Previously minted
+        uint256 claimable =
+            ILiquidityGaugeV2(crvGauge).integrate_fraction(address(this)) -
+                ITokenMinter(CRV_MINTER).minted(address(this), crvGauge);
+        if (claimable != 0) {
+            (, rewardAsCollateral, ) = swapManager.bestOutputFixedInput(CRV, address(collateralToken), claimable);
+        }
     }
 
     /// @dev Convert from 18 decimals to token defined decimals.
@@ -84,21 +116,19 @@ abstract contract CrvPoolStrategyBase is CrvBase, Strategy {
      * @dev Report total value in collateral token
      */
     function totalValue() public view virtual override returns (uint256 _value) {
-        uint256 claimable = claimableRewards();
-        uint256 rewardAsCollateral;
-        if (claimable != 0) {
-            (, rewardAsCollateral, ) = swapManager.bestOutputFixedInput(CRV, address(collateralToken), claimable);
-        }
         _value =
             collateralToken.balanceOf(address(this)) +
             convertFrom18(_calcAmtOutAfterSlippage(getLpValue(totalLp()), crvSlippage)) +
-            rewardAsCollateral;
+            claimableRewardsInCollateral();
     }
 
     function _setupOracles() internal virtual override {
         swapManager.createOrUpdateOracle(CRV, WETH, oraclePeriod, oracleRouterIdx);
         for (uint256 i = 0; i < n; i++) {
             swapManager.createOrUpdateOracle(coins[i], WETH, oraclePeriod, oracleRouterIdx);
+        }
+        for (uint256 i = 0; i < rewardTokens.length; i++) {
+            swapManager.createOrUpdateOracle(rewardTokens[i], WETH, oraclePeriod, oracleRouterIdx);
         }
     }
 
@@ -133,8 +163,11 @@ abstract contract CrvPoolStrategyBase is CrvBase, Strategy {
     function _approveToken(uint256 _amount) internal virtual override {
         collateralToken.safeApprove(pool, _amount);
         collateralToken.safeApprove(address(crvPool), _amount);
-        for (uint256 i = 0; i < swapManager.N_DEX(); i++) {
-            IERC20(CRV).safeApprove(address(swapManager.ROUTERS(i)), _amount);
+        for (uint256 j = 0; j < swapManager.N_DEX(); j++) {
+            for (uint256 i = 0; i < rewardTokens.length; i++) {
+                IERC20(rewardTokens[i]).safeApprove(address(swapManager.ROUTERS(j)), _amount);
+            }
+            collateralToken.safeApprove(address(swapManager.ROUTERS(j)), _amount);
         }
         IERC20(crvLp).safeApprove(crvGauge, _amount);
     }
@@ -209,17 +242,24 @@ abstract contract CrvPoolStrategyBase is CrvBase, Strategy {
         _unstakeAllLp();
     }
 
+    /**
+     * @notice Curve pool may have more than one reward token. Child contract should override _claimRewards
+     */
     function _claimRewardsAndConvertTo(address _toToken) internal virtual override {
-        _claimCrv();
-        uint256 amt = IERC20(CRV).balanceOf(address(this));
-        if (amt != 0) {
-            address[] memory path = new address[](3);
-            path[0] = CRV;
-            path[1] = WETH;
-            path[2] = _toToken;
-            uint256 minAmtOut =
-                (swapSlippage != 10000) ? _calcAmtOutAfterSlippage(_getOracleRate(path, amt), swapSlippage) : 1;
-            _safeSwap(CRV, _toToken, amt, minAmtOut);
+        _claimRewards();
+        for (uint256 i = 0; i < rewardTokens.length; i++) {
+            uint256 _amt = IERC20(rewardTokens[i]).balanceOf(address(this));
+            if (_amt != 0) {
+                uint256 _minAmtOut;
+                if (swapSlippage < 10000) {
+                    (uint256 _minWethOut, bool _isValid) = _consultOracle(rewardTokens[i], WETH, _amt);
+                    (uint256 _minTokenOut, bool _isValidTwo) = _consultOracle(WETH, _toToken, _minWethOut);
+                    require(_isValid, "stale-reward-oracle");
+                    require(_isValidTwo, "stale-collateral-oracle");
+                    _minAmtOut = _calcAmtOutAfterSlippage(_minTokenOut, swapSlippage);
+                }
+                _safeSwap(rewardTokens[i], _toToken, _amt, _minAmtOut);
+            }
         }
     }
 

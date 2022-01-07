@@ -3,16 +3,12 @@
 const { prepareConfig } = require('./config')
 const { shouldBehaveLikePool } = require('../behavior/vesper-pool')
 const { shouldBehaveLikeStrategy } = require('../behavior/strategy')
-const { strategyConfig } = require('../utils/chains').getChainData()
 
-describe('vDAI Pool with Crv4PoolStrategy', function () {
-  const strategy1 = strategyConfig.Convex4PoolStrategySUSDPoolDAI
-  strategy1.config.debtRatio = 10000
-  const strategies = [strategy1]
-  prepareConfig(strategies)
+describe('vaFRAX Pool with Convex4MetaPoolStrategy', function () {
+  const strategies = prepareConfig()
 
   describe('Pool Tests', function () {
-    shouldBehaveLikePool('vDai', 'DAI')
+    shouldBehaveLikePool('vaFRAX', 'FRAX')
   })
 
   describe('Strategy Tests', function () {

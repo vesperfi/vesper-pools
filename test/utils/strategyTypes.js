@@ -9,6 +9,7 @@ const StrategyType = {
   VESPER_MAKER: 'vesperMaker',
   EARN_VESPER_MAKER: 'earnVesperMaker',
   CURVE: 'curve',
+  CONVEX: 'curveConvex',
   YEARN: 'yearn',
   EARN_MAKER: 'earnMaker',
   EARN_COMPOUND: 'earnCompound',

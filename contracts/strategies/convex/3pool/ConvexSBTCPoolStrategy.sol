@@ -19,18 +19,7 @@ contract ConvexSBTCStrategy is ConvexStrategy {
         address _swapManager,
         uint256 _collateralIdx,
         string memory _name
-    ) ConvexStrategy(_pool, THREEPOOL, THREECRV, GAUGE, _swapManager, _collateralIdx, CONVEX_POOL_ID, N, _name) {}
-
-    function _setupOracles() internal virtual override {
-        swapManager.createOrUpdateOracle(CVX, WETH, oraclePeriod, SUSHISWAP_ROUTER_INDEX);
-        swapManager.createOrUpdateOracle(CRV, WETH, oraclePeriod, oracleRouterIdx);
-        for (int128 i = 0; i < int128(uint128(n)); i++) {
-            swapManager.createOrUpdateOracle(
-                IStableSwapV2(address(crvPool)).coins(i),
-                WETH,
-                oraclePeriod,
-                oracleRouterIdx
-            );
-        }
+    ) ConvexStrategy(_pool, THREEPOOL, THREECRV, GAUGE, _swapManager, _collateralIdx, CONVEX_POOL_ID, N, _name) {
+        oracleRouterIdx = 1;
     }
 }

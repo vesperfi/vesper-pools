@@ -32,15 +32,8 @@ abstract contract Crv4PoolStrategy is CrvPoolStrategyBase {
         string memory _name
     ) CrvPoolStrategyBase(_pool, _crvPool, _crvLp, _gauge, _swapManager, _collateralIdx, N, _name) {
         require(IDeposit4x(_crvDeposit).token() == _crvLp, "invalid-deposit-contract");
-
         crvDeposit = _crvDeposit;
-
         require(ILiquidityGaugeV2(_gauge).lp_token() == _crvLp, "invalid-gauge");
-
-        require(
-            IStableSwapV2(_crvPool).coins(int128((int256(_collateralIdx)))) == address(IVesperPool(_pool).token()),
-            "collateral-mismatch"
-        );
     }
 
     function _init(address _crvPool, uint256 _n) internal virtual override {
@@ -50,44 +43,10 @@ abstract contract Crv4PoolStrategy is CrvPoolStrategyBase {
         }
     }
 
-    function _setupOracles() internal virtual override {
-        super._setupOracles();
-        address _rewardToken = ILiquidityGaugeV1(crvGauge).rewarded_token();
-        if (_rewardToken != address(0))
-            swapManager.createOrUpdateOracle(_rewardToken, WETH, oraclePeriod, oracleRouterIdx);
-    }
-
     function _approveToken(uint256 _amount) internal virtual override {
         super._approveToken(_amount);
-        address _rewardToken = ILiquidityGaugeV1(crvGauge).rewarded_token();
-        if (_rewardToken != address(0)) {
-            for (uint256 i = 0; i < swapManager.N_DEX(); i++) {
-                IERC20(_rewardToken).safeApprove(address(swapManager.ROUTERS(i)), _amount);
-            }
-        }
         collateralToken.safeApprove(crvDeposit, _amount);
-
         IERC20(crvLp).safeApprove(crvDeposit, _amount);
-    }
-
-    function _claimRewardsAndConvertTo(address _toToken) internal virtual override {
-        super._claimRewardsAndConvertTo(_toToken);
-
-        address _rewardToken = ILiquidityGaugeV1(crvGauge).rewarded_token();
-
-        if (_rewardToken != address(0)) {
-            ILiquidityGaugeV1(crvGauge).claim_rewards(address(this));
-            uint256 _amt = IERC20(_rewardToken).balanceOf(address(this));
-            if (_amt != 0) {
-                address[] memory _path = new address[](3);
-                _path[0] = _rewardToken;
-                _path[1] = WETH;
-                _path[2] = _toToken;
-                uint256 _minAmtOut =
-                    (swapSlippage != 10000) ? _calcAmtOutAfterSlippage(_getOracleRate(_path, _amt), swapSlippage) : 1;
-                _safeSwap(_rewardToken, _toToken, _amt, _minAmtOut);
-            }
-        }
     }
 
     function _depositToCurve(uint256 amt) internal virtual override returns (bool) {
@@ -127,5 +86,10 @@ abstract contract Crv4PoolStrategy is CrvPoolStrategyBase {
             (_lpAmount != 0)
                 ? IDeposit4x(crvDeposit).calc_withdraw_one_coin(_lpAmount, SafeCast.toInt128(int256(_i)))
                 : 0;
+    }
+
+    function _claimRewards() internal virtual override {
+        ITokenMinter(CRV_MINTER).mint(crvGauge);
+        ILiquidityGaugeV2(crvGauge).claim_rewards(address(this));
     }
 }

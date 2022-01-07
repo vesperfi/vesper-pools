@@ -2,26 +2,35 @@
 
 pragma solidity 0.8.3;
 
-import "../../curve/4Pool/Crv4MetaPoolStrategy.sol";
+import "../../../interfaces/convex/IConvex.sol";
+import "../../../interfaces/convex/IConvexToken.sol";
+import "../../curve/CrvPoolStrategyBase.sol";
 import "../ConvexStrategyBase.sol";
 
-/// @title This strategy will deposit collateral token in Curve 4MetaPool and stake lp token to convex.
-abstract contract Convex4MetaPoolStrategy is Crv4MetaPoolStrategy, ConvexStrategyBase {
+/// @title This strategy will deposit collateral token in Curve 3Pool and stake lp token to convex.
+abstract contract ConvexStrategy is CrvPoolStrategyBase, ConvexStrategyBase {
     using SafeERC20 for IERC20;
 
     constructor(
         address _pool,
-        address _swapManager,
-        address _metapool,
+        address _threePool,
+        address _threeCrv,
         address _gauge,
+        address _swapManager,
         uint256 _collateralIdx,
         uint256 _convexPoolId,
+        // No. of pooled tokens in the pool
+        uint256 _n,
         string memory _name
     )
-        Crv4MetaPoolStrategy(_pool, _swapManager, _metapool, _gauge, _collateralIdx, _name)
-        ConvexStrategyBase(_metapool, _convexPoolId)
+        CrvPoolStrategyBase(_pool, _threePool, _threeCrv, _gauge, _swapManager, _collateralIdx, _n, _name)
+        ConvexStrategyBase(_threeCrv, _convexPoolId)
     {
         oracleRouterIdx = 0;
+    }
+
+    function updateClaimRewards(bool _isClaimRewards) external onlyGovernor {
+        isClaimRewards = _isClaimRewards;
     }
 
     /// @dev convex pool can add new rewards. This method refresh list.
@@ -32,10 +41,6 @@ abstract contract Convex4MetaPoolStrategy is Crv4MetaPoolStrategy, ConvexStrateg
         _approveToken(0);
         _approveToken(MAX_UINT_VALUE);
         _setupOracles();
-    }
-
-    function updateClaimRewards(bool _isClaimRewards) external onlyGovernor {
-        isClaimRewards = _isClaimRewards;
     }
 
     function _approveToken(uint256 _amount) internal virtual override {

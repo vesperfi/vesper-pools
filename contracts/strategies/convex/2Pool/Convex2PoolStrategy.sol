@@ -22,29 +22,26 @@ abstract contract Convex2PoolStrategy is Crv2PoolStrategy, ConvexStrategyBase {
         Crv2PoolStrategy(_pool, _swapManager, _crvPool, _crvLp, _crvGauge, _collateralIdx, _name)
         ConvexStrategyBase(_crvLp, _convexPoolId)
     {
-        reservedToken[CVX] = true;
         oracleRouterIdx = 0;
+    }
+
+    /// @dev convex pool can add new rewards. This method refresh list.
+    function setRewardTokens(
+        address[] memory /*_rewardTokens*/
+    ) external override onlyKeeper {
+        rewardTokens = _getRewardTokens();
+        _approveToken(0);
+        _approveToken(MAX_UINT_VALUE);
+        _setupOracles();
     }
 
     function updateClaimRewards(bool _isClaimRewards) external onlyGovernor {
         isClaimRewards = _isClaimRewards;
     }
 
-    function updateClaimExtras(bool _isClaimExtras) external onlyGovernor {
-        isClaimExtras = _isClaimExtras;
-    }
-
     function _approveToken(uint256 _amount) internal virtual override {
         IERC20(crvLp).safeApprove(BOOSTER, _amount);
-        for (uint256 i = 0; i < swapManager.N_DEX(); i++) {
-            IERC20(CVX).safeApprove(address(swapManager.ROUTERS(i)), _amount);
-        }
         super._approveToken(_amount);
-    }
-
-    function _setupOracles() internal virtual override {
-        swapManager.createOrUpdateOracle(CVX, WETH, oraclePeriod, SUSHISWAP_ROUTER_INDEX);
-        super._setupOracles();
     }
 
     function _stakeAllLp() internal override {
@@ -64,25 +61,8 @@ abstract contract Convex2PoolStrategy is Crv2PoolStrategy, ConvexStrategyBase {
         }
     }
 
-    function _claimRewardsAndConvertTo(address _toToken) internal virtual override {
-        require(Rewards(cvxCrvRewards).getReward(address(this), isClaimExtras), "reward-claim-failed");
-        uint256 _amt = IERC20(CVX).balanceOf(address(this));
-        if (_amt != 0) {
-            uint256 minAmtOut;
-            if (swapSlippage < 10000) {
-                (uint256 minWethOut, bool isValid) = _consultOracle(CVX, WETH, _amt);
-                (uint256 _minAmtOut, bool isValidTwo) = _consultOracle(WETH, _toToken, minWethOut);
-                require(isValid, "stale-cvx-oracle");
-                require(isValidTwo, "stale-collateral-oracle");
-                minAmtOut = _calcAmtOutAfterSlippage(_minAmtOut, swapSlippage);
-            }
-            _safeSwap(CVX, _toToken, _amt, minAmtOut);
-        }
-        super._claimRewardsAndConvertTo(_toToken);
-    }
-
-    function claimableRewards() public view override returns (uint256 total) {
-        total = Rewards(cvxCrvRewards).earned(address(this));
+    function _claimRewards() internal override {
+        require(Rewards(cvxCrvRewards).getReward(address(this), true), "reward-claim-failed");
     }
 
     function totalStaked() public view override returns (uint256 total) {
@@ -93,7 +73,19 @@ abstract contract Convex2PoolStrategy is Crv2PoolStrategy, ConvexStrategyBase {
         total = IERC20(crvLp).balanceOf(address(this)) + Rewards(cvxCrvRewards).balanceOf(address(this));
     }
 
-    function totalValue() public view virtual override returns (uint256 _value) {
-        _value = super.totalValue();
+    /// @dev Claimable rewards estimated into pool's collateral value
+    function claimableRewardsInCollateral() public view virtual override returns (uint256 rewardAsCollateral) {
+        ClaimableRewardInfo[] memory _claimableRewardsInfo = _claimableRewards();
+        for (uint256 i = 0; i < _claimableRewardsInfo.length; i++) {
+            if (_claimableRewardsInfo[i].amount != 0) {
+                (, uint256 _reward, ) =
+                    swapManager.bestOutputFixedInput(
+                        _claimableRewardsInfo[i].token,
+                        address(collateralToken),
+                        _claimableRewardsInfo[i].amount
+                    );
+                rewardAsCollateral += _reward;
+            }
+        }
     }
 }

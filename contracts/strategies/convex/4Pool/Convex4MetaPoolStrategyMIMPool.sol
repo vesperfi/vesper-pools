@@ -19,5 +19,7 @@ contract Convex4MetaPoolStrategyMIMPool is Convex4MetaPoolStrategy {
         address _swapManager,
         uint256 _collateralIdx,
         string memory _name
-    ) Convex4MetaPoolStrategy(_pool, _swapManager, METAPOOL, GAUGE, _collateralIdx, CONVEX_POOL_ID, _name) {}
+    ) Convex4MetaPoolStrategy(_pool, _swapManager, METAPOOL, GAUGE, _collateralIdx, CONVEX_POOL_ID, _name) {
+        oracleRouterIdx = 1;
+    }
 }
