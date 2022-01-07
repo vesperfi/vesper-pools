@@ -252,10 +252,17 @@ abstract contract Strategy is IStrategy, Context {
         address _to,
         uint256 _amt
     ) internal returns (uint256, bool) {
-        // from, to, amountIn, period, router
-        (uint256 rate, uint256 lastUpdate, ) = swapManager.consult(_from, _to, _amt, oraclePeriod, oracleRouterIdx);
-        // We're looking at a TWAP ORACLE with a 1 hr Period that has been updated within the last hour
-        if ((lastUpdate > (block.timestamp - oraclePeriod)) && (rate != 0)) return (rate, true);
+        for (uint256 i = 0; i < swapManager.N_DEX(); i++) {
+            (bool _success, bytes memory _returnData) =
+                address(swapManager).call(
+                    abi.encodePacked(swapManager.consult.selector, abi.encode(_from, _to, _amt, oraclePeriod, i))
+                );
+            if (_success) {
+                (uint256 rate, uint256 lastUpdate, ) = abi.decode(_returnData, (uint256, uint256, bool));
+                if ((lastUpdate > (block.timestamp - oraclePeriod)) && (rate != 0)) return (rate, true);
+                return (0, false);
+            }
+        }
         return (0, false);
     }
 
