@@ -123,12 +123,27 @@ abstract contract CrvPoolStrategyBase is CrvBase, Strategy {
     }
 
     function _setupOracles() internal virtual override {
-        swapManager.createOrUpdateOracle(CRV, WETH, oraclePeriod, oracleRouterIdx);
+        _safeCreateOrUpdateOracle(CRV, WETH);
         for (uint256 i = 0; i < n; i++) {
-            swapManager.createOrUpdateOracle(coins[i], WETH, oraclePeriod, oracleRouterIdx);
+            _safeCreateOrUpdateOracle(coins[i], WETH);
         }
         for (uint256 i = 0; i < rewardTokens.length; i++) {
-            swapManager.createOrUpdateOracle(rewardTokens[i], WETH, oraclePeriod, oracleRouterIdx);
+            _safeCreateOrUpdateOracle(rewardTokens[i], WETH);
+        }
+    }
+
+    /**
+     * @dev Creates Oracle pair preventing revert if it doesn't exist in a DEX
+     */
+    function _safeCreateOrUpdateOracle(address _tokenA, address _tokenB) internal {
+        for (uint256 i = 0; i < swapManager.N_DEX(); i++) {
+            // solhint-disable no-empty-blocks
+            try swapManager.createOrUpdateOracle(_tokenA, _tokenB, oraclePeriod, i) {
+                break;
+            } catch Error(
+                string memory /* reason */
+            ) {}
+            // solhint-enable no-empty-blocks
         }
     }
 
