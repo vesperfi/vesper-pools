@@ -63,13 +63,13 @@ contract VFRBuffer {
     }
 
     function flush() public {
-        require(IVFRStablePool(stablePool).keepers().contains(msg.sender), "not-a-keeper");
+        require(IVFRStablePool(stablePool).isKeeper(msg.sender), "not-a-keeper");
         // Transfer any outstanding funds to the coverage pool
         IERC20(token).safeTransfer(coveragePool, IERC20(token).balanceOf(address(this)));
     }
 
     function updateCoverageTime(uint256 _coverageTime) external {
-        require(IVFRStablePool(stablePool).keepers().contains(msg.sender), "not-a-keeper");
+        require(IVFRStablePool(stablePool).isKeeper(msg.sender), "not-a-keeper");
         emit CoverageTimeUpdated(coverageTime, _coverageTime);
         coverageTime = _coverageTime;
     }

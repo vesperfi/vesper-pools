@@ -29,7 +29,7 @@ const deployFunction = async function ({ getNamedAccounts, deployments, poolConf
       execute: {
         init: {
           methodName: 'initialize',
-          args: [...poolConfig.poolParams, accountantProxy.address, setup.addressListFactory],
+          args: [...poolConfig.poolParams, accountantProxy.address],
         },
       },
     },

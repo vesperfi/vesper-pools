@@ -31,16 +31,6 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
     return _deposit(pool, collateralToken, amount, depositor)
   }
 
-  function convertTo18(amount) {
-    const multiplier = DECIMAL18.div(BN.from(10).pow(collateralDecimal))
-    return BN.from(amount).mul(multiplier)
-  }
-
-  function convertFrom18(amount) {
-    const divisor = DECIMAL18.div(BN.from(10).pow(collateralDecimal))
-    return BN.from(amount).div(divisor)
-  }
-
   describe(`${poolName} basic operation tests`, function () {
     beforeEach(async function () {
       ;[, user1, user2, user3, user4] = this.users
@@ -65,22 +55,30 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
 
     describe(`Deposit ${collateralName} into the ${poolName} pool`, function () {
       it(`Should deposit ${collateralName}`, async function () {
+        const pricePerShareBefore = await pool.pricePerShare()
         const depositAmount = await deposit(10, user1)
-        const depositAmount18 = convertTo18(depositAmount)
-        return Promise.all([pool.totalSupply(), pool.totalValue(), pool.balanceOf(user1.address)]).then(function ([
-          totalSupply,
-          totalValue,
-          vPoolBalance,
-        ]) {
-          expect(totalSupply).to.be.equal(depositAmount18, `Total supply of ${poolName} is wrong`)
-          expect(totalValue).to.be.equal(depositAmount, `Total value of ${poolName} is wrong`)
-          expect(vPoolBalance).to.be.equal(depositAmount18, `${poolName} balance of user is wrong`)
-        })
+
+        const externalDepositFee = await accountant.externalDepositFee()
+        let expectedShares = depositAmount
+        if (externalDepositFee.gt(0)) {
+          const amountAfterFee = depositAmount.sub(depositAmount.mul(externalDepositFee).div('10000'))
+          expectedShares = amountAfterFee.mul(ethers.utils.parseEther('1')).div(pricePerShareBefore)
+          const pricePerShareAfter = await pool.pricePerShare()
+          expect(pricePerShareAfter).to.gt(pricePerShareBefore, 'Price per share should increase')
+        }
+
+        const totalSupply = await pool.convertFrom18(await pool.totalSupply())
+        const totalValue = await pool.totalValue()
+        const vPoolBalance = await pool.convertFrom18(await pool.balanceOf(user1.address))
+
+        expect(vPoolBalance).to.be.equal(expectedShares, `${poolName} balance of user is wrong`)
+        expect(totalSupply).to.be.equal(vPoolBalance, `Total supply of ${poolName} is wrong`)
+        expect(totalValue).to.be.equal(depositAmount, `Total value of ${poolName} is wrong`)
       })
 
       it(`Should deposit ${collateralName} and call rebalance() of each strategy`, async function () {
         const depositAmount = await deposit(50, user4)
-        const depositAmount18 = convertTo18(depositAmount)
+
         const totalValue = await pool.totalValue()
         for (const strategy of strategies) {
           await executeIfExist(strategy.token.exchangeRateCurrent)
@@ -93,27 +91,29 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
           }
         }
         const totalDebtOfStrategies = await totalDebtOfAllStrategy(strategies, pool)
-        return Promise.all([pool.totalDebt(), pool.totalSupply(), pool.balanceOf(user4.address)]).then(function ([
-          totalDebt,
-          totalSupply,
-          vPoolBalance,
-        ]) {
-          expect(totalDebtOfStrategies).to.be.equal(totalDebt, `${collateralName} totalDebt of strategies is wrong`)
-          expect(totalSupply).to.be.equal(depositAmount18, `Total supply of ${poolName} is wrong`)
-          expect(totalValue).to.be.gte(depositAmount, `Total value of ${poolName} is wrong`)
-          expect(vPoolBalance).to.be.equal(depositAmount18, `${poolName} balance of user is wrong`)
-        })
+        const totalDebt = await pool.totalDebt()
+        const totalSupply = await pool.convertFrom18(await pool.totalSupply())
+        const vPoolBalance = await pool.convertFrom18(await pool.balanceOf(user4.address))
+        // Due to deposit fee, issued shares will be less than deposit amount, even if PPS is 1
+        expect(vPoolBalance).to.be.lte(depositAmount, `${poolName} balance of user is wrong`)
+        expect(totalDebtOfStrategies).to.be.equal(totalDebt, `${collateralName} totalDebt of strategies is wrong`)
+        expect(totalSupply).to.be.equal(vPoolBalance, `Total supply of ${poolName} is wrong`)
+        expect(totalValue).to.be.gte(depositAmount, `Total value of ${poolName} is wrong`)
       })
     })
 
     describe(`Withdraw ${collateralName} from ${poolName} pool`, function () {
       let depositAmount
+      const valueDust = '100000'
       beforeEach(async function () {
         depositAmount = await deposit(20, user1)
       })
 
       it(`Should withdraw all ${collateralName} before rebalance`, async function () {
         const withdrawAmount = await pool.balanceOf(user1.address)
+        const pricePerShare = await pool.pricePerShare()
+        const expectedCollateral = withdrawAmount.mul(pricePerShare).div(ethers.utils.parseEther('1'))
+
         await pool.connect(user1.signer).withdraw(withdrawAmount)
         const totalDebtOfStrategies = await totalDebtOfAllStrategy(strategies, pool)
         return Promise.all([
@@ -126,23 +126,28 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
           expect(totalDebtOfStrategies).to.be.equal(totalDebt, `${collateralName} totalDebt of strategies is wrong`)
           expect(totalDebt).to.be.equal(0, `${collateralName} total debt of pool is wrong`)
           expect(totalSupply).to.be.equal(0, `Total supply of ${poolName} is wrong`)
-          expect(totalValue).to.be.equal(0, `Total value of ${poolName} is wrong`)
           expect(vPoolBalance).to.be.equal(0, `${poolName} balance of user is wrong`)
-          expect(collateralBalance).to.be.equal(depositAmount, `${collateralName} balance of user is wrong`)
+          // If external deposit fee is non zero, pool may be in net gain which will leave token dust in pool
+          expect(totalValue).to.be.lte(valueDust, `Total value of ${poolName} is wrong`)
+          expect(collateralBalance).to.be.equal(expectedCollateral, `${collateralName} balance of user is wrong`)
         })
       })
 
       it(`Should withdraw partial ${collateralName} before rebalance`, async function () {
         let vPoolBalance = await pool.balanceOf(user1.address)
-        const withdrawAmount = vPoolBalance.sub(convertTo18(100))
+        const amountToKeep = ethers.utils.parseUnits('100', 18 - collateralDecimal) // 100 Wei
+        const withdrawAmount = vPoolBalance.sub(amountToKeep)
+        const pricePerShare = await pool.pricePerShare()
+        const expectedCollateral = withdrawAmount.mul(pricePerShare).div(ethers.utils.parseEther('1'))
+        // Withdraw
         await pool.connect(user1.signer).withdraw(withdrawAmount)
-        vPoolBalance = (await pool.balanceOf(user1.address)).toString()
-        const collateralBalance = (await collateralToken.balanceOf(user1.address)).toString()
+        vPoolBalance = await pool.balanceOf(user1.address)
+        const collateralBalance = await collateralToken.balanceOf(user1.address)
         const totalDebt = await pool.totalDebt()
         const totalDebtOfStrategies = await totalDebtOfAllStrategy(strategies, pool)
         expect(totalDebtOfStrategies).to.be.equal(totalDebt, `${collateralName} totalDebt of strategies is wrong`)
-        expect(vPoolBalance).to.equal(convertTo18(100), `${poolName} balance of user is wrong`)
-        expect(collateralBalance).to.equal(convertFrom18(withdrawAmount), `${collateralName} balance of user is wrong`)
+        expect(vPoolBalance).to.equal(amountToKeep, `${poolName} balance of user is wrong`)
+        expect(collateralBalance).to.equal(expectedCollateral, `${collateralName} balance of user is wrong`)
       })
 
       it(`Should withdraw very small ${collateralName} after rebalance`, async function () {
@@ -231,7 +236,7 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
 
     describe(`Rebalance ${poolName} pool`, function () {
       it('Should rebalance multiple times.', async function () {
-        const depositAmount = (await deposit(10, user3)).toString()
+        const depositAmount = await deposit(10, user3)
         await rebalance(strategies)
         let totalDebtRatio = await pool.totalDebtRatio()
         let totalValue = await pool.totalValue()
@@ -257,18 +262,17 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
           const credit = await pool.availableCreditLimit(strategy.instance.address)
           unusedCredit = unusedCredit.add(credit)
         }
-        return Promise.all([pool.totalDebt(), pool.totalSupply(), pool.balanceOf(user3.address)]).then(function ([
-          totalDebt,
-          totalSupply,
-          vPoolBalance,
-        ]) {
-          expect(maxDebt.sub(unusedCredit).sub(totalDebt).toNumber()).to.almost.eq(
-            0,
-            `${collateralName} total debt of pool is wrong`,
-          )
-          expect(totalSupply).to.be.gte(depositAmount, `Total supply of ${poolName} is wrong`)
-          expect(vPoolBalance).to.be.eq(convertTo18(depositAmount), `${poolName} balance of user is wrong`)
-        })
+        const totalDebt = await pool.totalDebt()
+        const totalSupply = await pool.convertFrom18(await pool.totalSupply())
+        const vPoolBalance = await pool.convertFrom18(await pool.balanceOf(user3.address))
+
+        expect(maxDebt.sub(unusedCredit).sub(totalDebt).toNumber()).to.almost.eq(
+          0,
+          `${collateralName} total debt of pool is wrong`,
+        )
+        // If external deposit fee is non zero, shares will be less than deposit amount
+        expect(vPoolBalance, `${poolName} balance of user is wrong`).to.be.lte(depositAmount)
+        expect(totalSupply, `Total supply of ${poolName} is wrong`).to.be.gte(vPoolBalance)
       })
 
       it('Should update strategy lastRebalance param', async function () {
@@ -329,9 +333,8 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
         await deposit(10, user2)
         feeCollector = this.feeCollector
         await pool.updateWithdrawFee(fee)
-        // Add fee collector to fee white list
-        const target = await pool.feeWhitelist()
-        await pool.addInList(target, feeCollector)
+        // Add fee collector to fee whitelist
+        await pool.addToFeeWhitelist(feeCollector)
       })
 
       it('Should collect fee on withdraw', async function () {

@@ -19,7 +19,8 @@ describe('VFR DAI Vesper', function () {
   const coverageStrategyConfigs = [coverageStrategy1]
 
   before(async function () {
-    const vaDAI = await ethers.getContractAt('VPool', Address.vaDAI)
+    // Using IVesperPoolTest to be backward compatible, as version 3.1.0 is breaking change for feeWhitelist
+    const vaDAI = await ethers.getContractAt('IVesperPoolTest', Address.vaDAI)
     const mock = await smock.fake('IAddressList', { address: await vaDAI.feeWhitelist() })
     // Pretend stable and coverage strategies are whitelisted for withdraw without fee
     mock.contains.returns(true)

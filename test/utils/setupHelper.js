@@ -96,7 +96,7 @@ async function setupVDAIPool() {
   const vPool = await deployContract(vDAI.contractName, vDAI.poolParams)
   const accountant = await deployContract('PoolAccountant')
   await accountant.init(vPool.address)
-  await vPool.initialize(...vDAI.poolParams, accountant.address, Address.ADDRESS_LIST_FACTORY)
+  await vPool.initialize(...vDAI.poolParams, accountant.address)
   return vPool
 }
 
@@ -188,8 +188,7 @@ async function createVesperMakerStrategy(strategy, poolAddress, options) {
   strategyInstance.collateralManager = collateralManager
   await Promise.all([strategyInstance.updateBalancingFactor(300, 250), collateralManager.addGemJoin(gemJoins)])
 
-  const feeList = await options.vPool.feeWhitelist()
-  await options.vPool.addInList(feeList, strategyInstance.address)
+  await options.vPool.addToFeeWhitelist(strategyInstance.address)
 
   return strategyInstance
 }
@@ -236,6 +235,8 @@ async function createStrategy(strategy, poolAddress, options = {}) {
   } else {
     strategy.token = await ethers.getContractAt(strategyTokenName, strategyTokenAddress)
     if (strategyTokenName === IVesperPool) {
+      // TODO when 3.1.0 pools are deployed and used as receiptToken in VesperXXX strategy then
+      // we will have to fix below config
       // Mock feeWhitelist to withdraw without fee in case of Earn Vesper strategies
       const mock = await smock.fake('IAddressList', { address: await strategy.token.feeWhitelist() })
       // Pretend any address is whitelisted for withdraw without fee
@@ -313,7 +314,7 @@ async function setupVPool(obj, poolData, options = {}) {
     obj.pool = await deployContract(poolConfig.contractName, poolConfig.poolParams)
 
     await obj.accountant.init(obj.pool.address)
-    await obj.pool.initialize(...poolConfig.poolParams, obj.accountant.address, Address.ADDRESS_LIST_FACTORY)
+    await obj.pool.initialize(...poolConfig.poolParams, obj.accountant.address)
     options.vPool = vPool
 
     await createStrategies(obj, options)

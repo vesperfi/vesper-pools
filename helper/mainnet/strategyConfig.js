@@ -6,7 +6,13 @@ const StrategyTypes = require('../../test/utils/strategyTypes')
 
 const swapManager = Address.SWAP_MANAGER
 const interestFee = 2000 // 20%
-const config = { interestFee, debtRatio: 0, debtRate: ethers.utils.parseEther('1000000').toString() }
+const config = {
+  interestFee,
+  debtRatio: 0,
+  debtRate: ethers.utils.parseEther('1000000').toString(),
+  externalDepositFee: 0,
+}
+
 const setup = {
   feeCollector: Address.FEE_COLLECTOR,
   keepers: [Address.KEEPER],
@@ -84,7 +90,7 @@ const StrategyConfig = {
       receiptToken: Address.Aave.aUSDC,
       strategyName: 'AaveStrategyUSDC',
     },
-    config: { interestFee, debtRatio: 0, debtRate: ethers.utils.parseUnits('1000000', 6).toString() },
+    config: { ...config, debtRate: ethers.utils.parseUnits('1000000', 6).toString(), externalDepositFee: 0 },
     setup: { ...setup },
   },
 
@@ -96,7 +102,7 @@ const StrategyConfig = {
       receiptToken: Address.Aave.aUSDT,
       strategyName: 'AaveStrategyUSDT',
     },
-    config: { interestFee, debtRatio: 0, debtRate: ethers.utils.parseUnits('1000000', 6).toString() },
+    config: { ...config, debtRate: ethers.utils.parseUnits('1000000', 6).toString(), externalDepositFee: 0 },
     setup: { ...setup },
   },
 
@@ -109,7 +115,7 @@ const StrategyConfig = {
       receiptToken: Address.Aave.aUSDCv1,
       strategyName: 'AaveV1StrategyUSDC',
     },
-    config: { interestFee, debtRatio: 0, debtRate: ethers.utils.parseUnits('1000000', 6).toString() },
+    config: { ...config, debtRate: ethers.utils.parseUnits('1000000', 6).toString(), externalDepositFee: 0 },
     setup: { ...setup },
   },
   EarnVesperStrategyDAIVSPDAI: {
@@ -194,7 +200,7 @@ const StrategyConfig = {
       receiptToken: Address.Compound.cUSDC,
       strategyName: 'CompoundStrategyUSDC',
     },
-    config: { interestFee, debtRatio: 0, debtRate: ethers.utils.parseUnits('1000000', 6).toString() },
+    config: { ...config, debtRate: ethers.utils.parseUnits('1000000', 6).toString(), externalDepositFee: 0 },
     setup: { ...setup },
   },
 
@@ -206,7 +212,7 @@ const StrategyConfig = {
       receiptToken: Address.Compound.cUSDT,
       strategyName: 'CompoundStrategyUSDT',
     },
-    config: { interestFee, debtRatio: 0, debtRate: ethers.utils.parseUnits('1000000', 6).toString() },
+    config: { ...config, debtRate: ethers.utils.parseUnits('1000000', 6).toString(), externalDepositFee: 0 },
     setup: { ...setup },
   },
 
@@ -218,7 +224,7 @@ const StrategyConfig = {
       receiptToken: Address.Compound.cWBTC,
       strategyName: 'CompoundStrategyWBTC',
     },
-    config: { interestFee, debtRatio: 0, debtRate: ethers.utils.parseUnits('1000000', 8).toString() },
+    config: { ...config, debtRate: ethers.utils.parseUnits('1000000', 8).toString(), externalDepositFee: 0 },
     setup: { ...setup },
   },
 
@@ -244,7 +250,7 @@ const StrategyConfig = {
       dripToken: Address.DAI,
       name: 'EarnCompoundStrategyWBTC',
     },
-    config: { interestFee, debtRatio: 0, debtRate: ethers.utils.parseUnits('1000000', 8).toString() },
+    config: { ...config, debtRate: ethers.utils.parseUnits('1000000', 8).toString(), externalDepositFee: 0 },
     setup: { ...setup },
   },
 
@@ -426,7 +432,7 @@ const StrategyConfig = {
       receiptToken: Address.Alpha.ibUSDCv2,
       strategyName: 'AlphaLendStrategyUSDC',
     },
-    config: { interestFee, debtRatio: 0, debtRate: ethers.utils.parseUnits('1000000', 6).toString() },
+    config: { ...config, debtRate: ethers.utils.parseUnits('1000000', 6).toString(), externalDepositFee: 0 },
     setup: { ...setup },
   },
 
@@ -438,7 +444,7 @@ const StrategyConfig = {
       receiptToken: Address.Alpha.ibUSDTv2,
       strategyName: 'AlphaLendStrategyUSDT',
     },
-    config: { interestFee, debtRatio: 0, debtRate: ethers.utils.parseUnits('1000000', 6).toString() },
+    config: { ...config, debtRate: ethers.utils.parseUnits('1000000', 6).toString(), externalDepositFee: 0 },
     setup: { ...setup },
   },
 
@@ -511,7 +517,7 @@ const StrategyConfig = {
       collateralIdx: 1,
       strategyName: 'ConvexSBTCPoolStrategyWBTC',
     },
-    config: { interestFee, debtRatio: 0, debtRate: ethers.utils.parseUnits('1000000', 8).toString() },
+    config: { ...config, debtRate: ethers.utils.parseUnits('1000000', 8).toString(), externalDepositFee: 0 },
     setup: { ...setup },
   },
 
@@ -583,7 +589,7 @@ const StrategyConfig = {
       collateralIdx: 0,
       strategyName: 'Crv3PoolStrategyDAI',
     },
-    config: { ...config },
+    config: { ...config, externalDepositFee: 100 },
     setup: { ...setup },
   },
 
@@ -595,7 +601,7 @@ const StrategyConfig = {
       collateralIdx: 1,
       strategyName: 'Crv3PoolStrategyUSDC',
     },
-    config: { interestFee, debtRatio: 0, debtRate: ethers.utils.parseUnits('1000000', 6).toString() },
+    config: { ...config, debtRate: ethers.utils.parseUnits('1000000', 6).toString(), externalDepositFee: 0 },
     setup: { ...setup },
   },
 
@@ -607,7 +613,7 @@ const StrategyConfig = {
       collateralIdx: 1,
       strategyName: 'CrvSBTCPoolStrategyWBTC',
     },
-    config: { interestFee, debtRatio: 0, debtRate: ethers.utils.parseUnits('1000000', 8).toString() },
+    config: { ...config, debtRate: ethers.utils.parseUnits('1000000', 8).toString(), externalDepositFee: 0 },
     setup: { ...setup },
   },
 
@@ -631,7 +637,7 @@ const StrategyConfig = {
       collateralIdx: 1,
       strategyName: 'Crv4MetaPoolStrategyMIMPoolDAI',
     },
-    config: { ...config },
+    config: { ...config, externalDepositFee: 100 },
     setup: { ...setup },
   },
 
@@ -667,7 +673,7 @@ const StrategyConfig = {
       collateralIdx: 0,
       strategyName: 'Crv4PoolStrategySUSDPoolDAI',
     },
-    config: { ...config },
+    config: { ...config, externalDepositFee: 100 },
     setup: { ...setup },
   },
 
@@ -679,7 +685,7 @@ const StrategyConfig = {
       collateralIdx: 0,
       strategyName: 'CrvA3PoolStrategyDAI',
     },
-    config: { ...config },
+    config: { ...config, externalDepositFee: 100 },
     setup: { ...setup },
   },
 
@@ -1003,7 +1009,7 @@ const StrategyConfig = {
       receiptToken: Address.Yearn.yvUSDC,
       strategyName: 'YearnStrategyUSDC',
     },
-    config: { interestFee, debtRatio: 0, debtRate: ethers.utils.parseUnits('1000000', 6).toString() },
+    config: { ...config, debtRate: ethers.utils.parseUnits('1000000', 6).toString(), externalDepositFee: 0 },
     setup: { ...setup },
   },
 

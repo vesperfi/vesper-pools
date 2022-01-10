@@ -3,6 +3,7 @@
 pragma solidity 0.8.3;
 
 import "../pool/Errors.sol";
+import "../interfaces/bloq/IAddressList.sol";
 import "../interfaces/bloq/IAddressListFactory.sol";
 import "../interfaces/vesper/IVesperPool.sol";
 import "./UsingSwapManager.sol";

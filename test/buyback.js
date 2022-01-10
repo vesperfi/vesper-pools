@@ -6,6 +6,7 @@ const { getChain } = require('./utils/chains')
 const Address = require(`../helper/${getChain()}/address`)
 const { adjustBalance } = require('./utils/balance')
 const { parseUnits } = require('ethers/lib/utils')
+const { swapEthForToken } = require('./utils/tokenSwapper')
 
 // From `deploy/utils/buyback.js` script
 const GOVERNOR = '0xdf826ff6518e609E4cEE86299d40611C148099d5'
@@ -47,6 +48,7 @@ describe('Buyback', function () {
     dai = await ethers.getContractAt('ERC20', Address.DAI, feeCollector)
     usdc = await ethers.getContractAt('ERC20', Address.USDC, feeCollector)
     vaDAI = await ethers.getContractAt('ERC20', Address.vaDAI, feeCollector)
+    await swapEthForToken(1, Address.DAI, someAccount, Address.FEE_COLLECTOR)
   })
 
   afterEach(async function () {
@@ -83,7 +85,7 @@ describe('Buyback', function () {
       expect(vVspVspAfter).gt(vVspVspBefore)
     })
 
-    it('should revert if not keeer', async function () {
+    it('should revert if not keeper', async function () {
       const tx = buyback.connect(someAccount).depositAndUnwrap(vaDAI.address, '1')
       await expect(tx).revertedWith('not-a-keeper')
     })
@@ -116,7 +118,7 @@ describe('Buyback', function () {
     })
 
     it('should give infinity approval twice', async function () {
-      // Note: Using USDC insterad of DAI because DAI doesn't decrease allowance if it's uint256(-1)
+      // Note: Using USDC instead of DAI because DAI doesn't decrease allowance if it's uint256(-1)
       await adjustBalance(usdc.address, feeCollector.address, parseUnits('1000', 6))
 
       // given
@@ -128,7 +130,7 @@ describe('Buyback', function () {
       await usdc.transfer(buyback.address, amount)
       await buyback.swapForVspAndTransferToVVSP(usdc.address, amount)
 
-      expect(await usdc.allowance(buyback.address, routerAddress)).lt(ethers.constants.MaxUint256)
+      expect(await usdc.allowance(buyback.address, routerAddress)).eq(ethers.constants.MaxUint256)
 
       // when
       await buyback.doInfinityApproval(usdc.address)
