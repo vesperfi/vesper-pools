@@ -66,7 +66,15 @@ task('deploy-pool', 'Deploy vesper pool')
   .addOptionalParam('targetChain', 'Target chain where contracts will be deployed')
   .addOptionalParam('deployParams', "Run 'npx hardhat deploy --help' to see all supported params")
   .addOptionalParam('strategyName', 'Vesper strategy name to deploy')
-  .setAction(async function ({ pool, release, targetChain = 'mainnet', deployParams = {}, strategyName }) {
+  .addOptionalParam('strategyConfig', 'Vesper strategy name to deploy')
+  .setAction(async function ({
+    pool,
+    release,
+    targetChain = 'mainnet',
+    deployParams = {},
+    strategyName,
+    strategyConfig,
+  }) {
     const hreNetwork = hre.network.name
     // When deploying on localhost, we can provide targetChain param to support chain other than mainnet
     if (hreNetwork !== 'localhost') {
@@ -99,7 +107,7 @@ task('deploy-pool', 'Deploy vesper pool')
       validatePoolConfig(hre.poolConfig, targetChain)
     }
 
-    await run('strategy-configuration', { strategyName, targetChain })
+    await run('strategy-configuration', { strategyName, targetChain, strategyConfig })
 
     const networkDir = `./deployments/${hreNetwork}`
     let deployer = process.env.DEPLOYER
