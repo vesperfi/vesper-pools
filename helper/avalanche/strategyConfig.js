@@ -5,7 +5,7 @@ const Address = require('./address')
 const StrategyTypes = require('../../test/utils/strategyTypes')
 
 const swapManager = Address.SWAP_MANAGER
-const interestFee = '1500' // 15%
+const interestFee = '2000' // 20%
 const config = { interestFee, debtRatio: 0, debtRate: ethers.utils.parseEther('1000000').toString() }
 const setup = {
   feeCollector: Address.FEE_COLLECTOR,

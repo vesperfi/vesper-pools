@@ -5,7 +5,7 @@ const Address = require('./address')
 const StrategyTypes = require('../../test/utils/strategyTypes')
 
 const swapManager = Address.SWAP_MANAGER
-const interestFee = 1500 // 15%
+const interestFee = 2000 // 20%
 const config = { interestFee, debtRatio: 0, debtRate: ethers.utils.parseEther('1000000').toString() }
 const setup = {
   feeCollector: Address.FEE_COLLECTOR,
@@ -539,6 +539,18 @@ const StrategyConfig = {
     setup: { ...setup },
   },
 
+  Convex4MetaPoolStrategyFRAXPoolDAI: {
+    contract: 'Convex4MetaPoolStrategyFRAXPool',
+    type: StrategyTypes.CONVEX,
+    constructorArgs: {
+      swapManager,
+      collateralIdx: 1,
+      strategyName: 'Convex4MetaPoolStrategyFRAXPool',
+    },
+    config: { ...config },
+    setup: { ...setup },
+  },
+
   Crv2PoolStrategyMIMUSTPoolMIM: {
     contract: 'Crv2PoolStrategyMIMUSTPool',
     type: StrategyTypes.CURVE,
@@ -606,6 +618,18 @@ const StrategyConfig = {
       swapManager,
       collateralIdx: 1,
       strategyName: 'Crv4MetaPoolStrategyMIMPoolDAI',
+    },
+    config: { ...config },
+    setup: { ...setup },
+  },
+
+  Crv4MetaPoolStrategyFRAXPoolDAI: {
+    contract: 'Crv4MetaPoolStrategyFRAXPool',
+    type: StrategyTypes.CURVE,
+    constructorArgs: {
+      swapManager,
+      collateralIdx: 1,
+      strategyName: 'Crv4MetaPoolStrategyFRAXPoolDAI',
     },
     config: { ...config },
     setup: { ...setup },

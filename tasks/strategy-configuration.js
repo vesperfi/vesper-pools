@@ -73,31 +73,38 @@ function validateStrategyConfig(strategyName, strategyConfig) {
 task('strategy-configuration', 'Prepare strategy configuration for deployment')
   .addOptionalParam('strategyName', 'Name of strategy to deploy')
   .addOptionalParam('targetChain', 'Target chain where contracts will be deployed')
-  .setAction(async function ({ strategyName, targetChain = hre.targetChain }) {
+  .addOptionalParam('strategyConfig', 'strategy config object')
+  .setAction(async function ({ strategyName, targetChain = hre.targetChain, strategyConfig }) {
     if (!strategyName) {
       // not deploying strategy
       return
     }
+    let additionalConfig
+    if (typeof strategyConfig === 'string') {
+      additionalConfig = JSON.parse(strategyConfig)
+    }
     const fileName = `../helper/${targetChain}/strategyConfig`
-    const strategyConfig = require(fileName)[strategyName]
-    if (!strategyConfig) {
+    let config = { ...require(fileName)[strategyName] }
+    additionalConfig = { ...config.config, ...additionalConfig }
+    config = { ...config, config: additionalConfig }
+    if (!config) {
       throw new Error(`Missing strategy configuration in ${fileName}.js`)
     }
 
-    validateStrategyConfig(strategyName, strategyConfig)
+    validateStrategyConfig(strategyName, config)
 
-    strategyConfig.alias = strategyName
+    config.alias = strategyName
     if (strategyName.includes('RariFuse')) {
-      strategyConfig.alias = `${strategyConfig.alias}#${strategyConfig.constructorArgs.fusePoolId}`
+      config.alias = `${config.alias}#${config.constructorArgs.fusePoolId}`
     }
 
     console.log(
       `Deploying ${strategyName} on ${hre.network.name} for ${hre.targetChain} with following configuration: `,
-      strategyConfig,
+      config,
     )
 
     // Set configuration in hre
-    hre.strategyConfig = strategyConfig
+    hre.strategyConfig = config
   })
 
 module.exports = {}

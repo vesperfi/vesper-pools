@@ -83,6 +83,10 @@ const deployFunction = async function ({ getNamedAccounts, deployments, poolConf
     )
   }
 
+  if (strategyAlias.toUpperCase().includes('CONVEX')) {
+    await execute(strategyAlias, { from: deployer, log: true }, 'setRewardTokens', [])
+  }
+
   let PoolAccountant = 'PoolAccountant'
   if (strategyAlias.includes('Coverage')) {
     PoolAccountant = 'PoolAccountantCoverage'
