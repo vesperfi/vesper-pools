@@ -11,7 +11,7 @@ contract AaveV1Strategy is Strategy {
 
     // solhint-disable-next-line var-name-mixedcase
     string public NAME;
-    string public constant VERSION = "3.0.22";
+    string public constant VERSION = "4.0.0";
 
     AaveAddressesProvider public aaveAddressesProvider =
         AaveAddressesProvider(0x24a42fD28C976A61Df5D00D0599C34c4f90748c8);

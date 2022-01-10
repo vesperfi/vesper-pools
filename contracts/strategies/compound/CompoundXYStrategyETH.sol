@@ -8,7 +8,7 @@ import "./CompoundXYStrategy.sol";
 /// @title Deposit ETH/WETH in Compound and earn interest.
 contract CompoundXYStrategyETH is CompoundXYStrategy {
     string public constant NAME = "CompoundXYStrategyETH";
-    string public constant VERSION = "3.0.22";
+    string public constant VERSION = "4.0.0";
 
     constructor(
         address _pool,

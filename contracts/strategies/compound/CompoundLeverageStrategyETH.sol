@@ -9,7 +9,7 @@ import "../../interfaces/token/IToken.sol";
 /// @title Deposit ETH in Compound and earn interest.
 contract CompoundLeverageStrategyETH is CompoundLeverageStrategy {
     string public constant NAME = "CompoundLeverageStrategyETH";
-    string public constant VERSION = "3.0.22";
+    string public constant VERSION = "4.0.0";
 
     constructor(
         address _pool,

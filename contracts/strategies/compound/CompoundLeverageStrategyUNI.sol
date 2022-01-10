@@ -9,7 +9,7 @@ import "../../interfaces/token/IToken.sol";
 /// @title Deposit UNI in Compound and also borrow UNI based on leverage condition
 contract CompoundLeverageStrategyUNI is CompoundLeverageStrategy {
     string public constant NAME = "CompoundLeverageStrategyUNI";
-    string public constant VERSION = "3.0.22";
+    string public constant VERSION = "4.0.0";
 
     constructor(
         address _pool,

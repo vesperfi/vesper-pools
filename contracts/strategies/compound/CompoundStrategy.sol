@@ -11,7 +11,7 @@ contract CompoundStrategy is Strategy {
 
     // solhint-disable-next-line var-name-mixedcase
     string public NAME;
-    string public constant VERSION = "3.0.22";
+    string public constant VERSION = "4.0.0";
 
     CToken internal cToken;
     address internal constant COMP = 0xc00e94Cb662C3520282E6f5717214004A7f26888;
