@@ -9,7 +9,7 @@ import "../../interfaces/token/IToken.sol";
 /// @title Deposit LINK in Compound and also borrow LINK based on leverage condition
 contract CompoundLeverageStrategyLINK is CompoundLeverageStrategy {
     string public constant NAME = "CompoundLeverageStrategyLINK";
-    string public constant VERSION = "3.0.22";
+    string public constant VERSION = "4.0.0";
 
     constructor(
         address _pool,
