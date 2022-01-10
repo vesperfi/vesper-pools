@@ -1,6 +1,6 @@
 'use strict'
 
-const { deposit, timeTravel, rebalanceStrategy } = require('../utils/poolOps')
+const { deposit, timeTravel, rebalanceStrategy, rebalance } = require('../utils/poolOps')
 const { expect } = require('chai')
 const { ethers } = require('hardhat')
 const hre = require('hardhat')
@@ -28,7 +28,7 @@ async function shouldBehaveLikeUnderlyingVesperPoolStrategy(strategyIndex) {
 
       it('Should not pay withdraw fee to underlying Vesper pool', async function () {
         await deposit(pool, collateralToken, 40, user2)
-        await strategy.instance.rebalance()
+        await rebalance(this.strategies)
         const vDai = await ethers.getContractAt('VPool', await strategy.instance.receiptToken())
         const fc = '0xdba93b57e7223506717040f45d1ca3df5f30b275'
         const governor = await vDai.governor()
@@ -39,7 +39,7 @@ async function shouldBehaveLikeUnderlyingVesperPoolStrategy(strategyIndex) {
         await vDai.connect(signer).updateWithdrawFee('2000')
         const tokenBalanceBefore = await vDai.balanceOf(fc)
         await timeTravel(10 * 24 * 60 * 60)
-        await strategy.instance.rebalance()
+        await rebalance(this.strategies)
         const tokenBalanceAfter = await vDai.balanceOf(fc)
         expect(tokenBalanceAfter).to.be.eq(
           tokenBalanceBefore,

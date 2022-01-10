@@ -861,6 +861,20 @@ const StrategyConfig = {
     setup: { ...setup },
   },
 
+  EarnVesperStrategyDAISHIB: {
+    contract: 'EarnVesperStrategy',
+    type: StrategyTypes.EARN_VESPER,
+    constructorArgs: {
+      swapManager,
+      receiptToken: Address.vaDAI,
+      dripToken: Address.SHIB,
+      vsp: Address.VSP,
+      strategyName: 'EarnVesperStrategyDAISHIB',
+    },
+    config: { ...config },
+    setup: { ...setup },
+  },
+
   EarnVesperStrategyDAIVSP: {
     contract: 'EarnVesperStrategyVSPDrip',
     type: StrategyTypes.EARN_VESPER,

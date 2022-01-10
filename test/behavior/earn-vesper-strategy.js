@@ -41,10 +41,14 @@ async function shouldBehaveLikeEarnVesperStrategy(strategyIndex) {
             : await dripToken.balanceOf(user2.address)
 
         const EarnDrip = await ethers.getContractAt('IEarnDrip', await pool.poolRewards())
-        const growToken = await ethers.getContractAt('ERC20', await EarnDrip.growToken())
-        const growTokenSymbol = await growToken.symbol()
 
-        const tokenBalanceBefore = await growToken.balanceOf(EarnDrip.address)
+        let rewardToken = await ethers.getContractAt('ERC20', await EarnDrip.growToken())
+        if (rewardToken.address === ethers.constants.AddressZero) {
+          rewardToken = dripToken
+        }
+        const rewardTokenSymbol = await rewardToken.symbol()
+
+        const tokenBalanceBefore = await rewardToken.balanceOf(EarnDrip.address)
         const pricePerShareBefore = await pool.pricePerShare()
 
         await timeTravel(10 * 24 * 60 * 60)
@@ -55,8 +59,11 @@ async function shouldBehaveLikeEarnVesperStrategy(strategyIndex) {
         const claimable = await EarnDrip.claimable(user1.address)
         expect(claimable._claimableAmounts[0]).to.gt(0, 'incorrect claimable')
 
-        const tokenBalanceAfter = await growToken.balanceOf(EarnDrip.address)
-        expect(tokenBalanceAfter).to.be.gt(tokenBalanceBefore, `Should increase ${growTokenSymbol} balance in EarnDrip`)
+        const tokenBalanceAfter = await rewardToken.balanceOf(EarnDrip.address)
+        expect(tokenBalanceAfter).to.be.gt(
+          tokenBalanceBefore,
+          `Should increase ${rewardTokenSymbol} balance in EarnDrip`,
+        )
 
         const pricePerShareAfter = await pool.pricePerShare()
 

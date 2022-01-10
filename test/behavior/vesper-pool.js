@@ -400,13 +400,17 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
         } else {
           const EarnDrip = await ethers.getContractAt('IEarnDrip', await pool.poolRewards())
           const growToken = await ethers.getContractAt('ERC20', await EarnDrip.growToken())
+          const rewardToken =
+            growToken.address === ethers.constants.AddressZero
+              ? await ethers.getContractAt('ERC20', strategies[0].constructorArgs.dripToken)
+              : growToken
           await rebalance(strategies)
-          const feeEarned1 = await growToken.balanceOf(fc)
+          const feeEarned1 = await rewardToken.balanceOf(fc)
           expect(feeEarned1).to.be.gt(0, 'Fee collected is not correct')
           await timeTravel()
           await rebalance(strategies)
           await rebalance(strategies)
-          const feeEarned2 = await growToken.balanceOf(fc)
+          const feeEarned2 = await rewardToken.balanceOf(fc)
           expect(feeEarned2).to.be.gt(feeEarned1, 'Fee collected is not correct')
         }
       })
@@ -583,17 +587,17 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
 
     if (isEarnPool === true) {
       describe(`${poolName}: Earn specific tests`, function () {
-        let earnDrip, growToken, dripToken
+        let earnDrip, rewardToken, dripToken
 
         beforeEach(async function () {
           earnDrip = await ethers.getContractAt('IEarnDrip', await pool.poolRewards())
-          growToken = await ethers.getContractAt('ERC20', await earnDrip.growToken())
-          const growPool = await ethers.getContractAt('IVesperPool', growToken.address)
-          dripToken = await ethers.getContractAt('ERC20', await growPool.token())
+          rewardToken = await ethers.getContractAt('ERC20', await earnDrip.growToken())
+          dripToken = await ethers.getContractAt('ERC20', strategies[0].constructorArgs.dripToken)
+          if (rewardToken.address === ethers.constants.AddressZero) rewardToken = dripToken
         })
 
-        it('Earn Pool should collect profits in growToken', async function () {
-          const growTokenBalanceBefore = await growToken.balanceOf(earnDrip.address)
+        it('Earn Pool should collect profits in rewardToken', async function () {
+          const rewardTokenBalanceBefore = await rewardToken.balanceOf(earnDrip.address)
 
           await deposit(20, user1)
           await rebalance(strategies)
@@ -602,9 +606,12 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
           await rebalance(strategies)
           await rebalance(strategies)
 
-          const growTokenBalanceAfter = await growToken.balanceOf(earnDrip.address)
+          const rewardTokenBalanceAfter = await rewardToken.balanceOf(earnDrip.address)
 
-          expect(growTokenBalanceAfter).to.be.gt(growTokenBalanceBefore, `growToken balance in ${poolName} is wrong`)
+          expect(rewardTokenBalanceAfter).to.be.gt(
+            rewardTokenBalanceBefore,
+            `rewardToken balance in ${poolName} is wrong`,
+          )
         })
 
         it('Users should collect profits in dripToken using claimReward', async function () {

@@ -66,7 +66,7 @@ const deployFunction = async function ({ getNamedAccounts, deployments, poolConf
   await execute(poolConfig.contractName, { from: deployer, log: true }, 'updatePoolRewards', rewardsProxy.address)
 
   // Update grow token in Vesper Earn Drip contract of Earn pool
-  if (poolConfig.poolParams[0].includes('Earn')) {
+  if (poolConfig.poolParams[0].includes('Earn') && 'growToken' in rewards) {
     await execute(rewards.contract, { from: deployer, log: true }, 'updateGrowToken', rewards.growToken)
   }
 
