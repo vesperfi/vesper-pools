@@ -2,7 +2,7 @@ name: vFRAX with Convex D3 Pool
 on:
   pull_request:
     paths:
-      - "test/vfrax/crv-cvx-4pool.js"
+      - "test/vafrax/crv-cvx-4pool.js"
       - "contracts/strategies/Strategy.sol"
       - "contracts/strategies/curve/CrvBase.sol"
       - "contracts/strategies/convex/ConvexStrategyBase.sol"
@@ -28,4 +28,4 @@ jobs:
         run: npm install
 
       - name: Running tests for vFRAX with with Convex D3 Pool
-        run: npm test "test/vfrax/crv-cvx-d3pool.js"
+        run: npm test "test/vafrax/crv-cvx-d3pool.js"
