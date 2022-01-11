@@ -19,7 +19,5 @@ contract ConvexD3PoolStrategy is ConvexStrategy {
         address _swapManager,
         uint256 _collateralIdx,
         string memory _name
-    ) ConvexStrategy(_pool, THREEPOOL, THREECRV, GAUGE, _swapManager, _collateralIdx, CONVEX_POOL_ID, N, _name) {
-        oracleRouterIdx = 1;
-    }
+    ) ConvexStrategy(_pool, THREEPOOL, THREECRV, GAUGE, _swapManager, _collateralIdx, CONVEX_POOL_ID, N, _name) {}
 }

@@ -533,6 +533,30 @@ const StrategyConfig = {
     setup: { ...setup },
   },
 
+  ConvexD3PoolStrategyFEI: {
+    contract: 'ConvexD3PoolStrategy',
+    type: StrategyTypes.CONVEX,
+    constructorArgs: {
+      swapManager,
+      collateralIdx: 1,
+      strategyName: 'ConvexD3PoolStrategyFEI',
+    },
+    config: { ...config },
+    setup: { ...setup },
+  },
+
+  ConvexD3PoolStrategyAlUSD: {
+    contract: 'ConvexD3PoolStrategy',
+    type: StrategyTypes.CONVEX,
+    constructorArgs: {
+      swapManager,
+      collateralIdx: 2,
+      strategyName: 'ConvexD3PoolStrategyAlUSD',
+    },
+    config: { ...config },
+    setup: { ...setup },
+  },
+
   Convex4MetaPoolStrategyMIMPoolMIM: {
     contract: 'Convex4MetaPoolStrategyMIMPool',
     type: StrategyTypes.CONVEX,

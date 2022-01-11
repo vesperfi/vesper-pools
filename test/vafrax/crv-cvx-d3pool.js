@@ -15,7 +15,7 @@ describe('vaFRAX Pool with ConvexD3PoolStrategy', function () {
     shouldBehaveLikePool('vaFRAX', 'FRAX')
   })
 
-  describe.only('Strategy Tests', function () {
+  describe('Strategy Tests', function () {
     shouldBehaveLikeStrategy(0, strategies[0].type, strategies[0].contract)
   })
 })

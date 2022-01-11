@@ -11,7 +11,7 @@ const { parseEther } = require('@ethersproject/units')
 const { adjustBalance } = require('./balance')
 const { getChain } = require('../utils/chains')
 const address = require('../../helper/mainnet/address')
-const { NATIVE_TOKEN, DAI, MIM } = require(`../../helper/${getChain()}/address`)
+const { NATIVE_TOKEN, DAI, MIM, ALUSD } = require(`../../helper/${getChain()}/address`)
 
 async function executeIfExist(fn) {
   if (typeof fn === 'function') {
@@ -39,7 +39,7 @@ async function deposit(pool, token, amount, depositor) {
     depositAmount = requestedAmount
     await token.connect(depositor.signer).approve(pool.address, depositAmount)
     await pool.connect(depositor.signer)['deposit(uint256)'](depositAmount)
-  } else if (token.address === MIM || token.address === DAI) {
+  } else if (token.address === MIM || token.address === DAI || token.address === ALUSD) {
     // Artificially performs the swap from NATIVE_TOKEN to token.address
     // By altering the token balance
     // Also simulates 0.1% linear slippage between consecutive deposits
@@ -48,7 +48,7 @@ async function deposit(pool, token, amount, depositor) {
     depositAmount = await swapper.getAmountsOut(parseEther(amount.toString()), [NATIVE_TOKEN, DAI])
     const slippage = BigNumber.from(1000).sub(pool.depositsCount)
     depositAmount = depositAmount.mul(slippage).div(1000)
-    adjustBalance(token.address, depositor.address, depositAmount)
+    await adjustBalance(token.address, depositor.address, depositAmount)
     await token.connect(depositor.signer).approve(pool.address, depositAmount)
     await pool.connect(depositor.signer).deposit(depositAmount)
   } else {
