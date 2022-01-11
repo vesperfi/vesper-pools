@@ -2,6 +2,7 @@ name: vDAI with Curve a3Pool
 on:
   pull_request:
     paths:
+      - "test/utils/setupHelper.js"
       - "test/vdai/crv-a3pool.js"
       - "contracts/strategies/Strategy.sol"
       - "contracts/strategies/curve/AaveCore.sol"

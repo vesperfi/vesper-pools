@@ -71,8 +71,9 @@ async function shouldBehaveLikeEarnVesperStrategy(strategyIndex) {
 
         const withdrawAmount = await pool.balanceOf(user2.address)
 
-        if (collateralToken.address === Address.WETH) await pool.connect(user2.signer).withdrawETH(withdrawAmount)
-        else await pool.connect(user2.signer).withdraw(withdrawAmount)
+        if (collateralToken.address === Address.WETH)
+          await pool.connect(user2.signer).withdrawETHAndClaim(withdrawAmount)
+        else await pool.connect(user2.signer).withdrawAndClaim(withdrawAmount)
 
         const earnedDrip =
           dripToken.address === Address.WETH

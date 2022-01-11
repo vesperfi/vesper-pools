@@ -2,6 +2,7 @@ name: veWBTC-DAI with Compound
 on:
   pull_request:
     paths:
+      - "test/utils/setupHelper.js"
       - "test/vwbtc/earn-compound.js"
       - "contracts/strategies/Strategy.sol"
       - "contracts/strategies/compound/CompoundStrategy.sol"

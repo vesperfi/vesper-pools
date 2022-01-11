@@ -2,6 +2,7 @@ name: veDAI-LINK with Vesper Strategy
 on:
   pull_request:
     paths:
+      - "test/utils/setupHelper.js"
       - "test/vdai/earn-vesper-dai-link.js"
       - "contracts/pool/earn/VesperEarnDrip.sol"
       - "contracts/strategies/Strategy.sol"

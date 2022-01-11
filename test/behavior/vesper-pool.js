@@ -655,7 +655,7 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
 
           await timeTravel(7 * 24 * 60 * 60)
 
-          const withdrawTx = await (await pool.connect(user1.signer).withdraw(withdrawAmount)).wait()
+          const withdrawTx = await (await pool.connect(user1.signer).withdrawAndClaim(withdrawAmount)).wait()
 
           if (dripToken.address === NATIVE_TOKEN) {
             dripTokenBalanceBefore = dripTokenBalanceBefore.sub(withdrawTx.cumulativeGasUsed)

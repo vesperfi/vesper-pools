@@ -2,6 +2,7 @@ name: veWBTC-DAI with Vesper Maker
 on:
   pull_request:
     paths:
+      - "test/utils/setupHelper.js"
       - "test/vwbtc/vesper-earn-maker.js"
       - "contracts/strategies/Strategy.sol"
       - "contracts/strategies/maker/MakerStrategy.sol"

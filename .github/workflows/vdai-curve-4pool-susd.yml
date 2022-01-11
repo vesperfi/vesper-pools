@@ -2,6 +2,7 @@ name: vDAI with Curve 4Pool
 on:
   pull_request:
     paths:
+      - "test/utils/setupHelper.js"
       - "test/vdai/crv-4pool-susd.js"
       - "contracts/strategies/Strategy.sol"
       - "contracts/strategies/curve/CrvBase.sol"

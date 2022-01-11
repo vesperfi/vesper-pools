@@ -2,6 +2,7 @@ name: veWBTC-DAI with Vesper Strategy
 on:
   pull_request:
     paths:
+      - "test/utils/setupHelper.js"
       - "test/vwbtc/earn-vesper-wbtc-dai.js"
       - "contracts/pool/earn/VesperEarnDrip.sol"
       - "contracts/strategies/Strategy.sol"
