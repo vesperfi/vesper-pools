@@ -104,6 +104,7 @@ const deployFunction = async function ({ getNamedAccounts, deployments, poolConf
     config.interestFee,
     config.debtRatio,
     config.debtRate,
+    config.externalDepositFee,
   )
 
   const strategyVersion = await read(strategyAlias, {}, 'VERSION')

@@ -1,7 +1,6 @@
 'use strict'
 
 const ethers = require('ethers')
-
 const PoolAccountant = 'PoolAccountant'
 
 const deployFunction = async function ({ getNamedAccounts, deployments, poolConfig }) {
@@ -44,6 +43,14 @@ const deployFunction = async function ({ getNamedAccounts, deployments, poolConf
   await execute(poolConfig.contractName, { from: deployer, log: true }, 'updateFeeCollector', setup.feeCollector)
   await execute(poolConfig.contractName, { from: deployer, log: true }, 'updateWithdrawFee', setup.withdrawFee)
 
+  // Prepare id of deployment, next deployment will be triggered if id is changed
+  const poolVersion = await read(poolConfig.contractName, {}, 'VERSION')
+  const poolAccountantVersion = await read(PoolAccountant, {}, 'VERSION')
+  deployFunction.id = `${poolConfig.poolParams[1]}-v${poolVersion}_${poolAccountantVersion}`
+
+  if (poolConfig.rewards.tokens.length === 0) {
+    return true
+  }
   const rewards = poolConfig.rewards
   // Deploy pool rewards (Vesper Earn drip for Earn pools)
   const rewardsProxy = await deploy(rewards.contract, {
@@ -69,11 +76,6 @@ const deployFunction = async function ({ getNamedAccounts, deployments, poolConf
   if (poolConfig.poolParams[0].includes('Earn') && 'growToken' in rewards) {
     await execute(rewards.contract, { from: deployer, log: true }, 'updateGrowToken', rewards.growToken)
   }
-
-  // Prepare id of deployment, next deployment will be triggered if id is changed
-  const poolVersion = await read(poolConfig.contractName, {}, 'VERSION')
-  const poolAccountantVersion = await read(PoolAccountant, {}, 'VERSION')
-  deployFunction.id = `${poolConfig.poolParams[1]}-v${poolVersion}_${poolAccountantVersion}`
 
   return true
 }

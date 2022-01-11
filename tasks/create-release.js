@@ -36,14 +36,6 @@ function getPoolData(data) {
     }
   }
 
-  if (data.PoolRewards) {
-    root.poolRewards = {
-      proxyAdmin: data.DefaultProxyAdmin,
-      proxy: data.PoolRewards,
-      implementation: data.PoolRewards_Implementation,
-    }
-  }
-
   if (data.VesperEarnDrip) {
     root.poolRewards = {
       proxyAdmin: data.DefaultProxyAdmin,

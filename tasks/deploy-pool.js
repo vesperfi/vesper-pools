@@ -51,7 +51,7 @@ function validatePoolConfig(poolConfig, targetChain) {
       throw new Error('Wrong contract name for Rewards Pool')
     }
     if (!poolConfig.rewards.tokens.length) {
-      throw new Error('Rewards token is required')
+      console.log('Deploying without any rewards tokens')
     }
   }
 }
