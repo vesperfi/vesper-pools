@@ -21,6 +21,7 @@ module.exports = {
   networks: {
     localhost: {
       saveDeployments: true,
+      timeout: 1000000,
     },
     hardhat: {
       chainId: 1,
