@@ -2,6 +2,7 @@ name: vDAI with Aave Compound
 on:
   pull_request:
     paths:
+      - "test/utils/setupHelper.js"
       - "test/vdai/aave-compound.js"
       - "contracts/strategies/Strategy.sol"
       - "contracts/strategies/aave/AaveCore.sol"

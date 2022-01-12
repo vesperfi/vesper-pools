@@ -2,6 +2,7 @@ name: veETH-DAI with Vesper Strategy
 on:
   pull_request:
     paths:
+      - "test/utils/setupHelper.js"
       - "test/veth/earn-vesper-eth-dai.js"
       - "contracts/pool/earn/VesperEarnDrip.sol"
       - "contracts/strategies/Strategy.sol"

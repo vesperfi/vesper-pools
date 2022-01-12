@@ -2,6 +2,7 @@ name: vDAI with Yearn
 on:
   pull_request:
     paths:
+      - "test/utils/setupHelper.js"
       - "test/vdai/yearn.js"
       - "contracts/strategies/Strategy.sol"
       - "contracts/strategies/yearn/YearnStrategy.sol"

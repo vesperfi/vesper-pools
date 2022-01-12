@@ -2,6 +2,7 @@ name: vaDAI with Curve-Convex
 on:
   pull_request:
     paths:
+      - "test/utils/setupHelper.js"
       - "test/vdai/crv-cvx-3pool.js"
       - "contracts/strategies/Strategy.sol"
       - "contracts/strategies/curve/CrvBase.sol"

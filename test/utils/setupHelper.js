@@ -112,13 +112,23 @@ async function setupVDAIPool() {
 async function setupEarnDrip(obj, options) {
   for (const strategy of obj.strategies) {
     if (strategy.type.toUpperCase().includes('EARN')) {
-      const growPool = options.growPool ? options.growPool : { address: ethers.constants.AddressZero }
+      let growPool
+      if (strategy.type === 'earnVesperMaker') {
+        growPool = await setupVDAIPool()
+      } else {
+        growPool = options.growPool ? options.growPool : { address: ethers.constants.AddressZero }
+      }
       const vesperEarnDrip = await deployContract('VesperEarnDrip', [])
-      const rewardTokens = growPool.address === ethers.constants.AddressZero ? [...options.tokens] : [growPool.address]
-      await vesperEarnDrip.initialize(obj.pool.address, rewardTokens)
-      if (growPool.address !== ethers.constants.AddressZero) await vesperEarnDrip.updateGrowToken(growPool.address)
-      await obj.pool.updatePoolRewards(vesperEarnDrip.address)
-      break
+      const rewardTokens =
+        growPool.address === ethers.constants.AddressZero
+          ? [...('tokens' in options ? options.tokens : [])]
+          : [growPool.address]
+      if (rewardTokens.length > 0) {
+        await vesperEarnDrip.initialize(obj.pool.address, rewardTokens)
+        if (growPool.address !== ethers.constants.AddressZero) await vesperEarnDrip.updateGrowToken(growPool.address)
+        await obj.pool.updatePoolRewards(vesperEarnDrip.address)
+        break
+      }
     }
   }
 }

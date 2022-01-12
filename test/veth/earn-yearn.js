@@ -3,7 +3,7 @@
 const { prepareConfig } = require('./config')
 const { shouldBehaveLikeStrategy } = require('../behavior/strategy')
 const { shouldBehaveLikePool } = require('../behavior/vesper-pool')
-const { strategyConfig } = require('../utils/chains').getChainData()
+const { address: Address, strategyConfig } = require('../utils/chains').getChainData()
 
 describe('veETH pool with EarnYearnStrategyETH strategy', function () {
   const strategy = strategyConfig.EarnYearnStrategyETH
@@ -11,7 +11,7 @@ describe('veETH pool with EarnYearnStrategyETH strategy', function () {
   strategy.config.debtRatio = 9000
   const strategies = [strategy]
 
-  prepareConfig(strategies)
+  prepareConfig(strategies, { growPool: { address: Address.vaDAI } })
 
   describe('Pool Tests', function () {
     shouldBehaveLikePool('veETH', 'ETH', true)
