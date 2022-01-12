@@ -5,7 +5,7 @@ import "../Strategy.sol";
 import "../../interfaces/aave/IAave.sol";
 
 /// @dev This strategy will deposit collateral token in Aave and earn interest.
-abstract contract AaveStrategyAvalanche is Strategy {
+contract AaveStrategyAvalanche is Strategy {
     using SafeERC20 for IERC20;
     // solhint-disable-next-line var-name-mixedcase
     string public NAME;

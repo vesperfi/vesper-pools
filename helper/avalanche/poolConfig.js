@@ -3,12 +3,12 @@
 const Address = require('./address')
 
 const setup = { feeCollector: Address.FEE_COLLECTOR, withdrawFee: 60 }
-const rewards = { contract: 'PoolRewards', tokens: [] }
+const rewards = { contract: 'PoolRewards', tokens: [Address.NATIVE_TOKEN] }
 
 const PoolConfig = {
-  VDAI: {
+  VADAI: {
     contractName: 'VPool',
-    poolParams: ['vDAI Pool', 'vDAI', Address.DAI],
+    poolParams: ['vaDAI Pool', 'vaDAI', Address.DAI],
     setup: { ...setup }, // Shallow copy
     rewards: { ...rewards },
   },

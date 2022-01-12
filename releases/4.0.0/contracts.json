@@ -1,0 +1,27 @@
+{
+  "version": "4.0.0",
+  "networks": {
+    "avalanche": {
+      "vadai": {
+        "pool": {
+          "proxyAdmin": "0xB6D75A53442844e8F1eed35d7A65225c57B282EB",
+          "proxy": "0x5323F445A8665239222b117aE095423a238F5706",
+          "implementation": "0x30a35969AdBb8B437c44C8BdC162501Efa8eE018",
+          "poolAccountant": {
+            "proxyAdmin": "0xB6D75A53442844e8F1eed35d7A65225c57B282EB",
+            "proxy": "0x1450E77CA4a646676A051118320efe3ed1c4831b",
+            "implementation": "0x59246B1E23240fAb9a51cE97FB3F907Eb9758489"
+          }
+        },
+        "poolRewards": {
+          "proxyAdmin": "0xB6D75A53442844e8F1eed35d7A65225c57B282EB",
+          "proxy": "0x57282f2ED5a39De0c2517E8E0D93003608B657D7",
+          "implementation": "0x13A3f5769164D86CA87D70B006249B25F3429CFE"
+        },
+        "strategies": {
+          "AaveStrategyAvalancheDAI": "0x867E89E47b7c252F4D991DF75eBd2CFD9188B929"
+        }
+      }
+    }
+  }
+}
