@@ -54,14 +54,32 @@ const deployFunction = async function ({ getNamedAccounts, deployments, poolConf
 
   // Execute setup transactions
   await execute(strategyAlias, { from: deployer, log: true }, 'approveToken')
-  await execute(strategyAlias, { from: deployer, log: true }, 'updateFeeCollector', setup.feeCollector)
-  for (const keeper of setup.keepers) {
-    await execute(strategyAlias, { from: deployer, log: true }, 'addKeeper', keeper)
-  }
 
   // For earn strategies approve grow token
   if (strategyAlias.includes('Earn')) {
     await execute(strategyAlias, { from: deployer, log: true }, 'approveGrowToken')
+  }
+
+  if (strategyAlias.toUpperCase().includes('CONVEX')) {
+    await execute(strategyAlias, { from: deployer, log: true }, 'setRewardTokens', [])
+  }
+
+  const strategyVersion = await read(strategyAlias, {}, 'VERSION')
+  deployFunction.id = `${strategyAlias}-v${strategyVersion}`
+
+  const governor = await (await ethers.getContractAt(deploymentName, poolProxy.address)).governor()
+  // skip if deployer is not pool governor
+  if (governor !== deployer) {
+    console.log('*** updateFeeCollector, addKeeper, addStrategy are skipped as deployer is not pool governor ***')
+    if (strategyAlias.includes('Maker')) {
+      console.log('*** addGemJoin, createVault, updateBalancingFactor are skipped as deployer is not pool governor ***')
+    }
+    return true
+  }
+
+  await execute(strategyAlias, { from: deployer, log: true }, 'updateFeeCollector', setup.feeCollector)
+  for (const keeper of setup.keepers) {
+    await execute(strategyAlias, { from: deployer, log: true }, 'addKeeper', keeper)
   }
 
   // Execute Maker related configuration transactions
@@ -83,10 +101,6 @@ const deployFunction = async function ({ getNamedAccounts, deployments, poolConf
     )
   }
 
-  if (strategyAlias.toUpperCase().includes('CONVEX')) {
-    await execute(strategyAlias, { from: deployer, log: true }, 'setRewardTokens', [])
-  }
-
   let PoolAccountant = 'PoolAccountant'
   if (strategyAlias.includes('Coverage')) {
     PoolAccountant = 'PoolAccountantCoverage'
@@ -106,9 +120,6 @@ const deployFunction = async function ({ getNamedAccounts, deployments, poolConf
     config.debtRate,
     config.externalDepositFee,
   )
-
-  const strategyVersion = await read(strategyAlias, {}, 'VERSION')
-  deployFunction.id = `${strategyAlias}-v${strategyVersion}`
   return true
 }
 module.exports = deployFunction
