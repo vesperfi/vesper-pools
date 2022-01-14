@@ -22,6 +22,54 @@
           "AaveStrategyAvalancheDAI": "0x867E89E47b7c252F4D991DF75eBd2CFD9188B929"
         }
       }
+    },
+    "mainnet": {
+      "vafrax": {
+        "pool": {
+          "proxy": "0xc14900dFB1Aa54e7674e1eCf9ce02b3b35157ba5",
+          "implementation": "0xB0582CcAD2E265924E3E75539a84717449396d66",
+          "poolAccountant": {
+            "proxy": "0xC0A7EB8B23512ecD0e9F8f51e3FAe7Cf9530b212",
+            "implementation": "0xCD6bF2b8DA112AB77C42Fc96AbF4218dCB71fD35"
+          }
+        },
+        "poolRewards": {
+          "proxy": "0xf1D4EB7183bA624a4a198376560DF0De20d99941",
+          "implementation": "0x92574eD22C0b3961e240dBa1EbA02F6f30fd066C"
+        },
+        "strategies": {
+          "Convex4MetaPoolStrategyFRAXPoolFRAX": "0x6c8E1186c4d768955f66050C2a967F8043Ea295C",
+          "RariFuseStrategy#18": "0xeCF139cF1a5D902b191818F182b48f0301CA0bD6",
+          "RariFuseStrategy#36": "0x13AECC59A88A65F02E053eEce29d743a952D6f1e",
+          "RariFuseStrategy#6": "0x463C835f2959c52F99D65b5E712F3806c7E6A46F",
+          "RariFuseStrategy#7": "0xf95fb643c7b26afe64a6daf7e2b84d9eda6559bb"
+        }
+      },
+      "vadai": {
+        "pool": {
+          "proxyAdmin": "0x19A02f3512BdF78114B3c50f7d22a34b1B2798cA",
+          "proxy": "0x0538C8bAc84E95A9dF8aC10Aad17DbE81b9E36ee",
+          "implementation": "0x479DFA0612Ea457235CdeEFcDea4E3FF072778ca",
+          "poolAccountant": {
+            "proxyAdmin": "0x19A02f3512BdF78114B3c50f7d22a34b1B2798cA",
+            "proxy": "0x2337c59180357cE1d771Da2B2dF56A91e7c442c0",
+            "implementation": "0x762fF5490e6f4836FeD3399207094c46B720380d"
+          }
+        },
+        "poolRewards": {
+          "proxyAdmin": "0x19A02f3512BdF78114B3c50f7d22a34b1B2798cA",
+          "proxy": "0x35864296944119F72AA1B468e13449222f3f0E67",
+          "implementation": "0xE244881025f8F5005985D60757CC95c8D667e493"
+        },
+        "strategies": {
+          "Convex4MetaPoolStrategyFRAXPoolDAI": "0xBD5862Ae6C6f98ac2aaAd83A26D58744c1250C10",
+          "ConvexStrategyDAI": "0x6897d2cBf66e317bdE74595C455BeE09cf144136",
+          "Crv3PoolStrategyDAI": "0xD11E6772A430c45C7B64927069AF37fa9ab3bE75",
+          "RariFuseStrategy": "0x863FB34417f6a13e6179d946Eb3e2c03157d8f42",
+          "RariFuseStrategyDAI": "0x5495f41144ECeF9233f15AC3E4283f5F653fc96c",
+          "YearnStrategyDAI": "0xA385821a6f24a1e541ab22448eb03aE9f21a1611"
+        }
+      }
     }
   }
 }
