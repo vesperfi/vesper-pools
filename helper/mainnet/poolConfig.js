@@ -84,8 +84,14 @@ const PoolConfig = {
   VEDAI_SHIB: {
     contractName: 'VPool',
     poolParams: ['veDAI-SHIB Earn Pool', 'veDAI-SHIB', Address.DAI],
-    setup: { ...setup },
-    rewards: { contract: 'VesperEarnDrip', tokens: [Address.vaDAI, Address.VSP] },
+    setup: { ...setup, withdrawFee: 0 },
+    rewards: { contract: 'VesperEarnDrip', tokens: [Address.SHIB, Address.VSP] },
+  },
+  VEDAI_PUNK: {
+    contractName: 'VPool',
+    poolParams: ['veDAI-PUNK Earn Pool', 'veDAI-PUNK', Address.DAI],
+    setup: { ...setup, withdrawFee: 0 },
+    rewards: { contract: 'VesperEarnDrip', tokens: [Address.PUNK, Address.VSP] },
   },
   VLINK: {
     contractName: 'VPool',

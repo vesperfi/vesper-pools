@@ -913,7 +913,21 @@ const StrategyConfig = {
       vsp: Address.VSP,
       strategyName: 'EarnVesperStrategyDAISHIB',
     },
-    config: { ...config },
+    config: { ...config, interestFee: 2500 },
+    setup: { ...setup },
+  },
+
+  EarnVesperStrategyDAIPUNK: {
+    contract: 'EarnVesperStrategy',
+    type: StrategyTypes.EARN_VESPER,
+    constructorArgs: {
+      swapManager,
+      receiptToken: Address.vaDAI,
+      dripToken: Address.PUNK,
+      vsp: Address.VSP,
+      strategyName: 'EarnVesperStrategyDAIPUNK',
+    },
+    config: { ...config, interestFee: 2500 },
     setup: { ...setup },
   },
 
