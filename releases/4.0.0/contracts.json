@@ -69,6 +69,30 @@
           "RariFuseStrategyDAI": "0x5495f41144ECeF9233f15AC3E4283f5F653fc96c",
           "YearnStrategyDAI": "0xA385821a6f24a1e541ab22448eb03aE9f21a1611"
         }
+      },
+      "vafei": {
+        "pool": {
+          "proxyAdmin": "0xd9A5df2877a42460E9055C4134946668dfcf51f8",
+          "proxy": "0x2B6c40Ef15Db0D78D08A7D1b4E12d57E88a3e324",
+          "implementation": "0xfE711bE66DEF585c90671b6eB767a3979cdfe007",
+          "poolAccountant": {
+            "proxyAdmin": "0xd9A5df2877a42460E9055C4134946668dfcf51f8",
+            "proxy": "0x7F896DDe137fBFc0347854fAa02E243aD6F2bE93",
+            "implementation": "0xEeD0E5AACe8Cee7c5fEDfCB858bcb2082e1B94EE"
+          }
+        },
+        "poolRewards": {
+          "proxyAdmin": "0xd9A5df2877a42460E9055C4134946668dfcf51f8",
+          "proxy": "0x40971A53fa57b3D26bF0c98075f81955dE78b61F",
+          "implementation": "0xbE33791F85f3CCFd6C5aA6f8Fd5540F14D3574ad"
+        },
+        "strategies": {
+          "AaveStrategyFEI": "0xD5b60408f4513B112C7138a45b02C280249aCfb2",
+          "ConvexD3PoolStrategyFEI": "0x2E746ADfdA5fCBb3E145Af4415632630Abd199D6",
+          "RariFuseStrategy#18": "0xf5A66196306855821159e41f4dDbb71Ae5663825",
+          "RariFuseStrategy#27": "0x187C51C9803424efe1Cbe62cFFc0D99B6912c0F6",
+          "RariFuseStrategy#6": "0x0a46A9716b4632A57863d52123c5c10FDF9e10F8"
+        }
       }
     }
   }
