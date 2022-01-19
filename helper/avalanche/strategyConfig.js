@@ -30,6 +30,50 @@ const StrategyConfig = {
     config: { ...config }, // Shallow copy
     setup: { ...setup },
   },
+  AaveStrategyAvalancheWETH: {
+    contract: 'AaveStrategyAvalanche',
+    type: StrategyTypes.AAVE,
+    constructorArgs: {
+      swapManager,
+      receiptToken: Address.Aave.avWETH,
+      strategyName: 'AaveStrategyAvalancheWETH',
+    },
+    config: { ...config }, // Shallow copy
+    setup: { ...setup },
+  },
+  AaveStrategyAvalancheWBTC: {
+    contract: 'AaveStrategyAvalanche',
+    type: StrategyTypes.AAVE,
+    constructorArgs: {
+      swapManager,
+      receiptToken: Address.Aave.avWBTC,
+      strategyName: 'AaveStrategyAvalancheWBTC',
+    },
+    config: { ...config }, // Shallow copy
+    setup: { ...setup },
+  },
+  AaveStrategyAvalancheAVAX: {
+    contract: 'AaveStrategyAvalanche',
+    type: StrategyTypes.AAVE,
+    constructorArgs: {
+      swapManager,
+      receiptToken: Address.Aave.avWAVAX,
+      strategyName: 'AaveStrategyAvalancheAVAX',
+    },
+    config: { ...config }, // Shallow copy
+    setup: { ...setup },
+  },
+  AaveStrategyAvalancheUSDC: {
+    contract: 'AaveStrategyAvalanche',
+    type: StrategyTypes.AAVE,
+    constructorArgs: {
+      swapManager,
+      receiptToken: Address.Aave.avUSDC,
+      strategyName: 'AaveStrategyAvalancheUSDC',
+    },
+    config: { ...config }, // Shallow copy
+    setup: { ...setup },
+  },
 }
 
 module.exports = Object.freeze(StrategyConfig)

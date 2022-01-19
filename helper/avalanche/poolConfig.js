@@ -12,6 +12,30 @@ const PoolConfig = {
     setup: { ...setup }, // Shallow copy
     rewards: { ...rewards },
   },
+  VAWETH: {
+    contractName: 'VPool',
+    poolParams: ['vaWETH Pool', 'vaWETH', Address.WETH],
+    setup: { ...setup }, // Shallow copy
+    rewards: { contract: 'PoolRewards', tokens: [] }, // no rewards
+  },
+  VAWBTC: {
+    contractName: 'VPool',
+    poolParams: ['vaWBTC Pool', 'vaWBTC', Address.WBTC],
+    setup: { ...setup }, // Shallow copy
+    rewards: { contract: 'PoolRewards', tokens: [] }, // no rewards
+  },
+  VAAVAX: {
+    contractName: 'VPool',
+    poolParams: ['vaAVAX Pool', 'vaAVAX', Address.NATIVE_TOKEN],
+    setup: { ...setup }, // Shallow copy
+    rewards: { contract: 'PoolRewards', tokens: [] }, // no rewards
+  },
+  VAUSDC: {
+    contractName: 'VPool',
+    poolParams: ['vaUSDC Pool', 'vaUSDC', Address.USDC],
+    setup: { ...setup }, // Shallow copy
+    rewards: { contract: 'PoolRewards', tokens: [] }, // no rewards
+  },
 }
 
 module.exports = Object.freeze(PoolConfig)
