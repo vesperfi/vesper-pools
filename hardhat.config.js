@@ -10,6 +10,7 @@ require('./tasks/create-release')
 require('./tasks/deploy-pool')
 require('./tasks/strategy-configuration')
 require('./tasks/deploy-upgrader')
+require('./tasks/upgrade-pool')
 const junk = 'test test test test test test test test test test test junk'
 
 if (process.env.RUN_CONTRACT_SIZER === 'true') {
@@ -22,6 +23,7 @@ module.exports = {
     localhost: {
       saveDeployments: true,
       timeout: 1000000,
+      accounts: { mnemonic: process.env.MNEMONIC || junk },
     },
     hardhat: {
       chainId: 1,

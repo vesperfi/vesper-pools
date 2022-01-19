@@ -18,6 +18,7 @@
     "coverage": "hardhat coverage",
     "deploy": "hardhat deploy-pool",
     "deploy-upgrader": "hardhat deploy-upgrader",
+    "upgrade-pool": "hardhat upgrade-pool",
     "fork": "hardhat node --no-deploy",
     "release": "hardhat create-release",
     "test": "hardhat test",
