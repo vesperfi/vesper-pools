@@ -88,12 +88,18 @@ contract PoolAccountant is Initializable, Context, PoolAccountantStorageV2 {
     }
 
     modifier onlyKeeper() {
-        require(IVesperPool(pool).isKeeper(_msgSender()), "not-a-keeper");
+        require(
+            IVesperPool(pool).governor() == _msgSender() || IVesperPool(pool).isKeeper(_msgSender()),
+            "not-a-keeper"
+        );
         _;
     }
 
     modifier onlyMaintainer() {
-        require(IVesperPool(pool).isMaintainer(_msgSender()), "not-a-maintainer");
+        require(
+            IVesperPool(pool).governor() == _msgSender() || IVesperPool(pool).isMaintainer(_msgSender()),
+            "not-a-maintainer"
+        );
         _;
     }
 

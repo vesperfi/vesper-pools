@@ -1,8 +1,6 @@
 'use strict'
 
 const { expect } = require('chai')
-const hre = require('hardhat')
-const ethers = hre.ethers
 const { getUsers, deployContract, createStrategy } = require('./utils/setupHelper')
 
 const { poolConfig, strategyConfig } = require('./utils/chains').getChainData()
@@ -45,6 +43,17 @@ describe('Vesper Pool: Admin only function tests', function () {
         await pool.addKeeper(user1.address)
         await pool.removeKeeper(user1.address)
         expect((await pool.keepers()).length).to.be.equal(1, 'Address removed successfully')
+      })
+
+      it('Governor should be able to add keeper in empty list', async function () {
+        const keepers = await pool.keepers()
+        for (const keeper of keepers) {
+          await pool.removeKeeper(keeper)
+        }
+        expect((await pool.keepers()).length).to.be.equal(0, 'Address removed successfully')
+        await expect(pool.connect(user3.signer).addKeeper(user1.address)).to.be.revertedWith('not-a-keeper')
+        await pool.addKeeper(user2.address) // default user is governor
+        expect((await pool.keepers()).length).to.be.equal(1, 'Keeper added successfully')
       })
 
       it('Should revert if address not in list', async function () {
@@ -121,6 +130,17 @@ describe('Vesper Pool: Admin only function tests', function () {
 
         await pool.connect(user1.signer).removeMaintainer(user3.address)
         expect((await pool.maintainers()).length).to.be.equal(1, 'Address removed successfully')
+      })
+
+      it('Governor should be able to add maintainer in empty list', async function () {
+        const maintainers = await pool.maintainers()
+        for (const maintainer of maintainers) {
+          await pool.removeMaintainer(maintainer)
+        }
+        expect((await pool.maintainers()).length).to.be.equal(0, 'Address removed successfully')
+        await expect(pool.connect(user3.signer).addMaintainer(user1.address)).to.be.revertedWith('not-a-keeper')
+        await pool.addMaintainer(user2.address) // default user is governor
+        expect((await pool.maintainers()).length).to.be.equal(1, 'Keeper added successfully')
       })
 
       it('Should revert if address already exist in list', async function () {
