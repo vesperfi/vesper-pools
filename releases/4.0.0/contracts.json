@@ -21,6 +21,21 @@
         "strategies": {
           "AaveStrategyAvalancheDAI": "0x867E89E47b7c252F4D991DF75eBd2CFD9188B929"
         }
+      },
+      "vaweth": {
+        "pool": {
+          "proxyAdmin": "0xd9A5df2877a42460E9055C4134946668dfcf51f8",
+          "proxy": "0x2B6c40Ef15Db0D78D08A7D1b4E12d57E88a3e324",
+          "implementation": "0xfE711bE66DEF585c90671b6eB767a3979cdfe007",
+          "poolAccountant": {
+            "proxyAdmin": "0xd9A5df2877a42460E9055C4134946668dfcf51f8",
+            "proxy": "0x7F896DDe137fBFc0347854fAa02E243aD6F2bE93",
+            "implementation": "0xEeD0E5AACe8Cee7c5fEDfCB858bcb2082e1B94EE"
+          }
+        },
+        "strategies": {
+          "AaveStrategyAvalancheWETH": "0x0a46a9716b4632a57863d52123c5c10fdf9e10f8"
+        }
       }
     },
     "mainnet": {
