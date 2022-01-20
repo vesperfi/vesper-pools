@@ -36,12 +36,12 @@ abstract contract VPoolBase is PoolShareToken {
     }
 
     modifier onlyKeeper() {
-        require(_keepers.contains(_msgSender()), "not-a-keeper");
+        require(governor == _msgSender() || _keepers.contains(_msgSender()), "not-a-keeper");
         _;
     }
 
     modifier onlyMaintainer() {
-        require(_maintainers.contains(_msgSender()), "not-a-maintainer");
+        require(governor == _msgSender() || _maintainers.contains(_msgSender()), "not-a-maintainer");
         _;
     }
 
