@@ -110,6 +110,20 @@
         "strategies": {
           "EarnVesperStrategyDAISHIB": "0x62514F46A2c55aaE92a56Cd6f90510Dbabe18438"
         }
+      },
+      "vedai_punk": {
+        "pool": {
+          "proxy": "0xeBcF77CCE55ed6091F82aEE3c5539841E4D75F49",
+          "implementation": "0x853f81A2E3801Ddc4D8074fe9FAfD341336A89d0",
+          "poolAccountant": {
+            "proxy": "0x745c1085657035AD04C7F87438C13d525a5bD70D",
+            "implementation": "0x715AE7Db6b175D9cDf71E04aa36a2CeAc57d88C9"
+          }
+        },
+        "poolRewards": {
+          "proxy": "0x59928b4b25da3633718B6DF4EA0655850899C88C",
+          "implementation": "0x175a7815393d4f2E71BA37f53afdF96278df18cE"
+        }
       }
     }
   }
