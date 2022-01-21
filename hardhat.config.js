@@ -10,6 +10,7 @@ require('./tasks/create-release')
 require('./tasks/deploy-pool')
 require('./tasks/strategy-configuration')
 require('./tasks/deploy-upgrader')
+require('./tasks/deploy-buyback')
 require('./tasks/upgrade-pool')
 const junk = 'test test test test test test test test test test test junk'
 

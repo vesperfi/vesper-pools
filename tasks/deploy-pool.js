@@ -129,7 +129,7 @@ async function deployPoolContracts(pool, deployParams, release) {
   }
 }
 
-/* eslint-disable no-param-reassign, complexity */
+/* eslint-disable no-param-reassign */
 task('deploy-pool', 'Deploy vesper pool')
   .addParam('pool', 'Vesper pool name')
   .addOptionalParam('release', 'Vesper release semantic version. It will create release file under /releases directory')
