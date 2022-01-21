@@ -69,7 +69,7 @@ async function deployPoolContracts(pool, deployParams, release) {
   )
 
   const networkDir = `./deployments/${hreNetwork}`
-  const poolDir = `${networkDir}/${pool}`
+  const poolDir = `${networkDir}/${pool.toLowerCase()}`
   const globalDir = `${networkDir}/global`
   const deployerDir = `${globalDir}/${deployer}`
 
