@@ -605,6 +605,18 @@ const StrategyConfig = {
     setup: { ...setup },
   },
 
+  Convex4MetaPoolStrategyIBBTCPoolWBTC: {
+    contract: 'Convex4MetaPoolStrategyIBBTCPool',
+    type: StrategyTypes.CONVEX,
+    constructorArgs: {
+      swapManager,
+      collateralIdx: 2,
+      strategyName: 'Convex4MetaPoolStrategyIBBTCPoolWBTC',
+    },
+    config: { ...config },
+    setup: { ...setup },
+  },
+
   Crv2PoolStrategyMIMUSTPoolMIM: {
     contract: 'Crv2PoolStrategyMIMUSTPool',
     type: StrategyTypes.CURVE,
