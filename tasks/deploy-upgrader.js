@@ -1,6 +1,6 @@
 'use strict'
 const supportedUpgraderContract = ['PoolAccountantUpgrader', 'PoolRewardsUpgrader', 'VPoolUpgrader']
-/* eslint-disable no-param-reassign, complexity */
+/* eslint-disable no-param-reassign */
 task('deploy-upgrader', 'Deploy upgrader contract')
   .addParam('name', 'Upgrader contract name, ex: PoolAccountantUpgrader, PoolRewardsUpgrader, VPoolUpgrader')
   .addOptionalParam('targetChain', 'Target chain where contracts will be deployed')

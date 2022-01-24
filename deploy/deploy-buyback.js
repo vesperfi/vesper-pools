@@ -2,13 +2,11 @@
 
 const BuyBack = 'BuyBack'
 
-const deployFunction = async function ({ getNamedAccounts, deployments, network }) {
+const deployFunction = async function ({ getNamedAccounts, deployments, targetChain }) {
+  const Address = require(`../helper/${targetChain}/address`)
+
   const { deploy } = deployments
   const { deployer } = await getNamedAccounts()
-
-  const hreNetwork = network.name
-  const helperNetwork = hreNetwork === 'localhost' || hreNetwork === 'hardhat' ? 'mainnet' : hreNetwork
-  const Address = require(`../../helper/${helperNetwork}/address`)
 
   await deploy(BuyBack, {
     from: deployer,

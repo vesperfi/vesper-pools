@@ -2,7 +2,7 @@
 
 const { deployPoolContracts } = require('./deploy-pool')
 
-/* eslint-disable no-param-reassign, complexity */
+/* eslint-disable no-param-reassign */
 task('upgrade-pool', 'Upgrading vPool and poolAccountant')
   .addParam('pool', 'Vesper pool name')
   .addOptionalParam('release', 'Vesper release semantic version. It will create release file under /releases directory')
