@@ -2,6 +2,10 @@
 
 const ethers = require('ethers')
 const PoolAccountant = 'PoolAccountant'
+function sleep(ms) {
+  console.log(`waiting for ${ms} ms`)
+  return new Promise(resolve => setTimeout(resolve, ms))
+}
 
 const deployFunction = async function ({ getNamedAccounts, deployments, poolConfig }) {
   const { deploy, execute, read } = deployments
@@ -14,8 +18,9 @@ const deployFunction = async function ({ getNamedAccounts, deployments, poolConf
     proxy: {
       proxyContract: 'OpenZeppelinTransparentProxy',
     },
+    waitConfirmations: 2,
   })
-
+  await sleep(5000)
   // Deploy Pool. This call will use ProxyAdmin. It will deploy proxy and Pool and also initialize pool
   const poolProxy = await deploy(poolConfig.contractName, {
     from: deployer,
@@ -32,15 +37,20 @@ const deployFunction = async function ({ getNamedAccounts, deployments, poolConf
         },
       },
     },
+    waitConfirmations: 2,
   })
 
   // Initialize PoolAccountant with pool proxy address
   if ((await read(PoolAccountant, {}, 'pool')) === ethers.constants.AddressZero) {
+    await sleep(5000)
     await execute(PoolAccountant, { from: deployer, log: true }, 'init', poolProxy.address)
   }
 
   // Update pool fee collector and withdraw fee
+  await sleep(5000)
   await execute(poolConfig.contractName, { from: deployer, log: true }, 'updateFeeCollector', setup.feeCollector)
+
+  await sleep(5000)
   await execute(poolConfig.contractName, { from: deployer, log: true }, 'updateWithdrawFee', setup.withdrawFee)
 
   // Prepare id of deployment, next deployment will be triggered if id is changed
@@ -53,6 +63,7 @@ const deployFunction = async function ({ getNamedAccounts, deployments, poolConf
   }
   const rewards = poolConfig.rewards
   // Deploy pool rewards (Vesper Earn drip for Earn pools)
+  await sleep(5000)
   const rewardsProxy = await deploy(rewards.contract, {
     from: deployer,
     log: true,
@@ -67,13 +78,16 @@ const deployFunction = async function ({ getNamedAccounts, deployments, poolConf
         },
       },
     },
+    waitConfirmations: 2,
   })
 
   // Update pool rewards in pool
+  await sleep(5000)
   await execute(poolConfig.contractName, { from: deployer, log: true }, 'updatePoolRewards', rewardsProxy.address)
 
   // Update grow token in Vesper Earn Drip contract of Earn pool
   if (poolConfig.poolParams[0].includes('Earn') && 'growToken' in rewards) {
+    await sleep(5000)
     await execute(rewards.contract, { from: deployer, log: true }, 'updateGrowToken', rewards.growToken)
   }
 

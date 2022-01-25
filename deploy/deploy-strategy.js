@@ -3,7 +3,10 @@
 
 const { ethers } = require('hardhat')
 const CollateralManager = 'CollateralManager'
-
+function sleep(ms) {
+  console.log(`waiting for ${ms} ms`)
+  return new Promise(resolve => setTimeout(resolve, ms))
+}
 const deployFunction = async function ({ getNamedAccounts, deployments, poolConfig, strategyConfig, targetChain }) {
   if (!strategyConfig) {
     throw new Error('Strategy configuration object is not created.')
@@ -27,7 +30,8 @@ const deployFunction = async function ({ getNamedAccounts, deployments, poolConf
     let cm = Address.COLLATERAL_MANAGER
     if (!cm) {
       // Deploy collateral manager
-      cm = (await deploy(CollateralManager, { from: deployer, log: true })).address
+      await sleep(5000)
+      cm = (await deploy(CollateralManager, { from: deployer, log: true, waitConfirmations: 2 })).address
     }
     // Fail fast: By reading any property we make sure deployment object exist for CollateralManager
     try {
@@ -43,24 +47,29 @@ const deployFunction = async function ({ getNamedAccounts, deployments, poolConf
   }
 
   // Deploy strategy
+  await sleep(5000)
   const deployed = await deploy(strategyAlias, {
     contract: strategyConfig.contract,
     from: deployer,
     log: true,
     args: constructorArgs,
+    waitConfirmations: 2,
   })
 
   const setup = strategyConfig.setup
 
   // Execute setup transactions
+  await sleep(5000)
   await execute(strategyAlias, { from: deployer, log: true }, 'approveToken')
 
   // For earn strategies approve grow token
   if (strategyAlias.includes('Earn')) {
+    await sleep(5000)
     await execute(strategyAlias, { from: deployer, log: true }, 'approveGrowToken')
   }
 
   if (strategyAlias.toUpperCase().includes('CONVEX')) {
+    await sleep(5000)
     await execute(strategyAlias, { from: deployer, log: true }, 'setRewardTokens', [])
   }
 
@@ -77,8 +86,10 @@ const deployFunction = async function ({ getNamedAccounts, deployments, poolConf
     return true
   }
 
+  await sleep(5000)
   await execute(strategyAlias, { from: deployer, log: true }, 'updateFeeCollector', setup.feeCollector)
   for (const keeper of setup.keepers) {
+    await sleep(5000)
     await execute(strategyAlias, { from: deployer, log: true }, 'addKeeper', keeper)
   }
 
@@ -89,9 +100,13 @@ const deployFunction = async function ({ getNamedAccounts, deployments, poolConf
     const collateralType = await (await ethers.getContractAt('GemJoinLike', maker.gemJoin)).ilk()
     const gemJoinInCM = await read(CollateralManager, {}, 'mcdGemJoin', collateralType)
     if (gemJoinInCM !== maker.gemJoin) {
+      await sleep(5000)
       await execute('CollateralManager', { from: deployer, log: true }, 'addGemJoin', [maker.gemJoin])
     }
+    await sleep(5000)
     await execute(strategyAlias, { from: deployer, log: true }, 'createVault')
+
+    await sleep(5000)
     await execute(
       strategyAlias,
       { from: deployer, log: true },
@@ -110,6 +125,7 @@ const deployFunction = async function ({ getNamedAccounts, deployments, poolConf
 
   // Add strategy in pool accountant
   const config = strategyConfig.config
+  await sleep(5000)
   await execute(
     PoolAccountant,
     { from: deployer, log: true },
