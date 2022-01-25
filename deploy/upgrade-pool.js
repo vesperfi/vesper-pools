@@ -14,7 +14,7 @@ async function validateAndDeployUpgrader(name, deployments, deployer, targetChai
     // check ownership
     proxyAdminOwner = await read(DefaultProxyAdmin, 'owner').catch(() => null)
     if (proxyAdminOwner !== deployer) {
-      throw new Error('Deployer is not owner of proxyAdmin. Cant upgrade pool')
+      throw new Error('Deployer is not owner of DefaultProxyAdmin. Cant upgrade pool')
     }
   }
 
@@ -22,7 +22,7 @@ async function validateAndDeployUpgrader(name, deployments, deployer, targetChai
     // Found safe upgrader contract. Check ownership
     proxyAdminOwner = await read(`${name}Upgrader`, 'owner').catch(() => null)
     if (proxyAdminOwner !== deployer) {
-      throw new Error('Deployer is not owner of proxyAdmin. Cant upgrade pool')
+      throw new Error('Deployer is not owner of safe upgrader. Cant upgrade pool')
     }
   } else {
     // Deploy new custom proxy admin
@@ -44,23 +44,7 @@ async function validateAndDeployUpgrader(name, deployments, deployer, targetChai
 const deployFunction = async function ({ getNamedAccounts, deployments, poolConfig, targetChain }) {
   const { deploy, execute } = deployments
   const { deployer } = await getNamedAccounts()
-  await validateAndDeployUpgrader(PoolAccountant, deployments, deployer, targetChain)
-  // const proxy = await deployments.get(name)
-  // Deploy a new implementation
-  const poolAccountantImpl = await deploy(`${PoolAccountant}_Implementation`, {
-    contract: PoolAccountant,
-    from: deployer,
-    log: true,
-  })
-  let proxy = await deployments.get(PoolAccountant)
-  // Finally, trigger a safe upgrade via the upgrader
-  await execute(
-    PoolAccountantUpgrader,
-    { from: deployer, log: true },
-    'safeUpgrade',
-    proxy.address,
-    poolAccountantImpl.address,
-  )
+
   await validateAndDeployUpgrader(poolConfig.contractName, deployments, deployer, targetChain)
 
   const vPoolImpl = await deploy(`${poolConfig.contractName}_Implementation`, {
@@ -70,9 +54,28 @@ const deployFunction = async function ({ getNamedAccounts, deployments, poolConf
     args: poolConfig.poolParams,
   })
 
-  proxy = await deployments.get(poolConfig.contractName)
-  // Finally, trigger a safe upgrade via the upgrader
+  let proxy = await deployments.get(poolConfig.contractName)
+
   await execute(VPoolUpgrader, { from: deployer, log: true }, 'safeUpgrade', proxy.address, vPoolImpl.address)
+
+  await validateAndDeployUpgrader(PoolAccountant, deployments, deployer, targetChain)
+  // const proxy = await deployments.get(name)
+  // Deploy a new implementation
+  const poolAccountantImpl = await deploy(`${PoolAccountant}_Implementation`, {
+    contract: PoolAccountant,
+    from: deployer,
+    log: true,
+  })
+
+  proxy = await deployments.get(PoolAccountant)
+  // Finally, trigger a safe upgrade via the upgrader
+  await execute(
+    PoolAccountantUpgrader,
+    { from: deployer, log: true },
+    'safeUpgrade',
+    proxy.address,
+    poolAccountantImpl.address,
+  )
   deployFunction.id = 'upgrade-pool'
   return true
 }
