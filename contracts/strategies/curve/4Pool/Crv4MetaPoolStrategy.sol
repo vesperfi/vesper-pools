@@ -15,9 +15,9 @@ abstract contract Crv4MetaPoolStrategy is CrvPoolStrategyBase {
     // No. of pooled tokens in the metapool
     uint256 private constant N = 4;
     // Curve Metapool Factory
-    address private constant FACTORY = 0x0959158b6040D32d04c301A72CBFD6b39E21c9AE;
-    // Curve DepositZap Contract
-    address internal constant DEPOSIT_ZAP = 0xA79828DF1850E8a3A3064576f380D90aECDD3359;
+    address private constant FACTORY = 0xB9fC157394Af804a3578134A6585C0dc9cc990d4;
+    // Curve BASE-3CRV DepositZap Contract
+    address internal DEPOSIT_ZAP = 0xA79828DF1850E8a3A3064576f380D90aECDD3359;
 
     constructor(
         address _pool,
