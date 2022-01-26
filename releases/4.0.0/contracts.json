@@ -145,7 +145,7 @@
           "implementation": "0x72DCF9bA5F5E124b393A659F1629DEf439fF1b56"
         },
         "strategies": {
-          "ConvexD3PoolStrategyAlUSD":"0xa3Bf97238A715C84D655f8683886C66718fd33CF",
+          "ConvexD3PoolStrategyAlUSD": "0xa3Bf97238A715C84D655f8683886C66718fd33CF",
           "RariFuseStrategy#18": "0xf4BB5824F3e5b6314e1c0A8BE60c733B3dB53786",
           "RariFuseStrategy#6": "0x8B3AC0f18Eae871b83b9212345E736735e6604d6",
           "RariFuseStrategy#7": "0xc6e5505d7C501D51e9d69669b1C393079Fc426D0"
@@ -165,9 +165,33 @@
           "implementation": "0x7a75d934ecd0Dffae11592E7E6955C8186273b1c"
         },
         "strategies": {
-          "Convex4MetaPoolStrategyFRAXPoolUSDC":"0x938F7babD1895984D1ba57b8b06EBB5f5060DFB1",
+          "Convex4MetaPoolStrategyFRAXPoolUSDC": "0x938F7babD1895984D1ba57b8b06EBB5f5060DFB1",
           "RariFuseStrategy#18": "0x3f46812E5b11A1b88B7b757b3caFF965e458f380",
           "RariFuseStrategy#6": "0xA92F21CF2923cd634922d193fC8eEaf05CBefb65"
+        }
+      },
+      "vawbtc": {
+        "pool": {
+          "proxyAdmin": "0x19A02f3512BdF78114B3c50f7d22a34b1B2798cA",
+          "proxy": "0x01e1d41C1159b745298724c5Fd3eAfF3da1C6efD",
+          "implementation": "0xfAeD291aBA8c0F7daae17C0176CCC398D9284FD5",
+          "poolAccountant": {
+            "proxyAdmin": "0x19A02f3512BdF78114B3c50f7d22a34b1B2798cA",
+            "proxy": "0xb2A27aC2E362c37030F3c703B02007CE2b43257A",
+            "implementation": "0xA3a0b3190ad7806F78376461B61b42F48e1eF168"
+          }
+        },
+        "poolRewards": {
+          "proxyAdmin": "0x19A02f3512BdF78114B3c50f7d22a34b1B2798cA",
+          "proxy": "0x30D63c7651D7Ed798Af5385f4d5Fc9a3d966bB45",
+          "implementation": "0xe583A2e073b5CC3853fAda6E33fC2F6F4e29a0bB"
+        },
+        "strategies": {
+          "Convex4MetaPoolStrategyIBBTCPoolWBTC": "0x4837d515320e227167d70992D50f70fACD0A68aE",
+          "ConvexSBTCStrategyWBTC": "0x43CeCF2e018FEE7EE94410f85FcefeD2a3843ef2",
+          "CrvsBTCStrategyWBTC": "0x867FC11B40351451d1dc3114A4204B2444b94B32",
+          "RariFuseStrategy": "0x2962741a2aec7627F64E77a5808A025F49ea17DA",
+          "VesperMakerStrategyWBTC": "0x1A3a83d1a9a667c61DF54b109ed88da58022f12b"
         }
       }
     },
