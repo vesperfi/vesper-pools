@@ -150,6 +150,25 @@
           "RariFuseStrategy#6": "0x8B3AC0f18Eae871b83b9212345E736735e6604d6",
           "RariFuseStrategy#7": "0xc6e5505d7C501D51e9d69669b1C393079Fc426D0"
         }
+      },
+      "vausdc": {
+        "pool": {
+          "proxy": "0xa8b607Aa09B6A2E306F93e74c282Fb13f6A80452",
+          "implementation": "0xff97999A82bBee3F2A2FabF0b1F96CE472Bb0532",
+          "poolAccountant": {
+            "proxy": "0xa9aF8f4202996528D23d913378F92EF932eeE400",
+            "implementation": "0xce0Ae51DEA9fCBF44dC076638D2DEcD028E19659"
+          }
+        },
+        "poolRewards": {
+          "proxy": "0x2F59B0F98A08E733C66dFB42Bd8E366dC2cfedA6",
+          "implementation": "0x7a75d934ecd0Dffae11592E7E6955C8186273b1c"
+        },
+        "strategies": {
+          "Convex4MetaPoolStrategyFRAXPoolUSDC":"0x938F7babD1895984D1ba57b8b06EBB5f5060DFB1",
+          "RariFuseStrategy#18": "0x3f46812E5b11A1b88B7b757b3caFF965e458f380",
+          "RariFuseStrategy#6": "0xA92F21CF2923cd634922d193fC8eEaf05CBefb65"
+        }
       }
     },
     "polygon": {
