@@ -760,7 +760,7 @@ const StrategyConfig = {
       strategyName: 'CompoundMakerStrategyETH',
     },
     config: { ...config },
-    setup: { ...setup, maker: { gemJoin: Address.Maker.MCD_JOIN_ETH_C, highWater: 275, lowWater: 250 } },
+    setup: { ...setup, maker: { gemJoin: Address.Maker.MCD_JOIN_ETH_C, highWater: 250, lowWater: 225 } },
   },
 
   CompoundMakerStrategyUNI: {
@@ -786,7 +786,7 @@ const StrategyConfig = {
       strategyName: 'VesperMakerStrategyETH',
     },
     config: { ...config },
-    setup: { ...setup, maker: { gemJoin: Address.Maker.MCD_JOIN_ETH_C, highWater: 275, lowWater: 250 } },
+    setup: { ...setup, maker: { gemJoin: Address.Maker.MCD_JOIN_ETH_C, highWater: 250, lowWater: 225 } },
   },
 
   VesperMakerStrategyLINK: {
@@ -808,11 +808,11 @@ const StrategyConfig = {
     constructorArgs: {
       swapManager,
       receiptToken: Address.vaDAI,
-      collateralType: ethers.utils.formatBytes32String('WBTC-A'),
+      collateralType: ethers.utils.formatBytes32String('WBTC-C'),
       strategyName: 'VesperMakerStrategyWBTC',
     },
     config: { ...config },
-    setup: { ...setup, maker: { gemJoin: Address.Maker.MCD_JOIN_WBTC_A, highWater: 275, lowWater: 250 } },
+    setup: { ...setup, maker: { gemJoin: Address.Maker.MCD_JOIN_WBTC_A, highWater: 250, lowWater: 225 } },
   },
 
   EarnAaveMakerStrategyETH: {
@@ -826,7 +826,7 @@ const StrategyConfig = {
       strategyName: 'EarnAaveMakerStrategyETH',
     },
     config: { ...config },
-    setup: { ...setup, maker: { gemJoin: Address.Maker.MCD_JOIN_ETH_C, highWater: 275, lowWater: 250 } },
+    setup: { ...setup, maker: { gemJoin: Address.Maker.MCD_JOIN_ETH_C, highWater: 250, lowWater: 225 } },
   },
 
   EarnCompoundMakerStrategyETH: {
@@ -840,7 +840,7 @@ const StrategyConfig = {
       strategyName: 'EarnCompoundMakerStrategyETH',
     },
     config: { ...config },
-    setup: { ...setup, maker: { gemJoin: Address.Maker.MCD_JOIN_ETH_C, highWater: 275, lowWater: 250 } },
+    setup: { ...setup, maker: { gemJoin: Address.Maker.MCD_JOIN_ETH_C, highWater: 250, lowWater: 225 } },
   },
 
   EarnVesperMakerStrategyETH: {
@@ -854,7 +854,7 @@ const StrategyConfig = {
       strategyName: 'EarnVesperMakerStrategyETH',
     },
     config: { ...config },
-    setup: { ...setup, maker: { gemJoin: Address.Maker.MCD_JOIN_ETH_C, highWater: 275, lowWater: 250 } },
+    setup: { ...setup, maker: { gemJoin: Address.Maker.MCD_JOIN_ETH_C, highWater: 250, lowWater: 225 } },
   },
 
   EarnVesperMakerStrategyLINK: {
@@ -877,12 +877,12 @@ const StrategyConfig = {
     constructorArgs: {
       swapManager,
       receiptToken: Address.vaDAI,
-      collateralType: ethers.utils.formatBytes32String('WBTC-A'),
+      collateralType: ethers.utils.formatBytes32String('WBTC-C'),
       dripToken: Address.DAI,
       strategyName: 'EarnVesperMakerStrategyWBTC',
     },
     config: { ...config },
-    setup: { ...setup, maker: { gemJoin: Address.Maker.MCD_JOIN_WBTC_A, highWater: 275, lowWater: 250 } },
+    setup: { ...setup, maker: { gemJoin: Address.Maker.MCD_JOIN_WBTC_A, highWater: 250, lowWater: 225 } },
   },
 
   EarnVesperStrategyDAIDPI: {
