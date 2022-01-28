@@ -21,6 +21,36 @@
         "strategies": {
           "AaveStrategyAvalancheDAI": "0x867E89E47b7c252F4D991DF75eBd2CFD9188B929"
         }
+      },
+      "vaweth": {
+        "pool": {
+          "proxyAdmin": "0xd9A5df2877a42460E9055C4134946668dfcf51f8",
+          "proxy": "0x2B6c40Ef15Db0D78D08A7D1b4E12d57E88a3e324",
+          "implementation": "0xfE711bE66DEF585c90671b6eB767a3979cdfe007",
+          "poolAccountant": {
+            "proxyAdmin": "0xd9A5df2877a42460E9055C4134946668dfcf51f8",
+            "proxy": "0x7F896DDe137fBFc0347854fAa02E243aD6F2bE93",
+            "implementation": "0xEeD0E5AACe8Cee7c5fEDfCB858bcb2082e1B94EE"
+          }
+        },
+        "strategies": {
+          "AaveStrategyAvalancheWETH": "0x0a46a9716b4632a57863d52123c5c10fdf9e10f8"
+        }
+      },
+      "vaavax": {
+        "pool": {
+          "proxyAdmin": "0x53b7d29a0CC5451Eb2725f0E02fA9b7d14168226",
+          "proxy": "0x148a829492bEc827FE9638c690Ee6A71De6f1736",
+          "implementation": "0xd208121e66d017806a6f4Ec5f3Cc2CA1e887c70C",
+          "poolAccountant": {
+            "proxyAdmin": "0x53b7d29a0CC5451Eb2725f0E02fA9b7d14168226",
+            "proxy": "0x3Ad8cA4b9c651D75368812F6a0F3F18282381c28",
+            "implementation": "0xcE9053Ee524dCB628e1bC387fC6e341611eD1AF2"
+          }
+        },
+        "strategies": {
+          "AaveStrategyAvalancheAVAX": "0xABf9B38a967595eDC38D0E97CE2Eb213e445BF45"
+        }
       }
     },
     "mainnet": {
