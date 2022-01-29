@@ -253,6 +253,27 @@
           "RariFuseStrategy": "0x2962741a2aec7627F64E77a5808A025F49ea17DA",
           "VesperMakerStrategyWBTC": "0x1A3a83d1a9a667c61DF54b109ed88da58022f12b"
         }
+      },
+      "vewbtc_dai": {
+        "pool": {
+          "proxyAdmin": "0xe1444fEA423Bf8614c6E731C5BD5e45602AE6afC",
+          "proxy": "0x7a74B6D3A07D3249Ea2FBb58e47F0DaF6d6a2ebf",
+          "implementation": "0x84323D50425eA63E5D9cC493b47C58dfCFB64D68",
+          "poolAccountant": {
+            "proxyAdmin": "0xe1444fEA423Bf8614c6E731C5BD5e45602AE6afC",
+            "proxy": "0x11aAb1b00c62EA9528c3286C53c2308Aad6f64ea",
+            "implementation": "0xADb6a931af81FE7E2430e12e125d8f8a72769274"
+          }
+        },
+        "poolRewards": {
+          "proxyAdmin": "0xe1444fEA423Bf8614c6E731C5BD5e45602AE6afC",
+          "proxy": "0x92659c1293f74d76249a72601C9Bf36bf6d738cA",
+          "implementation": "0xacff2dc81fc8a99ec310E35DB006e36FC947F351"
+        },
+        "strategies": {
+          "EarnVesperMakerStrategyWBTC": "0x2740B8b29B229bD690252DBc5590A5c7416e44DC",
+          "EarnVesperStrategyWBTCDAI": "0x1Cd0f3bD73d60D56B487073A0caB2E8a9085CF08"
+        }
       }
     },
     "polygon": {
