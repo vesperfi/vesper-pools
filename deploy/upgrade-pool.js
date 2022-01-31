@@ -5,7 +5,11 @@ const PoolAccountantUpgrader = 'PoolAccountantUpgrader'
 const VPoolUpgrader = 'VPoolUpgrader'
 async function validateAndDeployUpgrader(name, deployments, deployer, targetChain) {
   const { deploy, execute, read } = deployments
-  let upgrader = await deployments.getOrNull(`${name}Upgrader`)
+  let upgraderName = `${name}Upgrader`
+  if (name === 'VETH') {
+    upgraderName = 'VPoolUpgrader'
+  }
+  let upgrader = await deployments.getOrNull(upgraderName)
   const proxy = await deployments.get(name)
   const admin = await read(DefaultProxyAdmin, 'getProxyAdmin', proxy.address).catch(() => null)
   let proxyAdminOwner
@@ -20,14 +24,14 @@ async function validateAndDeployUpgrader(name, deployments, deployer, targetChai
 
   if (upgrader) {
     // Found safe upgrader contract. Check ownership
-    proxyAdminOwner = await read(`${name}Upgrader`, 'owner').catch(() => null)
+    proxyAdminOwner = await read(upgraderName, 'owner').catch(() => null)
     if (proxyAdminOwner !== deployer) {
       throw new Error('Deployer is not owner of safe upgrader. Cant upgrade pool')
     }
   } else {
     // Deploy new custom proxy admin
     const MULTICALL = require(`../helper/${targetChain}/address`).MULTICALL
-    upgrader = await deploy(`${name}Upgrader`, {
+    upgrader = await deploy(upgraderName, {
       from: deployer,
       log: true,
       args: [MULTICALL],
