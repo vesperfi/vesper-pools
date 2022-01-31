@@ -569,6 +569,17 @@ const StrategyConfig = {
     setup: { ...setup },
   },
 
+  Convex4PoolStrategyMStablePoolMUSD: {
+    contract: 'Convex4PoolStrategyMStablePool',
+    type: StrategyTypes.CONVEX,
+    constructorArgs: {
+      swapManager,
+      collateralIdx: 0,
+      strategyName: 'Convex4PoolStrategyMStablePoolMUSD',
+    },
+    config: { ...config },
+    setup: { ...setup },
+  },
   Convex4MetaPoolStrategyFRAXPoolFRAX: {
     contract: 'Convex4MetaPoolStrategyFRAXPool',
     type: StrategyTypes.CONVEX,
