@@ -92,7 +92,7 @@ contract AaveStrategyAvalanche is Strategy {
     /// @notice Claim Aave rewards and convert to _toToken.
     function _claimRewardsAndConvertTo(address _toToken) internal override {
         uint256 _rewardAmount = _claimRewards();
-        if (_rewardAmount != 0) {
+        if (rewardToken != _toToken && _rewardAmount != 0) {
             _safeSwap(rewardToken, _toToken, _rewardAmount, 1);
         }
     }
