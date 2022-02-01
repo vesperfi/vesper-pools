@@ -20,7 +20,7 @@ contract EarnRariFuseStrategy is RariFuseStrategy, Earn {
 
     // solhint-enable no-empty-blocks
 
-    function totalValueCurrent() external virtual override(Strategy, CompoundStrategy) returns (uint256 _totalValue) {
+    function totalValueCurrent() public virtual override(Strategy, CompoundStrategy) returns (uint256 _totalValue) {
         _totalValue = totalValue();
     }
 

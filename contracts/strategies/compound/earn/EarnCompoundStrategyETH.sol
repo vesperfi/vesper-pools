@@ -11,10 +11,12 @@ contract EarnCompoundStrategyETH is EarnCompoundStrategy {
     constructor(
         address _pool,
         address _swapManager,
+        address _comptroller,
+        address _rewardToken,
         address _receiptToken,
         address _dripToken,
         string memory _name
-    ) EarnCompoundStrategy(_pool, _swapManager, _receiptToken, _dripToken, _name) {}
+    ) EarnCompoundStrategy(_pool, _swapManager, _comptroller, _rewardToken, _receiptToken, _dripToken, _name) {}
 
     /// @dev Only receive ETH from either cToken or WETH
     receive() external payable {

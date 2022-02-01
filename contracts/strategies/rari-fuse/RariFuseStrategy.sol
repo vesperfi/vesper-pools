@@ -22,6 +22,8 @@ contract RariFuseStrategy is CompoundStrategy {
         CompoundStrategy(
             _pool,
             _swapManager,
+            address(0), // Comptroller
+            address(0), // rewardToken
             _cTokenByUnderlying(_fusePoolId, address(IVesperPool(_pool).token())),
             _name
         )
