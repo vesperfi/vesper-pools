@@ -30,7 +30,7 @@ const deployFunction = async function ({ getNamedAccounts, deployments, poolConf
   // Prepare id of deployment, next deployment will be triggered if id is changed
   const poolVersion = await read(poolConfig.contractName, {}, 'VERSION')
 
-  deployFunction.id = `${poolConfig.poolParams[1]}-poolRewards-v${poolVersion}`
+  deployFunction.id = `${poolConfig.contractName}-poolRewards-v${poolVersion}`
 
   return true
 }
