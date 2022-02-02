@@ -74,6 +74,50 @@ const StrategyConfig = {
     config: { ...config }, // Shallow copy
     setup: { ...setup },
   },
+  TraderJoeCompoundStrategyAvalancheUSDC: {
+    contract: 'CompoundMultiRewardAvalancheStrategy',
+    type: StrategyTypes.TRADER_JOE,
+    constructorArgs: {
+      swapManager,
+      comptroller: Address.TraderJoe.COMPTROLLER,
+      rewardDistributor: Address.TraderJoe.REWARD_DISTRIBUTOR,
+      rewardToken: Address.TraderJoe.JOE,
+      receiptToken: Address.TraderJoe.jUSDC,
+      strategyName: 'TraderJoeCompoundStrategyAvalancheUSDC',
+    },
+    config: { ...config }, // Shallow copy
+    setup: { ...setup },
+  },
+
+  TraderJoeCompoundStrategyAvalancheAVAX: {
+    contract: 'CompoundMultiRewardAvalancheStrategy',
+    type: StrategyTypes.TRADER_JOE,
+    constructorArgs: {
+      swapManager,
+      comptroller: Address.TraderJoe.COMPTROLLER,
+      rewardDistributor: Address.TraderJoe.REWARD_DISTRIBUTOR,
+      rewardToken: Address.TraderJoe.JOE,
+      receiptToken: Address.TraderJoe.jAVAX,
+      strategyName: 'TraderJoeCompoundStrategyAvalancheAVAX',
+    },
+    config: { ...config }, // Shallow copy
+    setup: { ...setup },
+  },
+
+  BenqiCompoundStrategyAvalancheUSDC: {
+    contract: 'CompoundMultiRewardAvalancheStrategy',
+    type: StrategyTypes.COMPOUND,
+    constructorArgs: {
+      swapManager,
+      comptroller: Address.Benqi.COMPTROLLER,
+      rewardDistributor: Address.Benqi.REWARD_DISTRIBUTOR,
+      rewardToken: Address.Benqi.QI,
+      receiptToken: Address.Benqi.qiUSDC,
+      strategyName: 'BenqiCompoundStrategyAvalancheUSDC',
+    },
+    config: { ...config }, // Shallow copy
+    setup: { ...setup },
+  },
 }
 
 module.exports = Object.freeze(StrategyConfig)

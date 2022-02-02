@@ -36,6 +36,12 @@ const PoolConfig = {
     setup: { ...setup }, // Shallow copy
     rewards: { contract: 'PoolRewards', tokens: [] }, // no rewards
   },
+  VUSDC: {
+    contractName: 'VPool',
+    poolParams: ['vUSDC Pool', 'vUSDC', Address.USDC],
+    setup: { ...setup }, // Shallow copy
+    rewards: { contract: 'PoolRewards', tokens: [] }, // no rewards
+  },
 }
 
 module.exports = Object.freeze(PoolConfig)

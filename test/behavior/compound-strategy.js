@@ -8,9 +8,9 @@ const { adjustBalance } = require('../utils/balance')
 const { advanceBlock } = require('../utils/time')
 const hre = require('hardhat')
 const { ethers } = hre
-
 const { BigNumber: BN } = require('ethers')
 const address = require('../../helper/mainnet/address')
+const { getChain } = require('../utils/chains')
 const DECIMAL18 = BN.from('1000000000000000000')
 
 // Compound strategy specific tests
@@ -35,8 +35,11 @@ function shouldBehaveLikeCompoundStrategy(strategyIndex) {
       comptroller = await ethers.getContractAt('Comptroller', await strategy.COMPTROLLER())
     })
 
-    it('Should get COMP token as reserve token', async function () {
-      expect(await strategy.isReservedToken(comp.address)).to.be.equal(true, 'COMP token is reserved')
+    it('Should get rewardToken token as reserve token', async function () {
+      expect(await strategy.isReservedToken(await strategy.rewardToken())).to.be.equal(
+        true,
+        'rewardToken token is reserved',
+      )
     })
 
     it('Should get total value', async function () {
@@ -47,7 +50,7 @@ function shouldBehaveLikeCompoundStrategy(strategyIndex) {
     })
 
     it('Should claim COMP when rebalance is called', async function () {
-      if (comptroller.address !== address.Drops.COMPTROLLER) {
+      if (getChain() === 'mainnet' && comptroller.address !== address.Drops.COMPTROLLER) {
         // compAccrued doesn't increment in Drops Finance,
         // deposits and withdraws automatically claim rewards
         // Reference: https://shorturl.at/luJKP
@@ -67,26 +70,29 @@ function shouldBehaveLikeCompoundStrategy(strategyIndex) {
     })
 
     it('Should liquidate COMP when claimed by external source', async function () {
-      await deposit(pool, collateralToken, 1, user1)
-      await strategy.rebalance()
-      await swapper.swapEthForToken(10, comp.address, user2, strategy.address)
-      const afterSwap = await comp.balanceOf(strategy.address)
-      expect(afterSwap).to.be.gt(0, 'COMP balance should increase on strategy address')
-      await comptroller.claimComp(strategy.address, [token.address], { from: user1.address })
-      const afterClaim = await comp.balanceOf(strategy.address)
-      expect(afterClaim).to.be.gt(afterSwap, 'COMP balance increase after claim')
-      await advanceBlock(100)
-      await token.exchangeRateCurrent()
-      await strategy.rebalance()
-      const compBalance = await comp.balanceOf(strategy.address)
-      expect(compBalance).to.be.equal('0', 'COMP balance should be 0 on rebalance')
+      if (getChain() === 'mainnet') {
+        await deposit(pool, collateralToken, 1, user1)
+        await strategy.rebalance()
+        await swapper.swapEthForToken(10, comp.address, user2, strategy.address)
+        const afterSwap = await comp.balanceOf(strategy.address)
+        expect(afterSwap).to.be.gt(0, 'COMP balance should increase on strategy address')
+        await comptroller.claimComp(strategy.address, [token.address], { from: user1.address })
+        const afterClaim = await comp.balanceOf(strategy.address)
+        expect(afterClaim).to.be.gt(afterSwap, 'COMP balance increase after claim')
+        await advanceBlock(100)
+        await token.exchangeRateCurrent()
+        await strategy.rebalance()
+        const compBalance = await comp.balanceOf(strategy.address)
+        expect(compBalance).to.be.equal('0', 'COMP balance should be 0 on rebalance')
+      }
     })
 
     it('Should be able to withdraw amount when low liquidity for cETH', async function () {
       if (
-        token.address === address.Compound.cETH ||
-        token.address === address.Inverse.anETH ||
-        token.address === address.Drops.dETH
+        getChain() === 'mainnet' &&
+        (token.address === address.Compound.cETH ||
+          token.address === address.Inverse.anETH ||
+          token.address === address.Drops.dETH)
       ) {
         const cToken = await ethers.getContractAt('CToken', token.address)
         await deposit(pool, collateralToken, 2000, user1)
@@ -109,9 +115,10 @@ function shouldBehaveLikeCompoundStrategy(strategyIndex) {
 
     it('Should be able to withdraw amount when low liquidity for ERC20 cToken', async function () {
       if (
-        token.address !== address.Compound.cETH &&
-        token.address !== address.Inverse.anETH &&
-        token.address !== address.Drops.dETH
+        getChain() === 'mainnet' &&
+        (token.address === address.Compound.cETH ||
+          token.address === address.Inverse.anETH ||
+          token.address === address.Drops.dETH)
       ) {
         const cToken = await ethers.getContractAt('CToken', token.address)
         const depositAmount = await swapper.swapEthForToken(10, collateralToken.address, user1)

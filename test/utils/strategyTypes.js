@@ -4,6 +4,7 @@ const StrategyType = {
   AAVE_V1: 'aaveV1',
   ALPHA_LEND: 'alphaLend',
   COMPOUND: 'compound',
+  TRADER_JOE: 'traderJoe',
   AAVE_MAKER: 'aaveMaker',
   COMPOUND_MAKER: 'compoundMaker',
   VESPER_MAKER: 'vesperMaker',

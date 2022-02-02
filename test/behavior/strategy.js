@@ -7,6 +7,7 @@ const { constants } = require('@openzeppelin/test-helpers')
 const { getUsers, getEvent } = require('../utils/setupHelper')
 const { shouldBehaveLikeAaveStrategy } = require('../behavior/aave-strategy')
 const { shouldBehaveLikeCompoundStrategy } = require('../behavior/compound-strategy')
+const { shouldBehaveLikeTraderJoeStrategy } = require('../behavior/traderjoe-strategy')
 const { shouldBehaveLikeCompoundXYStrategy } = require('../behavior/compound-xy')
 const { shouldBehaveLikeCompoundLeverageStrategy } = require('../behavior/compound-leverage')
 const { shouldBehaveLikeMakerStrategy } = require('../behavior/maker-strategy')
@@ -36,6 +37,7 @@ function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
     [StrategyType.EARN_VESPER_MAKER]: shouldBehaveLikeEarnVesperMakerStrategy,
     [StrategyType.EARN_VESPER]: shouldBehaveLikeEarnVesperStrategy,
     [StrategyType.RARI_FUSE]: shouldBehaveLikeRariFuseStrategy,
+    [StrategyType.TRADER_JOE]: shouldBehaveLikeTraderJoeStrategy,
   }
 
   const ANY_ERC20 = hre.address.ANY_ERC20
