@@ -149,6 +149,8 @@ const StrategyConfig = {
     type: StrategyTypes.COMPOUND,
     constructorArgs: {
       swapManager,
+      comptroller: Address.Compound.COMPTROLLER,
+      rewardToken: Address.Compound.COMP,
       receiptToken: Address.Compound.cDAI,
       strategyName: 'CompoundStrategyDAI',
     },
@@ -161,6 +163,8 @@ const StrategyConfig = {
     type: StrategyTypes.COMPOUND,
     constructorArgs: {
       swapManager,
+      comptroller: Address.Compound.COMPTROLLER,
+      rewardToken: Address.Compound.COMP,
       receiptToken: Address.Compound.cLINK,
       strategyName: 'CompoundStrategyLINK',
     },
@@ -173,6 +177,8 @@ const StrategyConfig = {
     type: StrategyTypes.COMPOUND,
     constructorArgs: {
       swapManager,
+      comptroller: Address.Compound.COMPTROLLER,
+      rewardToken: Address.Compound.COMP,
       receiptToken: Address.Compound.cETH,
       strategyName: 'CompoundStrategyETH',
     },
@@ -185,6 +191,8 @@ const StrategyConfig = {
     type: StrategyTypes.COMPOUND,
     constructorArgs: {
       swapManager,
+      comptroller: Address.Compound.COMPTROLLER,
+      rewardToken: Address.Compound.COMP,
       receiptToken: Address.Compound.cUNI,
       strategyName: 'CompoundStrategyUNI',
     },
@@ -197,6 +205,8 @@ const StrategyConfig = {
     type: StrategyTypes.COMPOUND,
     constructorArgs: {
       swapManager,
+      comptroller: Address.Compound.COMPTROLLER,
+      rewardToken: Address.Compound.COMP,
       receiptToken: Address.Compound.cUSDC,
       strategyName: 'CompoundStrategyUSDC',
     },
@@ -209,6 +219,8 @@ const StrategyConfig = {
     type: StrategyTypes.COMPOUND,
     constructorArgs: {
       swapManager,
+      comptroller: Address.Compound.COMPTROLLER,
+      rewardToken: Address.Compound.COMP,
       receiptToken: Address.Compound.cUSDT,
       strategyName: 'CompoundStrategyUSDT',
     },
@@ -221,10 +233,40 @@ const StrategyConfig = {
     type: StrategyTypes.COMPOUND,
     constructorArgs: {
       swapManager,
+      comptroller: Address.Compound.COMPTROLLER,
+      rewardToken: Address.Compound.COMP,
       receiptToken: Address.Compound.cWBTC,
       strategyName: 'CompoundStrategyWBTC',
     },
     config: { ...config, debtRate: ethers.utils.parseUnits('1000000', 8).toString(), externalDepositFee: 0 },
+    setup: { ...setup },
+  },
+
+  InverseCompoundStrategyETH: {
+    contract: 'CompoundStrategyETH',
+    type: StrategyTypes.COMPOUND,
+    constructorArgs: {
+      swapManager,
+      comptroller: Address.Inverse.COMPTROLLER,
+      rewardToken: Address.Inverse.INV,
+      receiptToken: Address.Inverse.anETH,
+      strategyName: 'InverseCompoundStrategyETH',
+    },
+    config: { ...config },
+    setup: { ...setup },
+  },
+
+  DropsCompoundStrategyETH: {
+    contract: 'CompoundStrategyETH',
+    type: StrategyTypes.COMPOUND,
+    constructorArgs: {
+      swapManager,
+      comptroller: Address.Drops.COMPTROLLER,
+      rewardToken: Address.Drops.DOP,
+      receiptToken: Address.Drops.dETH,
+      strategyName: 'DropsCompoundStrategyETH',
+    },
+    config: { ...config },
     setup: { ...setup },
   },
 
@@ -233,6 +275,8 @@ const StrategyConfig = {
     type: StrategyTypes.EARN_COMPOUND,
     constructorArgs: {
       swapManager,
+      comptroller: Address.Compound.COMPTROLLER,
+      rewardToken: Address.Compound.COMP,
       receiptToken: Address.Compound.cETH,
       dripToken: Address.DAI,
       strategyName: 'EarnCompoundStrategyETH',
@@ -246,6 +290,8 @@ const StrategyConfig = {
     type: StrategyTypes.EARN_COMPOUND,
     constructorArgs: {
       swapManager,
+      comptroller: Address.Compound.COMPTROLLER,
+      rewardToken: Address.Compound.COMP,
       receiptToken: Address.Compound.cWBTC,
       dripToken: Address.DAI,
       name: 'EarnCompoundStrategyWBTC',
@@ -259,6 +305,8 @@ const StrategyConfig = {
     type: StrategyTypes.COMPOUND,
     constructorArgs: {
       swapManager,
+      comptroller: Address.Compound.COMPTROLLER,
+      rewardToken: Address.Compound.COMP,
       receiptToken: Address.Compound.cDAI,
       strategyName: 'CompoundCoverageStrategyDAI',
     },
@@ -271,6 +319,8 @@ const StrategyConfig = {
     type: StrategyTypes.COMPOUND,
     constructorArgs: {
       swapManager,
+      comptroller: Address.Compound.COMPTROLLER,
+      rewardToken: Address.Compound.COMP,
       receiptToken: Address.Compound.cDAI,
       strategyName: 'CompoundStableStrategyDAI',
     },
