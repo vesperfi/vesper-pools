@@ -9,7 +9,7 @@ contract AaveStrategyAvalanche is Strategy {
     using SafeERC20 for IERC20;
     // solhint-disable-next-line var-name-mixedcase
     string public NAME;
-    string public constant VERSION = "4.0.0";
+    string public constant VERSION = "4.0.1";
 
     bytes32 private constant AAVE_PROVIDER_ID = 0x0100000000000000000000000000000000000000000000000000000000000000;
     AaveLendingPool public aaveLendingPool;
