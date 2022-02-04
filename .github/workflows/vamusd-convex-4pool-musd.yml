@@ -6,7 +6,7 @@ on:
       - "contracts/strategies/Strategy.sol"
       - "contracts/strategies/curve/CrvBase.sol"
       - "contracts/strategies/convex/ConvexStrategyBase.sol"
-      - "contracts/strategies/convex/Convex4PoolStrategyMStablePool.sol"
+      - "contracts/strategies/convex/Convex4PoolStrategyMUSDPool.sol"
 
 jobs:
   vamusd-convex4p-strategy-test:

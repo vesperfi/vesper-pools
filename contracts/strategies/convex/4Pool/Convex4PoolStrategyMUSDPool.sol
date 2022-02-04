@@ -5,7 +5,7 @@ pragma solidity 0.8.3;
 import "./Convex4PoolStrategy.sol";
 
 //solhint-disable no-empty-blocks
-contract Convex4PoolStrategyMStablePool is Convex4PoolStrategy {
+contract Convex4PoolStrategyMUSDPool is Convex4PoolStrategy {
     // MUSD-3CRV Metapool
     // Composed of [ MUSD , [ DAI, USDC, USDT ]]
 

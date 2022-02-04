@@ -7,7 +7,7 @@ function prepareConfig(_strategies) {
   let strategies = _strategies
 
   if (!strategies) {
-    const strategy1 = strategyConfig.Convex4MetaPoolStrategyMStablePoolMUSD
+    const strategy1 = strategyConfig.Convex4MetaPoolStrategyMUSDPoolMUSD
     strategy1.config.debtRatio = 10000
     strategies = [strategy1]
   }

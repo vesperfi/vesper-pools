@@ -6,7 +6,7 @@ const { shouldBehaveLikeStrategy } = require('../behavior/strategy')
 const { strategyConfig } = require('../utils/chains').getChainData()
 
 describe('vMUSD Pool with Convex4PoolStrategy', function () {
-  const strategy1 = strategyConfig.Convex4PoolStrategyMStablePoolMUSD
+  const strategy1 = strategyConfig.Convex4PoolStrategyMUSDPoolMUSD
   strategy1.config.debtRatio = 10000
   const strategies = [strategy1]
   prepareConfig(strategies)
