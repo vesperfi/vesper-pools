@@ -181,11 +181,11 @@
           }
         },
         "poolRewards": {
-          "proxy": "0x59928b4b25da3633718B6DF4EA0655850899C88C",
-          "implementation": "0x175a7815393d4f2E71BA37f53afdF96278df18cE"
+          "proxy": "0x02c4Ca1773d3F5E33A307512bb6141e0e09b5f0a",
+          "implementation": "0xC51bcc7499D699908C439fe85ab7fFABbeB65000"
         },
         "strategies": {
-          "EarnVesperStrategyDAIPUNK": "0xE9b31C682Dce211AEBB03Db321103975015D395F"
+          "EarnVesperStrategyDAIPUNK": "0x3E281c4289b69573F0bD01Ab51C18A4f8144046f"
         }
       },
       "vaalusd": {

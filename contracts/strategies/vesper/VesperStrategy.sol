@@ -10,7 +10,7 @@ abstract contract VesperStrategy is Strategy {
 
     // solhint-disable-next-line var-name-mixedcase
     string public NAME;
-    string public constant VERSION = "4.0.0";
+    string public constant VERSION = "4.0.1";
 
     address internal immutable vsp;
     IVesperPool internal immutable vToken;
