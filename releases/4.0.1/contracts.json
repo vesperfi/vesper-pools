@@ -287,6 +287,9 @@
         "poolRewards": {
           "proxy": "0x968d6024e32d30a7334Ffc5373CcD97a3d199E94",
           "implementation": "0x233ADa5Dd2941AD71aD40e059878660fFA958319"
+        },
+        "strategies": {
+          "Convex4PoolStrategyMUSDPoolMUSD": "0x6A71539014C2B8c8ff961b91F559153aBA725Af3"
         }
       }
     },
