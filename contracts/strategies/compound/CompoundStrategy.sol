@@ -42,11 +42,7 @@ contract CompoundStrategy is Strategy {
      * @dev Report total value in collateral token
      */
     function totalValue() public view virtual override returns (uint256 _totalValue) {
-        if (rewardToken != address(0)) {
-            _totalValue = _calculateTotalValue(COMPTROLLER.compAccrued(address(this)));
-        } else {
-            _totalValue = _calculateTotalValue(0);
-        }
+        _totalValue = _calculateTotalValue((rewardToken != address(0)) ? _getRewardAccrued() : 0);
     }
 
     function totalValueCurrent() public virtual override returns (uint256 _totalValue) {
@@ -84,10 +80,14 @@ contract CompoundStrategy is Strategy {
     function _beforeMigration(address _newStrategy) internal virtual override {}
 
     /// @notice Claim comp
-    function _claimRewards() internal {
+    function _claimRewards() internal virtual {
         address[] memory _markets = new address[](1);
         _markets[0] = address(cToken);
         COMPTROLLER.claimComp(address(this), _markets);
+    }
+
+    function _getRewardAccrued() internal view virtual returns (uint256 _rewardAccrued) {
+        _rewardAccrued = COMPTROLLER.compAccrued(address(this));
     }
 
     /// @notice Claim COMP and convert COMP into collateral token.
