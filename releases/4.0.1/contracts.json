@@ -274,6 +274,23 @@
           "EarnVesperMakerStrategyWBTC": "0x2740B8b29B229bD690252DBc5590A5c7416e44DC",
           "EarnVesperStrategyWBTCDAI": "0x1Cd0f3bD73d60D56B487073A0caB2E8a9085CF08"
         }
+      },
+      "vamusd": {
+        "pool": {
+          "proxy": "0x83c608b3997db00B5C6D93746785857Cd22d4495",
+          "implementation": "0x1fE9E028329080B22073713a985768a7c90039c7",
+          "poolAccountant": {
+            "proxy": "0x963a9593C9fb4dE39C94452d3De437E8Ab1F7074",
+            "implementation": "0x4F193Be75CDCE0a28Aae09B9761B3bd46F67A7a1"
+          }
+        },
+        "poolRewards": {
+          "proxy": "0x968d6024e32d30a7334Ffc5373CcD97a3d199E94",
+          "implementation": "0x233ADa5Dd2941AD71aD40e059878660fFA958319"
+        },
+        "strategies": {
+          "Convex4PoolStrategyMUSDPoolMUSD": "0x6A71539014C2B8c8ff961b91F559153aBA725Af3"
+        }
       }
     },
     "polygon": {
