@@ -17,13 +17,23 @@ import "./interfaces/dydx/ISoloMargin.sol";
 abstract contract FlashLoanHelper {
     using SafeERC20 for IERC20;
 
-    AaveLendingPoolAddressesProvider internal constant AAVE_ADDRESSES_PROVIDER =
-        AaveLendingPoolAddressesProvider(0xB53C1a33016B2DC2fF3653530bfF1848a515c8c5);
+    //solhint-disable var-name-mixedcase
+    AaveLendingPoolAddressesProvider internal AAVE_ADDRESSES_PROVIDER;
+
     address internal constant SOLO = 0x1E0447b19BB6EcFdAe1e4AE1694b0C3659614e4e;
     uint256 public dyDxMarketId;
     bytes32 private constant AAVE_PROVIDER_ID = 0x0100000000000000000000000000000000000000000000000000000000000000;
     bool public isAaveActive = false;
     bool public isDyDxActive = false;
+
+    constructor(address _aaveAddressProvider) {
+        // aave provider ETH: 0xB53C1a33016B2DC2fF3653530bfF1848a515c8c5
+        // aave provider AVAX: 0xb6A86025F0FE1862B372cb0ca18CE3EDe02A318f
+
+        require(_aaveAddressProvider != address(0), "invalid-aave-provider");
+
+        AAVE_ADDRESSES_PROVIDER = AaveLendingPoolAddressesProvider(_aaveAddressProvider);
+    }
 
     function _updateAaveStatus(bool _status) internal {
         isAaveActive = _status;

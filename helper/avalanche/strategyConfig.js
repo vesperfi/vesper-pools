@@ -163,6 +163,22 @@ const StrategyConfig = {
     config: { ...config }, // Shallow copy
     setup: { ...setup },
   },
+
+  TraderJoeCompoundLeverageStrategyAvalancheWETH: {
+    contract: 'CompoundLeverageAvalancheStrategy',
+    type: StrategyTypes.COMPOUND_LEVERAGE,
+    constructorArgs: {
+      swapManager,
+      comptroller: Address.TraderJoe.COMPTROLLER,
+      rewardDistributor: Address.TraderJoe.REWARD_DISTRIBUTOR,
+      rewardToken: Address.TraderJoe.JOE,
+      aaveAddressProvider: Address.Aave.AddressProvider,
+      receiptToken: Address.TraderJoe.jWETH,
+      strategyName: 'TraderJoeCompoundStrategyAvalancheWETH',
+    },
+    config: { ...config }, // Shallow copy
+    setup: { ...setup },
+  },
 }
 
 module.exports = Object.freeze(StrategyConfig)
