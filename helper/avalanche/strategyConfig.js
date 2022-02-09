@@ -104,6 +104,51 @@ const StrategyConfig = {
     setup: { ...setup },
   },
 
+  TraderJoeCompoundStrategyAvalancheWETH: {
+    contract: 'CompoundMultiRewardAvalancheStrategy',
+    type: StrategyTypes.TRADER_JOE,
+    constructorArgs: {
+      swapManager,
+      comptroller: Address.TraderJoe.COMPTROLLER,
+      rewardDistributor: Address.TraderJoe.REWARD_DISTRIBUTOR,
+      rewardToken: Address.TraderJoe.JOE,
+      receiptToken: Address.TraderJoe.jWETH,
+      strategyName: 'TraderJoeCompoundStrategyAvalancheWETH',
+    },
+    config: { ...config }, // Shallow copy
+    setup: { ...setup },
+  },
+
+  TraderJoeCompoundStrategyAvalancheDAI: {
+    contract: 'CompoundMultiRewardAvalancheStrategy',
+    type: StrategyTypes.TRADER_JOE,
+    constructorArgs: {
+      swapManager,
+      comptroller: Address.TraderJoe.COMPTROLLER,
+      rewardDistributor: Address.TraderJoe.REWARD_DISTRIBUTOR,
+      rewardToken: Address.TraderJoe.JOE,
+      receiptToken: Address.TraderJoe.jDAI,
+      strategyName: 'TraderJoeCompoundStrategyAvalancheDAI',
+    },
+    config: { ...config }, // Shallow copy
+    setup: { ...setup },
+  },
+
+  TraderJoeCompoundStrategyAvalancheWBTC: {
+    contract: 'CompoundMultiRewardAvalancheStrategy',
+    type: StrategyTypes.TRADER_JOE,
+    constructorArgs: {
+      swapManager,
+      comptroller: Address.TraderJoe.COMPTROLLER,
+      rewardDistributor: Address.TraderJoe.REWARD_DISTRIBUTOR,
+      rewardToken: Address.TraderJoe.JOE,
+      receiptToken: Address.TraderJoe.jWBTC,
+      strategyName: 'TraderJoeCompoundStrategyAvalancheWBTC',
+    },
+    config: { ...config }, // Shallow copy
+    setup: { ...setup },
+  },
+
   BenqiCompoundStrategyAvalancheUSDC: {
     contract: 'CompoundMultiRewardAvalancheStrategy',
     type: StrategyTypes.COMPOUND,
