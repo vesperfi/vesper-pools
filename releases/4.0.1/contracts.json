@@ -19,7 +19,8 @@
           "implementation": "0x13A3f5769164D86CA87D70B006249B25F3429CFE"
         },
         "strategies": {
-          "AaveStrategyAvalancheDAI": "0x867E89E47b7c252F4D991DF75eBd2CFD9188B929"
+          "AaveStrategyAvalancheDAI": "0x867E89E47b7c252F4D991DF75eBd2CFD9188B929",
+          "TraderJoeCompoundStrategyAvalancheDAI": "0x6871c4e1582D36980Fa6ED0b482294325a83570e"
         }
       },
       "vaweth": {
