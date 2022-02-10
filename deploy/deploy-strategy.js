@@ -90,7 +90,12 @@ const deployFunction = async function ({ getNamedAccounts, deployments, poolConf
   await execute(strategyAlias, { from: deployer, log: true }, 'updateFeeCollector', setup.feeCollector)
   for (const keeper of setup.keepers) {
     await sleep(5000)
-    await execute(strategyAlias, { from: deployer, log: true }, 'addKeeper', keeper)
+    const _keepers = await (await ethers.getContractAt(strategyConfig.contract, deployed.address)).keepers()
+    if (_keepers.includes(keeper)) {
+      console.log('Keeper %s already added, skipping addKeeper', keeper)
+    } else {
+      await execute(strategyAlias, { from: deployer, log: true }, 'addKeeper', keeper)
+    }
   }
 
   // Execute Maker related configuration transactions
