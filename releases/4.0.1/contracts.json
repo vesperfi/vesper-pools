@@ -51,7 +51,8 @@
           }
         },
         "strategies": {
-          "AaveStrategyAvalancheAVAX": "0xef9a768880b4996cddB8C24a26F4b00d6e8ed35E"
+          "AaveStrategyAvalancheAVAX": "0xef9a768880b4996cddB8C24a26F4b00d6e8ed35E",
+          "TraderJoeCompoundStrategyAvalancheAVAX": "0xf4BB5824F3e5b6314e1c0A8BE60c733B3dB53786"
         }
       },
       "vawbtc": {
