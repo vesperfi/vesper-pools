@@ -35,7 +35,8 @@
           }
         },
         "strategies": {
-          "AaveStrategyAvalancheWETH": "0x0a46a9716b4632a57863d52123c5c10fdf9e10f8"
+          "AaveStrategyAvalancheWETH": "0x0a46A9716b4632A57863d52123c5c10FDF9e10F8",
+          "TraderJoeCompoundStrategyAvalancheWETH": "0xedDd1B6c51749183595D2c6e6140B73dE086ac68"
         }
       },
       "vaavax": {
