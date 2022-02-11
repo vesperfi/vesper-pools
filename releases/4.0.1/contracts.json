@@ -19,7 +19,8 @@
           "implementation": "0x13A3f5769164D86CA87D70B006249B25F3429CFE"
         },
         "strategies": {
-          "AaveStrategyAvalancheDAI": "0x867E89E47b7c252F4D991DF75eBd2CFD9188B929"
+          "AaveStrategyAvalancheDAI": "0x867E89E47b7c252F4D991DF75eBd2CFD9188B929",
+          "TraderJoeCompoundStrategyAvalancheDAI": "0x6871c4e1582D36980Fa6ED0b482294325a83570e"
         }
       },
       "vaweth": {
@@ -34,7 +35,8 @@
           }
         },
         "strategies": {
-          "AaveStrategyAvalancheWETH": "0x0a46a9716b4632a57863d52123c5c10fdf9e10f8"
+          "AaveStrategyAvalancheWETH": "0x0a46A9716b4632A57863d52123c5c10FDF9e10F8",
+          "TraderJoeCompoundStrategyAvalancheWETH": "0xedDd1B6c51749183595D2c6e6140B73dE086ac68"
         }
       },
       "vaavax": {
@@ -49,7 +51,8 @@
           }
         },
         "strategies": {
-          "AaveStrategyAvalancheAVAX": "0xef9a768880b4996cddB8C24a26F4b00d6e8ed35E"
+          "AaveStrategyAvalancheAVAX": "0xef9a768880b4996cddB8C24a26F4b00d6e8ed35E",
+          "TraderJoeCompoundStrategyAvalancheAVAX": "0xf4BB5824F3e5b6314e1c0A8BE60c733B3dB53786"
         }
       },
       "vawbtc": {
@@ -64,7 +67,8 @@
           }
         },
         "strategies": {
-          "AaveStrategyAvalancheWBTC": "0x604af53401f7e84C3c332CB3C64a3FfE48A68cBf"
+          "AaveStrategyAvalancheWBTC": "0x604af53401f7e84C3c332CB3C64a3FfE48A68cBf",
+          "TraderJoeCompoundStrategyAvalancheWBTC": "0xeF8737Ec1180ddaD26438e4675bCFE9773A0E8c8"
         }
       },
       "vausdc": {
@@ -79,7 +83,8 @@
           }
         },
         "strategies": {
-          "AaveStrategyAvalancheUSDC": "0x718E58C448116FE7315caEE135b12793AFc4FDf4"
+          "AaveStrategyAvalancheUSDC": "0x718E58C448116FE7315caEE135b12793AFc4FDf4",
+          "TraderJoeCompoundStrategyAvalancheUSDC": "0xe25d8F3F659E2a44602eC91538F9818793fd844F"
         }
       }
     },
