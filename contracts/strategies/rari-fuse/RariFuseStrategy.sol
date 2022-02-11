@@ -10,6 +10,10 @@ import "../../interfaces/rari-fuse/IFusePoolDirectory.sol";
 contract RariFuseStrategy is CompoundStrategy {
     using SafeERC20 for IERC20;
     uint256 public fusePoolId;
+    address public rewardDistributor;
+
+    bool public poolWithRewards;
+
     address private constant FUSE_POOL_DIRECTORY = 0x835482FE0532f169024d5E9410199369aAD5C77E;
     event FusePoolChanged(uint256 indexed newFusePoolId, address indexed oldCToken, address indexed newCToken);
 
@@ -17,6 +21,7 @@ contract RariFuseStrategy is CompoundStrategy {
         address _pool,
         address _swapManager,
         uint256 _fusePoolId,
+        bool _poolWithRewards,
         string memory _name
     )
         CompoundStrategy(
@@ -29,6 +34,10 @@ contract RariFuseStrategy is CompoundStrategy {
         )
     {
         fusePoolId = _fusePoolId;
+        poolWithRewards = _poolWithRewards;
+
+        // Find and set the rewardToken from the fuse pool data
+        _setRewardToken();
     }
 
     // solhint-enable no-empty-blocks
@@ -60,10 +69,6 @@ contract RariFuseStrategy is CompoundStrategy {
         fusePoolId = _newPoolId;
     }
 
-    function isReservedToken(address _token) public view override returns (bool) {
-        return _token == address(cToken);
-    }
-
     /**
      * @notice Gets the cToken to mint for a Fuse Pool
      * @param _poolId Fuse Pool ID
@@ -81,22 +86,29 @@ contract RariFuseStrategy is CompoundStrategy {
         return _cToken;
     }
 
+    // Automatically finds rewardToken set for the current Fuse Pool
+    function _setRewardToken() internal virtual {
+        if (poolWithRewards == true) {
+            (, , address _comptroller, , ) = IFusePoolDirectory(FUSE_POOL_DIRECTORY).pools(fusePoolId);
+            address _rewardDistributor = IComptroller(_comptroller).rewardsDistributors(0);
+
+            if (_rewardDistributor != address(0)) {
+                rewardDistributor = _rewardDistributor;
+                rewardToken = IRariRewardDistributor(_rewardDistributor).rewardToken();
+            }
+        }
+    }
+
+    /// @notice Claim rewards from Fuse Pool' rewardDistributor
+    function _claimRewards() internal virtual override {
+        IRariRewardDistributor(rewardDistributor).claimRewards(address(this));
+    }
+
+    /// @notice Get rewards accrued in Fuse Pool' rewardDistributor
+    function _getRewardAccrued() internal view virtual override returns (uint256 _rewardAccrued) {
+        _rewardAccrued = IRariRewardDistributor(rewardDistributor).compAccrued(address(this));
+    }
+
     // solhint-disable-next-line
     function _beforeMigration(address _newStrategy) internal override {}
-
-    /**
-     * @notice Calculate earning and withdraw it from Rari Fuse
-     * @dev If somehow we got some collateral token in strategy then we want to
-     *  include those in profit. That's why we used 'return' outside 'if' condition.
-     * @param _totalDebt Total collateral debt of this strategy
-     * @return profit in collateral token
-     */
-    function _realizeProfit(uint256 _totalDebt) internal virtual override returns (uint256) {
-        uint256 _collateralBalance = _convertToCollateral(cToken.balanceOf(address(this)));
-
-        if (_collateralBalance > _totalDebt) {
-            _withdrawHere(_collateralBalance - _totalDebt);
-        }
-        return collateralToken.balanceOf(address(this));
-    }
 }

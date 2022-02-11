@@ -12,9 +12,10 @@ contract EarnRariFuseStrategyETH is EarnRariFuseStrategy {
         address _pool,
         address _swapManager,
         uint256 _fusePoolId,
+        bool _poolWithRewards,
         address _dripToken,
         string memory _name
-    ) EarnRariFuseStrategy(_pool, _swapManager, _fusePoolId, _dripToken, _name) {}
+    ) EarnRariFuseStrategy(_pool, _swapManager, _fusePoolId, _poolWithRewards, _dripToken, _name) {}
 
     function migrateFusePool(uint256 _newPoolId) external override onlyKeeper {
         address _newCToken = _cTokenByUnderlying(_newPoolId, address(collateralToken));

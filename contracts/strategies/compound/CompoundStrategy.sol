@@ -17,7 +17,7 @@ contract CompoundStrategy is Strategy {
 
     // solhint-disable-next-line var-name-mixedcase
     Comptroller public immutable COMPTROLLER;
-    address public immutable rewardToken;
+    address public rewardToken;
 
     constructor(
         address _pool,

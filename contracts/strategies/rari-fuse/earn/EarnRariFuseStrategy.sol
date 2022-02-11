@@ -14,9 +14,10 @@ contract EarnRariFuseStrategy is RariFuseStrategy, Earn {
         address _pool,
         address _swapManager,
         uint256 _fusePoolId,
+        bool _poolWithRewards,
         address _dripToken,
         string memory _name
-    ) RariFuseStrategy(_pool, _swapManager, _fusePoolId, _name) Earn(_dripToken) {}
+    ) RariFuseStrategy(_pool, _swapManager, _fusePoolId, _poolWithRewards, _name) Earn(_dripToken) {}
 
     // solhint-enable no-empty-blocks
 
@@ -29,14 +30,17 @@ contract EarnRariFuseStrategy is RariFuseStrategy, Earn {
     }
 
     // solhint-disable-next-line
-    function _claimRewardsAndConvertTo(address _toToken) internal override(Strategy, CompoundStrategy) {}
+    function _claimRewardsAndConvertTo(address _toToken) internal override(Strategy, CompoundStrategy) {
+        CompoundStrategy._claimRewardsAndConvertTo(_toToken);
+    }
 
     function _realizeProfit(uint256 _totalDebt)
         internal
         virtual
-        override(Strategy, RariFuseStrategy)
+        override(Strategy, CompoundStrategy)
         returns (uint256)
     {
+        _claimRewardsAndConvertTo(address(dripToken));
         uint256 _collateralBalance = _convertToCollateral(cToken.balanceOf(address(this)));
         if (_collateralBalance > _totalDebt) {
             _withdrawHere(_collateralBalance - _totalDebt);
