@@ -364,6 +364,18 @@ const StrategyConfig = {
     setup: { ...setup },
   },
 
+  CompoundLeverageStrategyWBTC: {
+    contract: 'CompoundLeverageStrategyWBTC',
+    type: StrategyTypes.COMPOUND_LEVERAGE,
+    constructorArgs: {
+      swapManager,
+      receiptToken: Address.Compound.cWBTC,
+      // There is no strategy name param in Compound Leverage
+    },
+    config: { ...config },
+    setup: { ...setup },
+  },
+
   CompoundXYStrategyETH: {
     contract: 'CompoundXYStrategyETH',
     type: StrategyTypes.COMPOUND_XY,
