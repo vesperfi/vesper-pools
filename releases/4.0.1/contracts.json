@@ -252,6 +252,7 @@
           "implementation": "0xe583A2e073b5CC3853fAda6E33fC2F6F4e29a0bB"
         },
         "strategies": {
+          "CompoundLeverageStrategyWBTC": "0xBE699fE81a8a4edb135e47BB5885A51FC58F0C39",
           "Convex4MetaPoolStrategyIBBTCPoolWBTC": "0x4837d515320e227167d70992D50f70fACD0A68aE",
           "ConvexSBTCStrategyWBTC": "0x43CeCF2e018FEE7EE94410f85FcefeD2a3843ef2",
           "CrvsBTCStrategyWBTC": "0x867FC11B40351451d1dc3114A4204B2444b94B32",
