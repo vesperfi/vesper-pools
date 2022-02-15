@@ -12,9 +12,8 @@ contract RariFuseStrategyETH is RariFuseStrategy {
         address _pool,
         address _swapManager,
         uint256 _fusePoolId,
-        bool _poolWithRewards,
         string memory _name
-    ) RariFuseStrategy(_pool, _swapManager, _fusePoolId, _poolWithRewards, _name) {}
+    ) RariFuseStrategy(_pool, _swapManager, _fusePoolId, _name) {}
 
     /// @dev Only receive ETH from either cToken or WETH
     receive() external payable {
