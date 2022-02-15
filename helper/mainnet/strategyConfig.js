@@ -395,6 +395,7 @@ const StrategyConfig = {
     constructorArgs: {
       swapManager,
       fusePoolId: 23, // default
+      poolWithRewards: false,
       strategyName: 'RariFuseStrategy',
     },
     config: { ...config },
@@ -407,17 +408,33 @@ const StrategyConfig = {
     constructorArgs: {
       swapManager,
       fusePoolId: 23, // default
+      poolWithRewards: false,
       strategyName: 'RariFuseStrategyETH',
     },
     config: { ...config },
     setup: { ...setup },
   },
+
+  RariFuseStrategyDAI: {
+    contract: 'RariFuseStrategy',
+    type: StrategyTypes.RARI_FUSE,
+    constructorArgs: {
+      swapManager,
+      fusePoolId: 8,
+      poolWithRewards: true,
+      strategyName: 'RariFuseStrategyDAI',
+    },
+    config: { ...config },
+    setup: { ...setup },
+  },
+
   EarnRariFuseStrategy: {
     contract: 'EarnRariFuseStrategy',
     type: StrategyTypes.EARN_RARI_FUSE,
     constructorArgs: {
       swapManager,
       fusePoolId: 23, // default,
+      poolWithRewards: false,
       dripToken: Address.DAI,
       strategyName: 'EarnRariFuseStrategy',
     },
@@ -431,6 +448,7 @@ const StrategyConfig = {
     constructorArgs: {
       swapManager,
       fusePoolId: 23, // default
+      poolWithRewards: false,
       dripToken: Address.DAI,
       strategyName: 'EarnRariFuseStrategyETH',
     },
