@@ -41,6 +41,12 @@ module.exports = {
       gas: 6700000,
       accounts: { mnemonic: process.env.MNEMONIC || junk },
     },
+    goerli: {
+      url: process.env.NODE_URL,
+      chainId: 5,
+      gas: 12000000,
+      accounts: { mnemonic: process.env.MNEMONIC || junk },
+    },
     polygon: {
       url: process.env.NODE_URL,
       chainId: 137,
