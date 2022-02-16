@@ -14,10 +14,9 @@ contract EarnRariFuseStrategy is RariFuseStrategy, Earn {
         address _pool,
         address _swapManager,
         uint256 _fusePoolId,
-        bool _poolWithRewards,
         address _dripToken,
         string memory _name
-    ) RariFuseStrategy(_pool, _swapManager, _fusePoolId, _poolWithRewards, _name) Earn(_dripToken) {}
+    ) RariFuseStrategy(_pool, _swapManager, _fusePoolId, _name) Earn(_dripToken) {}
 
     // solhint-enable no-empty-blocks
 

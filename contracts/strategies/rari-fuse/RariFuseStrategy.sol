@@ -12,8 +12,6 @@ contract RariFuseStrategy is CompoundStrategy {
     uint256 public fusePoolId;
     address public rewardDistributor;
 
-    bool public poolWithRewards;
-
     address private constant FUSE_POOL_DIRECTORY = 0x835482FE0532f169024d5E9410199369aAD5C77E;
     event FusePoolChanged(uint256 indexed newFusePoolId, address indexed oldCToken, address indexed newCToken);
 
@@ -21,7 +19,6 @@ contract RariFuseStrategy is CompoundStrategy {
         address _pool,
         address _swapManager,
         uint256 _fusePoolId,
-        bool _poolWithRewards,
         string memory _name
     )
         CompoundStrategy(
@@ -34,7 +31,6 @@ contract RariFuseStrategy is CompoundStrategy {
         )
     {
         fusePoolId = _fusePoolId;
-        poolWithRewards = _poolWithRewards;
 
         // Find and set the rewardToken from the fuse pool data
         _setRewardToken();
@@ -88,14 +84,36 @@ contract RariFuseStrategy is CompoundStrategy {
 
     // Automatically finds rewardToken set for the current Fuse Pool
     function _setRewardToken() internal virtual {
-        if (poolWithRewards == true) {
-            (, , address _comptroller, , ) = IFusePoolDirectory(FUSE_POOL_DIRECTORY).pools(fusePoolId);
-            address _rewardDistributor = IComptroller(_comptroller).rewardsDistributors(0);
+        (, , address _comptroller, , ) = IFusePoolDirectory(FUSE_POOL_DIRECTORY).pools(fusePoolId);
 
-            if (_rewardDistributor != address(0)) {
-                rewardDistributor = _rewardDistributor;
-                rewardToken = IRariRewardDistributor(_rewardDistributor).rewardToken();
-            }
+        uint256 _success;
+        address _rewardDistributor;
+        bytes4 _selector = IComptroller(_comptroller).rewardsDistributors.selector;
+
+        // Low level static call to prevent revert in case the Comptroller doesn't have
+        // rewardsDistributors function exposed
+        // which may happen to older Fuse Pools
+
+        assembly {
+            let x := mload(0x40) // Find empty storage location using "free memory pointer"
+            mstore(x, _selector) // Place signature at beginning of empty storage
+            mstore(add(x, 0x04), 0) // Place first argument directly next to signature
+
+            _success := staticcall(
+                30000, // 30k gas
+                _comptroller, // To addr
+                x, // Inputs are stored at location x
+                0x24, // Inputs are 36 bytes long
+                x, // Store output over input (saves space)
+                0x20
+            ) // Outputs are 32 bytes long
+
+            _rewardDistributor := mload(x) // Load the result
+        }
+
+        if (_rewardDistributor != address(0)) {
+            rewardDistributor = _rewardDistributor;
+            rewardToken = IRariRewardDistributor(_rewardDistributor).rewardToken();
         }
     }
 
