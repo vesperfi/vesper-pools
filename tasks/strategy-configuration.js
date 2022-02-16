@@ -1,5 +1,7 @@
 'use strict'
 const _ = require('lodash')
+const fs = require('fs')
+const copy = require('recursive-copy')
 
 // Prepare constructor args keys
 // eslint-disable-next-line complexity
@@ -105,6 +107,16 @@ task('strategy-configuration', 'Prepare strategy configuration for deployment')
 
     // Set configuration in hre
     hre.strategyConfig = config
+
+    // For localhost deployment, if pool dir do not exits, then copy from mainnet.
+    const networkDir = `./deployments/${hre.network.name}`
+    const poolDir = `${networkDir}/${hre.poolName}`
+    if (hre.network.name === 'localhost' && !fs.existsSync(poolDir)) {
+      const mainnetDir = `./deployments/mainnet/${hre.poolName}`
+      if (fs.existsSync(mainnetDir)) {
+        await copy(mainnetDir, poolDir, { overwrite: true })
+      }
+    }
   })
 
 module.exports = {}

@@ -152,6 +152,7 @@ task('deploy-pool', 'Deploy vesper pool')
     }
     // Set pool config in hre to use later in deploy scripts
     hre.poolConfig = require(`../helper/${targetChain}/poolConfig`)[pool.toUpperCase()]
+    hre.poolName = pool.toLowerCase()
 
     if (pool.includes('VFR')) {
       validatePoolConfig(hre.poolConfig.Coverage, targetChain)
