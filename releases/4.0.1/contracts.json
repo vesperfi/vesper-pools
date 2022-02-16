@@ -300,13 +300,13 @@
       },
       "veeth_dai": {
         "pool": {
-          "proxyAdmin": "0xe1444fEA423Bf8614c6E731C5BD5e45602AE6afC",
+          "proxyAdmin": "0x47046Cb201C6be61e9f3cC3B700358150336a3B8",
           "proxy": "0xA89566489E932a2d334b9eFF7884Feb21a07d2B3",
-          "implementation": "0x804F330F9f55623A50BEFdf4a18812a532c82EA3",
+          "implementation": "0xD6108a9da51211a039e0547fE981803Bd948d91f",
           "poolAccountant": {
-            "proxyAdmin": "0xe1444fEA423Bf8614c6E731C5BD5e45602AE6afC",
+            "proxyAdmin": "0x0e8Fde7771899413B73613d78AD9E14BdA807C60",
             "proxy": "0xfb7fa759Fb93e56e1dCd2f0Cd7098369c624eB44",
-            "implementation": "0x8Ad5b311a7d9111BCC3E92811cd23dcE9Ba62E0a"
+            "implementation": "0x99Fa9307f017db0d64498e7d1CcA71e977678671"
           }
         },
         "poolRewards": {
