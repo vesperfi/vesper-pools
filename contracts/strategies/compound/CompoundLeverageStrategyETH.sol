@@ -14,7 +14,7 @@ contract CompoundLeverageStrategyETH is CompoundLeverageStrategy {
         address _comptroller,
         address _rewardDistributor,
         address _rewardToken,
-        address _aaveAddressProvider,
+        address _aaveAddressesProvider,
         address _receiptToken,
         string memory _name
     )
@@ -24,7 +24,7 @@ contract CompoundLeverageStrategyETH is CompoundLeverageStrategy {
             _comptroller,
             _rewardDistributor,
             _rewardToken,
-            _aaveAddressProvider,
+            _aaveAddressesProvider,
             _receiptToken,
             _name
         )

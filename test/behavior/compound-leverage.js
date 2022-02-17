@@ -200,7 +200,7 @@ function shouldBehaveLikeCompoundLeverageStrategy(strategyIndex) {
     it('Should claim rewardToken when rebalance is called', async function () {
       async function rewardAccrued() {
         if (getChain() === 'mainnet') {
-          const comptroller = await ethers.getContractAt('Comptroller', await strategy.COMPTROLLER())
+          const comptroller = await ethers.getContractAt('Comptroller', await strategy.comptroller())
           return comptroller.compAccrued(strategy.address)
         }
         // avalanche
@@ -228,7 +228,7 @@ function shouldBehaveLikeCompoundLeverageStrategy(strategyIndex) {
 
     it('Should liquidate rewardToken when claimed by external source', async function () {
       await strategy.connect(governor.signer).updateSwapSlippage('1000')
-      const comptroller = await strategy.COMPTROLLER()
+      const comptroller = await strategy.comptroller()
       const rewardToken = await ethers.getContractAt('IERC20', strategy.rewardToken())
       await deposit(pool, collateralToken, 10, user2)
       await strategy.connect(governor.signer).rebalance()

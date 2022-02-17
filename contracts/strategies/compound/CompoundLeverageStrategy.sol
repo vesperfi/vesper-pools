@@ -24,8 +24,7 @@ contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
     IUniswapV3Oracle internal constant ORACLE = IUniswapV3Oracle(0x0F1f5A87f99f0918e6C81F16E59F3518698221Ff);
     uint32 internal constant TWAP_PERIOD = 3600;
 
-    // solhint-disable-next-line var-name-mixedcase
-    Comptroller public immutable COMPTROLLER;
+    Comptroller public immutable comptroller;
     address public immutable rewardToken;
     address public rewardDistributor;
 
@@ -42,13 +41,13 @@ contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
         address _comptroller,
         address _rewardDistributor,
         address _rewardToken,
-        address _aaveAddressProvider,
+        address _aaveAddressesProvider,
         address _receiptToken,
         string memory _name
-    ) Strategy(_pool, _swapManager, _receiptToken) FlashLoanHelper(_aaveAddressProvider) {
+    ) Strategy(_pool, _swapManager, _receiptToken) FlashLoanHelper(_aaveAddressesProvider) {
         NAME = _name;
         require(_comptroller != address(0), "comptroller-address-is-zero");
-        COMPTROLLER = Comptroller(_comptroller);
+        comptroller = Comptroller(_comptroller);
         rewardToken = _rewardToken;
 
         require(_receiptToken != address(0), "cToken-address-is-zero");
@@ -65,7 +64,7 @@ contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
      * @param _maxBorrowRatio Maximum % we want to borrow
      */
     function updateBorrowRatio(uint256 _minBorrowRatio, uint256 _maxBorrowRatio) external onlyGovernor {
-        (, uint256 _collateralFactor, ) = COMPTROLLER.markets(address(cToken));
+        (, uint256 _collateralFactor, ) = comptroller.markets(address(cToken));
         require(_maxBorrowRatio < (_collateralFactor / 1e14), "invalid-max-borrow-limit");
         require(_maxBorrowRatio > _minBorrowRatio, "max-should-be-higher-than-min");
         emit UpdatedBorrowRatio(minBorrowRatio, _minBorrowRatio, maxBorrowRatio, _maxBorrowRatio);
@@ -197,7 +196,7 @@ contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
 
     /// @notice Get main Rewards accrued
     function _getRewardAccrued() internal view virtual returns (uint256 _rewardAccrued) {
-        _rewardAccrued = COMPTROLLER.compAccrued(address(this));
+        _rewardAccrued = comptroller.compAccrued(address(this));
     }
 
     /**
@@ -222,7 +221,7 @@ contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
     function _claimRewards() internal virtual {
         address[] memory _markets = new address[](1);
         _markets[0] = address(cToken);
-        COMPTROLLER.claimComp(address(this), _markets);
+        comptroller.claimComp(address(this), _markets);
     }
 
     /// @notice Claim rewardToken and convert rewardToken into collateral token.
@@ -311,7 +310,7 @@ contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
             return 0;
         }
 
-        (, uint256 collateralFactor, ) = COMPTROLLER.markets(address(cToken));
+        (, uint256 collateralFactor, ) = comptroller.markets(address(cToken));
 
         if (_shouldRepay) {
             amount = _normalDeleverage(_adjustBy, _supply, _borrow, collateralFactor);

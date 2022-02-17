@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 pragma solidity 0.8.3;
 
 import "./CompoundLeverageStrategy.sol";
@@ -55,8 +57,8 @@ contract CompoundLeverageAvalancheStrategy is CompoundLeverageStrategy {
 
     /// @notice Claim Protocol rewards + AVAX
     function _claimRewards() internal override {
-        ComptrollerMultiReward(address(COMPTROLLER)).claimReward(0, address(this)); // Claim protocol rewards
-        ComptrollerMultiReward(address(COMPTROLLER)).claimReward(1, address(this)); // Claim native AVAX (optional)
+        ComptrollerMultiReward(address(comptroller)).claimReward(0, address(this)); // Claim protocol rewards
+        ComptrollerMultiReward(address(comptroller)).claimReward(1, address(this)); // Claim native AVAX (optional)
     }
 
     function _safeSwap(
