@@ -333,8 +333,12 @@ const StrategyConfig = {
     type: StrategyTypes.COMPOUND_LEVERAGE,
     constructorArgs: {
       swapManager,
+      rewardDistributor: Address.Compound.COMPTROLLER,
+      comptroller: Address.Compound.COMPTROLLER,
+      rewardToken: Address.Compound.COMP,
+      aaveAddressProvider: Address.Aave.AddressProvider,
       receiptToken: Address.Compound.cETH,
-      // There is no strategy name param in Compound Leverage
+      strategyName: 'CompoundLeverageStrategyETH',
     },
     config: { ...config },
     setup: { ...setup },
@@ -345,8 +349,12 @@ const StrategyConfig = {
     type: StrategyTypes.COMPOUND_LEVERAGE,
     constructorArgs: {
       swapManager,
+      rewardDistributor: Address.Compound.COMPTROLLER,
+      comptroller: Address.Compound.COMPTROLLER,
+      rewardToken: Address.Compound.COMP,
+      aaveAddressProvider: Address.Aave.AddressProvider,
       receiptToken: Address.Compound.cUNI,
-      // There is no strategy name param in Compound Leverage
+      strategyName: 'CompoundLeverageStrategyUNI',
     },
     config: { ...config },
     setup: { ...setup },
@@ -357,20 +365,28 @@ const StrategyConfig = {
     type: StrategyTypes.COMPOUND_LEVERAGE,
     constructorArgs: {
       swapManager,
+      rewardDistributor: Address.Compound.COMPTROLLER,
+      comptroller: Address.Compound.COMPTROLLER,
+      rewardToken: Address.Compound.COMP,
+      aaveAddressProvider: Address.Aave.AddressProvider,
       receiptToken: Address.Compound.cLINK,
-      // There is no strategy name param in Compound Leverage
+      strategyName: 'CompoundLeverageStrategyLINK',
     },
     config: { ...config },
     setup: { ...setup },
   },
 
   CompoundLeverageStrategyWBTC: {
-    contract: 'CompoundLeverageStrategyWBTC',
+    contract: 'CompoundLeverageStrategy',
     type: StrategyTypes.COMPOUND_LEVERAGE,
     constructorArgs: {
       swapManager,
+      rewardDistributor: Address.Compound.COMPTROLLER,
+      comptroller: Address.Compound.COMPTROLLER,
+      rewardToken: Address.Compound.COMP,
+      aaveAddressProvider: Address.Aave.AddressProvider,
       receiptToken: Address.Compound.cWBTC,
-      // There is no strategy name param in Compound Leverage
+      strategyName: 'CompoundLeverageStrategyWBTC',
     },
     config: { ...config },
     setup: { ...setup },

@@ -3,10 +3,19 @@
 pragma solidity 0.8.3;
 import "./ICompound.sol";
 
-interface ComptrollerMultiReward is Comptroller {
+interface ComptrollerMultiReward {
     function claimReward(uint8 rewardType, address holder) external;
 
     function rewardDistributor() external view returns (address);
+
+    function markets(address market)
+        external
+        view
+        returns (
+            bool isListed,
+            uint256 collateralFactorMantissa,
+            uint8 version
+        );
 }
 
 interface IRewardDistributor {
