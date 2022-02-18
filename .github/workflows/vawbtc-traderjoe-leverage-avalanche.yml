@@ -1,0 +1,31 @@
+name: vaWBTC with TraderJoe Compound Leverage
+on:
+  pull_request:
+    paths:
+      - "test/vawbtc/trader-joe-leverage.js"
+      - "contracts/strategies/Strategy.sol"
+      - "contracts/strategies/compound/CompoundLeverageStrategy.sol"
+      - "contracts/strategies/compound/CompoundLeverageAvalancheStrategy.sol"      
+
+jobs:
+  vawbtc-traderjoe-leverage-strategy-test:
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: "https://api.avax.network/ext/bc/C/rpc"
+      TEST_CHAIN: "avalanche"
+      BLOCK_NUMBER: 11068408 
+    steps:
+      - uses: actions/checkout@v2.3.1
+        with:
+          submodules: true
+      
+      - name: Use Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version-file: '.nvmrc'
+
+      - name: Run npm install with node v${{ matrix.node }}
+        run: npm install
+
+      - name: Running tests for vaWBTC TraderJoe Compound Leverage
+        run: npm test "test/vawbtc/trader-joe-leverage.js"
