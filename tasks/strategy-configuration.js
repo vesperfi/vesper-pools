@@ -108,13 +108,13 @@ task('strategy-configuration', 'Prepare strategy configuration for deployment')
     // Set configuration in hre
     hre.strategyConfig = config
 
-    // For localhost deployment, if pool dir do not exits, then copy from mainnet.
+    // For localhost deployment, if pool dir do not exits, then copy from targetChain.
     const networkDir = `./deployments/${hre.network.name}`
     const poolDir = `${networkDir}/${hre.poolName}`
     if (hre.network.name === 'localhost' && !fs.existsSync(poolDir)) {
-      const mainnetDir = `./deployments/mainnet/${hre.poolName}`
-      if (fs.existsSync(mainnetDir)) {
-        await copy(mainnetDir, poolDir, { overwrite: true })
+      const targetChainDir = `./deployments/${targetChain}/${hre.poolName}`
+      if (fs.existsSync(targetChainDir)) {
+        await copy(targetChainDir, poolDir, { overwrite: true })
       }
     }
   })
