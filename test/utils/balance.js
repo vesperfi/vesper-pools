@@ -2,6 +2,7 @@
 
 const hre = require('hardhat')
 const Address = require('../../helper/mainnet/address')
+const AvalancheAddress = require('../../helper/avalanche/address')
 const ethers = hre.ethers
 const { BigNumber } = require('ethers')
 const { hexlify, solidityKeccak256, zeroPad, getAddress } = ethers.utils
@@ -18,6 +19,7 @@ const slots = {
   [Address.ALUSD]: 1,
   '0x5d3a536E4D6DbD6114cc1Ead35777bAB948E3643': 14, // cDAI
   '0xc00e94Cb662C3520282E6f5717214004A7f26888': 1, // COMP
+  [AvalancheAddress.DAI]: 0,
 }
 
 /**
