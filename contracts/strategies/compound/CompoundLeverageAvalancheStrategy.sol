@@ -34,10 +34,8 @@ contract CompoundLeverageAvalancheStrategy is CompoundLeverageStrategy {
         WETH = WAVAX;
     }
 
-    // Allow to receive avax from rewardDistributor only
-    receive() external payable {
-        require(msg.sender == rewardDistributor, "not-allowed-to-receive-avax");
-    }
+    //solhint-disable-next-line no-empty-blocks
+    receive() external payable {}
 
     /// @notice Approve all required tokens
     function _approveToken(uint256 _amount) internal virtual override {

@@ -197,7 +197,7 @@ const StrategyConfig = {
   },
 
   BenqiCompoundLeverageStrategyAvalancheAVAX: {
-    contract: 'CompoundLeverageAvalancheStrategy',
+    contract: 'BenqiCompoundLeverageAvalancheStrategyAVAX',
     type: StrategyTypes.COMPOUND_LEVERAGE,
     constructorArgs: {
       swapManager,
