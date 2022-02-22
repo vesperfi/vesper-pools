@@ -154,6 +154,29 @@ async function harvestVesperMaker(strategy) {
 }
 
 /**
+ * Simulates harvesting in a VesperCompoundXY strategy
+ * 1. Swaps some ethers for collateral into the underlying vPool
+ * 2. This causes vPool' pricePerShare to increase
+ *
+ * @param {object} strategy - strategy object
+ */
+async function harvestVesperCompoundXY(strategy) {
+  const vPool = await ethers.getContractAt('IVesperPool', await strategy.instance.vPool())
+  const collateralTokenAddress = await vPool.token()
+
+  const signer = await ethers.provider.getSigner(strategy.signer)
+
+  if (collateralTokenAddress === NATIVE_TOKEN) {
+    const weth = await ethers.getContractAt('TokenLike', collateralTokenAddress, signer)
+    const transferAmount = ethers.utils.parseEther('5')
+    await weth.deposit({ value: transferAmount })
+    await weth.transfer(vPool.address, transferAmount)
+  } else {
+    await swapper.swapEthForToken(5, collateralTokenAddress, { signer }, vPool.address)
+  }
+}
+
+/**
  * Simulates profit in a Vesper Pool
  *
  * @param {object} strategy - strategy object
@@ -188,7 +211,11 @@ async function rebalanceStrategy(strategy) {
       await harvestYearn(strategy)
     }
     if (strategy.type.includes('earnVesper') || strategy.type.includes('vesper')) {
-      await harvestVesper(strategy)
+      if (strategy.type.includes('vesperCompoundXY')) {
+        await harvestVesperCompoundXY(strategy)
+      } else {
+        await harvestVesper(strategy)
+      }
     }
     if (strategy.type.toUpperCase().includes('ALPHA')) {
       // Alpha SafeBox has a cToken - this method calls exchangeRateCurrent on the cToken

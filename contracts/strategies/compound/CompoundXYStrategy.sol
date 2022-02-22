@@ -12,16 +12,24 @@ import "../../interfaces/token/IToken.sol";
 abstract contract CompoundXYStrategy is Strategy {
     using SafeERC20 for IERC20;
 
+    // solhint-disable-next-line var-name-mixedcase
+    string public NAME;
+    string public constant VERSION = "4.0.0";
+
     uint256 internal constant MAX_BPS = 10_000; //100%
     uint256 public minBorrowRatio = 4_500; // 45%
     uint256 public maxBorrowRatio = 6_000; // 60%
     uint256 public minBorrowLimit;
     uint256 public maxBorrowLimit;
     address public borrowToken;
+
+    address public immutable rewardToken;
+    address public immutable rewardDistributor;
+    Comptroller public comptroller;
+
     CToken public immutable supplyCToken;
     CToken public borrowCToken;
-    address internal constant COMP = 0xc00e94Cb662C3520282E6f5717214004A7f26888;
-    Comptroller internal constant COMPTROLLER = Comptroller(0x3d9819210A31b4961b30EF54bE2aeD79B9c9Cd3B);
+
     IUniswapV3Oracle internal constant ORACLE = IUniswapV3Oracle(0x0F1f5A87f99f0918e6C81F16E59F3518698221Ff);
     address internal constant CETH = 0x4Ddc2D193948926D02f9B1fE9e1daa0718270ED5;
     uint32 internal constant TWAP_PERIOD = 3600;
@@ -37,10 +45,24 @@ abstract contract CompoundXYStrategy is Strategy {
     constructor(
         address _pool,
         address _swapManager,
+        address _comptroller,
+        address _rewardDistributor,
+        address _rewardToken,
         address _receiptToken,
-        address _borrowCToken
+        address _borrowCToken,
+        string memory _name
     ) Strategy(_pool, _swapManager, _receiptToken) {
         require(_receiptToken != address(0), "cToken-address-is-zero");
+        require(_comptroller != address(0), "comptroller-address-is-zero");
+        require(_rewardDistributor != address(0), "rewardDistributor-is-zero");
+        require(_rewardToken != address(0), "rewardToken-address-is-zero");
+
+        NAME = _name;
+
+        comptroller = Comptroller(_comptroller);
+        rewardToken = _rewardToken;
+        rewardDistributor = _rewardDistributor;
+
         supplyCToken = CToken(_receiptToken);
         borrowCToken = CToken(_borrowCToken);
         borrowToken = _getBorrowToken(_borrowCToken);
@@ -48,8 +70,8 @@ abstract contract CompoundXYStrategy is Strategy {
         address[] memory _cTokens = new address[](2);
         _cTokens[0] = _receiptToken;
         _cTokens[1] = _borrowCToken;
-        COMPTROLLER.enterMarkets(_cTokens);
-        (, uint256 _collateralFactorMantissa, ) = COMPTROLLER.markets(_receiptToken);
+        comptroller.enterMarkets(_cTokens);
+        (, uint256 _collateralFactorMantissa, ) = comptroller.markets(_receiptToken);
         minBorrowLimit = (minBorrowRatio * 1e18) / _collateralFactorMantissa;
         maxBorrowLimit = (maxBorrowRatio * 1e18) / _collateralFactorMantissa;
     }
@@ -83,16 +105,16 @@ abstract contract CompoundXYStrategy is Strategy {
      * @dev Repay borrow for old borrow CToken and borrow for new borrow CToken
      * @param _newBorrowCToken Address of new CToken
      */
-    function updateBorrowCToken(address _newBorrowCToken) external onlyGovernor {
+    function updateBorrowCToken(address _newBorrowCToken) external virtual onlyGovernor {
         require(_newBorrowCToken != address(0), "newBorrowCToken-address-is-zero");
         // Repay whole borrow
         _repay(borrowCToken.borrowBalanceCurrent(address(this)), true);
 
         // Manage market position in Compound
-        COMPTROLLER.exitMarket(address(borrowCToken));
+        comptroller.exitMarket(address(borrowCToken));
         address[] memory _cTokens = new address[](1);
         _cTokens[0] = _newBorrowCToken;
-        COMPTROLLER.enterMarkets(_cTokens);
+        comptroller.enterMarkets(_cTokens);
 
         // Reset approval for old borrowCToken
         IERC20(borrowToken).safeApprove(address(borrowCToken), 0);
@@ -117,7 +139,7 @@ abstract contract CompoundXYStrategy is Strategy {
      * @param _maxBorrowRatio Maximum % we want to borrow
      */
     function updateBorrowRatio(uint256 _minBorrowRatio, uint256 _maxBorrowRatio) external onlyGovernor {
-        (, uint256 _collateralFactorMantissa, ) = COMPTROLLER.markets(address(supplyCToken));
+        (, uint256 _collateralFactorMantissa, ) = comptroller.markets(address(supplyCToken));
         require(_maxBorrowRatio < (_collateralFactorMantissa / 1e14), "invalid-max-borrow-ratio");
         require(_maxBorrowRatio > _minBorrowRatio, "max-should-be-higher-than-min");
         emit UpdatedBorrowRatio(minBorrowRatio, _minBorrowRatio, maxBorrowRatio, _maxBorrowRatio);
@@ -140,15 +162,15 @@ abstract contract CompoundXYStrategy is Strategy {
     }
 
     /**
-     * @notice Calculate total value based on COMP claimed, supply and borrow position
+     * @notice Calculate total value based on rewardToken claimed, supply and borrow position
      * @dev Report total value in collateral token
-     * @dev Claimed COMP will stay in strategy until next rebalance
+     * @dev Claimed rewardToken will stay in strategy until next rebalance
      */
     function totalValueCurrent() external override returns (uint256 _totalValue) {
-        _claimComp();
+        _claimRewards();
         supplyCToken.exchangeRateCurrent();
         borrowCToken.exchangeRateCurrent();
-        _totalValue = _calculateTotalValue(IERC20(COMP).balanceOf(address(this)));
+        _totalValue = _calculateTotalValue(IERC20(rewardToken).balanceOf(address(this)));
     }
 
     /**
@@ -167,30 +189,30 @@ abstract contract CompoundXYStrategy is Strategy {
     }
 
     /**
-     * @notice Calculate total value using COMP accrued, supply and borrow position
-     * @dev Compound calculate COMP accrued and store it when user interact with
+     * @notice Calculate total value using rewardToken accrued, supply and borrow position
+     * @dev Compound calculate rewardToken accrued and store it when user interact with
      * Compound contracts, i.e. deposit, withdraw or transfer tokens.
-     * So compAccrued() will return stored COMP accrued amount, which is older
+     * So _getRewardAccrued() will return stored rewardToken accrued amount, which is older
      * @dev For up to date value check totalValueCurrent()
      */
     function totalValue() public view virtual override returns (uint256 _totalValue) {
-        _totalValue = _calculateTotalValue(COMPTROLLER.compAccrued(address(this)));
+        _totalValue = _calculateTotalValue(_getRewardAccrued());
     }
 
     /**
-     * @notice Calculate current position using claimed COMP and current borrow.
+     * @notice Calculate current position using claimed rewardToken and current borrow.
      */
     function isLossMaking() external returns (bool) {
-        _claimComp();
-        uint256 _compAccrued = IERC20(COMP).balanceOf(address(this));
+        _claimRewards();
+        uint256 _rewardAccrued = IERC20(rewardToken).balanceOf(address(this));
         uint256 _borrow = borrowCToken.borrowBalanceCurrent(address(this));
-        uint256 _borrowBalanceHere = IERC20(borrowToken).balanceOf(address(this));
-        // If we are short on borrow amount then check if we can pay interest using accrued COMP
+        uint256 _borrowBalanceHere = _getBorrowBalance();
+        // If we are short on borrow amount then check if we can pay interest using accrued rewardToken
         if (_borrow > _borrowBalanceHere) {
-            (, uint256 _compNeededForRepay, ) =
-                swapManager.bestInputFixedOutput(COMP, borrowToken, _borrow - _borrowBalanceHere);
-            // Accrued COMP are not enough to pay interest on borrow
-            if (_compNeededForRepay > _compAccrued) {
+            (, uint256 _rewardNeededForRepay, ) =
+                swapManager.bestInputFixedOutput(rewardToken, borrowToken, _borrow - _borrowBalanceHere);
+            // Accrued rewardToken are not enough to pay interest on borrow
+            if (_rewardNeededForRepay > _rewardAccrued) {
                 return true;
             }
         }
@@ -200,7 +222,7 @@ abstract contract CompoundXYStrategy is Strategy {
     function isReservedToken(address _token) public view virtual override returns (bool) {
         return
             _token == address(supplyCToken) ||
-            _token == COMP ||
+            _token == rewardToken ||
             _token == address(collateralToken) ||
             _token == borrowToken;
     }
@@ -211,14 +233,18 @@ abstract contract CompoundXYStrategy is Strategy {
         collateralToken.safeApprove(address(supplyCToken), _amount);
         IERC20(borrowToken).safeApprove(address(borrowCToken), _amount);
         for (uint256 i = 0; i < swapManager.N_DEX(); i++) {
-            IERC20(COMP).safeApprove(address(swapManager.ROUTERS(i)), _amount);
+            IERC20(rewardToken).safeApprove(address(swapManager.ROUTERS(i)), _amount);
             collateralToken.safeApprove(address(swapManager.ROUTERS(i)), _amount);
             IERC20(borrowToken).safeApprove(address(swapManager.ROUTERS(i)), _amount);
         }
     }
 
+    function _getRewardAccrued() internal view virtual returns (uint256 _rewardAccrued) {
+        _rewardAccrued = comptroller.compAccrued(address(this));
+    }
+
     /**
-     * @notice Claim COMP and transfer to new strategy
+     * @notice Claim rewardToken and transfer to new strategy
      * @param _newStrategy Address of new strategy.
      */
     function _beforeMigration(address _newStrategy) internal virtual override {
@@ -245,7 +271,7 @@ abstract contract CompoundXYStrategy is Strategy {
         }
 
         uint256 _supply = supplyCToken.balanceOfUnderlying(address(this));
-        (, uint256 _collateralFactorMantissa, ) = COMPTROLLER.markets(address(supplyCToken));
+        (, uint256 _collateralFactorMantissa, ) = comptroller.markets(address(supplyCToken));
 
         // In case of withdraw, _amount can be greater than _supply
         uint256 _newSupply = _isDeposit ? _supply + _amount : _supply > _amount ? _supply - _amount : 0;
@@ -276,19 +302,23 @@ abstract contract CompoundXYStrategy is Strategy {
     }
 
     /**
-     * @dev COMP is converted to collateral and if we have some borrow interest to pay,
+     * @dev rewardToken is converted to collateral and if we have some borrow interest to pay,
      * it will go come from collateral.
      * @dev Report total value in collateral token
      */
-    function _calculateTotalValue(uint256 _compAccrued) internal view returns (uint256 _totalValue) {
-        uint256 _compAsCollateral;
-        if (_compAccrued != 0) {
-            (, _compAsCollateral, ) = swapManager.bestOutputFixedInput(COMP, address(collateralToken), _compAccrued);
+    function _calculateTotalValue(uint256 _rewardAccrued) internal view virtual returns (uint256 _totalValue) {
+        uint256 _rewardAsCollateral;
+        if (_rewardAccrued != 0) {
+            (, _rewardAsCollateral, ) = swapManager.bestOutputFixedInput(
+                rewardToken,
+                address(collateralToken),
+                _rewardAccrued
+            );
         }
         uint256 _collateralInCompound =
             (supplyCToken.balanceOf(address(this)) * supplyCToken.exchangeRateStored()) / 1e18;
 
-        uint256 _borrowBalanceHere = IERC20(borrowToken).balanceOf(address(this));
+        uint256 _borrowBalanceHere = _getBorrowBalance();
         uint256 _borrowInCompound = borrowCToken.borrowBalanceStored(address(this));
 
         uint256 _collateralNeededForRepay;
@@ -300,33 +330,38 @@ abstract contract CompoundXYStrategy is Strategy {
             );
         }
         _totalValue =
-            _compAsCollateral +
+            _rewardAsCollateral +
             _collateralInCompound +
             collateralToken.balanceOf(address(this)) -
             _collateralNeededForRepay;
     }
 
-    /// @notice Claim comp
-    function _claimComp() internal {
+    /// @notice Get the borrow balance strategy is holding
+    function _getBorrowBalance() internal view virtual returns (uint256) {
+        return IERC20(borrowToken).balanceOf(address(this));
+    }
+
+    /// @notice Claim rewardToken
+    function _claimRewards() internal virtual {
         address[] memory _markets = new address[](2);
         _markets[0] = address(supplyCToken);
         _markets[1] = address(borrowCToken);
-        COMPTROLLER.claimComp(address(this), _markets);
+        comptroller.claimComp(address(this), _markets);
     }
 
-    /// @notice Claim COMP and convert COMP into collateral token.
-    function _claimRewardsAndConvertTo(address _toToken) internal override {
-        _claimComp();
-        uint256 _compAmount = IERC20(COMP).balanceOf(address(this));
-        if (_compAmount != 0) {
-            _safeSwap(COMP, _toToken, _compAmount);
+    /// @notice Claim rewardToken and convert rewardToken into collateral token.
+    function _claimRewardsAndConvertTo(address _toToken) internal virtual override {
+        _claimRewards();
+        uint256 _rewardAmount = IERC20(rewardToken).balanceOf(address(this));
+        if (_rewardAmount != 0) {
+            _safeSwap(rewardToken, _toToken, _rewardAmount);
         }
     }
 
     /**
      * @notice Generate report for pools accounting and also send profit and any payback to pool.
-     * @dev Claim COMP and first convert COMP to borrowToken to cover interest, if any, on borrowed amount.
-     * Convert remaining COMP to collateral.
+     * @dev Claim rewardToken and first convert rewardToken to borrowToken to cover interest, if any, on borrowed amount.
+     * Convert remaining rewardToken to collateral.
      */
     function _generateReport()
         internal
@@ -340,23 +375,27 @@ abstract contract CompoundXYStrategy is Strategy {
         uint256 _excessDebt = IVesperPool(pool).excessDebt(address(this));
         uint256 _totalDebt = IVesperPool(pool).totalDebtOf(address(this));
 
-        // Claim any comp we have.
-        _claimComp();
+        // Claim any reward we have.
+        _claimRewards();
 
         uint256 _borrow = borrowCToken.borrowBalanceCurrent(address(this));
-        uint256 _borrowBalanceHere = IERC20(borrowToken).balanceOf(address(this));
-        // _borrow increases every block. There can be a scenario when COMP are not
+        uint256 _borrowBalanceHere = _getBorrowBalance();
+        // _borrow increases every block. There can be a scenario when rewardToken are not
         // enough to cover interest diff for borrow, reinvest function will handle
         // collateral liquidation
         if (_borrow > _borrowBalanceHere) {
-            _swapToBorrowToken(COMP, _borrow - _borrowBalanceHere);
-            // Read borrow balance again as we just swap some COMP to borrow token
-            _borrowBalanceHere = IERC20(borrowToken).balanceOf(address(this));
+            _swapToBorrowToken(rewardToken, _borrow - _borrowBalanceHere);
+            // Read borrow balance again as we just swap some rewardToken to borrow token
+            _borrowBalanceHere = _getBorrowBalance();
+        } else {
+            // When _borrowBalanceHere exceeds _borrow balance from compound
+            // Customize this hook to handle the excess profit
+            _rebalanceBorrow(_borrowBalanceHere - _borrow);
         }
 
-        uint256 _compRemaining = IERC20(COMP).balanceOf(address(this));
-        if (_compRemaining != 0) {
-            _safeSwap(COMP, address(collateralToken), _compRemaining);
+        uint256 _rewardRemaining = IERC20(rewardToken).balanceOf(address(this));
+        if (_rewardRemaining != 0) {
+            _safeSwap(rewardToken, address(collateralToken), _rewardRemaining);
         }
 
         // Any collateral here is profit
@@ -399,19 +438,19 @@ abstract contract CompoundXYStrategy is Strategy {
 
     /**
      * @notice Repay borrow amount
-     * @dev Claim COMP and convert to collateral. Swap collateral to borrowToken as needed.
+     * @dev Claim rewardToken and convert to collateral. Swap collateral to borrowToken as needed.
      * @param _repayAmount BorrowToken amount that we should repay to maintain safe position.
-     * @param _shouldClaimComp Flag indicating should we claim COMP and convert to collateral or not.
+     * @param _shouldClaimComp Flag indicating should we claim rewardToken and convert to collateral or not.
      */
     function _repay(uint256 _repayAmount, bool _shouldClaimComp) internal {
         if (_repayAmount != 0) {
-            uint256 _borrowBalanceHere = IERC20(borrowToken).balanceOf(address(this));
+            uint256 _borrowBalanceHere = _getBorrowBalance();
             // Liability is more than what we have.
             // To repay loan - convert all rewards to collateral, if asked, and redeem collateral(if needed).
             // This scenario is rare and if system works okay it will/might happen during final repay only.
             if (_repayAmount > _borrowBalanceHere) {
                 if (_shouldClaimComp) {
-                    // Claim COMP and convert those to collateral.
+                    // Claim rewardToken and convert those to collateral.
                     _claimRewardsAndConvertTo(address(collateralToken));
                 }
 
@@ -525,11 +564,13 @@ abstract contract CompoundXYStrategy is Strategy {
             if (borrowToken == WETH) {
                 TokenLike(WETH).deposit{value: address(this).balance}();
             }
+            _afterBorrowY(_amount);
         }
     }
 
     /// @dev BorrowToken can be updated at run time and if it is WETH then unwrap WETH as ETH before repay
     function _repayY(uint256 _amount) internal {
+        _beforeRepayY(_amount);
         if (borrowToken == WETH) {
             TokenLike(WETH).withdraw(_amount);
             borrowCToken.repayBorrow{value: _amount}();
@@ -537,6 +578,18 @@ abstract contract CompoundXYStrategy is Strategy {
             require(borrowCToken.repayBorrow(_amount) == 0, "repay-to-compound-failed");
         }
     }
+
+    /// @dev Hook that executes after borrowing collateral
+    /// solhint-disable-next-line no-empty-blocks
+    function _afterBorrowY(uint256 _amount) internal virtual {}
+
+    /// @dev Hook that executes before repaying borrowed collateral
+    /// solhint-disable-next-line no-empty-blocks
+    function _beforeRepayY(uint256 _amount) internal virtual {}
+
+    /// @dev Hook to handle when actual borrowed balance is > compound borrow account
+    /// solhint-disable-next-line no-empty-blocks
+    function _rebalanceBorrow(uint256 _excessBorrow) internal virtual {}
 
     //////////////////////////////////////////////////////////////////////////////
 
