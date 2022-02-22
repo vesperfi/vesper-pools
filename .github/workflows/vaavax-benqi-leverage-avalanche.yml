@@ -1,0 +1,29 @@
+name: vaAVAX with Benqi Compound Leverage
+on:
+  pull_request:
+    paths:
+      - "test/vaavax/benqi-leverage.js"
+      - "contracts/strategies/Strategy.sol"
+      - "contracts/strategies/compound/CompoundLeverageStrategy.sol"
+      - "contracts/strategies/compound/CompoundLeverageAvalancheStrategy.sol"
+      - "contracts/strategies/compound/BenqiCompoundLeverageAvalancheStrategyAVAX.sol"  
+
+jobs:
+  vaavax-benqi-leverage-strategy-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2.3.1
+        with:
+          submodules: true
+      - run: cat "${GITHUB_WORKSPACE}/.github/avalanche.env.properties" >> $GITHUB_ENV
+      
+      - name: Use Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version-file: '.nvmrc'
+
+      - name: Run npm install with node v${{ matrix.node }}
+        run: npm install
+
+      - name: Running tests for vaAVAX Benqi Compound Leverage
+        run: npm test "test/vaavax/benqi-leverage.js"
