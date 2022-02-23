@@ -2,11 +2,44 @@
 'use strict'
 
 const { ethers } = require('hardhat')
+const { isMultiSig, getMultiSigNonce, submitGnosisTxn } = require('./gnosis-txn')
 const CollateralManager = 'CollateralManager'
+let multiSigNonce = 0
+
 function sleep(ms) {
   console.log(`waiting for ${ms} ms`)
   return new Promise(resolve => setTimeout(resolve, ms))
 }
+
+async function sendGnosisSafeTxn(encodedData, safe, deployer, nonce) {
+  const txnParams = {
+    data: encodedData.data,
+    to: encodedData.to,
+    safe,
+    nonce,
+    sender: deployer,
+  }
+  await submitGnosisTxn(txnParams)
+}
+
+async function executeOrProposeTx(contractName, contractAddress, alias, params) {
+  await sleep(5000)
+  if (params.isGovernorMultiSig) {
+    const contract = await ethers.getContractAt(contractName, contractAddress)
+    multiSigNonce = multiSigNonce === 0 ? (await getMultiSigNonce(params.safe)).nonce : multiSigNonce + 1
+    const data = params.methodArgs
+      ? await contract.populateTransaction[params.methodName](...params.methodArgs)
+      : await contract.populateTransaction[params.methodName]()
+    await sendGnosisSafeTxn(data, params.safe, params.deployer, multiSigNonce)
+  } else if (params.governor === params.deployer) {
+    params.methodArgs
+      ? await params.execute(alias, { from: params.deployer, log: true }, params.methodName, ...params.methodArgs)
+      : await params.execute(alias, { from: params.deployer, log: true }, params.methodName)
+  } else {
+    console.log(`Pool governor is not deployer, skipping ${params.methodName} operation`)
+  }
+}
+
 const deployFunction = async function ({ getNamedAccounts, deployments, poolConfig, strategyConfig, targetChain }) {
   if (!strategyConfig) {
     throw new Error('Strategy configuration object is not created.')
@@ -15,10 +48,14 @@ const deployFunction = async function ({ getNamedAccounts, deployments, poolConf
 
   const { deploy, execute, read } = deployments
   const { deployer } = await getNamedAccounts()
+  const params = {
+    safe: Address.MultiSig.safe,
+    deployer,
+    execute,
+  }
 
-  const deploymentName = poolConfig.deploymentName ? poolConfig.deploymentName : poolConfig.contractName
-  const poolProxy = await deployments.get(deploymentName)
-
+  const poolDeploymentName = poolConfig.deploymentName ? poolConfig.deploymentName : poolConfig.contractName
+  const poolProxy = await deployments.get(poolDeploymentName)
   const strategyAlias = strategyConfig.alias
 
   const constructorArgs = [poolProxy.address, ...Object.values(strategyConfig.constructorArgs)]
@@ -55,7 +92,6 @@ const deployFunction = async function ({ getNamedAccounts, deployments, poolConf
     args: constructorArgs,
     waitConfirmations: 2,
   })
-
   const setup = strategyConfig.setup
 
   // Execute setup transactions
@@ -75,50 +111,44 @@ const deployFunction = async function ({ getNamedAccounts, deployments, poolConf
 
   const strategyVersion = await read(strategyAlias, {}, 'VERSION')
   deployFunction.id = `${strategyAlias}-v${strategyVersion}`
+  params.governor = await read(poolDeploymentName, {}, 'governor')
+  params.isGovernorMultiSig = await isMultiSig(params.governor, Address.MultiSig.safe, deployer)
 
-  const governor = await (await ethers.getContractAt(deploymentName, poolProxy.address)).governor()
-  // skip if deployer is not pool governor
-  if (governor !== deployer) {
-    console.log('*** updateFeeCollector, addKeeper, addStrategy are skipped as deployer is not pool governor ***')
-    if (strategyAlias.includes('Maker')) {
-      console.log('*** addGemJoin, createVault, updateBalancingFactor are skipped as deployer is not pool governor ***')
-    }
-    return true
-  }
+  // update fee collector
+  params.methodName = 'updateFeeCollector'
+  params.methodArgs = [setup.feeCollector]
+  await executeOrProposeTx(strategyConfig.contract, deployed.address, strategyConfig.alias, params)
 
-  await sleep(5000)
-  await execute(strategyAlias, { from: deployer, log: true }, 'updateFeeCollector', setup.feeCollector)
+  // addKeeper
   for (const keeper of setup.keepers) {
-    await sleep(5000)
-    const _keepers = await (await ethers.getContractAt(strategyConfig.contract, deployed.address)).keepers()
+    const _keepers = await read(strategyAlias, {}, 'keepers')
     if (_keepers.includes(keeper)) {
       console.log('Keeper %s already added, skipping addKeeper', keeper)
     } else {
-      await execute(strategyAlias, { from: deployer, log: true }, 'addKeeper', keeper)
+      params.methodName = 'addKeeper'
+      params.methodArgs = [keeper]
+      await executeOrProposeTx(strategyConfig.contract, deployed.address, strategyConfig.alias, params)
     }
   }
 
   // Execute Maker related configuration transactions
   if (strategyAlias.includes('Maker')) {
-    const maker = setup.maker
     // Check whether gemJoin already added(or old version) in CM or not
-    const collateralType = await (await ethers.getContractAt('GemJoinLike', maker.gemJoin)).ilk()
+    const collateralType = await (await ethers.getContractAt('GemJoinLike', setup.maker.gemJoin)).ilk()
     const gemJoinInCM = await read(CollateralManager, {}, 'mcdGemJoin', collateralType)
-    if (gemJoinInCM !== maker.gemJoin) {
-      await sleep(5000)
-      await execute('CollateralManager', { from: deployer, log: true }, 'addGemJoin', [maker.gemJoin])
+    if (gemJoinInCM !== setup.maker.gemJoin) {
+      params.methodName = 'addGemJoin'
+      params.methodArgs = [setup.maker.gemJoin]
+      await executeOrProposeTx(CollateralManager, Address.COLLATERAL_MANAGER, CollateralManager, params)
     }
-    await sleep(5000)
-    await execute(strategyAlias, { from: deployer, log: true }, 'createVault')
 
-    await sleep(5000)
-    await execute(
-      strategyAlias,
-      { from: deployer, log: true },
-      'updateBalancingFactor',
-      maker.highWater,
-      maker.lowWater,
-    )
+    params.methodName = 'createVault'
+    params.methodArgs = ''
+    await executeOrProposeTx(strategyConfig.contract, deployed.address, strategyConfig.alias, params)
+
+    params.methodName = 'updateBalancingFactor'
+    params.methodArgs = [setup.maker.highWater, setup.maker.lowWater]
+    await executeOrProposeTx(strategyConfig.contract, deployed.address, strategyConfig.alias, params)
   }
 
   let PoolAccountant = 'PoolAccountant'
@@ -127,20 +157,18 @@ const deployFunction = async function ({ getNamedAccounts, deployments, poolConf
   } else if (strategyAlias.includes('Stable')) {
     PoolAccountant = 'PoolAccountantStable'
   }
-
-  // Add strategy in pool accountant
   const config = strategyConfig.config
-  await sleep(5000)
-  await execute(
-    PoolAccountant,
-    { from: deployer, log: true },
-    'addStrategy',
+  const poolAccountantAddress = (await deployments.get(PoolAccountant)).address
+  params.methodName = 'addStrategy'
+  params.methodArgs = [
     deployed.address,
     config.interestFee,
     config.debtRatio,
     config.debtRate,
     config.externalDepositFee,
-  )
+  ]
+  await executeOrProposeTx(PoolAccountant, poolAccountantAddress, PoolAccountant, params)
+
   return true
 }
 module.exports = deployFunction

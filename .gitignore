@@ -28,4 +28,8 @@ coverage.json
 deployments/localhost/*
 deployments/*/failed
 
+# testnet
+deployments/goerli/*
+helper/goerli
+
 *~

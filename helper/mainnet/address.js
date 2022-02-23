@@ -92,6 +92,9 @@ const Address = {
     yvUSDC: '0x5f18C75AbDAe578b483E5F43f12a39cF75b973a9',
     yvWETH: '0xa258C4606Ca8206D8aA700cE2143D7db854D168c',
   },
+  MultiSig: {
+    safe: '0x9520b477Aa81180E6DdC006Fc09Fb6d3eb4e807A',
+  },
 }
 
 module.exports = Object.freeze(Address)
