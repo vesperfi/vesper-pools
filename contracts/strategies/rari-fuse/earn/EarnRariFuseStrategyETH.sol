@@ -17,7 +17,7 @@ contract EarnRariFuseStrategyETH is EarnRariFuseStrategy {
     ) EarnRariFuseStrategy(_pool, _swapManager, _fusePoolId, _dripToken, _name) {}
 
     function migrateFusePool(uint256 _newPoolId) external override onlyKeeper {
-        address _newCToken = _cTokenByUnderlying(_newPoolId, address(collateralToken));
+        address _newCToken = RariCore.getCTokenByUnderlying(_newPoolId, address(collateralToken));
         require(address(cToken) != _newCToken, "same-fuse-pool");
         require(cToken.redeem(cToken.balanceOf(address(this))) == 0, "withdraw-from-fuse-pool-failed");
         CToken(_newCToken).mint{value: address(this).balance}();

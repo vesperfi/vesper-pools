@@ -141,7 +141,8 @@ function shouldBehaveLikeCompoundLeverageStrategy(strategyIndex) {
     })
 
     it('Should verify that DyDx flash loan works', async function () {
-      if (getChain() !== 'avalanche') {
+      // Ignore FEI as no-marketId-found-for-fei-token
+      if (getChain() !== 'avalanche' && collateralToken.address !== address.FEI) {
         await strategy.connect(governor.signer).updateDyDxStatus(true)
         await strategy.connect(governor.signer).updateAaveStatus(false)
         await deposit(pool, collateralToken, 100, user1)
@@ -209,7 +210,19 @@ function shouldBehaveLikeCompoundLeverageStrategy(strategyIndex) {
 
     it('Should claim rewardToken when rebalance is called', async function () {
       async function rewardAccrued() {
+        const strategyName = await strategy.NAME()
         if (getChain() === 'mainnet') {
+          if (strategyName.includes('Rari')) {
+            const rewardDistributor = await ethers.getContractAt(
+              'IRariRewardDistributor',
+              await strategy.rewardDistributor(),
+            )
+            const collateralsWithRewards = await rewardDistributor.getAllMarkets()
+            // return -1 when Rari pool do not have reward token
+            return collateralsWithRewards.includes(collateralToken)
+              ? rewardDistributor.compAccrued(strategy.address)
+              : -1
+          }
           const comptroller = await ethers.getContractAt('Comptroller', await strategy.comptroller())
           return comptroller.compAccrued(strategy.address)
         }
@@ -222,6 +235,7 @@ function shouldBehaveLikeCompoundLeverageStrategy(strategyIndex) {
       await deposit(pool, collateralToken, 2, user2)
       await strategy.connect(governor.signer).rebalance()
       await token.exchangeRateCurrent()
+
       await advanceBlock(100)
 
       const withdrawAmount = await pool.balanceOf(user2.address)
@@ -230,10 +244,13 @@ function shouldBehaveLikeCompoundLeverageStrategy(strategyIndex) {
 
       await pool.connect(user2.signer).withdraw(withdrawAmount)
       const rewardAccruedBefore = await rewardAccrued()
-      expect(rewardAccruedBefore).to.gt(0, 'reward accrued should be > 0 before rebalance')
-      await strategy.connect(governor.signer).rebalance()
-      const rewardAccruedAfter = await rewardAccrued()
-      expect(rewardAccruedAfter).to.equal(0, 'reward accrued should be 0 after rebalance')
+      if (rewardAccruedBefore !== -1) {
+        // Assert only when reward tokens are available.
+        expect(rewardAccruedBefore).to.gt(0, 'reward accrued should be > 0 before rebalance')
+        await strategy.connect(governor.signer).rebalance()
+        const rewardAccruedAfter = await rewardAccrued()
+        expect(rewardAccruedAfter).to.equal(0, 'reward accrued should be 0 after rebalance')
+      }
     })
 
     it('Should liquidate rewardToken when claimed by external source', async function () {
@@ -245,9 +262,22 @@ function shouldBehaveLikeCompoundLeverageStrategy(strategyIndex) {
       await deposit(pool, collateralToken, 10, user2)
       await strategy.connect(governor.signer).rebalance()
       await advanceBlock(100)
+      const strategyName = await strategy.NAME()
       if (getChain() === 'mainnet') {
-        const comptrollerInstance = await ethers.getContractAt('Comptroller', comptroller)
-        await comptrollerInstance.connect(user2.signer).claimComp(strategy.address, [token.address])
+        if (strategyName.includes('Rari')) {
+          const rewardDistributor = await ethers.getContractAt(
+            'IRariRewardDistributor',
+            await strategy.rewardDistributor(),
+          )
+          const collateralsWithRewards = await rewardDistributor.getAllMarkets()
+          // return when Rari pool do not have reward token
+          if (!collateralsWithRewards.includes(collateralToken)) {
+            return
+          }
+        } else {
+          const comptrollerInstance = await ethers.getContractAt('Comptroller', comptroller)
+          await comptrollerInstance.connect(user2.signer).claimComp(strategy.address, [token.address])
+        }
       } else {
         // avalanche case
         const comptrollerInstance = await ethers.getContractAt('ComptrollerMultiReward', comptroller)
