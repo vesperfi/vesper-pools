@@ -12,6 +12,15 @@ const gnosisEstimateTransaction = async function (safe, tx) {
   return (await axios.post(`${safeRelayURL}/api/v2/safes/${safe}/transactions/estimate/`, tx)).data
 }
 
+const isDeployerADelegate = async function (safe, deployer) {
+  const {
+    data: { count, results },
+  } = await axios.get(`${safeTxnURL}/api/v1/safes/${safe}/delegates`)
+  if (count === 0) return false
+  const delegates = results.map(r => r.delegate)
+  return delegates.includes(deployer)
+}
+
 const getMultiSigNonce = async function (safe) {
   return (await axios.get(`${safeRelayURL}/api/v1/safes/${safe}`)).data
 }
@@ -27,7 +36,8 @@ function getGnosisContract(safe) {
 async function isMultiSig(governor, safe, deployer) {
   const multiSigContract = getGnosisContract(safe)
   const signers = await multiSigContract.getOwners()
-  return governor === safe && signers.includes(deployer)
+  const isDelegate = await isDeployerADelegate(safe, deployer)
+  return governor === safe && (signers.includes(deployer) || isDelegate)
 }
 
 const gnosisProposeTx = async function (safe, tx) {
