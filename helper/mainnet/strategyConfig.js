@@ -256,6 +256,22 @@ const StrategyConfig = {
     setup: { ...setup },
   },
 
+  InverseCompoundLeverageStrategyETH: {
+    contract: 'CompoundLeverageStrategyETH',
+    type: StrategyTypes.COMPOUND_LEVERAGE,
+    constructorArgs: {
+      swapManager,
+      comptroller: Address.Inverse.COMPTROLLER,
+      rewardDistributor: Address.Inverse.COMPTROLLER,
+      rewardToken: Address.Inverse.INV,
+      aaveAddressProvider: Address.Aave.AddressProvider,
+      receiptToken: Address.Inverse.anETH,
+      strategyName: 'InverseCompoundLeverageStrategyETH',
+    },
+    config: { ...config },
+    setup: { ...setup },
+  },
+
   DropsCompoundStrategyETH: {
     contract: 'CompoundStrategyETH',
     type: StrategyTypes.COMPOUND,

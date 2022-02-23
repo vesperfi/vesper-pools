@@ -6,6 +6,7 @@ const { getUsers } = require('../utils/setupHelper')
 const { deposit } = require('../utils/poolOps')
 const { advanceBlock } = require('../utils/time')
 const { getChain } = require('../utils/chains')
+const address = require('../../helper/mainnet/address')
 
 // Compound Leverage strategy specific tests
 function shouldBehaveLikeCompoundLeverageStrategy(strategyIndex) {
@@ -236,8 +237,10 @@ function shouldBehaveLikeCompoundLeverageStrategy(strategyIndex) {
     })
 
     it('Should liquidate rewardToken when claimed by external source', async function () {
-      await strategy.connect(governor.signer).updateSwapSlippage('1000')
       const comptroller = await strategy.comptroller()
+      if (comptroller !== address.Inverse.COMPTROLLER) {
+        await strategy.connect(governor.signer).updateSwapSlippage('1000')
+      }
       const rewardToken = await ethers.getContractAt('IERC20', strategy.rewardToken())
       await deposit(pool, collateralToken, 10, user2)
       await strategy.connect(governor.signer).rebalance()
