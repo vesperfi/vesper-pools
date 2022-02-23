@@ -2,7 +2,7 @@
 'use strict'
 
 const { ethers } = require('hardhat')
-const { isMultiSig, getMultiSigNonce, submitGnosisTxn } = require('./gnosis-txn')
+const { isDelegateOrOwner, getMultiSigNonce, submitGnosisTxn } = require('./gnosis-txn')
 const CollateralManager = 'CollateralManager'
 let multiSigNonce = 0
 
@@ -24,17 +24,17 @@ async function sendGnosisSafeTxn(encodedData, safe, deployer, nonce) {
 
 async function executeOrProposeTx(contractName, contractAddress, alias, params) {
   await sleep(5000)
-  if (params.isGovernorMultiSig) {
+  if (params.governor === params.deployer) {
+    params.methodArgs
+      ? await params.execute(alias, { from: params.deployer, log: true }, params.methodName, ...params.methodArgs)
+      : await params.execute(alias, { from: params.deployer, log: true }, params.methodName)
+  } else if (params.isDelegateOrOwner) {
     const contract = await ethers.getContractAt(contractName, contractAddress)
     multiSigNonce = multiSigNonce === 0 ? (await getMultiSigNonce(params.safe)).nonce : multiSigNonce + 1
     const data = params.methodArgs
       ? await contract.populateTransaction[params.methodName](...params.methodArgs)
       : await contract.populateTransaction[params.methodName]()
     await sendGnosisSafeTxn(data, params.safe, params.deployer, multiSigNonce)
-  } else if (params.governor === params.deployer) {
-    params.methodArgs
-      ? await params.execute(alias, { from: params.deployer, log: true }, params.methodName, ...params.methodArgs)
-      : await params.execute(alias, { from: params.deployer, log: true }, params.methodName)
   } else {
     console.log(`Pool governor is not deployer, skipping ${params.methodName} operation`)
   }
@@ -112,7 +112,8 @@ const deployFunction = async function ({ getNamedAccounts, deployments, poolConf
   const strategyVersion = await read(strategyAlias, {}, 'VERSION')
   deployFunction.id = `${strategyAlias}-v${strategyVersion}`
   params.governor = await read(poolDeploymentName, {}, 'governor')
-  params.isGovernorMultiSig = await isMultiSig(params.governor, Address.MultiSig.safe, deployer)
+  params.isDelegateOrOwner =
+    Address.MultiSig.safe === params.governor && (await isDelegateOrOwner(Address.MultiSig.safe, deployer))
 
   // update fee collector
   params.methodName = 'updateFeeCollector'
