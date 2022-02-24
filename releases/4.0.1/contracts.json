@@ -321,6 +321,30 @@
           "EarnVesperMakerStrategyETH": "0xDa538530bFF65cDfDb507670E0DAd17E54362C59",
           "EarnVesperStrategyETHDAI": "0x58DDe7CE67099C797f247dfB6f76dDF3235CDEbf"
         }
+      },
+      "vaeth": {
+        "pool": {
+          "proxyAdmin": "0x19A02f3512BdF78114B3c50f7d22a34b1B2798cA",
+          "proxy": "0xd1C117319B3595fbc39b471AB1fd485629eb05F2",
+          "implementation": "0x8b6598026176217AC92a7e0d53a99c1C50F55FB3",
+          "poolAccountant": {
+            "proxyAdmin": "0x19A02f3512BdF78114B3c50f7d22a34b1B2798cA",
+            "proxy": "0xFe888E56CbE72868683844e4B5f93ce330f6556F",
+            "implementation": "0x57494b981cEc5F662468CAa6D274f82580439dde"
+          }
+        },
+        "poolRewards": {
+          "proxyAdmin": "0x19A02f3512BdF78114B3c50f7d22a34b1B2798cA",
+          "proxy": "0x51EEf73abf5d4AC5F41De131591ed82c27a7Be3D",
+          "implementation": "0x08bca8c3789f35f9c482991fbabac54fc9042b89"
+        },
+        "strategies": {
+          "AlphaLendStrategyETH": "0xeCe0f32840280aD0069Dd89Ad97Ad6dF1bB0fF2A",
+          "CompoundLeverageStrategyETH": "0xFA4b6B138892E0005e9D385D6D4EcD35a9cC68dd",
+          "RariFuseStrategy": "0x4769f18ba364658bf98Bf74606ef2f8cfB17D425",
+          "RariFuseStrategyETH": "0x67893865686C22f0a243114B0893De65117d2f3b",
+          "VesperMakerStrategyETH": "0xc5cdf8cbe886fc5c1ef5cd4fdd599c975ec6bb54"
+        }
       }
     },
     "polygon": {
