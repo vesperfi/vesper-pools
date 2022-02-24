@@ -98,5 +98,6 @@
   "Convex4PoolStrategyMUSDPoolMUSD-v4.0.0": 1644025070,
   "VesperMakerStrategyWBTC-v4.0.0": 1644277328,
   "CompoundLeverageStrategyWBTC-v4.0.1": 1644616094,
-  "CompoundLeverageStrategyETH-v4.0.0": 1645712249
+  "CompoundLeverageStrategyETH-v4.0.0": 1645712249,
+  "InverseCompoundLeverageStrategyETH-v4.0.0": 1645712542
 }
