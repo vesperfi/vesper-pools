@@ -33,11 +33,11 @@ function getGnosisContract(safe) {
   return new ethers.Contract(safe, gnosisAbi, getProvider())
 }
 
-async function isMultiSig(governor, safe, deployer) {
+async function isDelegateOrOwner(safe, deployer) {
   const multiSigContract = getGnosisContract(safe)
   const signers = await multiSigContract.getOwners()
   const isDelegate = await isDeployerADelegate(safe, deployer)
-  return governor === safe && (signers.includes(deployer) || isDelegate)
+  return signers.includes(deployer) || isDelegate
 }
 
 const gnosisProposeTx = async function (safe, tx) {
@@ -107,7 +107,7 @@ const submitGnosisTxn = async function ({ safe, to, data, nonce, sender }) {
 }
 
 module.exports = {
-  isMultiSig,
+  isDelegateOrOwner,
   submitGnosisTxn,
   getMultiSigNonce,
 }
