@@ -1,7 +1,8 @@
 'use strict'
 const { unlock } = require('./utils/setupHelper')
 const { expect } = require('chai')
-const { ethers, deployments } = require('hardhat')
+const hre = require('hardhat')
+const { ethers, deployments } = hre
 const { getChain } = require('./utils/chains')
 const Address = require(`../helper/${getChain()}/address`)
 const { adjustBalance } = require('./utils/balance')
@@ -31,7 +32,7 @@ describe('Buyback', function () {
     governor = await unlock(GOVERNOR)
     feeCollector = await unlock(Address.FEE_COLLECTOR)
     vspHolder = await unlock(Address.vVSP)
-
+    hre.targetChain = getChain()
     const {
       BuyBack: { address: buyBackAddress },
     } = await deployments.fixture('BuyBack')

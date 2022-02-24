@@ -116,6 +116,7 @@ function shouldBehaveLikeCompoundStrategy(strategyIndex) {
     it('Should be able to withdraw amount when low liquidity for ERC20 cToken', async function () {
       if (
         getChain() === 'mainnet' &&
+        collateralToken.address !== address.WETH &&
         (token.address === address.Compound.cETH ||
           token.address === address.Inverse.anETH ||
           token.address === address.Drops.dETH)
