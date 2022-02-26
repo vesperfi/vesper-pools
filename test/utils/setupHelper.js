@@ -203,6 +203,29 @@ async function createVesperMakerStrategy(strategy, poolAddress, options) {
   return strategyInstance
 }
 
+/**
+ * Create and configure VesperCompoundXY Strategy.
+ *
+ * @param {object} strategy  Strategy config object
+ * @param {object} poolAddress pool address
+ * @param {object} options extra params
+ * @returns {object} Strategy instance
+ */
+async function createVesperCompoundXYStrategy(strategy, poolAddress, options) {
+  options.vPool = await setupVDAIPool()
+
+  strategy.constructorArgs.vPool = options.vPool.address
+
+  const strategyInstance = await deployContract(strategy.contract, [
+    poolAddress,
+    ...Object.values(strategy.constructorArgs),
+  ])
+
+  await options.vPool.addToFeeWhitelist(strategyInstance.address)
+
+  return strategyInstance
+}
+
 // eslint-disable-next-line complexity
 async function createStrategy(strategy, poolAddress, options = {}) {
   const strategyType = strategy.type
@@ -215,6 +238,8 @@ async function createStrategy(strategy, poolAddress, options = {}) {
     instance = await createMakerStrategy(strategy, poolAddress, options)
   } else if (strategyType === StrategyType.VESPER_MAKER || strategyType === StrategyType.EARN_VESPER_MAKER) {
     instance = await createVesperMakerStrategy(strategy, poolAddress, options)
+  } else if (strategyType === StrategyType.VESPER_COMPOUND_XY) {
+    instance = await createVesperCompoundXYStrategy(strategy, poolAddress, options)
   } else {
     instance = await deployContract(strategy.contract, [poolAddress, ...Object.values(strategy.constructorArgs)])
   }

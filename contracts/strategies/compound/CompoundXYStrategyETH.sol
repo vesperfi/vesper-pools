@@ -7,15 +7,27 @@ import "./CompoundXYStrategy.sol";
 // solhint-disable no-empty-blocks
 /// @title Deposit ETH/WETH in Compound and earn interest.
 contract CompoundXYStrategyETH is CompoundXYStrategy {
-    string public constant NAME = "CompoundXYStrategyETH";
-    string public constant VERSION = "4.0.0";
-
     constructor(
         address _pool,
         address _swapManager,
+        address _comptroller,
+        address _rewardDistributor,
+        address _rewardToken,
         address _receiptToken,
-        address _borrowCToken
-    ) CompoundXYStrategy(_pool, _swapManager, _receiptToken, _borrowCToken) {}
+        address _borrowCToken,
+        string memory _name
+    )
+        CompoundXYStrategy(
+            _pool,
+            _swapManager,
+            _comptroller,
+            _rewardDistributor,
+            _rewardToken,
+            _receiptToken,
+            _borrowCToken,
+            _name
+        )
+    {}
 
     /// @dev Only receive ETH from either cToken or WETH
     receive() external payable {

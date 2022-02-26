@@ -1,15 +1,14 @@
-name: vETH with Compound XY
+name: vWBTC with Vesper Compound XY
 on:
   pull_request:
     paths:
-      - "test/veth/compound-xy.js"
+      - "test/vwbtc/vesper-compound-xy.js"
       - "contracts/strategies/Strategy.sol"
-      - "contracts/strategies/CompoundStrategy.sol"
       - "contracts/strategies/compound/CompoundXYStrategy.sol"
-      - "contracts/strategies/compound/CompoundXYStrategyETH.sol"
+      - "contracts/strategies/compound/VesperCompoundXYStrategy.sol"
 
 jobs:
-  veth-compound-xy-test:
+  vwbtc-vesper-compound-xy-test:
     runs-on: ubuntu-latest
     env:
       NODE_URL: ${{ secrets.NODE_URL }}
@@ -27,5 +26,5 @@ jobs:
       - name: Run npm install with node v${{ matrix.node }}
         run: npm install
 
-      - name: Running vETH with Compound XY
-        run: npm test "test/veth/compound-xy.js"
+      - name: Running vWBTC with Vesper Compound XY
+        run: npm test "test/vwbtc/vesper-compound-xy.js"

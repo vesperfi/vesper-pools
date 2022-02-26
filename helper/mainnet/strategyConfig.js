@@ -413,9 +413,29 @@ const StrategyConfig = {
     type: StrategyTypes.COMPOUND_XY,
     constructorArgs: {
       swapManager,
+      comptroller: Address.Compound.COMPTROLLER,
+      rewardDistributor: Address.Compound.COMPTROLLER,
+      rewardToken: Address.Compound.COMP,
       receiptToken: Address.Compound.cETH,
       borrowCToken: Address.Compound.cWBTC,
-      // There is no strategy name param in Compound XY
+      strategyName: 'CompoundXYStrategyETH',
+    },
+    config: { ...config },
+    setup: { ...setup },
+  },
+
+  VesperCompoundXYStrategyWBTC: {
+    contract: 'VesperCompoundXYStrategy',
+    type: StrategyTypes.VESPER_COMPOUND_XY,
+    constructorArgs: {
+      swapManager,
+      comptroller: Address.Compound.COMPTROLLER,
+      rewardDistributor: Address.Compound.COMPTROLLER,
+      rewardToken: Address.Compound.COMP,
+      receiptToken: Address.Compound.cWBTC,
+      borrowCToken: Address.Compound.cDAI,
+      vPool: Address.vaDAI,
+      strategyName: 'VesperCompoundXYStrategyWBTC',
     },
     config: { ...config },
     setup: { ...setup },
@@ -995,7 +1015,7 @@ const StrategyConfig = {
     constructorArgs: {
       swapManager,
       receiptToken: Address.vaDAI,
-      collateralType: ethers.utils.formatBytes32String('WBTC-C'),
+      collateralType: ethers.utils.formatBytes32String('WBTC-A'),
       dripToken: Address.DAI,
       strategyName: 'EarnVesperMakerStrategyWBTC',
     },
