@@ -10,30 +10,36 @@ import "../../interfaces/rari-fuse/IFusePoolDirectory.sol";
 /// @title This strategy will deposit collateral token in a Rari Fuse Pool and earn interest.
 contract RariFuseStrategy is CompoundStrategy {
     using SafeERC20 for IERC20;
+    using RariCore for IFusePoolDirectory;
 
     uint256 public fusePoolId;
+    IFusePoolDirectory public immutable fusePoolDirectory;
     address public rewardDistributor;
-    address private constant FUSE_POOL_DIRECTORY = 0x835482FE0532f169024d5E9410199369aAD5C77E;
     event FusePoolChanged(uint256 indexed newFusePoolId, address indexed oldCToken, address indexed newCToken);
 
     constructor(
         address _pool,
         address _swapManager,
         uint256 _fusePoolId,
+        IFusePoolDirectory _fusePoolDirectory,
         string memory _name
     )
         CompoundStrategy(
             _pool,
             _swapManager,
-            RariCore.getComptroller(_fusePoolId),
+            _fusePoolDirectory.getComptroller(_fusePoolId),
             address(0), // rewardToken
-            RariCore.getCTokenByUnderlying(_fusePoolId, address(IVesperPool(_pool).token())),
+            _fusePoolDirectory.getCTokenByUnderlying(
+                _fusePoolId,
+                address(IVesperPool(_pool).token()) == WETH ? address(0x0) : address(IVesperPool(_pool).token())
+            ),
             _name
         )
     {
         fusePoolId = _fusePoolId;
+        fusePoolDirectory = _fusePoolDirectory;
         // Find and set the rewardToken from the fuse pool data
-        (rewardDistributor, rewardToken) = RariCore.getRewardToken(_fusePoolId);
+        (rewardDistributor, rewardToken) = _fusePoolDirectory.getRewardToken(_fusePoolId);
     }
 
     // solhint-enable no-empty-blocks
@@ -52,7 +58,7 @@ contract RariFuseStrategy is CompoundStrategy {
      * @param _newPoolId Fuse Pool ID
      */
     function migrateFusePool(uint256 _newPoolId) external virtual onlyGovernor {
-        address _newCToken = RariCore.getCTokenByUnderlying(_newPoolId, address(collateralToken));
+        address _newCToken = fusePoolDirectory.getCTokenByUnderlying(_newPoolId, address(collateralToken));
         require(address(cToken) != _newCToken, "same-fuse-pool");
         require(cToken.redeem(cToken.balanceOf(address(this))) == 0, "withdraw-from-fuse-pool-failed");
         collateralToken.safeApprove(address(cToken), 0);

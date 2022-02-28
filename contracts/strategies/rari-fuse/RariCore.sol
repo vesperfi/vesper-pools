@@ -9,41 +9,49 @@ import "../../interfaces/rari-fuse/IFusePoolDirectory.sol";
 
 /// @title This library provide core operations for Rari
 library RariCore {
-    function getComptroller(uint256 _fusePoolId) internal view returns (address _comptroller) {
-        //address  FUSE_POOL_DIRECTORY = 0x835482FE0532f169024d5E9410199369aAD5C77E;
-        (, , _comptroller, , ) = IFusePoolDirectory(0x835482FE0532f169024d5E9410199369aAD5C77E).pools(_fusePoolId);
+    /**
+     * @notice Gets Comptroller
+     * @param _fusePoolDir address of the Fuse Pool Directory
+     * @param _fusePoolId Fuse Pool ID
+     */
+    function getComptroller(IFusePoolDirectory _fusePoolDir, uint256 _fusePoolId)
+        internal
+        view
+        returns (address _comptroller)
+    {
+        (, , _comptroller, , ) = _fusePoolDir.pools(_fusePoolId);
     }
 
     /**
      * @notice Gets the cToken to mint for a Fuse Pool
+     * @param _fusePoolDir address of the Fuse Pool Directory
      * @param _fusePoolId Fuse Pool ID
      * @param _collateralToken address of the collateralToken
      */
-    function getCTokenByUnderlying(uint256 _fusePoolId, address _collateralToken)
-        internal
-        view
-        returns (address _cToken)
-    {
-        address _comptroller = getComptroller(_fusePoolId);
+    function getCTokenByUnderlying(
+        IFusePoolDirectory _fusePoolDir,
+        uint256 _fusePoolId,
+        address _collateralToken
+    ) internal view returns (address _cToken) {
+        address _comptroller = getComptroller(_fusePoolDir, _fusePoolId);
         require(_comptroller != address(0), "rari-fuse-invalid-comptroller");
-        // WETH
-        if (_collateralToken == 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2) {
-            // cETH is mapped with 0x0
-            _collateralToken = address(0x0);
-        }
         _cToken = IComptroller(_comptroller).cTokensByUnderlying(_collateralToken);
         require(_cToken != address(0), "rari-fuse-invalid-ctoken");
     }
 
-    // Automatically finds rewardToken set for the current Fuse Pool
-    function getRewardToken(uint256 _fusePoolId)
+    /**
+     * @notice Automatically finds rewardToken set for the current Fuse Pool
+     * @param _fusePoolDir address of the Fuse Pool Directory
+     * @param _fusePoolId Fuse Pool ID
+     */
+    function getRewardToken(IFusePoolDirectory _fusePoolDir, uint256 _fusePoolId)
         internal
         view
         returns (address _rewardDistributor, address _rewardToken)
     {
         uint256 _success;
-        address _comptroller = getComptroller(_fusePoolId);
-        bytes4 _selector = IComptroller(getComptroller(_fusePoolId)).rewardsDistributors.selector;
+        address _comptroller = getComptroller(_fusePoolDir, _fusePoolId);
+        bytes4 _selector = IComptroller(_comptroller).rewardsDistributors.selector;
 
         // Low level static call to prevent revert in case the Comptroller doesn't have
         // rewardsDistributors function exposed

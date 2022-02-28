@@ -427,6 +427,7 @@ const StrategyConfig = {
     constructorArgs: {
       swapManager,
       fusePoolId: 23, // default
+      fusePoolDirectory: Address.Rari.fusePoolDirectory,
       strategyName: 'RariFuseStrategy',
     },
     config: { ...config },
@@ -439,6 +440,7 @@ const StrategyConfig = {
     constructorArgs: {
       swapManager,
       fusePoolId: 23, // default
+      fusePoolDirectory: Address.Rari.fusePoolDirectory,
       strategyName: 'RariFuseStrategyETH',
     },
     config: { ...config },
@@ -451,6 +453,7 @@ const StrategyConfig = {
     constructorArgs: {
       swapManager,
       fusePoolId: 8,
+      fusePoolDirectory: Address.Rari.fusePoolDirectory,
       strategyName: 'RariFuseStrategyDAI',
     },
     config: { ...config },
@@ -464,6 +467,7 @@ const StrategyConfig = {
       swapManager,
       aaveAddressProvider: Address.Aave.AddressProvider,
       fusePoolId: 8,
+      fusePoolDirectory: Address.Rari.fusePoolDirectory,
       strategyName: 'RariFuseLeverageStrategyDAI',
     },
     config: { ...config },
@@ -477,6 +481,7 @@ const StrategyConfig = {
       swapManager,
       aaveAddressProvider: Address.Aave.AddressProvider,
       fusePoolId: 8,
+      fusePoolDirectory: Address.Rari.fusePoolDirectory,
       strategyName: 'RariFuseLeverageStrategyFEI',
     },
     config: { ...config },
@@ -489,6 +494,7 @@ const StrategyConfig = {
     constructorArgs: {
       swapManager,
       fusePoolId: 23, // default,
+      fusePoolDirectory: Address.Rari.fusePoolDirectory,
       dripToken: Address.DAI,
       strategyName: 'EarnRariFuseStrategy',
     },
@@ -502,6 +508,7 @@ const StrategyConfig = {
     constructorArgs: {
       swapManager,
       fusePoolId: 23, // default
+      fusePoolDirectory: Address.Rari.fusePoolDirectory,
       dripToken: Address.DAI,
       strategyName: 'EarnRariFuseStrategyETH',
     },
