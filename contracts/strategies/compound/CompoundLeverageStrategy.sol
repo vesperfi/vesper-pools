@@ -24,8 +24,9 @@ contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
     IUniswapV3Oracle internal constant ORACLE = IUniswapV3Oracle(0x0F1f5A87f99f0918e6C81F16E59F3518698221Ff);
     uint32 internal constant TWAP_PERIOD = 3600;
 
+    // Below can be address(0), for example in Rari Strategy
     Comptroller public immutable comptroller;
-    address public immutable rewardToken;
+    address public rewardToken;
     address public rewardDistributor;
 
     event UpdatedBorrowRatio(
@@ -53,7 +54,6 @@ contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
         require(_receiptToken != address(0), "cToken-address-is-zero");
         cToken = CToken(_receiptToken);
 
-        require(_rewardDistributor != address(0), "invalid-reward-distributor-addr");
         rewardDistributor = _rewardDistributor;
     }
 
@@ -64,7 +64,7 @@ contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
      * @param _maxBorrowRatio Maximum % we want to borrow
      */
     function updateBorrowRatio(uint256 _minBorrowRatio, uint256 _maxBorrowRatio) external onlyGovernor {
-        (, uint256 _collateralFactor, ) = comptroller.markets(address(cToken));
+        uint256 _collateralFactor = _getCollateralFactor();
         require(_maxBorrowRatio < (_collateralFactor / 1e14), "invalid-max-borrow-limit");
         require(_maxBorrowRatio > _minBorrowRatio, "max-should-be-higher-than-min");
         emit UpdatedBorrowRatio(minBorrowRatio, _minBorrowRatio, maxBorrowRatio, _maxBorrowRatio);
@@ -78,6 +78,15 @@ contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
 
     function updateDyDxStatus(bool _status) external virtual onlyGovernor {
         _updateDyDxStatus(_status, address(collateralToken));
+    }
+
+    /**
+     * @notice Get Collateral Factor
+     */
+    function _getCollateralFactor() internal view virtual returns (uint256 _collateralFactor) {
+        (, _collateralFactor, ) = comptroller.markets(address(cToken));
+        // Take 95% of collateralFactor to avoid any rounding issue.
+        _collateralFactor = (_collateralFactor * 95) / 100;
     }
 
     /**
@@ -310,7 +319,7 @@ contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
             return 0;
         }
 
-        (, uint256 collateralFactor, ) = comptroller.markets(address(cToken));
+        uint256 collateralFactor = _getCollateralFactor();
 
         if (_shouldRepay) {
             amount = _normalDeleverage(_adjustBy, _supply, _borrow, collateralFactor);

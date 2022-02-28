@@ -477,6 +477,32 @@ const StrategyConfig = {
     setup: { ...setup },
   },
 
+  RariFuseLeverageStrategyDAI: {
+    contract: 'RariFuseLeverageStrategy',
+    type: StrategyTypes.COMPOUND_LEVERAGE,
+    constructorArgs: {
+      swapManager,
+      aaveAddressProvider: Address.Aave.AddressProvider,
+      fusePoolId: 8,
+      strategyName: 'RariFuseLeverageStrategyDAI',
+    },
+    config: { ...config },
+    setup: { ...setup },
+  },
+
+  RariFuseLeverageStrategyFEI: {
+    contract: 'RariFuseLeverageStrategy',
+    type: StrategyTypes.COMPOUND_LEVERAGE,
+    constructorArgs: {
+      swapManager,
+      aaveAddressProvider: Address.Aave.AddressProvider,
+      fusePoolId: 8,
+      strategyName: 'RariFuseLeverageStrategyFEI',
+    },
+    config: { ...config },
+    setup: { ...setup },
+  },
+
   EarnRariFuseStrategy: {
     contract: 'EarnRariFuseStrategy',
     type: StrategyTypes.EARN_RARI_FUSE,
