@@ -32,7 +32,7 @@ function shouldBehaveLikeMakerStrategy(strategyIndex) {
 
     describe('Earning scenario', function () {
       beforeEach(async function () {
-        await deposit(pool, collateralToken, 20, user1)
+        await deposit(pool, collateralToken, 30, user1)
         await rebalanceStrategy(strategy)
       })
 
@@ -42,7 +42,6 @@ function shouldBehaveLikeMakerStrategy(strategyIndex) {
         await timeTravel()
         await executeIfExist(token.exchangeRateCurrent)
         await rebalanceStrategy(strategy)
-
         const tokensHereAfter = await pool.tokensHere()
         expect(tokensHereAfter).to.be.gt(tokensHere, 'Collateral token in pool should increase')
       })

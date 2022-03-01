@@ -5,6 +5,7 @@ on:
       - "test/veth/config.js"
       - "test/veth/pool.js"
       - "contracts/pool/*.sol"
+      - ".github/workflows/veth-pool.yml"
 
 jobs:
   veth-pool-test:
