@@ -262,17 +262,17 @@
       },
       "vewbtc_dai": {
         "pool": {
-          "proxyAdmin": "0xe1444fEA423Bf8614c6E731C5BD5e45602AE6afC",
+          "proxyAdmin": "0x19A02f3512BdF78114B3c50f7d22a34b1B2798cA",
           "proxy": "0x7a74B6D3A07D3249Ea2FBb58e47F0DaF6d6a2ebf",
-          "implementation": "0x84323D50425eA63E5D9cC493b47C58dfCFB64D68",
+          "implementation": "0x8d48fD51FfEB99b1Ad1224038E46166Cfc7d9dE3",
           "poolAccountant": {
-            "proxyAdmin": "0xe1444fEA423Bf8614c6E731C5BD5e45602AE6afC",
+            "proxyAdmin": "0x19A02f3512BdF78114B3c50f7d22a34b1B2798cA",
             "proxy": "0x11aAb1b00c62EA9528c3286C53c2308Aad6f64ea",
-            "implementation": "0xADb6a931af81FE7E2430e12e125d8f8a72769274"
+            "implementation": "0x2Ad6DefC823D6DF64117C6dB0A17596faD90C767"
           }
         },
         "poolRewards": {
-          "proxyAdmin": "0xe1444fEA423Bf8614c6E731C5BD5e45602AE6afC",
+          "proxyAdmin": "0x19A02f3512BdF78114B3c50f7d22a34b1B2798cA",
           "proxy": "0x92659c1293f74d76249a72601C9Bf36bf6d738cA",
           "implementation": "0xacff2dc81fc8a99ec310E35DB006e36FC947F351"
         },
