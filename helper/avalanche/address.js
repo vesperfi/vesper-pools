@@ -51,6 +51,9 @@ const Address = {
     qiLINK: '0x4e9f683A27a6BdAD3FC2764003759277e93696e6',
     QI: '0x8729438EB15e2C8B576fCc6AeCdA6A148776C0F5',
   },
+  MultiSig: {
+    safe: '0x0000000000000000000000000000000000000000',
+  },
 }
 
 module.exports = Object.freeze(Address)
