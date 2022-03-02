@@ -8,6 +8,7 @@ on:
       - "contracts/strategies/maker/MakerStrategy.sol"
       - "contracts/strategies/maker/earn/EarnVesperMakerStrategy.sol"
       - "contracts/strategies/maker/earn/EarnVesperMakerStrategyWBTC.sol"
+      - ".github/workflows/vwbtc-earn-vesper-maker.yml"
 
 jobs:
   vwbtc-earn-vesper-maker:

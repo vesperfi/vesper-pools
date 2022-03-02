@@ -11,6 +11,7 @@ on:
       - "contracts/strategies/maker/AaveMakerStrategyETH.sol"
       - "contracts/strategies/maker/CompoundMakerStrategy.sol"
       - "contracts/strategies/maker/CompoundMakerStrategyETH.sol"
+      - ".github/workflows/veth-maker-strategies.yml"
 
 jobs:
   veth-maker-strategies-test:
