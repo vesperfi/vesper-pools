@@ -10,10 +10,8 @@ abstract contract AaveCore {
     StakedAave public constant stkAAVE = StakedAave(0x4da27a545c0c5B758a6BA100e3a049001de870f5);
     address public constant AAVE = 0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9;
 
-    AaveLendingPoolAddressesProvider public aaveAddressesProvider =
-        AaveLendingPoolAddressesProvider(0xB53C1a33016B2DC2fF3653530bfF1848a515c8c5);
     AaveLendingPool public immutable aaveLendingPool;
-    AaveProtocolDataProvider public immutable aaveProtocolDataProvider;
+    AaveProtocolDataProvider public aaveProtocolDataProvider;
     AaveIncentivesController public immutable aaveIncentivesController;
 
     AToken internal immutable aToken;
@@ -26,7 +24,8 @@ abstract contract AaveCore {
         try AToken(_receiptToken).getIncentivesController() returns (address _aaveIncentivesController) {
             aaveIncentivesController = AaveIncentivesController(_aaveIncentivesController);
         } catch {} //solhint-disable no-empty-blocks
-
+        AaveLendingPoolAddressesProvider aaveAddressesProvider =
+            AaveLendingPoolAddressesProvider(0xB53C1a33016B2DC2fF3653530bfF1848a515c8c5);
         aaveLendingPool = AaveLendingPool(aaveAddressesProvider.getLendingPool());
         aaveProtocolDataProvider = AaveProtocolDataProvider(aaveAddressesProvider.getAddress(AAVE_PROVIDER_ID));
     }

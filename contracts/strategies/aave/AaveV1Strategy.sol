@@ -18,7 +18,7 @@ contract AaveV1Strategy is Strategy {
     AavePool public immutable aaveLendingPool;
     AavePoolCore public immutable aaveLendingPoolCore;
 
-    AToken internal immutable aToken;
+    ATokenV1 internal immutable aToken;
 
     constructor(
         address _pool,
@@ -27,7 +27,7 @@ contract AaveV1Strategy is Strategy {
         string memory _name
     ) Strategy(_pool, _swapManager, _receiptToken) {
         require(_receiptToken != address(0), "aToken-address-is-zero");
-        aToken = AToken(_receiptToken);
+        aToken = ATokenV1(_receiptToken);
         aaveLendingPool = AavePool(aaveAddressesProvider.getLendingPool());
         aaveLendingPoolCore = AavePoolCore(aaveAddressesProvider.getLendingPoolCore());
         NAME = _name;

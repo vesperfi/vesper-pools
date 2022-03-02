@@ -22,6 +22,7 @@ const gemJoins = [mcdEthAJoin, mcdWbtcJoin, mcdLinkJoin, mcdEthCJoin, mcdUniAJoi
 // Contract names
 const IVesperPool = 'IVesperPoolTest'
 const CToken = 'CToken'
+const AToken = 'AToken'
 const TokenLike = 'TokenLikeTest'
 const CollateralManager = 'CollateralManager'
 
@@ -251,6 +252,8 @@ async function createStrategy(strategy, poolAddress, options = {}) {
       ? IVesperPool
       : strategyType.includes('compound') || strategyType === StrategyType.EARN_COMPOUND
       ? CToken
+      : strategyType.includes('aave')
+      ? AToken
       : TokenLike
   if (
     strategyType === StrategyType.CURVE ||

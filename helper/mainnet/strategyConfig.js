@@ -106,6 +106,20 @@ const StrategyConfig = {
     setup: { ...setup },
   },
 
+  AaveLeverageStrategyDAI: {
+    contract: 'AaveLeverageStrategy',
+    type: StrategyTypes.AAVE_LEVERAGE,
+    constructorArgs: {
+      swapManager,
+      rewardToken: Address.Aave.AAVE,
+      aaveAddressProvider: Address.Aave.AddressProvider,
+      receiptToken: Address.Aave.aDAI,
+      strategyName: 'AaveLeverageStrategyDAI',
+    },
+    config: { ...config },
+    setup: { ...setup },
+  },
+
   // Aave V1 strategy
   AaveV1StrategyUSDC: {
     contract: 'AaveV1Strategy',
