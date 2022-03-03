@@ -383,6 +383,66 @@ const StrategyConfig = {
     config: { ...config }, // Shallow copy
     setup: { ...setup },
   },
+
+  AlphaLendAvalancheStrategyDAI: {
+    contract: 'AlphaLendAvalancheStrategy',
+    type: StrategyTypes.ALPHA_LEND,
+    constructorArgs: {
+      swapManager,
+      receiptToken: Address.Alpha.ibDAIv2,
+      strategyName: 'AlphaLendAvalancheStrategyDAI',
+    },
+    config: { ...config },
+    setup: { ...setup },
+  },
+
+  AlphaLendAvalancheStrategyWETH: {
+    contract: 'AlphaLendAvalancheStrategy',
+    type: StrategyTypes.ALPHA_LEND,
+    constructorArgs: {
+      swapManager,
+      receiptToken: Address.Alpha.ibWETHv2,
+      strategyName: 'AlphaLendAvalancheStrategyWETH',
+    },
+    config: { ...config },
+    setup: { ...setup },
+  },
+
+  AlphaLendAvalancheStrategyUSDC: {
+    contract: 'AlphaLendAvalancheStrategy',
+    type: StrategyTypes.ALPHA_LEND,
+    constructorArgs: {
+      swapManager,
+      receiptToken: Address.Alpha.ibUSDCv2,
+      strategyName: 'AlphaLendAvalancheStrategyUSDC',
+    },
+    config: { ...config },
+    setup: { ...setup },
+  },
+
+  AlphaLendAvalancheStrategyWBTC: {
+    contract: 'AlphaLendAvalancheStrategy',
+    type: StrategyTypes.ALPHA_LEND,
+    constructorArgs: {
+      swapManager,
+      receiptToken: Address.Alpha.ibWBTCv2,
+      strategyName: 'AlphaLendAvalancheStrategyWBTC',
+    },
+    config: { ...config },
+    setup: { ...setup },
+  },
+
+  AlphaLendAvalancheStrategyAVAX: {
+    contract: 'AlphaLendAvalancheStrategyAVAX',
+    type: StrategyTypes.ALPHA_LEND,
+    constructorArgs: {
+      swapManager,
+      receiptToken: Address.Alpha.ibAVAXv2,
+      strategyName: 'AlphaLendAvalancheStrategyAVAX',
+    },
+    config: { ...config },
+    setup: { ...setup },
+  },
 }
 
 module.exports = Object.freeze(StrategyConfig)
