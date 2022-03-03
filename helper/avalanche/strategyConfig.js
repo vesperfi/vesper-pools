@@ -164,6 +164,66 @@ const StrategyConfig = {
     setup: { ...setup },
   },
 
+  BenqiCompoundStrategyAvalancheDAI: {
+    contract: 'CompoundMultiRewardAvalancheStrategy',
+    type: StrategyTypes.COMPOUND,
+    constructorArgs: {
+      swapManager,
+      comptroller: Address.Benqi.COMPTROLLER,
+      rewardDistributor: Address.Benqi.REWARD_DISTRIBUTOR,
+      rewardToken: Address.Benqi.QI,
+      receiptToken: Address.Benqi.qiDAI,
+      strategyName: 'BenqiCompoundStrategyAvalancheDAI',
+    },
+    config: { ...config }, // Shallow copy
+    setup: { ...setup },
+  },
+
+  BenqiCompoundStrategyAvalancheWETH: {
+    contract: 'CompoundMultiRewardAvalancheStrategy',
+    type: StrategyTypes.COMPOUND,
+    constructorArgs: {
+      swapManager,
+      comptroller: Address.Benqi.COMPTROLLER,
+      rewardDistributor: Address.Benqi.REWARD_DISTRIBUTOR,
+      rewardToken: Address.Benqi.QI,
+      receiptToken: Address.Benqi.qiETH,
+      strategyName: 'BenqiCompoundStrategyAvalancheWETH',
+    },
+    config: { ...config }, // Shallow copy
+    setup: { ...setup },
+  },
+
+  BenqiCompoundStrategyAvalancheWBTC: {
+    contract: 'CompoundMultiRewardAvalancheStrategy',
+    type: StrategyTypes.COMPOUND,
+    constructorArgs: {
+      swapManager,
+      comptroller: Address.Benqi.COMPTROLLER,
+      rewardDistributor: Address.Benqi.REWARD_DISTRIBUTOR,
+      rewardToken: Address.Benqi.QI,
+      receiptToken: Address.Benqi.qiBTC,
+      strategyName: 'BenqiCompoundStrategyAvalancheWBTC',
+    },
+    config: { ...config }, // Shallow copy
+    setup: { ...setup },
+  },
+
+  BenqiCompoundStrategyAvalancheAVAX: {
+    contract: 'BenqiCompoundMultiRewardAvalancheStrategyAVAX',
+    type: StrategyTypes.COMPOUND,
+    constructorArgs: {
+      swapManager,
+      comptroller: Address.Benqi.COMPTROLLER,
+      rewardDistributor: Address.Benqi.REWARD_DISTRIBUTOR,
+      rewardToken: Address.Benqi.QI,
+      receiptToken: Address.Benqi.qiAVAX,
+      strategyName: 'BenqiCompoundStrategyAvalancheAVAX',
+    },
+    config: { ...config }, // Shallow copy
+    setup: { ...setup },
+  },
+
   BenqiCompoundLeverageStrategyAvalancheUSDC: {
     contract: 'CompoundLeverageAvalancheStrategy',
     type: StrategyTypes.COMPOUND_LEVERAGE,
