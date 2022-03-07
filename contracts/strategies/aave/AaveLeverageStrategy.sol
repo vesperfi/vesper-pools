@@ -7,7 +7,9 @@ import "../Strategy.sol";
 import "../../interfaces/aave/IAave.sol";
 import "../../interfaces/oracle/IUniswapV3Oracle.sol";
 import "../../FlashLoanHelper.sol";
+import "../../pool/Errors.sol";
 import "./AaveCore.sol";
+import "@openzeppelin/contracts/utils/math/Math.sol";
 
 /// @title This strategy will deposit collateral token in Aave and based on position
 /// it will borrow same collateral token. It will use borrowed asset as supply and borrow again.
@@ -25,7 +27,7 @@ contract AaveLeverageStrategy is Strategy, AaveCore, FlashLoanHelper {
     IUniswapV3Oracle internal constant ORACLE = IUniswapV3Oracle(0x0F1f5A87f99f0918e6C81F16E59F3518698221Ff);
     uint32 internal constant TWAP_PERIOD = 3600;
     address public rewardToken;
-    AToken internal vdToken; // Variable Debt Token
+    AToken public vdToken; // Variable Debt Token
 
     constructor(
         address _pool,
@@ -54,39 +56,26 @@ contract AaveLeverageStrategy is Strategy, AaveCore, FlashLoanHelper {
         uint256 _maxBorrowRatio,
         uint256 _slippage
     ) external onlyGovernor {
-        require(_maxBorrowRatio < _getCollateralFactor(), "invalid-max-borrow-limit");
-        require(_maxBorrowRatio > _minBorrowRatio, "max-should-be-higher-than-min");
-        require(_slippage <= MAX_BPS, "invalid-slippage");
+        require(_maxBorrowRatio < _getCollateralFactor(), Errors.INVALID_MAX_BORROW_LIMIT);
+        require(_maxBorrowRatio > _minBorrowRatio, Errors.MAX_LIMIT_LESS_THAN_MIN);
+        require(_slippage <= MAX_BPS, Errors.INVALID_SLIPPAGE);
         minBorrowRatio = _minBorrowRatio;
         maxBorrowRatio = _maxBorrowRatio;
         slippage = _slippage;
     }
 
-    function updateAaveStatus(bool _status) external onlyGovernor {
-        _updateAaveStatus(_status);
-    }
-
-    function updateDyDxStatus(bool _status) external virtual onlyGovernor {
-        _updateDyDxStatus(_status, address(collateralToken));
+    function updateFlashLoanStatus(bool _dydxStatus, bool _aaveStatus) external virtual onlyGovernor {
+        _updateDyDxStatus(_dydxStatus, address(collateralToken));
+        _updateAaveStatus(_aaveStatus);
     }
 
     /**
-     * @notice Get Collateral Factor (Loan to Value Ratio)
+     * @notice Get Collateral Factor (Loan to Value Ratio). The ltvRatio/_collateralFactor is in 1e4 decimals.
      */
     function _getCollateralFactor() internal view virtual returns (uint256 _collateralFactor) {
         (, uint256 ltvRatio, , , , , , , , ) =
             aaveProtocolDataProvider.getReserveConfigurationData(address(collateralToken));
-        _collateralFactor = (ltvRatio * (10000 - slippage)) / 10000;
-    }
-
-    /**
-     * @notice Calculate total value based on rewardToken claimed, supply and borrow position
-     * @dev Report total value in collateral token
-     * @dev Claimed rewardToken will stay in strategy until next rebalance
-     */
-    function totalValueCurrent() public override returns (uint256 _totalValue) {
-        _claimRewards();
-        _totalValue = _calculateTotalValue(IERC20(rewardToken).balanceOf(address(this)));
+        _collateralFactor = (ltvRatio * (MAX_BPS - slippage)) / MAX_BPS;
     }
 
     /**
@@ -102,19 +91,19 @@ contract AaveLeverageStrategy is Strategy, AaveCore, FlashLoanHelper {
      * @notice Calculate total value using rewardToken accrued, supply and borrow position
      */
     function totalValue() public view virtual override returns (uint256 _totalValue) {
-        _totalValue = _calculateTotalValue(_getRewardAccrued());
+        _totalValue = _calculateTotalValue(_totalAave());
     }
 
     /**
      * @notice Calculate current position using claimed rewardToken and current borrow.
      */
-    function isLossMaking() external returns (bool) {
+    function isLossMaking() external view returns (bool) {
         // It's loss making if _totalValue < totalDebt
-        return totalValueCurrent() < IVesperPool(pool).totalDebtOf(address(this));
+        return totalValue() < IVesperPool(pool).totalDebtOf(address(this));
     }
 
     function isReservedToken(address _token) public view virtual override returns (bool) {
-        return _token == address(aToken) || _token == rewardToken || _token == address(collateralToken);
+        return _isReservedToken(_token) || address(collateralToken) == _token;
     }
 
     /// @notice Return supply and borrow position. Position may return few block old value
@@ -138,7 +127,7 @@ contract AaveLeverageStrategy is Strategy, AaveCore, FlashLoanHelper {
      * @param _newStrategy Address of new strategy.
      */
     function _beforeMigration(address _newStrategy) internal virtual override {
-        require(IStrategy(_newStrategy).token() == address(aToken), "wrong-receipt-token");
+        require(IStrategy(_newStrategy).token() == address(aToken), Errors.WRONG_RECEIPT_TOKEN);
         minBorrowRatio = 0;
         // It will calculate amount to repay based on borrow limit and payback all
         _reinvest();
@@ -187,11 +176,6 @@ contract AaveLeverageStrategy is Strategy, AaveCore, FlashLoanHelper {
         }
     }
 
-    /// @notice Get main Rewards accrued
-    function _getRewardAccrued() internal view virtual returns (uint256 _rewardAccrued) {
-        return stkAAVE.balanceOf(address(this));
-    }
-
     /**
      * @dev rewardToken is converted to collateral and if we have some borrow interest to pay,
      * it will go come from collateral.
@@ -219,7 +203,7 @@ contract AaveLeverageStrategy is Strategy, AaveCore, FlashLoanHelper {
     function _claimRewardsAndConvertTo(address _toToken) internal virtual override {
         uint256 _aaveAmount = _claimAave();
         if (_aaveAmount > 0) {
-            _safeSwap(AAVE, _toToken, _aaveAmount, 1);
+            _safeSwap(rewardToken, _toToken, _aaveAmount, 1);
         }
     }
 
@@ -245,44 +229,34 @@ contract AaveLeverageStrategy is Strategy, AaveCore, FlashLoanHelper {
         uint256 _supply = aToken.balanceOf(address(this));
         uint256 _borrow = vdToken.balanceOf(address(this));
 
-        uint256 _investedCollateral = _supply > _borrow ? _supply - _borrow : 0;
+        uint256 _investedCollateral = _supply - _borrow;
 
         uint256 _collateralHere = collateralToken.balanceOf(address(this));
         uint256 _totalCollateral = _investedCollateral + _collateralHere;
 
-        uint256 _profitToWithdraw;
-
         if (_totalCollateral > _totalDebt) {
             _profit = _totalCollateral - _totalDebt;
-            if (_collateralHere <= _profit) {
-                _profitToWithdraw = _profit - _collateralHere;
-            } else if (_collateralHere >= (_profit + _excessDebt)) {
-                _payback = _excessDebt;
-            } else {
-                // _profit < CollateralHere < _profit + _excessDebt
-                _payback = _collateralHere - _profit;
-            }
         } else {
             _loss = _totalDebt - _totalCollateral;
         }
-
-        uint256 _paybackToWithdraw = _excessDebt - _payback;
-        uint256 _totalAmountToWithdraw = _paybackToWithdraw + _profitToWithdraw;
-        if (_totalAmountToWithdraw != 0) {
-            uint256 _withdrawn = _withdrawHere(_totalAmountToWithdraw);
-            // Any amount withdrawn over _profitToWithdraw is payback for pool
-            if (_withdrawn > _profitToWithdraw) {
-                _payback += (_withdrawn - _profitToWithdraw);
+        uint256 _profitAndExcessDebt = _profit + _excessDebt;
+        if (_collateralHere < _profitAndExcessDebt) {
+            uint256 _totalAmountToWithdraw = Math.min((_profitAndExcessDebt - _collateralHere), _investedCollateral);
+            if (_totalAmountToWithdraw > 0) {
+                _withdrawHere(_totalAmountToWithdraw);
+                _collateralHere = collateralToken.balanceOf(address(this));
             }
+        }
+
+        if (_excessDebt > 0) {
+            _payback = Math.min(_collateralHere, _excessDebt);
         }
 
         // Handle scenario if debtRatio is zero and some supply left.
         // Remaining tokens, after payback withdrawal, are profit
         (_supply, _borrow) = getPosition();
-        // min _supply > 1
-        if (_debtRatio == 0 && _supply > 1 && _borrow == 0) {
-            // This will redeem all aTokens this strategy has
-            _redeemUnderlying(MAX_UINT_VALUE);
+        if (_debtRatio == 0 && _supply > 0 && _borrow == 0) {
+            _redeemUnderlying(_supply);
             _profit += _supply;
         }
     }
@@ -302,11 +276,10 @@ contract AaveLeverageStrategy is Strategy, AaveCore, FlashLoanHelper {
             return 0;
         }
 
-        uint256 collateralFactor = _getCollateralFactor();
         if (_shouldRepay) {
-            amount = _normalDeleverage(_adjustBy, _supply, _borrow, collateralFactor);
+            amount = _normalDeleverage(_adjustBy, _supply, _borrow, _getCollateralFactor());
         } else {
-            amount = _normalLeverage(_adjustBy, _supply, _borrow, collateralFactor);
+            amount = _normalLeverage(_adjustBy, _supply, _borrow, _getCollateralFactor());
         }
     }
 
@@ -324,20 +297,17 @@ contract AaveLeverageStrategy is Strategy, AaveCore, FlashLoanHelper {
         uint256 _theoreticalSupply;
         if (_collateralFactor != 0) {
             // Calculate minimum supply required to support _borrow
-            _theoreticalSupply = (_borrow * 10000) / _collateralFactor;
+            _theoreticalSupply = (_borrow * MAX_BPS) / _collateralFactor;
         }
-        _deleveragedAmount = _supply > _theoreticalSupply ? _supply - _theoreticalSupply : 0;
+        _deleveragedAmount = _supply - _theoreticalSupply;
         if (_deleveragedAmount >= _borrow) {
             _deleveragedAmount = _borrow;
         }
         if (_deleveragedAmount >= _maxDeleverage) {
             _deleveragedAmount = _maxDeleverage;
         }
-        if (_deleveragedAmount > 1) {
-            // min amount > 1
-            _redeemUnderlying(_deleveragedAmount);
-            _repayBorrow(_deleveragedAmount);
-        }
+        _redeemUnderlying(_deleveragedAmount);
+        _repayBorrow(_deleveragedAmount);
     }
 
     /**
@@ -352,16 +322,12 @@ contract AaveLeverageStrategy is Strategy, AaveCore, FlashLoanHelper {
         uint256 _collateralFactor
     ) internal returns (uint256 _leveragedAmount) {
         // Calculate maximum we can borrow at current _supply
-        uint256 theoreticalBorrow = ((_supply * _collateralFactor) / 10000);
-        _leveragedAmount = theoreticalBorrow > _borrow ? theoreticalBorrow - _borrow : 0;
+        _leveragedAmount = ((_supply * _collateralFactor) / MAX_BPS) - _borrow;
         if (_leveragedAmount >= _maxLeverage) {
             _leveragedAmount = _maxLeverage;
         }
-        if (_leveragedAmount > 1) {
-            // min amount > 1
-            _borrowCollateral(_leveragedAmount);
-            _mint(collateralToken.balanceOf(address(this)));
-        }
+        _borrowCollateral(_leveragedAmount);
+        _mint(collateralToken.balanceOf(address(this)));
     }
 
     /// @notice Deposit collateral in Aave and adjust borrow position
@@ -411,24 +377,23 @@ contract AaveLeverageStrategy is Strategy, AaveCore, FlashLoanHelper {
                 }
                 // Current supply minus supply required to support _borrow at _maxBorrowRatio
                 uint256 _redeemable = _supply - _supplyToSupportBorrow;
-                _amount = _amount > _redeemable ? _redeemable : _amount;
+                if (_amount > _redeemable) {
+                    _amount = _redeemable;
+                }
             }
         }
         uint256 _collateralBefore = collateralToken.balanceOf(address(this));
 
         // If we do not have enough collateral, try to get some via AAVE
         // This scenario is rare and will happen during last withdraw
-        uint256 _underLyingBal = aToken.balanceOf(address(this));
-        if (_amount > _underLyingBal) {
+        if (_amount > aToken.balanceOf(address(this))) {
             // Use all collateral for withdraw
             _collateralBefore = 0;
             _claimRewardsAndConvertTo(address(collateralToken));
             // Updated amount
             _amount = _amount - collateralToken.balanceOf(address(this));
         }
-        if (_amount > 1) {
-            _redeemUnderlying(_amount);
-        }
+        _redeemUnderlying(_amount);
         return collateralToken.balanceOf(address(this)) - _collateralBefore;
     }
 
@@ -442,13 +407,19 @@ contract AaveLeverageStrategy is Strategy, AaveCore, FlashLoanHelper {
         uint256 _totalFlashAmount;
         // Due to less fee DyDx is our primary flash loan provider
         if (isDyDxActive && _flashAmount > 0) {
-            bytes memory _data = abi.encode(_flashAmount, _shouldRepay);
-            _totalFlashAmount = _doDyDxFlashLoan(address(collateralToken), _flashAmount, _data);
+            _totalFlashAmount = _doDyDxFlashLoan(
+                address(collateralToken),
+                _flashAmount,
+                abi.encode(_flashAmount, _shouldRepay)
+            );
             _flashAmount -= _totalFlashAmount;
         }
         if (isAaveActive && _shouldRepay && _flashAmount > 0) {
-            bytes memory _data = abi.encode(_flashAmount, _shouldRepay);
-            _totalFlashAmount += _doAaveFlashLoan(address(collateralToken), _flashAmount, _data);
+            _totalFlashAmount += _doAaveFlashLoan(
+                address(collateralToken),
+                _flashAmount,
+                abi.encode(_flashAmount, _shouldRepay)
+            );
         }
         return _totalFlashAmount;
     }
@@ -506,7 +477,7 @@ contract AaveLeverageStrategy is Strategy, AaveCore, FlashLoanHelper {
     }
 
     function _borrowCollateral(uint256 _amount) internal virtual {
-        // 2 for variable rate borrow.
+        // 2 for variable rate borrow, 0 for referralCode
         aaveLendingPool.borrow(address(collateralToken), _amount, 2, 0, address(this));
     }
 

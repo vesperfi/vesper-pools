@@ -23,4 +23,14 @@ library Errors {
     string public constant DEBT_RATIO_LIMIT_REACHED = "18"; // Debt ratio limit reached. It must be less than MAX_BPS
     string public constant TOTAL_DEBT_IS_NOT_ZERO = "19"; // Strategy total debt must be 0
     string public constant LOSS_TOO_HIGH = "20"; // Strategy reported loss must be less than current debt
+    string public constant INVALID_MAX_BORROW_LIMIT = "21"; // Max borrow limit is beyond range.
+    string public constant MAX_LIMIT_LESS_THAN_MIN = "22"; // Max limit should be greater than min limit.
+    string public constant INVALID_SLIPPAGE = "23"; // Slippage should be less than MAX_BPS
+    string public constant WRONG_RECEIPT_TOKEN = "24"; // Wrong receipt token address
+    string public constant AAVE_FLASH_LOAN_NOT_ACTIVE = "25"; // aave flash loan is not active
+    string public constant DYDX_FLASH_LOAN_NOT_ACTIVE = "26"; // DYDX flash loan is not active
+    string public constant INVALID_FLASH_LOAN = "27"; // invalid-flash-loan
+    string public constant INVALID_INITIATOR = "28"; // "invalid-initiator"
+    string public constant INCORRECT_WITHDRAW_AMOUNT = "29"; // withdrawn amount is not correct
+    string public constant NO_MARKET_ID_FOUND = "30"; // dydx flash loan no marketId found for token
 }

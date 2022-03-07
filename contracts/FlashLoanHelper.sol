@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./interfaces/vesper/IVesperPool.sol";
 import "./interfaces/aave/IAave.sol";
 import "./interfaces/dydx/ISoloMargin.sol";
+import "./pool/Errors.sol";
 
 /**
  * @title FlashLoanHelper:: This contract does all heavy lifting to get flash loan via Aave and DyDx.
@@ -26,7 +27,7 @@ abstract contract FlashLoanHelper {
     bool public isDyDxActive = false;
 
     constructor(address _aaveAddressesProvider) {
-        require(_aaveAddressesProvider != address(0), "invalid-aave-provider");
+        require(_aaveAddressesProvider != address(0), Errors.INPUT_ADDRESS_IS_ZERO);
 
         aaveAddressesProvider = AaveLendingPoolAddressesProvider(_aaveAddressesProvider);
     }
@@ -66,7 +67,7 @@ abstract contract FlashLoanHelper {
         uint256 _amountDesired,
         bytes memory _data
     ) internal returns (uint256 _amount) {
-        require(isAaveActive, "aave-flash-loan-is-not-active");
+        require(isAaveActive, Errors.AAVE_FLASH_LOAN_NOT_ACTIVE);
         AaveLendingPool _aaveLendingPool = AaveLendingPool(aaveAddressesProvider.getLendingPool());
         AaveProtocolDataProvider _aaveProtocolDataProvider =
             AaveProtocolDataProvider(aaveAddressesProvider.getAddress(AAVE_PROVIDER_ID));
@@ -104,8 +105,8 @@ abstract contract FlashLoanHelper {
         bytes calldata _data
     ) external returns (bool) {
         require(msg.sender == aaveAddressesProvider.getLendingPool(), "!aave-pool");
-        require(awaitingFlash, "invalid-flash-loan");
-        require(_initiator == address(this), "invalid-initiator");
+        require(awaitingFlash, Errors.INVALID_FLASH_LOAN);
+        require(_initiator == address(this), Errors.INVALID_INITIATOR);
 
         // Flash loan amount + flash loan fee
         uint256 _repayAmount = _amounts[0] + _premiums[0];
@@ -128,7 +129,7 @@ abstract contract FlashLoanHelper {
         uint256 _amountDesired,
         bytes memory _data
     ) internal returns (uint256 _amount) {
-        require(isDyDxActive, "dydx-flash-loan-is-not-active");
+        require(isDyDxActive, Errors.DYDX_FLASH_LOAN_NOT_ACTIVE);
 
         // Check token liquidity in DyDx
         uint256 amountInSolo = IERC20(_token).balanceOf(SOLO);
@@ -165,7 +166,7 @@ abstract contract FlashLoanHelper {
     ) external {
         (bytes memory _data, uint256 _repayAmount) = abi.decode(_callData, (bytes, uint256));
         require(msg.sender == SOLO, "!solo");
-        require(_sender == address(this), "invalid-initiator");
+        require(_sender == address(this), Errors.INVALID_INITIATOR);
         _flashLoanLogic(_data, _repayAmount);
     }
 
@@ -188,7 +189,7 @@ abstract contract FlashLoanHelper {
             }
         }
 
-        revert("no-marketId-found-for-token");
+        revert(Errors.NO_MARKET_ID_FOUND);
     }
 
     function _getWithdrawAction(uint256 marketId, uint256 amount) internal view returns (Actions.ActionArgs memory) {

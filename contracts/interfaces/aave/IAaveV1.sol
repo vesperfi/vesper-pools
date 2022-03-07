@@ -23,7 +23,7 @@ interface AavePoolCore {
     function getReserveAvailableLiquidity(address _reserve) external view returns (uint256);
 }
 
-interface ATokenV1 is IERC20 {
+interface AToken is IERC20 {
     function redeem(uint256 _amount) external;
 
     function principalBalanceOf(address _user) external view returns (uint256);
