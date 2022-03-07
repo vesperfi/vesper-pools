@@ -4,6 +4,7 @@ pragma solidity 0.8.3;
 import "../../Earn.sol";
 import "../VesperStrategy.sol";
 import "../../../interfaces/vesper/IVesperPool.sol";
+import "@openzeppelin/contracts/utils/math/Math.sol";
 
 /// @title This Earn strategy will deposit collateral token in a Vesper Grow Pool
 /// and converts the yield to another Drip Token
@@ -31,19 +32,51 @@ contract EarnVesperStrategy is VesperStrategy, Earn {
     }
 
     /**
-     * @notice Calculate earning and withdraw it from Vesper Grow.
-     * @param _totalDebt Total collateral debt of this strategy
-     * @return profit in collateral token
+     * @notice Generate report for pools accounting and also send profit and any payback to pool.
+     * @dev Claim rewardToken and convert to collateral.
      */
-    function _realizeProfit(uint256 _totalDebt) internal virtual override(VesperStrategy, Strategy) returns (uint256) {
-        _claimRewardsAndConvertTo(address(dripToken));
-        uint256 _collateralBalance = _getCollateralBalance();
-        if (_collateralBalance > _totalDebt) {
-            _withdrawHere(_collateralBalance - _totalDebt);
+    function _generateReport()
+        internal
+        virtual
+        override
+        returns (
+            uint256 _profit,
+            uint256 _loss,
+            uint256 _payback
+        )
+    {
+        uint256 _excessDebt = IVesperPool(pool).excessDebt(address(this));
+        uint256 _totalDebt = IVesperPool(pool).totalDebtOf(address(this));
+
+        _claimRewardsAndConvertTo(address(collateralToken));
+        uint256 _investedCollateral = _getCollateralBalance();
+        uint256 _collateralHere = collateralToken.balanceOf(address(this));
+
+        uint256 _totalCollateral = _investedCollateral + _collateralHere;
+        if (_totalCollateral > _totalDebt) {
+            _profit = _totalCollateral - _totalDebt;
         }
-        _convertCollateralToDrip();
-        _forwardEarning();
-        return 0;
+        uint256 _profitAndExcessDebt = _profit + _excessDebt;
+        if (_collateralHere < _profitAndExcessDebt) {
+            uint256 _totalAmountToWithdraw = Math.min((_profitAndExcessDebt - _collateralHere), _investedCollateral);
+            if (_totalAmountToWithdraw > 0) {
+                vToken.whitelistedWithdraw(_convertToShares(_totalAmountToWithdraw));
+                _collateralHere = collateralToken.balanceOf(address(this));
+            }
+        }
+
+        uint256 _dripAmount = Math.min(_collateralHere, _profit);
+        if (_dripAmount > 0) {
+            _convertCollateralToDrip(_dripAmount);
+            _forwardEarning();
+            _collateralHere = collateralToken.balanceOf(address(this));
+        }
+
+        if (_excessDebt > 0) {
+            _payback = Math.min(_collateralHere, _excessDebt);
+        }
+        // Earn always report 0 profit and 0 loss.
+        return (0, 0, _payback);
     }
 
     /// @notice Claim VSP rewards in underlying Grow Pool, if any
