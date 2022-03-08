@@ -184,7 +184,7 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
         for (const strategy of strategies) {
           await accountant.updateInterestFee(strategy.instance.address, '0')
         }
-        depositAmount = await deposit(20, user2)
+        depositAmount = await deposit(15, user2)
         const dust = DECIMAL18.div(BN.from(100)) // Dust is less than 1e16
         await rebalance(strategies)
         // Some strategies can report a loss if they don't have time to earn anything
@@ -218,17 +218,18 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
     describe(`Multi transfer ${poolName} pool tokens`, function () {
       it('Should transfer to multiple recipients', async function () {
         await deposit(100, user1)
+        const user1Balance = await pool.balanceOf(user1.address)
         const balanceBefore = await pool.balanceOf(user4.address)
         expect(balanceBefore).to.be.equal(0, `${collateralName} balance should be 0`)
         await pool
           .connect(user1.signer)
-          .multiTransfer([user3.address, user4.address], [DECIMAL18.mul(BN.from(1)), DECIMAL18.mul(BN.from(2))])
+          .multiTransfer([user3.address, user4.address], [user1Balance.div(3), user1Balance.div(4)])
         return Promise.all([pool.balanceOf(user3.address), pool.balanceOf(user4.address)]).then(function ([
           balance1,
           balance2,
         ]) {
-          expect(balance1).to.be.equal(balance1, `${collateralName} balance is wrong`)
-          expect(balance2).to.be.equal(balance2, `${collateralName} balance is wrong`)
+          expect(balance1).to.be.equal(user1Balance.div(3), `${collateralName} balance is wrong`)
+          expect(balance2).to.be.equal(user1Balance.div(4), `${collateralName} balance is wrong`)
         })
       })
 
@@ -531,7 +532,7 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
       it('Pool record correct value of profit and loss', async function () {
         await deposit(70, user2)
         await rebalance(strategies)
-        await timeTravel(50)
+        await timeTravel(500)
         await rebalance(strategies)
         const strategyParams = await pool.strategy(strategies[0].instance.address)
         const totalProfit = strategyParams._totalProfit
