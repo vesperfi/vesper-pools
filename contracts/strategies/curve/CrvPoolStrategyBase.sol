@@ -91,7 +91,7 @@ abstract contract CrvPoolStrategyBase is CrvBase, Strategy {
     }
 
     /// @dev Claimable rewards estimated into pool's collateral value
-    function claimableRewardsInCollateral() public view virtual returns (uint256 rewardAsCollateral) {
+    function estimateClaimableRewardsInCollateral() public view virtual returns (uint256 rewardAsCollateral) {
         //Total Mintable - Previously minted
         uint256 claimable =
             ILiquidityGaugeV2(crvGauge).integrate_fraction(address(this)) -
@@ -119,7 +119,7 @@ abstract contract CrvPoolStrategyBase is CrvBase, Strategy {
         _value =
             collateralToken.balanceOf(address(this)) +
             convertFrom18(_calcAmtOutAfterSlippage(getLpValue(totalLp()), crvSlippage)) +
-            claimableRewardsInCollateral();
+            estimateClaimableRewardsInCollateral();
     }
 
     function _setupOracles() internal virtual override {
