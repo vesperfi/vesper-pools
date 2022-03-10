@@ -8,12 +8,26 @@ import "../../interfaces/token/IToken.sol";
 // solhint-disable no-empty-blocks
 /// @title Deposit ETH in Compound and earn interest.
 contract CompoundLeverageStrategyETH is CompoundLeverageStrategy {
-    string public constant NAME = "Compound-Leverage-Strategy-ETH";
-    string public constant VERSION = "3.0.12";
-
-    // cETH = 0x4Ddc2D193948926D02f9B1fE9e1daa0718270ED5
-    constructor(address _pool, address _swapManager)
-        CompoundLeverageStrategy(_pool, _swapManager, 0x4Ddc2D193948926D02f9B1fE9e1daa0718270ED5)
+    constructor(
+        address _pool,
+        address _swapManager,
+        address _comptroller,
+        address _rewardDistributor,
+        address _rewardToken,
+        address _aaveAddressesProvider,
+        address _receiptToken,
+        string memory _name
+    )
+        CompoundLeverageStrategy(
+            _pool,
+            _swapManager,
+            _comptroller,
+            _rewardDistributor,
+            _rewardToken,
+            _aaveAddressesProvider,
+            _receiptToken,
+            _name
+        )
     {}
 
     /// @dev Only receive ETH from either cToken or WETH

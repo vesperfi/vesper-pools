@@ -27,7 +27,7 @@ Note: These tests will fork the mainnet as required in step 3. It is not recomme
 
   - Run single file
    ```sh
-   npm test test/veth/aave_maker-compound_maker.js
+   npm test test/veth/aave-maker-compound-maker.js
    ```
 
   - Or run them all (but some will fail, because of state modifications to the forked chain)
@@ -53,21 +53,83 @@ Deployment will be done via custom `hardhat task deploy-pool` which behind the s
    ```bash
    npx hardhat help deploy-pool
    ```
-* Deploy VDAI pool
-  ```bash
-   npm run deploy -- --pool VDAI --network localhost
-   or
-   npx hardhat deploy-pool --pool VDAI --network localhost
-  ```
 
-* Deploy VDAI pool with release (preferred)
+* Deploy Vesper pool
+  1. Add pool configuration in `./helper/mainnet/poolConfig.js` file.
+     - Some default config for setup and rewards are already defined at top of file, override them as needed.
+     - Replace mainnet in `./helper/mainnet/poolConfig.js` with arbitrum/avalanche/polygon as needed.
+
+   Example configuration for `VDAI`
+    ```js
+     VDAI: {
+      contractName: 'VPool',
+      poolParams: ['vDAI Pool', 'vDAI', Address.DAI],
+      setup: { ...setup },
+      rewards: { ...rewards },
+    },
+    ```
+
   
+  2. Run below command to deploy pool on localhost and mainnet as target chain
   ```bash
-   npm run deploy -- --pool VDAI --network localhost --release 3.0.5
+   npm run deploy -- --pool VDAI --network localhost --deploy-params '{"tags": "deploy-vPool"}'
   ```
-  > It will create `contracts.json` file at `/releases/3.0.5`
+  - To deploy pool on localhost and polygon as target chain, run below command 
+  ```bash 
+  npm run deploy -- --pool VDAI --network localhost --deploy-params '{"tags": "deploy-vPool"}' --target-chain polygon
+  ```
 
-* Passing any `hardhat-deploy` param
+* Deploy pool with release (preferred)
+  - It will create `contracts.json` file at `/releases/3.0.15`
   ```bash
-   npm run deploy -- --pool VDAI --network localhost --release 3.0.5 -- deploy-params '{"tags": "VDAI", gasprice: "25000000000"}'
+   npm run deploy -- --pool VDAI --network localhost --release 3.0.15 --deploy-params '{"tags": "deploy-vPool"}'
+  ``` 
+
+* Deploy strategy for already deployed pool
+  1. Add strategy configuration in `./helper/mainnet/strategyConfig.js` file.
+   
+   Example configuration for `AaveStrategyDAI`
+   ```js
+     AaveStrategyDAI: {
+      contract: 'AaveStrategy',
+      type: StrategyTypes.AAVE,
+      constructorArgs: {
+        swapManager,
+        receiptToken: Address.Aave.aDAI,
+        strategyName: 'AaveStrategyDAI',
+      },
+      config: { ...config },
+      setup: { ...setup },
+    },
+   ```
+  2. Run below command to deploy `AaveStrategyDAI` for `VDAI` pool
+  ```bash
+  npm run deploy -- --pool VDAI --network localhost --release 3.0.15 --deploy-params '{"tags": "deploy-strategy"}' --strategy-name AaveStrategyDAI
   ```
+
+* Migrate strategy
+  ```bash
+  npm run deploy -- --pool VDAI --network localhost --release 3.0.15 --deploy-params '{"tags": "migrate-strategy"}' --strategy-name AaveStrategyDAI
+  ```
+
+* Pass any `hardhat-deploy` supported param within `deploy-params` object
+  ```bash
+   npm run deploy -- --pool VDAI --network localhost --release 3.0.15 --deploy-params '{"tags": "deploy-vPool", "gasprice": "25000000000"}'
+  ```
+
+ ```
+
+ * Deploy `upgrader` contracts 
+  mandatory param `name`, supported values : `PoolAccountantUpgrader`, `PoolRewardsUpgrader`, `VPoolUpgrader`
+  optional param `--target-chain`, values :  `polygon`, `mainnet`, `avalanche`, `arbitrium`
+ 
+ ```bash
+  npm run deploy-upgrader -- --name PoolAccountantUpgrader --network localhost
+  npm run deploy-upgrader -- --name PoolRewardsUpgrader --network localhost --target-chain polygon
+ ```
+
+ * Deploy `vfr` pool
+ VFR Pool pair require Coverage, Stable pool and VFRBuffer contract. Refer `VFRDAI` config section in `poolConfig.js` file.
+ ```bash
+  npm run deploy -- --pool VFRDAI --network localhost --target-chain mainnet --release 3.0.15 --deploy-params '{"tags": "deploy-vfr", "gasprice": "25000000000"}'
+ ```

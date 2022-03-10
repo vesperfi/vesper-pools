@@ -4,19 +4,23 @@ pragma solidity 0.8.3;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
+import "../dependencies/openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "../interfaces/bloq/ISwapManager.sol";
-import "../interfaces/bloq/IAddressList.sol";
-import "../interfaces/bloq/IAddressListFactory.sol";
 import "../interfaces/vesper/IStrategy.sol";
 import "../interfaces/vesper/IVesperPool.sol";
 
 abstract contract Strategy is IStrategy, Context {
     using SafeERC20 for IERC20;
+    using EnumerableSet for EnumerableSet.AddressSet;
 
+    address internal constant ETH = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
+    uint256 internal constant MAX_UINT_VALUE = type(uint256).max;
+
+    // solhint-disable-next-line  var-name-mixedcase
+    address internal WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     IERC20 public immutable collateralToken;
     address public receiptToken;
     address public immutable override pool;
-    IAddressList public keepers;
     address public override feeCollector;
     ISwapManager public swapManager;
 
@@ -24,9 +28,7 @@ abstract contract Strategy is IStrategy, Context {
     uint256 public oracleRouterIdx = 0; // Uniswap V2
     uint256 public swapSlippage = 10000; // 100% Don't use oracles by default
 
-    address internal constant ETH = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
-    address internal constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
-    uint256 internal constant MAX_UINT_VALUE = type(uint256).max;
+    EnumerableSet.AddressSet private _keepers;
 
     event UpdatedFeeCollector(address indexed previousFeeCollector, address indexed newFeeCollector);
     event UpdatedSwapManager(address indexed previousSwapManager, address indexed newSwapManager);
@@ -44,6 +46,7 @@ abstract contract Strategy is IStrategy, Context {
         pool = _pool;
         collateralToken = IVesperPool(_pool).token();
         receiptToken = _receiptToken;
+        require(_keepers.add(_msgSender()), "add-keeper-failed");
     }
 
     modifier onlyGovernor {
@@ -52,7 +55,7 @@ abstract contract Strategy is IStrategy, Context {
     }
 
     modifier onlyKeeper() {
-        require(keepers.contains(_msgSender()), "caller-is-not-a-keeper");
+        require(_keepers.contains(_msgSender()), "caller-is-not-a-keeper");
         _;
     }
 
@@ -66,23 +69,12 @@ abstract contract Strategy is IStrategy, Context {
      * @param _keeperAddress keeper address to add.
      */
     function addKeeper(address _keeperAddress) external onlyGovernor {
-        require(keepers.add(_keeperAddress), "add-keeper-failed");
+        require(_keepers.add(_keeperAddress), "add-keeper-failed");
     }
 
-    /**
-     * @notice Create keeper list
-     * NOTE: Any function with onlyKeeper modifier will not work until this function is called.
-     * NOTE: Due to gas constraint this function cannot be called in constructor.
-     * @param _addressListFactory To support same code in eth side chain, user _addressListFactory as param
-     * ethereum- 0xded8217De022706A191eE7Ee0Dc9df1185Fb5dA3
-     * polygon-0xD10D5696A350D65A9AA15FE8B258caB4ab1bF291
-     */
-    function init(address _addressListFactory) external onlyGovernor {
-        require(address(keepers) == address(0), "keeper-list-already-created");
-        // Prepare keeper list
-        IAddressListFactory _factory = IAddressListFactory(_addressListFactory);
-        keepers = IAddressList(_factory.createList());
-        require(keepers.add(_msgSender()), "add-keeper-failed");
+    /// @notice Return list of keepers
+    function keepers() external view override returns (address[] memory) {
+        return _keepers.values();
     }
 
     /**
@@ -103,7 +95,7 @@ abstract contract Strategy is IStrategy, Context {
      * @param _keeperAddress keeper address to remove.
      */
     function removeKeeper(address _keeperAddress) external onlyGovernor {
-        require(keepers.remove(_keeperAddress), "remove-keeper-failed");
+        require(_keepers.remove(_keeperAddress), "remove-keeper-failed");
     }
 
     /**
@@ -191,11 +183,6 @@ abstract contract Strategy is IStrategy, Context {
         return receiptToken;
     }
 
-    /// @dev Convert from 18 decimals to token defined decimals. Default no conversion.
-    function convertFrom18(uint256 amount) public pure virtual returns (uint256) {
-        return amount;
-    }
-
     /**
      * @notice Calculate total value of asset under management
      * @dev Report total value in collateral token
@@ -214,7 +201,7 @@ abstract contract Strategy is IStrategy, Context {
     function isReservedToken(address _token) public view virtual override returns (bool);
 
     /**
-     * @notice some strategy may want to prepare before doing migration. 
+     * @notice some strategy may want to prepare before doing migration.
         Example In Maker old strategy want to give vault ownership to new strategy
      * @param _newStrategy .
      */
@@ -247,7 +234,7 @@ abstract contract Strategy is IStrategy, Context {
         return (_amount * (10000 - _slippage)) / (10000);
     }
 
-    function _simpleOraclePath(address _from, address _to) internal pure returns (address[] memory path) {
+    function _simpleOraclePath(address _from, address _to) internal view returns (address[] memory path) {
         if (_from == WETH || _to == WETH) {
             path = new address[](2);
             path[0] = _from;
@@ -265,10 +252,17 @@ abstract contract Strategy is IStrategy, Context {
         address _to,
         uint256 _amt
     ) internal returns (uint256, bool) {
-        // from, to, amountIn, period, router
-        (uint256 rate, uint256 lastUpdate, ) = swapManager.consult(_from, _to, _amt, oraclePeriod, oracleRouterIdx);
-        // We're looking at a TWAP ORACLE with a 1 hr Period that has been updated within the last hour
-        if ((lastUpdate > (block.timestamp - oraclePeriod)) && (rate != 0)) return (rate, true);
+        for (uint256 i = 0; i < swapManager.N_DEX(); i++) {
+            (bool _success, bytes memory _returnData) =
+                address(swapManager).call(
+                    abi.encodePacked(swapManager.consult.selector, abi.encode(_from, _to, _amt, oraclePeriod, i))
+                );
+            if (_success) {
+                (uint256 rate, uint256 lastUpdate, ) = abi.decode(_returnData, (uint256, uint256, bool));
+                if ((lastUpdate > (block.timestamp - oraclePeriod)) && (rate != 0)) return (rate, true);
+                return (0, false);
+            }
+        }
         return (0, false);
     }
 

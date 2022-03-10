@@ -1,0 +1,23 @@
+{
+  "vaDAI-v4.0.0_4.0.0": 1641955552,
+  "AaveStrategyAvalancheDAI-v4.0.0": 1641955949,
+  "vaWETH-v4.0.0_4.0.0": 1642687334,
+  "AaveStrategyAvalancheWETH-v4.0.0": 1642693000,
+  "vaAVAX-v4.0.0_4.0.0": 1643211575,
+  "AaveStrategyAvalancheAVAX-v4.0.0": 1643211854,
+  "vaWBTC-v4.0.0_4.0.0": 1643379890,
+  "AaveStrategyAvalancheWBTC-v4.0.0": 1643380306,
+  "vaUSDC-v4.0.0_4.0.0": 1643385578,
+  "AaveStrategyAvalancheUSDC-v4.0.0": 1643385965,
+  "AaveStrategyAvalancheAVAX-v4.0.1": 1643925846,
+  "TraderJoeCompoundStrategyAvalancheDAI-v4.0.0": 1644522199,
+  "TraderJoeCompoundStrategyAvalancheUSDC-v4.0.0": 1644524429,
+  "TraderJoeCompoundStrategyAvalancheWBTC-v4.0.0": 1644535729,
+  "TraderJoeCompoundStrategyAvalancheWETH-v4.0.0": 1644584047,
+  "TraderJoeCompoundStrategyAvalancheAVAX-v4.0.0": 1644584871,
+  "BenqiCompoundStrategyAvalancheUSDC-v4.0.0": 1646438496,
+  "BenqiCompoundStrategyAvalancheWBTC-v4.0.0": 1646485949,
+  "BenqiCompoundStrategyAvalancheWETH-v4.0.0": 1646493637,
+  "BenqiCompoundStrategyAvalancheDAI-v4.0.0": 1646494348,
+  "BenqiCompoundStrategyAvalancheAVAX-v4.0.0": 1646494716
+}

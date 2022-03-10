@@ -7,11 +7,12 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../../../interfaces/vesper/IVesperPool.sol";
 import "../../../interfaces/aave/IAave.sol";
 import "../../Strategy.sol";
-import "../3Pool/Crv3PoolStrategy.sol";
+import "../CrvPoolStrategyBase.sol";
 
-/// @title This strategy will deposit collateral token in Curve 3Pool and earn interest.
-abstract contract CrvA3PoolStrategy is Crv3PoolStrategyBase {
+/// @title This strategy will deposit collateral token in Curve Aave 3Pool and earn interest.
+contract CrvA3PoolStrategy is CrvPoolStrategyBase {
     using SafeERC20 for IERC20;
+    uint256 private constant N = 3;
     address private constant CRV_POOL = 0xDeBF20617708857ebe4F679508E7b7863a8A8EeE;
     address private constant LP = 0xFd2a8fA60Abd58Efe3EeE34dd494cD491dC14900;
     address private constant GAUGE = 0xd662908ADA2Ea1916B3318327A97eB18aD588b5d;
@@ -21,13 +22,10 @@ abstract contract CrvA3PoolStrategy is Crv3PoolStrategyBase {
     constructor(
         address _pool,
         address _swapManager,
-        uint256 _collateralIdx
-    ) Crv3PoolStrategyBase(_pool, CRV_POOL, LP, GAUGE, _swapManager, _collateralIdx) {
+        uint256 _collateralIdx,
+        string memory _name
+    ) CrvPoolStrategyBase(_pool, CRV_POOL, LP, GAUGE, _swapManager, _collateralIdx, N, _name) {
         require(IStableSwap3xUnderlying(CRV_POOL).lp_token() == LP, "receipt-token-mismatch");
-        require(
-            IStableSwap3xUnderlying(CRV_POOL).underlying_coins(_collateralIdx) == address(IVesperPool(_pool).token()),
-            "collateral-mismatch"
-        );
         reservedToken[AAVE] = true;
         reservedToken[STKAAVE] = true;
     }
@@ -56,34 +54,20 @@ abstract contract CrvA3PoolStrategy is Crv3PoolStrategyBase {
         _unstakeEnd = _cooldownEnd + StakedAave(STKAAVE).UNSTAKE_WINDOW();
     }
 
-    function _claimRewardsAndConvertTo(address _toToken) internal override {
-        require(_toToken == address(collateralToken), "invalid-toToken");
-        _claimCrv();
-        _claimStkAAVE();
-        uint256 amtCrv = IERC20(CRV).balanceOf(address(this));
-        if (amtCrv != 0) {
-            uint256 minAmtOut;
-            if (swapSlippage < 10000) {
-                (uint256 minWethOut, bool isValid) = _consultOracle(CRV, WETH, amtCrv);
-                (uint256 _minAmtOut, bool isValidTwo) = _consultOracle(WETH, _toToken, minWethOut);
-                require(isValid, "stale-crv-oracle");
-                require(isValidTwo, "stale-collateral-oracle");
-                minAmtOut = _calcAmtOutAfterSlippage(_minAmtOut, swapSlippage);
-            }
-            _safeSwap(CRV, _toToken, amtCrv, minAmtOut);
+    function _init(address _crvPool, uint256 _n) internal virtual override {
+        address[] memory _coins = new address[](_n);
+        uint256[] memory _coinDecimals = new uint256[](_n);
+        for (uint256 i = 0; i < _n; i++) {
+            _coins[i] = IStableSwap3xUnderlying(_crvPool).underlying_coins(i);
+            _coinDecimals[i] = IERC20Metadata(_coins[i]).decimals();
         }
-        _claimAave();
-        uint256 amtAave = IERC20(AAVE).balanceOf(address(this));
-        if (amtAave != 0) {
-            (uint256 minWethOut, bool isValid) = _consultOracle(AAVE, WETH, amtAave);
-            (uint256 minAmtOut, bool isValidTwo) = _consultOracle(WETH, _toToken, minWethOut);
-            require(isValid, "stale-crv-oracle");
-            require(isValidTwo, "stale-collateral-oracle");
-            _safeSwap(AAVE, _toToken, amtAave, _calcAmtOutAfterSlippage(minAmtOut, swapSlippage));
-        }
+        coins = _coins;
+        coinDecimals = _coinDecimals;
     }
 
-    function _claimStkAAVE() internal {
+    function _claimRewards() internal override {
+        ITokenMinter(CRV_MINTER).mint(crvGauge);
+        _claimAave();
         ILiquidityGaugeV2(crvGauge).claim_rewards(address(this));
     }
 
@@ -107,46 +91,21 @@ abstract contract CrvA3PoolStrategy is Crv3PoolStrategyBase {
             StakedAave(STKAAVE).balanceOf(address(this)) != 0 && (_cooldownStart == 0 || block.timestamp > _unstakeEnd);
     }
 
-    function _setupOracles() internal override {
-        swapManager.createOrUpdateOracle(CRV, WETH, oraclePeriod, oracleRouterIdx);
-        swapManager.createOrUpdateOracle(AAVE, WETH, oraclePeriod, oracleRouterIdx);
-        for (uint256 i = 0; i < N; i++) {
-            swapManager.createOrUpdateOracle(
-                IStableSwap3xUnderlying(CRV_POOL).underlying_coins(i),
-                WETH,
-                oraclePeriod,
-                oracleRouterIdx
-            );
-        }
-    }
-
-    // overrides init in Crv3x
-    function _init(address _pool) internal override {
-        for (uint256 i = 0; i < N; i++) {
-            coins[i] = IStableSwap3xUnderlying(_pool).underlying_coins(i);
-            coinDecimals[i] = IERC20Metadata(coins[i]).decimals();
-        }
-    }
-
-    function _approveToken(uint256 _amount) internal override {
-        collateralToken.safeApprove(pool, _amount);
-        collateralToken.safeApprove(address(crvPool), _amount);
-        for (uint256 i = 0; i < swapManager.N_DEX(); i++) {
-            IERC20(CRV).safeApprove(address(swapManager.ROUTERS(i)), _amount);
-            IERC20(AAVE).safeApprove(address(swapManager.ROUTERS(i)), _amount);
-        }
-        IERC20(crvLp).safeApprove(crvGauge, _amount);
-    }
-
-    function _depositToCurve(uint256 amt) internal override returns (bool) {
-        if (amt != 0) {
-            uint256[3] memory depositAmounts;
-            depositAmounts[collIdx] = amt;
-            uint256 minLpAmount =
-                ((amt * _getSafeUsdRate()) / crvPool.get_virtual_price()) * 10**(18 - coinDecimals[collIdx]);
-            // solhint-disable-next-line no-empty-blocks
+    function _depositToCurve(uint256 _amt) internal override returns (bool) {
+        if (_amt != 0) {
+            uint256[3] memory _depositAmounts;
+            _depositAmounts[collIdx] = _amt;
+            uint256 _expectedOut =
+                _calcAmtOutAfterSlippage(
+                    IStableSwap3xUnderlying(address(crvPool)).calc_token_amount(_depositAmounts, true),
+                    crvSlippage
+                );
+            uint256 _minLpAmount =
+                ((_amt * _getSafeUsdRate()) / crvPool.get_virtual_price()) * 10**(18 - coinDecimals[collIdx]);
+            if (_expectedOut > _minLpAmount) _minLpAmount = _expectedOut;
+            // solhint-disable no-empty-blocks
             try
-                IStableSwap3xUnderlying(address(crvPool)).add_liquidity(depositAmounts, minLpAmount, true)
+                IStableSwap3xUnderlying(address(crvPool)).add_liquidity(_depositAmounts, _minLpAmount, true)
             {} catch Error(string memory reason) {
                 emit DepositFailed(reason);
                 return false;

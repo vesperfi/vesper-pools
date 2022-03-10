@@ -1,7 +1,7 @@
 'use strict'
 require('dotenv').config()
 
-const {MNEMONIC} = require('./test/utils/testkey')
+const { MNEMONIC } = require('./test/utils/testKey')
 
 module.exports = {
   client: require('ganache-cli'),

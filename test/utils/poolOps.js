@@ -6,9 +6,12 @@ const provider = hre.waffle.provider
 const { BigNumber } = require('ethers')
 const { depositTokenToAave, depositTokenToCompound } = require('./market')
 const DECIMAL = BigNumber.from('1000000000000000000')
-const WETH_ADDRESS = '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2'
-const DAI = '0x6b175474e89094c44da98b954eedeac495271d0f'
 const StrategyType = require('../utils/strategyTypes')
+const { parseEther } = require('@ethersproject/units')
+const { adjustBalance } = require('./balance')
+const { getChain } = require('../utils/chains')
+const address = require('../../helper/mainnet/address')
+const { NATIVE_TOKEN, DAI, MIM, ALUSD } = require(`../../helper/${getChain()}/address`)
 
 async function executeIfExist(fn) {
   if (typeof fn === 'function') {
@@ -27,7 +30,7 @@ async function executeIfExist(fn) {
  */
 async function deposit(pool, token, amount, depositor) {
   let depositAmount
-  if (token.address === WETH_ADDRESS) {
+  if (token.address === NATIVE_TOKEN) {
     const wethBalance = await token.balanceOf(depositor.address)
     const requestedAmount = BigNumber.from(amount).mul(DECIMAL)
     if (requestedAmount.gt(wethBalance)) {
@@ -36,12 +39,51 @@ async function deposit(pool, token, amount, depositor) {
     depositAmount = requestedAmount
     await token.connect(depositor.signer).approve(pool.address, depositAmount)
     await pool.connect(depositor.signer)['deposit(uint256)'](depositAmount)
+  } else if (token.address === MIM || token.address === DAI || token.address === ALUSD) {
+    // Artificially performs the swap from NATIVE_TOKEN to token.address
+    // By altering the token balance
+    // Also simulates 0.1% linear slippage between consecutive deposits
+    if (pool.depositsCount === undefined) pool.depositsCount = 0
+    else pool.depositsCount++
+    depositAmount = await swapper.getAmountsOut(parseEther(amount.toString()), [NATIVE_TOKEN, DAI])
+    const slippage = BigNumber.from(1000).sub(pool.depositsCount)
+    depositAmount = depositAmount.mul(slippage).div(1000)
+    await adjustBalance(token.address, depositor.address, depositAmount)
+    await token.connect(depositor.signer).approve(pool.address, depositAmount)
+    await pool.connect(depositor.signer).deposit(depositAmount)
   } else {
     depositAmount = await swapper.swapEthForToken(amount, token.address, depositor)
     await token.connect(depositor.signer).approve(pool.address, depositAmount)
     await pool.connect(depositor.signer).deposit(depositAmount)
   }
   return depositAmount
+}
+
+// eslint-disable-next-line max-params
+async function timeTravel(
+  seconds = 6 * 60 * 60,
+  blocks = 25,
+  strategyType = '',
+  underlayStrategy = '',
+  strategies = [],
+) {
+  const timeTravelFn = async function () {
+    await provider.send('evm_increaseTime', [seconds])
+    await provider.send('evm_mine')
+  }
+  const blockMineFn = async function () {
+    for (let i = 0; i < blocks; i++) {
+      await provider.send('evm_mine')
+    }
+  }
+  let isCompoundStrategy = strategyType.includes('compound') || underlayStrategy.includes('compound')
+  strategies.forEach(function (strategy) {
+    if (strategy.type.includes('compound')) {
+      isCompoundStrategy = true
+    }
+  })
+
+  return isCompoundStrategy ? blockMineFn() : timeTravelFn()
 }
 
 async function bringAboveWater(strategy, amount) {
@@ -73,13 +115,12 @@ async function bringAboveWater(strategy, amount) {
  * @param {object} strategy - strategy object
  */
 async function harvestYearn(strategy) {
-
   const collateralTokenAddress = await strategy.instance.collateralToken()
   const vault = await strategy.instance.receiptToken()
 
   const signer = await ethers.provider.getSigner(strategy.signer)
 
-  if (collateralTokenAddress === WETH_ADDRESS) {
+  if (collateralTokenAddress === NATIVE_TOKEN) {
     const weth = await ethers.getContractAt('TokenLike', collateralTokenAddress, signer)
     const transferAmount = ethers.utils.parseEther('5')
     await weth.deposit({ value: transferAmount })
@@ -87,18 +128,72 @@ async function harvestYearn(strategy) {
   } else {
     await swapper.swapEthForToken(5, collateralTokenAddress, { signer }, vault)
   }
+}
 
+/**
+ * Simulates harvesting in a VesperMaker strategy
+ * 1. Swaps some ethers for collateral into the underlying vPool
+ * 2. This causes vPool' pricePerShare to increase
+ *
+ * @param {object} strategy - strategy object
+ */
+async function harvestVesperMaker(strategy) {
+  const vPool = await ethers.getContractAt('IVesperPool', await strategy.instance.receiptToken())
+  const collateralTokenAddress = await vPool.token()
+
+  const signer = await ethers.provider.getSigner(strategy.signer)
+
+  if (collateralTokenAddress === NATIVE_TOKEN) {
+    const weth = await ethers.getContractAt('TokenLike', collateralTokenAddress, signer)
+    const transferAmount = ethers.utils.parseEther('5')
+    await weth.deposit({ value: transferAmount })
+    await weth.transfer(vPool.address, transferAmount)
+  } else {
+    await swapper.swapEthForToken(5, collateralTokenAddress, { signer }, vPool.address)
+  }
+}
+
+/**
+ * Simulates harvesting in a VesperCompoundXY strategy
+ * 1. Swaps some ethers for collateral into the underlying vPool
+ * 2. This causes vPool' pricePerShare to increase
+ *
+ * @param {object} strategy - strategy object
+ */
+async function harvestVesperCompoundXY(strategy) {
+  const vPool = await ethers.getContractAt('IVesperPool', await strategy.instance.vPool())
+  const collateralTokenAddress = await vPool.token()
+
+  const signer = await ethers.provider.getSigner(strategy.signer)
+
+  if (collateralTokenAddress === NATIVE_TOKEN) {
+    const weth = await ethers.getContractAt('TokenLike', collateralTokenAddress, signer)
+    const transferAmount = ethers.utils.parseEther('5')
+    await weth.deposit({ value: transferAmount })
+    await weth.transfer(vPool.address, transferAmount)
+  } else {
+    await swapper.swapEthForToken(5, collateralTokenAddress, { signer }, vPool.address)
+  }
 }
 
 /**
  * Simulates profit in a Vesper Pool
- * As of now simulating profits behaves exactly like harvestYearn
  *
  * @param {object} strategy - strategy object
- */ 
+ */
 async function harvestVesper(strategy) {
+  if (strategy.type === 'earnVesperMaker') {
+    return harvestVesperMaker(strategy)
+  }
+  if (strategy.type.includes('earnVesper')) {
+    const dripToken = await strategy.instance.dripToken()
+    if (dripToken === ethers.utils.getAddress(address.VSP)) {
+      // wait 24hrs between rebalance due to vVSP's lock period
+      await timeTravel(3600 * 24)
+    }
+  }
   return harvestYearn(strategy)
-} 
+}
 
 /**
  * Rebalance one strategy
@@ -112,13 +207,17 @@ async function rebalanceStrategy(strategy) {
     if (strategy.type.includes('Maker')) {
       await bringAboveWater(strategy, 10)
     }
-    if (strategy.type.includes('yearn') || strategy.type.includes('Yearn')) {
+    if (strategy.type.toUpperCase().includes('YEARN')) {
       await harvestYearn(strategy)
     }
-    if (strategy.type === 'earnVesper') {
-      await harvestVesper(strategy)
+    if (strategy.type.includes('earnVesper') || strategy.type.includes('vesper')) {
+      if (strategy.type.includes('vesperCompoundXY')) {
+        await harvestVesperCompoundXY(strategy)
+      } else {
+        await harvestVesper(strategy)
+      }
     }
-    if (strategy.type.includes('alpha') || strategy.type.includes('Alpha')) {
+    if (strategy.type.toUpperCase().includes('ALPHA')) {
       // Alpha SafeBox has a cToken - this method calls exchangeRateCurrent on the cToken
       await strategy.instance.updateTokenRate()
     }
@@ -150,33 +249,6 @@ async function rebalance(strategies) {
   return txs
 }
 
-// eslint-disable-next-line max-params
-async function timeTravel(
-  seconds = 6 * 60 * 60,
-  blocks = 25,
-  strategyType = '',
-  underlayStrategy = '',
-  strategies = []
-) {
-  const timeTravelFn = async function () {
-    await provider.send('evm_increaseTime', [seconds])
-    await provider.send('evm_mine')
-  }
-  const blockMineFn = async function () {
-    for (let i = 0; i < blocks; i++) {
-      await provider.send('evm_mine')
-    }
-  }
-  let isCompoundStrategy = strategyType.includes('compound') || underlayStrategy.includes('compound')
-  strategies.forEach(function (strategy) {
-    if (strategy.type.includes('compound')) {
-      isCompoundStrategy = true
-    }
-  })
-
-  return isCompoundStrategy ? blockMineFn() : timeTravelFn()
-}
-
 /**
  *
  * @param {*} strategies .
@@ -192,18 +264,4 @@ async function totalDebtOfAllStrategy(strategies, pool) {
   return totalDebt
 }
 
-async function reset() {
-  // eslint-disable-next-line
-  console.log('Resetting Network...')
-  await provider.send(
-    'hardhat_reset',
-    [{
-      forking: {
-        jsonRpcUrl: process.env.NODE_URL,
-        blockNumber: process.env.BLOCK_NUMBER ? parseInt(process.env.BLOCK_NUMBER) : undefined
-      }
-    }]
-  )
-}
-
-module.exports = { deposit, rebalance, rebalanceStrategy, totalDebtOfAllStrategy, executeIfExist, timeTravel, reset }
+module.exports = { deposit, rebalance, rebalanceStrategy, totalDebtOfAllStrategy, executeIfExist, timeTravel }

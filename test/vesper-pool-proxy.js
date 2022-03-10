@@ -1,14 +1,14 @@
 'use strict'
 
-const {expect} = require('chai')
-const hre = require('hardhat')
-const ethers = hre.ethers
+const { expect } = require('chai')
+const { ethers } = require('hardhat')
 const poolOps = require('./utils/poolOps')
-const {deployContract, getUsers, createStrategy} = require('./utils/setupHelper')
-const StrategyType = require('./utils/strategyTypes')
-const addressListFactory = hre.address.ADDRESS_LIST_FACTORY
-const VDAI = require('../helper/ethereum/poolConfig').VDAI
-const MULTICALL = require('../helper/ethereum/address').MULTICALL
+const { deployContract, getUsers, createStrategy } = require('./utils/setupHelper')
+const { address, poolConfig, strategyConfig } = require('./utils/chains').getChainData()
+
+const VDAI = poolConfig.VDAI
+const AaveStrategyDAI = strategyConfig.AaveStrategyDAI
+const MULTICALL = address.MULTICALL
 
 describe('Vesper Pool: proxy', function () {
   const poolName = VDAI.contractName
@@ -17,11 +17,7 @@ describe('Vesper Pool: proxy', function () {
   let proxy, proxyAdmin
   let governor, user1, user2, user3, user4
 
-  const strategyConfig = {
-    name: 'AaveStrategyDAI',
-    type: StrategyType.AAVE,
-    config: {interestFee: '1500', debtRatio: 9000, debtRate: ethers.utils.parseEther('1000000')},
-  }
+  AaveStrategyDAI.config.debtRatio = 9000
 
   beforeEach(async function () {
     const users = await getUsers()
@@ -38,11 +34,7 @@ describe('Vesper Pool: proxy', function () {
     ])
     accountant = await ethers.getContractAt('PoolAccountant', accountantProxy.address)
 
-    const initData = poolImpl.interface.encodeFunctionData('initialize', [
-      ...poolParams,
-      accountantProxy.address,
-      addressListFactory,
-    ])
+    const initData = poolImpl.interface.encodeFunctionData('initialize', [...poolParams, accountantProxy.address])
     // deploy pool proxy with logic implementation
     proxy = await deployContract('TransparentUpgradeableProxy', [poolImpl.address, proxyAdmin.address, initData])
     // Get implementation from proxy
@@ -51,9 +43,9 @@ describe('Vesper Pool: proxy', function () {
     await accountant.init(pool.address)
 
     collateralToken = await ethers.getContractAt('ERC20', await pool.token())
-    strategyConfig.feeCollector = user4.address
-    strategy = await createStrategy(strategyConfig, pool.address, {addressListFactory})
-    await accountant.addStrategy(strategy.address, ...Object.values(strategyConfig.config))
+    AaveStrategyDAI.feeCollector = user4.address
+    strategy = await createStrategy(AaveStrategyDAI, pool.address)
+    await accountant.addStrategy(strategy.address, ...Object.values(AaveStrategyDAI.config))
   })
 
   context('Proxy upgrade', function () {
@@ -111,14 +103,14 @@ describe('Vesper Pool: proxy', function () {
 
         // Trigger upgrade
         await upgrader.connect(governor.signer).safeUpgrade(proxy.address, newPool.address)
-  
+
         pool = await ethers.getContractAt(poolName, proxy.address)
         expect(pool.address).to.be.eq(oldPool, 'Pool address via proxy should be same')
 
         const newPoolImpl = await upgrader.getProxyImplementation(proxy.address)
         expect(newPoolImpl !== oldPoolImpl, 'Implementation address should be different').to.be.true
       })
-  
+
       it('Should properly revert wrong upgrades via upgrader', async function () {
         // Trigger upgrade
         await expect(upgrader.connect(governor.signer).safeUpgrade(proxy.address, MULTICALL)).to.be.reverted

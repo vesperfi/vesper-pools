@@ -1,13 +1,15 @@
 'use strict'
 
-const {expect} = require('chai')
+const { expect } = require('chai')
 const swapper = require('../utils/tokenSwapper')
-const {getUsers} = require('../utils/setupHelper')
-const {deposit} = require('../utils/poolOps')
-const {advanceBlock} = require('../utils/time')
-const {ethers} = require('hardhat')
+const { getUsers } = require('../utils/setupHelper')
+const { deposit } = require('../utils/poolOps')
+const { advanceBlock } = require('../utils/time')
+const { ethers } = require('hardhat')
+const { getChain } = require('../utils/chains')
+const Address = require(`../../helper/${getChain()}/address`)
 
-const CRV = '0xD533a949740bb3306d119CC777fa900bA034cd52'
+const { CRV } = Address
 
 // crv strategy specific tests
 function shouldBehaveLikeCrvStrategy(strategyIndex) {
@@ -22,9 +24,17 @@ function shouldBehaveLikeCrvStrategy(strategyIndex) {
       crv = await ethers.getContractAt('ERC20', CRV)
     })
 
+    it('Verify convertFrom18 is implemented correctly', async function () {
+      const DECIMAL18 = ethers.utils.parseUnits('1', 18)
+      const collateralDecimal = await this.collateralToken.decimals()
+      const expected = ethers.utils.parseUnits('1', collateralDecimal)
+      const actual = await strategy.convertFrom18(DECIMAL18)
+      expect(actual).to.be.equal(expected, 'Conversion from 18 is wrong')
+    })
+
     it('Should get CRV token as reserve token', async function () {
       expect(await strategy.isReservedToken(CRV)).to.be.true
-      const crvLP = await strategy.threeCrv()
+      const crvLP = await strategy.crvLp()
       expect(await strategy.isReservedToken(crvLP)).to.be.true
     })
 
@@ -35,18 +45,23 @@ function shouldBehaveLikeCrvStrategy(strategyIndex) {
       expect(totalValue).to.be.equal(0, 'Total tokens should be zero')
     })
 
-    it('Should claim CRV when rebalance is called', async function () {
-      await deposit(pool, collateralToken, 1, user1)      
-      await strategy.rebalance()
-      await strategy.rebalance()
-      await advanceBlock(1000)
-      await strategy.setCheckpoint()
-      const crvAccruedBefore = await strategy.claimableRewards()
-      await strategy.rebalance()   
-      const crvAccruedAfter = await strategy.claimableRewards()                  
-      expect(crvAccruedBefore).to.be.gt(0, 'crv accrued should be > 0 before rebalance')     
-      expect(crvAccruedAfter).to.be.equal(0, 'crv accrued should be 0 after rebalance')     
-    })
+    // Note: Waiting clarification from Curve team to be able to simulate
+    // multi-chain CRV reward distribution
+    // Refs: https://curve.readthedocs.io/dao-gauges-sidechain.html
+    if (getChain() === 'mainnet') {
+      it('Should claim CRV when rebalance is called', async function () {
+        await deposit(pool, collateralToken, 1, user1)
+        await strategy.rebalance()
+        await strategy.rebalance()
+        await advanceBlock(1000)
+        await strategy.setCheckpoint()
+        const crvAccruedBefore = await strategy.claimableRewardsInCollateral()
+        await strategy.rebalance()
+        const crvAccruedAfter = await strategy.claimableRewardsInCollateral()
+        expect(crvAccruedBefore).to.be.gt(0, 'crv accrued should be > 0 before rebalance')
+        expect(crvAccruedAfter).to.be.equal(0, 'crv accrued should be 0 after rebalance')
+      })
+    }
 
     it('Should liquidate CRV when claimed by external source', async function () {
       await deposit(pool, collateralToken, 1, user1)
@@ -61,4 +76,4 @@ function shouldBehaveLikeCrvStrategy(strategyIndex) {
   })
 }
 
-module.exports = {shouldBehaveLikeCrvStrategy}
+module.exports = { shouldBehaveLikeCrvStrategy }

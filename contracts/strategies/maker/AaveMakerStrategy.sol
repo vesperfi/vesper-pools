@@ -7,7 +7,7 @@ import "../aave/AaveCore.sol";
 
 /// @dev This strategy will deposit collateral token in Maker, borrow Dai and
 /// deposit borrowed DAI in Aave to earn interest.
-abstract contract AaveMakerStrategy is MakerStrategy, AaveCore {
+contract AaveMakerStrategy is MakerStrategy, AaveCore {
     using SafeERC20 for IERC20;
 
     //solhint-disable no-empty-blocks
@@ -16,8 +16,9 @@ abstract contract AaveMakerStrategy is MakerStrategy, AaveCore {
         address _cm,
         address _swapManager,
         address _receiptToken,
-        bytes32 _collateralType
-    ) MakerStrategy(_pool, _cm, _swapManager, _receiptToken, _collateralType) AaveCore(_receiptToken) {}
+        bytes32 _collateralType,
+        string memory _name
+    ) MakerStrategy(_pool, _cm, _swapManager, _receiptToken, _collateralType, _name) AaveCore(_receiptToken) {}
 
     /// @notice Initiate cooldown to unstake aave.
     function startCooldown() external onlyKeeper returns (bool) {

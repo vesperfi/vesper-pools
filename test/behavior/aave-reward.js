@@ -1,10 +1,10 @@
 'use strict'
 
 const swapper = require('../utils/tokenSwapper')
-const {expect} = require('chai')
-const {ethers} = require('hardhat')
+const { expect } = require('chai')
+const { ethers } = require('hardhat')
 const time = require('../utils/time')
-const {deposit, rebalanceStrategy} = require('../utils/poolOps')
+const { deposit, rebalanceStrategy } = require('../utils/poolOps')
 const AAVE_ADDRESS = '0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9'
 const STAKED_AAVE_ADDRESS = '0x4da27a545c0c5B758a6BA100e3a049001de870f5'
 
@@ -12,6 +12,7 @@ const STAKED_AAVE_ADDRESS = '0x4da27a545c0c5B758a6BA100e3a049001de870f5'
 function shouldClaimAaveRewards(strategyIndex) {
   let strategy, aave, stakedAave, pool, collateralToken
   let user1, user2
+  let snapshotId
 
   async function stakeAave(onBehalfOf, caller) {
     const aaveBalance = await swapper.swapEthForToken(100, AAVE_ADDRESS, caller)
@@ -19,10 +20,9 @@ function shouldClaimAaveRewards(strategyIndex) {
     await stakedAave.connect(caller.signer).stake(onBehalfOf, aaveBalance)
   }
 
-  // TODO Below tests are skipped as Aave rewards are time sensitive and tests are now failing
-  // eslint-disable-next-line mocha/no-skipped-tests
-  describe.skip('Claim Aave rewards', function () {
+  describe('Claim Aave rewards', function () {
     beforeEach(async function () {
+      snapshotId = await ethers.provider.send('evm_snapshot', [])
       ;[, user1, user2] = this.users
       strategy = this.strategies[strategyIndex]
       aave = await ethers.getContractAt('ERC20', AAVE_ADDRESS)
@@ -31,7 +31,17 @@ function shouldClaimAaveRewards(strategyIndex) {
       collateralToken = this.collateralToken
     })
 
+    afterEach(async function () {
+      await ethers.provider.send('evm_revert', [snapshotId])
+    })
+
     describe('Start cooldown', function () {
+      it('Should revert when Cooldown started from non keeper user', async function () {
+        await expect(strategy.instance.connect(user2.signer).startCooldown()).to.be.revertedWith(
+          'caller-is-not-a-keeper',
+        )
+      })
+
       it('Should return false for canStartCooldown', async function () {
         const canStartCooldown = await strategy.instance.canStartCooldown()
         expect(canStartCooldown).to.be.false
@@ -91,14 +101,6 @@ function shouldClaimAaveRewards(strategyIndex) {
         expect(stkAaveAfter).to.be.eq(stkAaveBefore, 'StakedAave balance should remains same in cool down period')
       })
 
-      it('Should unstake aave if its unstake window', async function () {
-        await rebalanceStrategy(strategy)
-        await time.increase(11 * 24 * 60 * 60)
-        await rebalanceStrategy(strategy)
-        const stkAave = await stakedAave.balanceOf(strategy.instance.address)
-        expect(stkAave).to.be.eq(0, 'StakedAave balance should be 0')
-      })
-
       it('Should claim more stkAave if unstake window missed', async function () {
         await rebalanceStrategy(strategy)
         await time.increase(11 * 24 * 60 * 60)
@@ -109,8 +111,16 @@ function shouldClaimAaveRewards(strategyIndex) {
         expect(stkAaveAfter).to.be.gt(stkAaveBefore, 'should claim more stake aave')
       })
 
+      it('Should unstake aave if its unstake window', async function () {
+        await rebalanceStrategy(strategy)
+        await time.increase(11 * 24 * 60 * 60)
+        await rebalanceStrategy(strategy)
+        const stkAave = await stakedAave.balanceOf(strategy.instance.address)
+        expect(stkAave).to.be.eq(0, 'StakedAave balance should be 0')
+      })
+
       it('Should startCooldown with rebalance', async function () {
-        await time.increase(10 * 60 * 60)
+        await time.increase(11 * 24 * 60 * 60)
         await rebalanceStrategy(strategy)
         const data = await strategy.instance.cooldownData()
         expect(data._cooldownStart).to.be.eq(await time.latest(), 'Cooldown start is not correct')
@@ -121,23 +131,20 @@ function shouldClaimAaveRewards(strategyIndex) {
         // Takes time out of unstake window
         await time.increase(18 * 24 * 60 * 60)
         const balance1 = await stakedAave.balanceOf(strategy.instance.address)
+
         await rebalanceStrategy(strategy)
         const balance2 = await stakedAave.balanceOf(strategy.instance.address)
         expect(balance2).to.be.gt(balance1, 'should claim stake aave')
-        // Stake aave rewards ends on July 15th which will results in no new stakedAave.
+
         await time.increase(120 * 24 * 60 * 60)
         await rebalanceStrategy(strategy)
-        // It may have same value as previous if current time is greater than 15th July
+
         const balance3 = await stakedAave.balanceOf(strategy.instance.address)
-        // 1626393600 = July 16th
-        // if current time in fork > 16th July
-        if ((await time.latest()).gte('1626393600')) {
-          expect(balance3).to.be.eq(balance2, 'should NOT claim stake aave as there is nothing to')
-        } else {
-          expect(balance3).to.be.gt(balance2, 'should claim more stake aave')
-        }
+        expect(balance3).to.be.gt(balance2, 'should claim more stake aave')
+
         // Increase time to be in unstake window
         await time.increase(11 * 24 * 60 * 60)
+
         // Unstake all StakedAave
         await rebalanceStrategy(strategy)
         const balance5 = await stakedAave.balanceOf(strategy.instance.address)
@@ -147,4 +154,4 @@ function shouldClaimAaveRewards(strategyIndex) {
   })
 }
 
-module.exports = {shouldClaimAaveRewards}
+module.exports = { shouldClaimAaveRewards }

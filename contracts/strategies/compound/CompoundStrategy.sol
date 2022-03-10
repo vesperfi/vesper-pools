@@ -6,21 +6,35 @@ import "../Strategy.sol";
 import "../../interfaces/compound/ICompound.sol";
 
 /// @title This strategy will deposit collateral token in Compound and earn interest.
-abstract contract CompoundStrategy is Strategy {
+contract CompoundStrategy is Strategy {
     using SafeERC20 for IERC20;
 
+    // solhint-disable-next-line var-name-mixedcase
+    string public NAME;
+    string public constant VERSION = "4.0.0";
+
     CToken internal cToken;
-    address internal constant COMP = 0xc00e94Cb662C3520282E6f5717214004A7f26888;
-    Comptroller internal constant COMPTROLLER = Comptroller(0x3d9819210A31b4961b30EF54bE2aeD79B9c9Cd3B);
+
+    // solhint-disable-next-line var-name-mixedcase
+    Comptroller public immutable COMPTROLLER;
+    address public rewardToken;
 
     constructor(
         address _pool,
         address _swapManager,
-        address _receiptToken
+        address _comptroller,
+        address _rewardToken,
+        address _receiptToken,
+        string memory _name
     ) Strategy(_pool, _swapManager, _receiptToken) {
         require(_receiptToken != address(0), "cToken-address-is-zero");
         cToken = CToken(_receiptToken);
         swapSlippage = 10000; // disable oracles on reward swaps by default
+        NAME = _name;
+
+        // Either can be address(0), for example in Rari Strategy
+        COMPTROLLER = Comptroller(_comptroller);
+        rewardToken = _rewardToken;
     }
 
     /**
@@ -28,63 +42,69 @@ abstract contract CompoundStrategy is Strategy {
      * @dev Report total value in collateral token
      */
     function totalValue() public view virtual override returns (uint256 _totalValue) {
-        _totalValue = _calculateTotalValue(COMPTROLLER.compAccrued(address(this)));
+        _totalValue = _calculateTotalValue((rewardToken != address(0)) ? _getRewardAccrued() : 0);
     }
 
-    function totalValueCurrent() external virtual override returns (uint256 _totalValue) {
-        _claimComp();
-        _totalValue = _calculateTotalValue(IERC20(COMP).balanceOf(address(this)));
+    function totalValueCurrent() public virtual override returns (uint256 _totalValue) {
+        if (rewardToken != address(0)) {
+            _claimRewards();
+            _totalValue = _calculateTotalValue(IERC20(rewardToken).balanceOf(address(this)));
+        } else {
+            _totalValue = _calculateTotalValue(0);
+        }
     }
 
-    function _calculateTotalValue(uint256 _compAccrued) internal view returns (uint256 _totalValue) {
-        if (_compAccrued != 0) {
-            (, _totalValue) = swapManager.bestPathFixedInput(COMP, address(collateralToken), _compAccrued, 0);
+    function _calculateTotalValue(uint256 _rewardAccrued) internal view returns (uint256 _totalValue) {
+        if (_rewardAccrued != 0) {
+            (, _totalValue) = swapManager.bestPathFixedInput(rewardToken, address(collateralToken), _rewardAccrued, 0);
         }
         _totalValue += _convertToCollateral(cToken.balanceOf(address(this)));
     }
 
     function isReservedToken(address _token) public view virtual override returns (bool) {
-        return _token == address(cToken) || _token == COMP;
+        return _token == address(cToken) || _token == rewardToken;
     }
 
     /// @notice Approve all required tokens
     function _approveToken(uint256 _amount) internal virtual override {
         collateralToken.safeApprove(pool, _amount);
         collateralToken.safeApprove(address(cToken), _amount);
-        for (uint256 i = 0; i < swapManager.N_DEX(); i++) {
-            IERC20(COMP).safeApprove(address(swapManager.ROUTERS(i)), _amount);
+        if (rewardToken != address(0)) {
+            for (uint256 i = 0; i < swapManager.N_DEX(); i++) {
+                IERC20(rewardToken).safeApprove(address(swapManager.ROUTERS(i)), _amount);
+            }
         }
     }
 
-    /**
-     * @notice Claim COMP and transfer to new strategy
-     * @param _newStrategy Address of new strategy.
-     */
-    function _beforeMigration(address _newStrategy) internal virtual override {
-        _claimComp();
-        IERC20(COMP).safeTransfer(_newStrategy, IERC20(COMP).balanceOf(address(this)));
-    }
+    //solhint-disable-next-line no-empty-blocks
+    function _beforeMigration(address _newStrategy) internal virtual override {}
 
     /// @notice Claim comp
-    function _claimComp() internal {
+    function _claimRewards() internal virtual {
         address[] memory _markets = new address[](1);
         _markets[0] = address(cToken);
         COMPTROLLER.claimComp(address(this), _markets);
     }
 
+    function _getRewardAccrued() internal view virtual returns (uint256 _rewardAccrued) {
+        _rewardAccrued = COMPTROLLER.compAccrued(address(this));
+    }
+
     /// @notice Claim COMP and convert COMP into collateral token.
     function _claimRewardsAndConvertTo(address _toToken) internal virtual override {
-        _claimComp();
-        uint256 _compAmount = IERC20(COMP).balanceOf(address(this));
-        if (_compAmount != 0) {
-            uint256 minAmtOut =
-                (swapSlippage != 10000)
-                    ? _calcAmtOutAfterSlippage(
-                        _getOracleRate(_simpleOraclePath(COMP, _toToken), _compAmount),
-                        swapSlippage
-                    )
-                    : 1;
-            _safeSwap(COMP, _toToken, _compAmount, minAmtOut);
+        if (rewardToken != address(0)) {
+            _claimRewards();
+            uint256 _rewardAmount = IERC20(rewardToken).balanceOf(address(this));
+            if (_rewardAmount != 0) {
+                uint256 minAmtOut =
+                    (swapSlippage != 10000)
+                        ? _calcAmtOutAfterSlippage(
+                            _getOracleRate(_simpleOraclePath(rewardToken, _toToken), _rewardAmount),
+                            swapSlippage
+                        )
+                        : 1;
+                _safeSwap(rewardToken, _toToken, _rewardAmount, minAmtOut);
+            }
         }
     }
 
@@ -162,7 +182,8 @@ abstract contract CompoundStrategy is Strategy {
     }
 
     function _setupOracles() internal virtual override {
-        swapManager.createOrUpdateOracle(COMP, WETH, oraclePeriod, oracleRouterIdx);
+        if (rewardToken != address(0))
+            swapManager.createOrUpdateOracle(rewardToken, WETH, oraclePeriod, oracleRouterIdx);
         if (address(collateralToken) != WETH) {
             swapManager.createOrUpdateOracle(WETH, address(collateralToken), oraclePeriod, oracleRouterIdx);
         }

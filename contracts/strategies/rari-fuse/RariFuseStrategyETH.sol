@@ -8,11 +8,15 @@ import "../../interfaces/token/IToken.sol";
 // solhint-disable no-empty-blocks
 /// @title Deposit ETH in a Rari Fuse Pool and earn interest.
 contract RariFuseStrategyETH is RariFuseStrategy {
+    using RariCore for IFusePoolDirectory;
+
     constructor(
         address _pool,
         address _swapManager,
-        uint256 _fusePoolId
-    ) RariFuseStrategy(_pool, _swapManager, _fusePoolId) {}
+        uint256 _fusePoolId,
+        IFusePoolDirectory _fusePoolDirectory,
+        string memory _name
+    ) RariFuseStrategy(_pool, _swapManager, _fusePoolId, _fusePoolDirectory, _name) {}
 
     /// @dev Only receive ETH from either cToken or WETH
     receive() external payable {
@@ -20,7 +24,7 @@ contract RariFuseStrategyETH is RariFuseStrategy {
     }
 
     function migrateFusePool(uint256 _newPoolId) external override onlyKeeper {
-        address _newCToken = _cTokenByUnderlying(_newPoolId, address(collateralToken));
+        address _newCToken = fusePoolDirectory.getCTokenByUnderlying(_newPoolId, address(0x0));
         require(address(cToken) != _newCToken, "same-fuse-pool");
         require(cToken.redeem(cToken.balanceOf(address(this))) == 0, "withdraw-from-fuse-pool-failed");
         CToken(_newCToken).mint{value: address(this).balance}();

@@ -17,13 +17,19 @@ import "./interfaces/dydx/ISoloMargin.sol";
 abstract contract FlashLoanHelper {
     using SafeERC20 for IERC20;
 
-    AaveLendingPoolAddressesProvider internal constant AAVE_ADDRESSES_PROVIDER =
-        AaveLendingPoolAddressesProvider(0xB53C1a33016B2DC2fF3653530bfF1848a515c8c5);
+    AaveLendingPoolAddressesProvider internal aaveAddressesProvider;
+
     address internal constant SOLO = 0x1E0447b19BB6EcFdAe1e4AE1694b0C3659614e4e;
     uint256 public dyDxMarketId;
     bytes32 private constant AAVE_PROVIDER_ID = 0x0100000000000000000000000000000000000000000000000000000000000000;
     bool public isAaveActive = false;
     bool public isDyDxActive = false;
+
+    constructor(address _aaveAddressesProvider) {
+        require(_aaveAddressesProvider != address(0), "invalid-aave-provider");
+
+        aaveAddressesProvider = AaveLendingPoolAddressesProvider(_aaveAddressesProvider);
+    }
 
     function _updateAaveStatus(bool _status) internal {
         isAaveActive = _status;
@@ -39,7 +45,7 @@ abstract contract FlashLoanHelper {
     /// @notice Approve all required tokens for flash loan
     function _approveToken(address _token, uint256 _amount) internal {
         IERC20(_token).safeApprove(SOLO, _amount);
-        IERC20(_token).safeApprove(AAVE_ADDRESSES_PROVIDER.getLendingPool(), _amount);
+        IERC20(_token).safeApprove(aaveAddressesProvider.getLendingPool(), _amount);
     }
 
     /// @dev Override this function to execute logic which uses flash loan amount
@@ -61,9 +67,9 @@ abstract contract FlashLoanHelper {
         bytes memory _data
     ) internal returns (uint256 _amount) {
         require(isAaveActive, "aave-flash-loan-is-not-active");
-        AaveLendingPool _aaveLendingPool = AaveLendingPool(AAVE_ADDRESSES_PROVIDER.getLendingPool());
+        AaveLendingPool _aaveLendingPool = AaveLendingPool(aaveAddressesProvider.getLendingPool());
         AaveProtocolDataProvider _aaveProtocolDataProvider =
-            AaveProtocolDataProvider(AAVE_ADDRESSES_PROVIDER.getAddress(AAVE_PROVIDER_ID));
+            AaveProtocolDataProvider(aaveAddressesProvider.getAddress(AAVE_PROVIDER_ID));
         // Check token liquidity in Aave
         (uint256 _availableLiquidity, , , , , , , , , ) = _aaveProtocolDataProvider.getReserveData(_token);
         if (_amountDesired > _availableLiquidity) {
@@ -97,7 +103,7 @@ abstract contract FlashLoanHelper {
         address _initiator,
         bytes calldata _data
     ) external returns (bool) {
-        require(msg.sender == AAVE_ADDRESSES_PROVIDER.getLendingPool(), "!aave-pool");
+        require(msg.sender == aaveAddressesProvider.getLendingPool(), "!aave-pool");
         require(awaitingFlash, "invalid-flash-loan");
         require(_initiator == address(this), "invalid-initiator");
 

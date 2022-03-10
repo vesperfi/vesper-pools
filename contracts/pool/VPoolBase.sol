@@ -4,12 +4,11 @@ pragma solidity 0.8.3;
 
 import "./Errors.sol";
 import "./PoolShareToken.sol";
-import "../interfaces/vesper/IPoolAccountant.sol";
 import "../interfaces/vesper/IStrategy.sol";
-import "../interfaces/bloq/IAddressListFactory.sol";
 
 abstract contract VPoolBase is PoolShareToken {
     using SafeERC20 for IERC20;
+    using EnumerableSet for EnumerableSet.AddressSet;
 
     event UpdatedFeeCollector(address indexed previousFeeCollector, address indexed newFeeCollector);
     event UpdatedPoolRewards(address indexed previousPoolRewards, address indexed newPoolRewards);
@@ -26,43 +25,23 @@ abstract contract VPoolBase is PoolShareToken {
         string memory _name,
         string memory _symbol,
         address _token,
-        address _poolAccountant,
-        address _addressListFactory
+        address _poolAccountant
     ) internal initializer {
         require(_poolAccountant != address(0), Errors.INPUT_ADDRESS_IS_ZERO);
-        require(_addressListFactory != address(0), Errors.INPUT_ADDRESS_IS_ZERO);
         _initializePool(_name, _symbol, _token);
         _initializeGoverned();
-        _initializeAddressLists(_addressListFactory);
+        require(_keepers.add(_msgSender()), Errors.ADD_IN_LIST_FAILED);
+        require(_maintainers.add(_msgSender()), Errors.ADD_IN_LIST_FAILED);
         poolAccountant = _poolAccountant;
     }
 
-    /**
-     * @notice Create feeWhitelist, keeper and maintainer list
-     * @dev Add caller into the keeper and maintainer list
-     * @dev This function will be used as part of initializer
-     * @param _addressListFactory To support same code in eth side chain, user _addressListFactory as param
-     * ethereum - 0xded8217De022706A191eE7Ee0Dc9df1185Fb5dA3
-     * polygon - 0xD10D5696A350D65A9AA15FE8B258caB4ab1bF291
-     */
-    function _initializeAddressLists(address _addressListFactory) internal {
-        require(address(keepers) == address(0), Errors.ALREADY_INITIALIZED);
-        IAddressListFactory _factory = IAddressListFactory(_addressListFactory);
-        feeWhitelist = _factory.createList();
-        keepers = _factory.createList();
-        maintainers = _factory.createList();
-        // List creator can do job of keeper and maintainer.
-        require(IAddressList(keepers).add(_msgSender()), Errors.ADD_IN_LIST_FAILED);
-        require(IAddressList(maintainers).add(_msgSender()), Errors.ADD_IN_LIST_FAILED);
-    }
-
     modifier onlyKeeper() {
-        require(IAddressList(keepers).contains(_msgSender()), "not-a-keeper");
+        require(governor == _msgSender() || _keepers.contains(_msgSender()), "not-a-keeper");
         _;
     }
 
     modifier onlyMaintainer() {
-        require(IAddressList(maintainers).contains(_msgSender()), "not-a-maintainer");
+        require(governor == _msgSender() || _maintainers.contains(_msgSender()), "not-a-maintainer");
         _;
     }
 
@@ -132,24 +111,79 @@ abstract contract VPoolBase is PoolShareToken {
         _open();
     }
 
-    /**
-     * @notice Add given address in provided address list.
-     * @dev Use it to add keeper in keepers list and to add address in feeWhitelist
-     * @param _listToUpdate address of AddressList contract.
-     * @param _addressToAdd address which we want to add in AddressList.
-     */
-    function addInList(address _listToUpdate, address _addressToAdd) external onlyKeeper {
-        require(IAddressList(_listToUpdate).add(_addressToAdd), Errors.ADD_IN_LIST_FAILED);
+    /// @notice Return list of whitelisted addresses
+    function feeWhitelist() external view returns (address[] memory) {
+        return _feeWhitelist.values();
+    }
+
+    function isFeeWhitelisted(address _address) external view returns (bool) {
+        return _feeWhitelist.contains(_address);
     }
 
     /**
-     * @notice Remove given address from provided address list.
-     * @dev Use it to remove keeper from keepers list and to remove address from feeWhitelist
-     * @param _listToUpdate address of AddressList contract.
-     * @param _addressToRemove address which we want to remove from AddressList.
+     * @notice Add given address in feeWhitelist.
+     * @param _addressToAdd Address to add in feeWhitelist.
      */
-    function removeFromList(address _listToUpdate, address _addressToRemove) external onlyKeeper {
-        require(IAddressList(_listToUpdate).remove(_addressToRemove), Errors.REMOVE_FROM_LIST_FAILED);
+    function addToFeeWhitelist(address _addressToAdd) external onlyKeeper {
+        require(_feeWhitelist.add(_addressToAdd), Errors.ADD_IN_LIST_FAILED);
+    }
+
+    /**
+     * @notice Remove given address from feeWhitelist.
+     * @param _addressToRemove Address to remove from feeWhitelist.
+     */
+    function removeFromFeeWhitelist(address _addressToRemove) external onlyKeeper {
+        require(_feeWhitelist.remove(_addressToRemove), Errors.REMOVE_FROM_LIST_FAILED);
+    }
+
+    /// @notice Return list of keepers
+    function keepers() external view returns (address[] memory) {
+        return _keepers.values();
+    }
+
+    function isKeeper(address _address) external view returns (bool) {
+        return _keepers.contains(_address);
+    }
+
+    /**
+     * @notice Add given address in keepers list.
+     * @param _keeperAddress keeper address to add.
+     */
+    function addKeeper(address _keeperAddress) external onlyKeeper {
+        require(_keepers.add(_keeperAddress), Errors.ADD_IN_LIST_FAILED);
+    }
+
+    /**
+     * @notice Remove given address from keepers list.
+     * @param _keeperAddress keeper address to remove.
+     */
+    function removeKeeper(address _keeperAddress) external onlyKeeper {
+        require(_keepers.remove(_keeperAddress), Errors.REMOVE_FROM_LIST_FAILED);
+    }
+
+    /// @notice Return list of maintainers
+    function maintainers() external view returns (address[] memory) {
+        return _maintainers.values();
+    }
+
+    function isMaintainer(address _address) external view returns (bool) {
+        return _maintainers.contains(_address);
+    }
+
+    /**
+     * @notice Add given address in maintainers list.
+     * @param _maintainerAddress maintainer address to add.
+     */
+    function addMaintainer(address _maintainerAddress) external onlyKeeper {
+        require(_maintainers.add(_maintainerAddress), Errors.ADD_IN_LIST_FAILED);
+    }
+
+    /**
+     * @notice Remove given address from maintainers list.
+     * @param _maintainerAddress maintainer address to remove.
+     */
+    function removeMaintainer(address _maintainerAddress) external onlyKeeper {
+        require(_maintainers.remove(_maintainerAddress), Errors.REMOVE_FROM_LIST_FAILED);
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -190,7 +224,9 @@ abstract contract VPoolBase is PoolShareToken {
      * @param _loss Loss that strategy want to report
      */
     function reportLoss(uint256 _loss) external {
-        IPoolAccountant(poolAccountant).reportLoss(_msgSender(), _loss);
+        if (_loss != 0) {
+            IPoolAccountant(poolAccountant).reportLoss(_msgSender(), _loss);
+        }
     }
 
     /**
@@ -231,7 +267,7 @@ abstract contract VPoolBase is PoolShareToken {
     }
 
     function strategy(address _strategy)
-        external
+        public
         view
         returns (
             bool _active,
@@ -241,7 +277,8 @@ abstract contract VPoolBase is PoolShareToken {
             uint256 _totalDebt,
             uint256 _totalLoss,
             uint256 _totalProfit,
-            uint256 _debtRatio
+            uint256 _debtRatio,
+            uint256 _externalDepositFee
         )
     {
         return IPoolAccountant(poolAccountant).strategy(_strategy);
@@ -276,11 +313,11 @@ abstract contract VPoolBase is PoolShareToken {
         uint256 _balanceAfter;
         uint256 _balanceBefore;
         uint256 _amountWithdrawn;
-        uint256 _amountNeeded = _amount;
         uint256 _totalAmountWithdrawn;
         address[] memory _withdrawQueue = getWithdrawQueue();
         uint256 _len = _withdrawQueue.length;
         for (uint256 i; i < _len; i++) {
+            uint256 _amountNeeded = _amount - _totalAmountWithdrawn;
             address _strategy = _withdrawQueue[i];
             _debt = totalDebtOf(_strategy);
             if (_debt == 0) {
@@ -304,7 +341,6 @@ abstract contract VPoolBase is PoolShareToken {
                 // withdraw done
                 break;
             }
-            _amountNeeded = _amount - _totalAmountWithdrawn;
         }
     }
 
@@ -320,5 +356,6 @@ abstract contract VPoolBase is PoolShareToken {
             _balanceNow = tokensHere();
         }
         actualWithdrawn = _balanceNow < _amount ? _balanceNow : _amount;
+        require(actualWithdrawn != 0, Errors.INVALID_COLLATERAL_AMOUNT);
     }
 }

@@ -1,8 +1,9 @@
 'use strict'
 
-const {deposit: _deposit, rebalance, rebalanceStrategy} = require('../utils/poolOps')
-const {expect} = require('chai')
-const {makeNewStrategy} = require('../utils/setupHelper')
+const hre = require('hardhat')
+const { deposit: _deposit, rebalance, rebalanceStrategy } = require('../utils/poolOps')
+const { expect } = require('chai')
+const { makeNewStrategy } = require('../utils/setupHelper')
 const DECIMAL = '1000000000000000000'
 async function shouldBehaveLikeMultiPool(poolName) {
   let pool, strategies, collateralToken, accountant
@@ -45,8 +46,8 @@ async function shouldBehaveLikeMultiPool(poolName) {
 
         debt0 = await pool.totalDebtOf(strategies[0].instance.address)
         tokenHere = await pool.tokensHere()
-        expect(actualWithdrawFromS1).to.be.eq(expectedFromS1, 'Withdraw from Strategy 1 is wrong')
-        expect(debt0).to.be.eq(0, 'Withdraw from Strategy 1 is wrong')
+        expect(actualWithdrawFromS1).to.be.eq(expectedFromS1, 'Actual withdrawal from Strategy 1 is wrong')
+        expect(debt0).to.be.eq(0, 'Debt of strategy 0 is wrong')
       })
 
       it('Should be able to shuffle withdraw queue', async function () {
@@ -111,22 +112,26 @@ async function shouldBehaveLikeMultiPool(poolName) {
         const poolDebtRatioAfter = await pool.totalDebtRatio()
         expect(poolDebtRatioBefore.sub(poolDebtRatioAfter)).to.be.eq(
           strategyParamsBefore._debtRatio,
-          'debt ratio not adjusted'
+          'debt ratio not adjusted',
         )
       })
 
       it('Should not disturb the withdraw queue order', async function () {
         await rebalance(strategies)
-        const hre = require('hardhat')
+
         const newStrategy = await makeNewStrategy(strategies[0], pool.address, {
-          addressListFactory: hre.address.ADDRESS_LIST_FACTORY,
           swapManager: hre.address.SWAP_MANAGER,
         })
-        await Promise.all([
-          accountant.connect(gov.signer).updateDebtRatio(strategies[0].instance.address, 3000),
-          accountant.connect(gov.signer).updateDebtRatio(strategies[1].instance.address, 3000),
-        ])
-        const config = {interestFee: 1500, debtRatio: 2000, debtRate: strategies[0].config.debtRate}
+
+        await accountant.connect(gov.signer).updateDebtRatio(strategies[0].instance.address, 3000)
+        await accountant.connect(gov.signer).updateDebtRatio(strategies[1].instance.address, 3000)
+
+        const config = {
+          interestFee: 1500,
+          debtRatio: 2000,
+          debtRate: strategies[0].config.debtRate,
+          externalDepositFee: 0,
+        }
         await accountant.connect(gov.signer).addStrategy(newStrategy.instance.address, ...Object.values(config))
         await accountant
           .connect(gov.signer)
@@ -149,4 +154,4 @@ async function shouldBehaveLikeMultiPool(poolName) {
   })
 }
 
-module.exports = {shouldBehaveLikeMultiPool}
+module.exports = { shouldBehaveLikeMultiPool }

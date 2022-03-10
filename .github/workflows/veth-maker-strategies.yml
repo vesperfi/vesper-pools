@@ -2,7 +2,7 @@ name: vETH with Maker strategies
 on:
   pull_request:
     paths:
-      - "test/veth/aave_maker-compound_maker.js"
+      - "test/veth/aave-maker-compound-maker.js"
       - "contracts/strategies/Strategy.sol"
       - "contracts/strategies/maker/MakerStrategy.sol"
       - "contracts/strategies/maker/CollateralManager.sol"
@@ -11,15 +11,13 @@ on:
       - "contracts/strategies/maker/AaveMakerStrategyETH.sol"
       - "contracts/strategies/maker/CompoundMakerStrategy.sol"
       - "contracts/strategies/maker/CompoundMakerStrategyETH.sol"
+      - ".github/workflows/veth-maker-strategies.yml"
 
 jobs:
   veth-maker-strategies-test:
     runs-on: ubuntu-latest
     env:
       NODE_URL: ${{ secrets.NODE_URL }}
-    strategy:
-      matrix:
-        node: [14]
     steps:
       - uses: actions/checkout@v2.3.1
         with:
@@ -27,12 +25,12 @@ jobs:
       - run: cat "${GITHUB_WORKSPACE}/.github/env.properties" >> $GITHUB_ENV
 
       - name: Use Node.js
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v2
         with:
-          node-version: ${{ matrix.node }}
+          node-version-file: '.nvmrc'
 
       - name: Run npm install with node v${{ matrix.node }}
         run: npm install
 
       - name: Running vETH with Aave Maker and Compound Maker
-        run: npm test "test/veth/aave_maker-compound_maker.js"
+        run: npm test "test/veth/aave-maker-compound-maker.js"

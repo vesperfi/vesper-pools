@@ -7,7 +7,7 @@ import "../../Earn.sol";
 
 /// @dev This strategy will deposit collateral token in Maker, borrow Dai and
 /// deposit borrowed DAI in Vesper pool to earn interest.
-abstract contract EarnVesperMakerStrategy is VesperMakerStrategy, Earn {
+contract EarnVesperMakerStrategy is VesperMakerStrategy, Earn {
     using SafeERC20 for IERC20;
 
     constructor(
@@ -16,8 +16,9 @@ abstract contract EarnVesperMakerStrategy is VesperMakerStrategy, Earn {
         address _swapManager,
         address _vPool,
         bytes32 _collateralType,
-        address _dripToken
-    ) VesperMakerStrategy(_pool, _cm, _swapManager, _vPool, _collateralType) Earn(_dripToken) {
+        address _dripToken,
+        string memory _name
+    ) VesperMakerStrategy(_pool, _cm, _swapManager, _vPool, _collateralType, _name) Earn(_dripToken) {
         require(address(IVesperPool(_vPool).token()) == DAI, "not-a-valid-dai-pool");
         address _dripContract = IVesperPool(_pool).poolRewards();
         address _growPool = IEarnDrip(_dripContract).growToken();

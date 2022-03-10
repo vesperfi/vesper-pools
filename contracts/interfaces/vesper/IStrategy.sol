@@ -13,6 +13,8 @@ interface IStrategy {
 
     function isReservedToken(address _token) external view returns (bool);
 
+    function keepers() external view returns (address[] memory);
+
     function migrate(address _newStrategy) external;
 
     function token() external view returns (address);

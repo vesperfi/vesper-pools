@@ -7,7 +7,7 @@ import "./VFRPool.sol";
 
 // solhint-disable no-empty-blocks
 contract VFRStablePool is VFRPool {
-    string public constant VERSION = "3.0.4";
+    string public constant VERSION = "4.0.0";
 
     uint256 public targetAPY;
     uint256 public startTime;
@@ -87,7 +87,7 @@ contract VFRStablePool is VFRPool {
         uint256 profits;
         uint256 loss;
         for (uint256 i = 0; i < strategies.length; i++) {
-            (, uint256 fee, , , uint256 totalDebt, , , ) = IPoolAccountant(poolAccountant).strategy(strategies[i]);
+            (, uint256 fee, , , uint256 totalDebt, , , , ) = IPoolAccountant(poolAccountant).strategy(strategies[i]);
             uint256 totalValue = IStrategy(strategies[i]).totalValueCurrent();
             if (totalValue > totalDebt) {
                 uint256 totalProfits = totalValue - totalDebt;
@@ -155,7 +155,7 @@ contract VFRStablePool is VFRPool {
         uint256 fromPricePerShare = pricePerShare();
         uint256 toPricePerShare = targetPricePerShare();
         if (fromPricePerShare < toPricePerShare) {
-            (, uint256 fee, , , , , , ) = IPoolAccountant(poolAccountant).strategy(_strategy);
+            (, uint256 fee, , , , , , , ) = IPoolAccountant(poolAccountant).strategy(_strategy);
             uint256 fromTotalValue = (fromPricePerShare * totalSupply()) / 1e18;
             uint256 toTotalValue = (toPricePerShare * totalSupply()) / 1e18;
             uint256 amountWithoutFee = toTotalValue - fromTotalValue;

@@ -36,6 +36,14 @@ function getPoolData(data) {
     }
   }
 
+  if (data.VesperEarnDrip) {
+    root.poolRewards = {
+      proxyAdmin: data.DefaultProxyAdmin,
+      proxy: data.VesperEarnDrip,
+      implementation: data.VesperEarnDrip_Implementation,
+    }
+  }
+
   const strategies = {}
   Object.entries(data).map(function ([key, value]) {
     if (key.includes('Strategy')) {
@@ -123,7 +131,10 @@ task('create-release', 'Create release file from deploy data')
       releaseData.version = release
     }
     // We might have new network in this deployment, if not exist add empty network
-    if (!releaseData.networks[network]) {
+    if (!releaseData.networks) {
+      releaseData.networks = {}
+      releaseData.networks[network] = {}
+    } else if (!releaseData.networks[network]) {
       releaseData.networks[network] = {}
     }
     // Update pool data with latest deployment

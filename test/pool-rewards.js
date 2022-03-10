@@ -5,11 +5,11 @@ const { ethers } = require('hardhat')
 
 const time = require('./utils/time')
 const poolOps = require('./utils/poolOps')
-const { deployContract, getUsers, setupVPool } = require('./utils/setupHelper')
-const StrategyType = require('./utils/strategyTypes')
-const PoolConfig = require('../helper/ethereum/poolConfig')
 const swapper = require('./utils/tokenSwapper')
-const Address = require('../helper/ethereum/address')
+const { adjustBalance } = require('./utils/balance')
+const { deployContract, getUsers, setupVPool } = require('./utils/setupHelper')
+const { address: Address, poolConfig, strategyConfig } = require('./utils/chains').getChainData()
+const AaveStrategyDAI = strategyConfig.AaveStrategyDAI
 
 const TOTAL_REWARD = ethers.utils.parseUnits('150000')
 const REWARD_DURATION = 30 * 24 * 60 * 60
@@ -21,20 +21,13 @@ describe('Rewards for VDAI Pool', function () {
   const notifySignature = 'notifyRewardAmount(address,uint256,uint256)'
   const notifyMultiSignature = 'notifyRewardAmount(address[],uint256[],uint256[])'
 
-  const ONE_MILLION = ethers.utils.parseUnits('1000000', 'ether')
-  const interestFee = '1500' // 15%
-  const strategies = [
-    {
-      name: 'AaveStrategyDAI',
-      type: StrategyType.AAVE,
-      config: { interestFee, debtRatio: 9000, debtRate: ONE_MILLION },
-    },
-  ]
+  AaveStrategyDAI.config.debtRatio = 9000
+  const strategies = [AaveStrategyDAI]
   beforeEach(async function () {
     const users = await getUsers()
-      ;[governor, user1, user2, user3] = users
+    ;[governor, user1, user2, user3] = users
     await setupVPool(this, {
-      poolConfig: PoolConfig.VDAI,
+      poolConfig: poolConfig.VDAI,
       feeCollector: users[7].address,
       strategies: strategies.map((item, i) => ({
         ...item,
@@ -134,7 +127,7 @@ describe('Rewards for VDAI Pool', function () {
     it('Should claim rewards via withdraw', async function () {
       await poolOps.deposit(vdai, dai, 10, user2)
       await time.increase(34 * 24 * 60 * 60)
-      await vdai.connect(user2.signer).withdraw(await vdai.balanceOf(user2.address))
+      await vdai.connect(user2.signer).withdrawAndClaim(await vdai.balanceOf(user2.address))
       const claimable = (await poolRewards.claimable(user2.address))._claimableAmounts[0]
       expect(claimable).to.be.eq(0, 'Claimable balance after claim should be 0')
       const vspRewards = await vsp.balanceOf(user2.address)
@@ -146,7 +139,11 @@ describe('Rewards for VDAI Pool', function () {
     it('Should claim rewards via deposit', async function () {
       await poolOps.deposit(vdai, dai, 10, user2)
       await time.increase(34 * 24 * 60 * 60)
-      await poolOps.deposit(vdai, dai, 1, user2)
+      // Get DAI and call depositAndClaim
+      const amount = ethers.utils.parseEther('1000')
+      await adjustBalance(Address.DAI, user2.address, ethers.utils.parseEther('1000'))
+      await dai.connect(user2.signer).approve(vdai.address, amount)
+      await vdai.connect(user2.signer).depositAndClaim(amount)
       const claimable = (await poolRewards.claimable(user2.address))._claimableAmounts[0]
       expect(claimable).to.be.eq(0, 'Claimable balance after claim should be 0')
       const vspRewards = await vsp.balanceOf(user2.address)
@@ -285,8 +282,13 @@ describe('Rewards for VDAI Pool', function () {
       // Swap and transfer to poolRewards
       await swapper.swapEthForToken(10, Address.UNI, user1, poolRewards.address)
       const uniBalance = await uni.balanceOf(poolRewards.address)
-      await poolRewards.connect(governor.signer)[`${notifyMultiSignature}`]
-        ([vsp.address, Address.UNI], [TOTAL_REWARD, uniBalance], [REWARD_DURATION, REWARD_DURATION])
+      await poolRewards
+        .connect(governor.signer)
+        [`${notifyMultiSignature}`](
+          [vsp.address, Address.UNI],
+          [TOTAL_REWARD, uniBalance],
+          [REWARD_DURATION, REWARD_DURATION],
+        )
     })
 
     it('Should distribute multiple reward tokens', async function () {
@@ -309,7 +311,6 @@ describe('Rewards for VDAI Pool', function () {
       const vspAfter = await vsp.balanceOf(user2.address)
       expect(uniAfter).to.be.gt(0, 'UNI balance after claim should be 0')
       expect(vspAfter).to.be.gt(0, 'VSP balance after claim should be 0')
-
     })
 
     it('Should distribute for multiple epoch', async function () {
@@ -332,8 +333,13 @@ describe('Rewards for VDAI Pool', function () {
       // Swap and transfer UNI to poolRewards
       await swapper.swapEthForToken(10, Address.UNI, user1, poolRewards.address)
       uniBalance = await uni.balanceOf(poolRewards.address)
-      await poolRewards.connect(governor.signer)[`${notifyMultiSignature}`]
-        ([vsp.address, Address.UNI], [TOTAL_REWARD, uniBalance], [REWARD_DURATION, REWARD_DURATION])
+      await poolRewards
+        .connect(governor.signer)
+        [`${notifyMultiSignature}`](
+          [vsp.address, Address.UNI],
+          [TOTAL_REWARD, uniBalance],
+          [REWARD_DURATION, REWARD_DURATION],
+        )
 
       await time.increase(34 * 24 * 60 * 60)
       claimable = claimableAfter

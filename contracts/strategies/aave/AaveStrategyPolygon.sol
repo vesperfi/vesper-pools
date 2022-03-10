@@ -5,8 +5,13 @@ import "../Strategy.sol";
 import "../../interfaces/aave/IAave.sol";
 
 /// @dev This strategy will deposit collateral token in Aave and earn interest.
-abstract contract AaveStrategyPolygon is Strategy {
+contract AaveStrategyPolygon is Strategy {
     using SafeERC20 for IERC20;
+
+    // solhint-disable-next-line var-name-mixedcase
+    string public NAME;
+    string public constant VERSION = "4.0.0";
+
     bytes32 private constant AAVE_PROVIDER_ID = 0x0100000000000000000000000000000000000000000000000000000000000000;
     AaveLendingPool public aaveLendingPool;
     AaveProtocolDataProvider public aaveProtocolDataProvider;
@@ -20,16 +25,18 @@ abstract contract AaveStrategyPolygon is Strategy {
     constructor(
         address _pool,
         address _swapManager,
-        address _receiptToken
+        address _receiptToken,
+        string memory _name
     ) Strategy(_pool, _swapManager, _receiptToken) {
         require(_receiptToken != address(0), "aToken-address-is-zero");
         aToken = AToken(_receiptToken);
         // If there is no incentive then below call will fail
-        try AToken(_receiptToken).getIncentivesController() {
-            aaveIncentivesController = AaveIncentivesController(AToken(_receiptToken).getIncentivesController());
+        try AToken(_receiptToken).getIncentivesController() returns (address _aaveIncentivesController) {
+            aaveIncentivesController = AaveIncentivesController(_aaveIncentivesController);
         } catch {} //solhint-disable no-empty-blocks
         aaveLendingPool = AaveLendingPool(aaveAddressesProvider.getLendingPool());
         aaveProtocolDataProvider = AaveProtocolDataProvider(aaveAddressesProvider.getAddress(AAVE_PROVIDER_ID));
+        NAME = _name;
     }
 
     /**
@@ -80,17 +87,13 @@ abstract contract AaveStrategyPolygon is Strategy {
      * @notice Transfer StakeAave to newStrategy
      * @param _newStrategy Address of newStrategy
      */
-    function _beforeMigration(address _newStrategy) internal override {
-        uint256 _rewardAmount = _claimRewards();
-        if (_claimRewards() != 0) {
-            IERC20(rewardToken).safeTransfer(_newStrategy, _rewardAmount);
-        }
-    }
+    //solhint-disable no-empty-blocks
+    function _beforeMigration(address _newStrategy) internal override {}
 
     /// @notice Claim Aave rewards and convert to _toToken.
-    function _claimRewardsAndConvertTo(address _toToken) internal override {
+    function _claimRewardsAndConvertTo(address _toToken) internal virtual override {
         uint256 _rewardAmount = _claimRewards();
-        if (_rewardAmount != 0) {
+        if (_rewardAmount != 0 && rewardToken != _toToken) {
             _safeSwap(rewardToken, _toToken, _rewardAmount, 1);
         }
     }

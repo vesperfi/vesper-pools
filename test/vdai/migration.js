@@ -1,8 +1,9 @@
 'use strict'
-const {prepareConfig} = require('./config')
-const {shouldMigrateStrategies} = require('../behavior/strategy-migration')
+const { prepareConfig } = require('./config')
 
-describe('vUSDC pool strategies migration', function () {
+const { shouldMigrateStrategies } = require('../behavior/strategy-migration')
+
+describe('vDAI pool strategies migration', function () {
   prepareConfig()
-  shouldMigrateStrategies('vDai')
+  shouldMigrateStrategies('vDAI')
 })

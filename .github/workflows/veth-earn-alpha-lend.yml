@@ -2,7 +2,8 @@ name: veETH-DAI with AlphaLend
 on:
   pull_request:
     paths:
-      - "test/veth/vesper-earn-alpha-lend.js"
+      - "test/utils/setupHelper.js"
+      - "test/veth/earn-alpha-lend.js"
       - "contracts/strategies/Strategy.sol"
       - "contracts/strategies/alpha/AlphaLendStrategy.sol"
       - "contracts/strategies/alpha/earn/EarnAlphaLendStrategy.sol"
@@ -13,9 +14,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       NODE_URL: ${{ secrets.NODE_URL }}
-    strategy:
-      matrix:
-        node: [14]
     steps:
       - uses: actions/checkout@v2.3.1
         with:
@@ -23,12 +21,12 @@ jobs:
       - run: cat "${GITHUB_WORKSPACE}/.github/env.properties" >> $GITHUB_ENV
 
       - name: Use Node.js
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v2
         with:
-          node-version: ${{ matrix.node }}
+          node-version-file: '.nvmrc'
 
       - name: Run npm install with node v${{ matrix.node }}
         run: npm install
 
-      - name: Running vETH-DAI with AlphaLend
-        run: npm test "test/veth/vesper-earn-alpha-lend.js"
+      - name: Running veETH-DAI with AlphaLend
+        run: npm test "test/veth/earn-alpha-lend.js"

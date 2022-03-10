@@ -5,18 +5,24 @@ import "../Strategy.sol";
 import "../../interfaces/yearn/IYToken.sol";
 
 /// @title This strategy will deposit collateral token in a Yearn vault and earn interest.
-abstract contract YearnStrategy is Strategy {
+contract YearnStrategy is Strategy {
     using SafeERC20 for IERC20;
+
+    // solhint-disable-next-line var-name-mixedcase
+    string public NAME;
+    string public constant VERSION = "4.0.0";
 
     IYToken internal immutable yToken;
 
     constructor(
         address _pool,
         address _swapManager,
-        address _receiptToken
+        address _receiptToken,
+        string memory _name
     ) Strategy(_pool, _swapManager, _receiptToken) {
         require(_receiptToken != address(0), "yToken-address-is-zero");
         yToken = IYToken(_receiptToken);
+        NAME = _name;
     }
 
     /**

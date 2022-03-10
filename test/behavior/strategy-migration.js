@@ -7,8 +7,8 @@ const { expect } = require('chai')
 
 async function shouldMigrateStrategies(poolName) {
   let pool, strategies, collateralToken
-  let user1, user2, gov
-  const options = { skipVault: true, addressListFactory: '0xded8217De022706A191eE7Ee0Dc9df1185Fb5dA3' }
+  let user1, user2, user3, gov
+  const options = { skipVault: true }
 
   async function deposit(amount, depositor) {
     return _deposit(pool, collateralToken, amount, depositor)
@@ -48,28 +48,28 @@ async function shouldMigrateStrategies(poolName) {
     expect(totalDebtAfter).to.be.eq(totalDebtBefore, `${poolName} total debt after migration is not correct`)
     expect(totalDebtRatioAfter).to.be.eq(
       totalDebtRatioBefore,
-      `${poolName} total debt ratio after migration is not correct`
+      `${poolName} total debt ratio after migration is not correct`,
     )
     if (newStrategy.type === StrategyType.COMPOUND_LEVERAGE) {
       // new strategy will have less receipt tokens due to deleverage at migration
       expect(receiptTokenAfter2).to.be.lt(
         receiptTokenBefore,
-        `${poolName} receipt  token balance of new strategy after migration is not correct`
+        `${poolName} receipt token balance of new strategy after migration is not correct`,
       )
     } else {
       expect(receiptTokenAfter2).to.be.gte(
         receiptTokenBefore,
-        `${poolName} receipt  token balance of new strategy after migration is not correct`
+        `${poolName} receipt token balance of new strategy after migration is not correct`,
       )
     }
     expect(receiptTokenAfter).to.be.eq(
       0,
-      `${poolName} receipt  token balance of new strategy after migration is not correct`
+      `${poolName} receipt token balance of old strategy after migration is not correct`,
     )
   }
 
   async function assertDepositAndWithdraw(newStrategy) {
-    await deposit(50, user2)
+    await deposit(30, user2)
     const amountBefore = await pool.balanceOf(user2.address)
     expect(amountBefore).to.be.gt(0, 'failed to deposit in pool')
     await rebalanceStrategy(newStrategy)
@@ -79,10 +79,10 @@ async function shouldMigrateStrategies(poolName) {
   }
 
   async function assertTotalDebt(newStrategy) {
-    await deposit(40, user2)
+    await deposit(40, user3)
     await rebalanceStrategy(newStrategy)
     const totalDebtBefore = await pool.totalDebtOf(newStrategy.instance.address)
-    await deposit(50, user2)
+    await deposit(50, user3)
     await rebalanceStrategy(newStrategy)
     const totalDebtAfter = await pool.totalDebtOf(newStrategy.instance.address)
     expect(totalDebtAfter).to.be.gt(totalDebtBefore, `Total debt of strategy in ${poolName} is wrong`)
@@ -106,7 +106,7 @@ async function shouldMigrateStrategies(poolName) {
 
   describe(`${poolName} Strategy Migration`, function () {
     beforeEach(async function () {
-      ;[gov, user1, user2] = this.users
+      ;[gov, user1, user2, user3] = this.users
       pool = this.pool
       strategies = this.strategies
       collateralToken = this.collateralToken

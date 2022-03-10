@@ -3,5 +3,19 @@
   "vDAI-v3.0.4_3.0.5": 1626392585,
   "vUSDT-v3.0.4_3.0.5": 1626393232,
   "vWETH-v3.0.4_3.0.5": 1626393823,
-  "vWBTC-v3.0.4_3.0.5": 1626394148
+  "vWBTC-v3.0.4_3.0.5": 1626394148,
+  "VDAI-Polygon-Pool-Rewards-1": 1636493563,
+  "VUSDC-Polygon-Pool-Rewards-1": 1636494145,
+  "VUSDT-Polygon-Pool-Rewards-1": 1636494400,
+  "VWETH-Polygon-Pool-Rewards-1": 1636494905,
+  "VWBTC-Polygon-Pool-Rewards-1": 1636495053,
+  "vMATIC-v3.0.21_3.0.5": 1638395125,
+  "AaveStrategyPolygonWMATIC-v3.0.21": 1638396105,
+  "veDAI-WETH-v3.0.23_3.0.5": 1640023053,
+  "EarnVesperStrategyDAIWETH-v3.0.22": 1640023658,
+  "veDAI-WBTC-v3.0.23_3.0.5": 1640091581,
+  "EarnVesperStrategyDAIWBTC-v3.0.22": 1640093776,
+  "upgrade-pool": 1643412959,
+  "upgrade-pool": 1643662066,
+  "upgrade-pool": 1643665621
 }

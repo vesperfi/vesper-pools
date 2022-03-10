@@ -8,19 +8,15 @@ import "../../../interfaces/token/IToken.sol";
 // solhint-disable no-empty-blocks
 /// @title Deposit ETH/WETH in Compound and earn interest in DAI.
 contract EarnCompoundStrategyETH is EarnCompoundStrategy {
-    string public constant NAME = "Earn-Compound-Strategy-ETH";
-    string public constant VERSION = "3.0.5";
-
-    // cETH = 0x4Ddc2D193948926D02f9B1fE9e1daa0718270ED5
-    // DAI = 0x6b175474e89094c44da98b954eedeac495271d0f
-    constructor(address _pool, address _swapManager)
-        EarnCompoundStrategy(
-            _pool,
-            _swapManager,
-            0x4Ddc2D193948926D02f9B1fE9e1daa0718270ED5,
-            0x6B175474E89094C44Da98b954EedeAC495271d0F
-        )
-    {}
+    constructor(
+        address _pool,
+        address _swapManager,
+        address _comptroller,
+        address _rewardToken,
+        address _receiptToken,
+        address _dripToken,
+        string memory _name
+    ) EarnCompoundStrategy(_pool, _swapManager, _comptroller, _rewardToken, _receiptToken, _dripToken, _name) {}
 
     /// @dev Only receive ETH from either cToken or WETH
     receive() external payable {

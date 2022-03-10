@@ -2,6 +2,7 @@ name: vDAI with Yearn
 on:
   pull_request:
     paths:
+      - "test/utils/setupHelper.js"
       - "test/vdai/yearn.js"
       - "contracts/strategies/Strategy.sol"
       - "contracts/strategies/yearn/YearnStrategy.sol"
@@ -12,9 +13,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       NODE_URL: ${{ secrets.NODE_URL }}
-    strategy:
-      matrix:
-        node: [14]
     steps:
       - uses: actions/checkout@v2.3.1
         with:
@@ -22,9 +20,9 @@ jobs:
       - run: cat "${GITHUB_WORKSPACE}/.github/env.properties" >> $GITHUB_ENV
 
       - name: Use Node.js
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v2
         with:
-          node-version: ${{ matrix.node }}
+          node-version-file: '.nvmrc'
 
       - name: Run npm install with node v${{ matrix.node }}
         run: npm install

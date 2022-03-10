@@ -1,7 +1,8 @@
 'use strict'
 
 const hre = require('hardhat')
-const Address = require('../../helper/ethereum/address')
+const Address = require('../../helper/mainnet/address')
+const AvalancheAddress = require('../../helper/avalanche/address')
 const ethers = hre.ethers
 const { BigNumber } = require('ethers')
 const { hexlify, solidityKeccak256, zeroPad, getAddress } = ethers.utils
@@ -14,8 +15,11 @@ const slots = {
   [Address.USDT]: 2,
   [Address.WBTC]: 0,
   [Address.UNI]: 4,
+  [Address.MIM]: 0,
+  [Address.ALUSD]: 1,
   '0x5d3a536E4D6DbD6114cc1Ead35777bAB948E3643': 14, // cDAI
-  '0xc00e94Cb662C3520282E6f5717214004A7f26888': 1 // COMP
+  '0xc00e94Cb662C3520282E6f5717214004A7f26888': 1, // COMP
+  [AvalancheAddress.DAI]: 0,
 }
 
 /**
@@ -43,8 +47,8 @@ async function adjustBalance(token, targetAddress, balance) {
     throw new Error(`Missing slot configuration for token ${token}`)
   }
 
-  const index = hexlify(solidityKeccak256(['uint256', 'uint256'], [targetAddress, slot]))
-    .replace('0x0', '0x') // reason: https://github.com/nomiclabs/hardhat/issues/1585 comments
+  // reason: https://github.com/nomiclabs/hardhat/issues/1585 comments
+  const index = hexlify(solidityKeccak256(['uint256', 'uint256'], [targetAddress, slot])).replace('0x0', '0x')
 
   if (!BigNumber.isBigNumber(balance)) {
     // eslint-disable-next-line no-param-reassign

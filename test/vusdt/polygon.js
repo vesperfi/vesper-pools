@@ -3,26 +3,15 @@
 const { prepareConfig } = require('./config')
 const { shouldBehaveLikePool } = require('../behavior/vesper-pool')
 const { shouldBehaveLikeMultiPool } = require('../behavior/vesper-multi-pool')
-const StrategyType = require('../utils/strategyTypes')
-const { BigNumber: BN } = require('ethers')
-const DECIMAL18 = BN.from('1000000000000000000')
-const ONE_MILLION = DECIMAL18.mul('1000000')
+const { strategyConfig } = require('../utils/chains').getChainData()
 
-/* eslint-disable mocha/no-setup-in-describe */
+const strategy1 = strategyConfig.AaveStrategyPolygonUSDT
+const strategy2 = strategyConfig.AaveStrategyPolygonUSDT
+
 describe('vUSDT Pool', function () {
-  const interestFee = '1500'
-  const strategies = [
-    {
-      name: 'AaveStrategyPolygonUSDT',
-      type: StrategyType.AAVE,
-      config: { interestFee, debtRatio: 4000, debtRate: ONE_MILLION },
-    },
-    {
-      name: 'AaveStrategyPolygonUSDT',
-      type: StrategyType.AAVE,
-      config: { interestFee, debtRatio: 4000, debtRate: ONE_MILLION },
-    }
-  ]
+  strategy1.config.debtRatio = 4000
+  strategy2.config.debtRatio = 4000
+  const strategies = [strategy1, strategy2]
   prepareConfig(strategies)
   shouldBehaveLikePool('vUSDT', 'USDT')
   shouldBehaveLikeMultiPool('vUSDT')

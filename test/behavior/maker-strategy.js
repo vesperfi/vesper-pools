@@ -1,10 +1,10 @@
 'use strict'
 
-const {deposit, executeIfExist, timeTravel, rebalanceStrategy} = require('../utils/poolOps')
-const {expect} = require('chai')
-const {ethers} = require('hardhat')
-const {getUsers, getEvent} = require('../utils/setupHelper')
-const {shouldValidateMakerCommonBehaviour} = require('./maker-common')
+const { deposit, executeIfExist, timeTravel, rebalanceStrategy } = require('../utils/poolOps')
+const { expect } = require('chai')
+const { ethers } = require('hardhat')
+const { getUsers, getEvent } = require('../utils/setupHelper')
+const { shouldValidateMakerCommonBehavior } = require('./maker-common')
 
 function shouldBehaveLikeMakerStrategy(strategyIndex) {
   let pool, strategy, token, accountant
@@ -18,10 +18,10 @@ function shouldBehaveLikeMakerStrategy(strategyIndex) {
     const vaultType = await strategy.instance.collateralType()
     await jugLike.drip(vaultType)
   }
-  shouldValidateMakerCommonBehaviour(strategyIndex)
+  shouldValidateMakerCommonBehavior(strategyIndex)
   describe(`MakerStrategy specific tests for strategy[${strategyIndex}]`, function () {
     beforeEach(async function () {
-      ;[user1, user2] = await getUsers()
+      ;[, user1, user2] = await getUsers()
       pool = this.pool
       accountant = this.accountant
       strategy = this.strategies[strategyIndex]
@@ -32,7 +32,7 @@ function shouldBehaveLikeMakerStrategy(strategyIndex) {
 
     describe('Earning scenario', function () {
       beforeEach(async function () {
-        await deposit(pool, collateralToken, 20, user1)
+        await deposit(pool, collateralToken, 30, user1)
         await rebalanceStrategy(strategy)
       })
 
@@ -42,14 +42,14 @@ function shouldBehaveLikeMakerStrategy(strategyIndex) {
         await timeTravel()
         await executeIfExist(token.exchangeRateCurrent)
         await rebalanceStrategy(strategy)
-
         const tokensHereAfter = await pool.tokensHere()
         expect(tokensHereAfter).to.be.gt(tokensHere, 'Collateral token in pool should increase')
       })
 
       describe('Interest fee calculation via Jug Drip', function () {
         it('Should earn interest fee', async function () {
-          const feeBalanceBefore = await pool.balanceOf(strategy.instance.address)
+          const feeCollector = await strategy.instance.feeCollector()
+          const feeBalanceBefore = await pool.balanceOf(feeCollector)
           const totalSupplyBefore = await pool.totalSupply()
           await deposit(pool, collateralToken, 50, user2)
 
@@ -57,7 +57,7 @@ function shouldBehaveLikeMakerStrategy(strategyIndex) {
           await timeTravel()
           await updateRate()
 
-          const feeBalanceAfter = await pool.balanceOf(strategy.instance.address)
+          const feeBalanceAfter = await pool.balanceOf(feeCollector)
           expect(feeBalanceAfter).to.be.gt(feeBalanceBefore, 'Fee should increase')
 
           const totalSupplyAfter = await pool.totalSupply()
@@ -88,9 +88,9 @@ function shouldBehaveLikeMakerStrategy(strategyIndex) {
         await rebalanceStrategy(strategy)
         const daiDebtAfter = await cm.getVaultDebt(strategy.instance.address)
         expect(daiDebtAfter).to.be.gt(daiDebtBefore, 'Should increase vault debt on rebalance')
-      })      
+      })
     })
   })
 }
 
-module.exports = {shouldBehaveLikeMakerStrategy}
+module.exports = { shouldBehaveLikeMakerStrategy }

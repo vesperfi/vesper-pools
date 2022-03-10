@@ -6,17 +6,21 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import "../../interfaces/curve/IStableSwap.sol";
-import "../../interfaces/curve/ILiquidityGaugeV2.sol";
+import "../../interfaces/curve/ILiquidityGauge.sol";
 import "../../interfaces/curve/ITokenMinter.sol";
+import "../../interfaces/curve/IMetapoolFactory.sol";
+import "../../interfaces/curve/IDepositZap.sol";
 
 abstract contract CrvBase {
     using SafeERC20 for IERC20;
 
+    address public constant CRV_MINTER = 0xd061D61a4d941c39E5453435B6345Dc261C2fcE0;
+
+    // solhint-disable-next-line  var-name-mixedcase
+    address public CRV = 0xD533a949740bb3306d119CC777fa900bA034cd52;
     IStableSwapUnderlying public immutable crvPool;
     address public immutable crvLp;
     address public immutable crvGauge;
-    address public constant CRV_MINTER = 0xd061D61a4d941c39E5453435B6345Dc261C2fcE0;
-    address public constant CRV = 0xD533a949740bb3306d119CC777fa900bA034cd52;
 
     constructor(
         address _pool,
@@ -30,11 +34,7 @@ abstract contract CrvBase {
         crvPool = IStableSwapUnderlying(_pool);
         crvLp = _lp;
         crvGauge = _gauge;
-        _init(_pool);
     }
-
-    // must be implemented downstream
-    function _init(address _pool) internal virtual;
 
     function _minimumLpPrice(uint256 _safeRate) internal view returns (uint256) {
         return ((crvPool.get_virtual_price() * _safeRate) / 1e18);
@@ -60,8 +60,8 @@ abstract contract CrvBase {
         view
         returns (uint256 lpToWithdraw, uint256 unstakeAmt)
     {
-        uint256 lp = IERC20(crvLp).balanceOf(address(this));
-        uint256 tlp = lp + totalStaked();
+        uint256 lp = getLp();
+        uint256 tlp = totalLp();
         lpToWithdraw = (_amtNeeded * tlp) / getLpValueAs(tlp, i);
         lpToWithdraw = (lpToWithdraw > tlp) ? tlp : lpToWithdraw;
         if (lpToWithdraw > lp) {
@@ -75,7 +75,7 @@ abstract contract CrvBase {
 
     // While this is inaccurate in terms of slippage, this gives us the
     // best estimate (least manipulatable value) to calculate share price
-    function getLpValue(uint256 _lpAmount) public view returns (uint256) {
+    function getLpValue(uint256 _lpAmount) public view virtual returns (uint256) {
         return (_lpAmount != 0) ? (crvPool.get_virtual_price() * _lpAmount) / 1e18 : 0;
     }
 
@@ -101,19 +101,12 @@ abstract contract CrvBase {
         }
     }
 
-    function _claimCrv() internal {
+    function _claimRewards() internal virtual {
         ITokenMinter(CRV_MINTER).mint(crvGauge);
     }
 
-    function _setCheckpoint() internal {
+    function _setCheckpoint() internal virtual {
         ILiquidityGaugeV2(crvGauge).user_checkpoint(address(this));
-    }
-
-    function claimableRewards() public view virtual returns (uint256) {
-        //Total Mintable - Previously minted
-        return
-            ILiquidityGaugeV2(crvGauge).integrate_fraction(address(this)) -
-            ITokenMinter(CRV_MINTER).minted(address(this), crvGauge);
     }
 
     function totalStaked() public view virtual returns (uint256 total) {
@@ -121,6 +114,11 @@ abstract contract CrvBase {
     }
 
     function totalLp() public view virtual returns (uint256 total) {
-        total = IERC20(crvLp).balanceOf(address(this)) + IERC20(crvGauge).balanceOf(address(this));
+        total = getLp() + IERC20(crvGauge).balanceOf(address(this));
+    }
+
+    // Gets LP value not staked in gauge
+    function getLp() public view virtual returns (uint256 total) {
+        total = IERC20(crvLp).balanceOf(address(this));
     }
 }

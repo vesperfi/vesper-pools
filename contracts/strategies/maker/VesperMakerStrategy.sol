@@ -7,8 +7,7 @@ import "../../interfaces/vesper/IPoolRewards.sol";
 
 /// @dev This strategy will deposit collateral token in Maker, borrow Dai and
 /// deposit borrowed DAI in Vesper DAI pool to earn interest.
-//solhint-disable no-empty-blocks
-abstract contract VesperMakerStrategy is MakerStrategy {
+contract VesperMakerStrategy is MakerStrategy {
     using SafeERC20 for IERC20;
     address internal constant VSP = 0x1b40183EFB4Dd766f11bDa7A7c3AD8982e998421;
 
@@ -17,8 +16,9 @@ abstract contract VesperMakerStrategy is MakerStrategy {
         address _cm,
         address _swapManager,
         address _vPool,
-        bytes32 _collateralType
-    ) MakerStrategy(_pool, _cm, _swapManager, _vPool, _collateralType) {
+        bytes32 _collateralType,
+        string memory _name
+    ) MakerStrategy(_pool, _cm, _swapManager, _vPool, _collateralType, _name) {
         require(address(IVesperPool(_vPool).token()) == DAI, "not-a-valid-dai-pool");
     }
 

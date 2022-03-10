@@ -7,22 +7,24 @@ import "../../Earn.sol";
 import "../../../interfaces/vesper/IPoolRewards.sol";
 
 /// @title This strategy will deposit collateral token in Compound and earn drip in an another token.
-abstract contract EarnCompoundStrategy is CompoundStrategy, Earn {
+contract EarnCompoundStrategy is CompoundStrategy, Earn {
     using SafeERC20 for IERC20;
 
     // solhint-disable no-empty-blocks
     constructor(
         address _pool,
         address _swapManager,
+        address _comptroller,
+        address _rewardToken,
         address _receiptToken,
-        address _dripToken
-    ) CompoundStrategy(_pool, _swapManager, _receiptToken) Earn(_dripToken) {}
+        address _dripToken,
+        string memory _name
+    ) CompoundStrategy(_pool, _swapManager, _comptroller, _rewardToken, _receiptToken, _name) Earn(_dripToken) {}
 
     // solhint-enable no-empty-blocks
 
-    function totalValueCurrent() external virtual override(Strategy, CompoundStrategy) returns (uint256 _totalValue) {
-        _claimComp();
-        _totalValue = _calculateTotalValue(IERC20(COMP).balanceOf(address(this)));
+    function totalValueCurrent() public virtual override(Strategy, CompoundStrategy) returns (uint256 _totalValue) {
+        _totalValue = CompoundStrategy.totalValueCurrent();
     }
 
     function _setupOracles() internal override(Strategy, CompoundStrategy) {
@@ -54,7 +56,8 @@ abstract contract EarnCompoundStrategy is CompoundStrategy, Earn {
         collateralToken.safeApprove(pool, _amount);
         collateralToken.safeApprove(address(cToken), _amount);
         for (uint256 i = 0; i < swapManager.N_DEX(); i++) {
-            IERC20(COMP).safeApprove(address(swapManager.ROUTERS(i)), _amount);
+            if (rewardToken != address(0)) IERC20(rewardToken).safeApprove(address(swapManager.ROUTERS(i)), _amount);
+
             collateralToken.safeApprove(address(swapManager.ROUTERS(i)), _amount);
         }
     }

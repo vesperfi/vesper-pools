@@ -10,17 +10,24 @@ import "../../FlashLoanHelper.sol";
 
 /// @title This strategy will deposit collateral token in Compound and based on position
 /// it will borrow same collateral token. It will use borrowed asset as supply and borrow again.
-abstract contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
+contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
     using SafeERC20 for IERC20;
+
+    // solhint-disable-next-line var-name-mixedcase
+    string public NAME;
+    string public constant VERSION = "4.0.0";
 
     uint256 internal constant MAX_BPS = 10_000; //100%
     uint256 public minBorrowRatio = 5_000; // 50%
     uint256 public maxBorrowRatio = 6_000; // 60%
     CToken internal cToken;
-    address internal constant COMP = 0xc00e94Cb662C3520282E6f5717214004A7f26888;
-    Comptroller internal constant COMPTROLLER = Comptroller(0x3d9819210A31b4961b30EF54bE2aeD79B9c9Cd3B);
     IUniswapV3Oracle internal constant ORACLE = IUniswapV3Oracle(0x0F1f5A87f99f0918e6C81F16E59F3518698221Ff);
     uint32 internal constant TWAP_PERIOD = 3600;
+
+    // Below can be address(0), for example in Rari Strategy
+    Comptroller public immutable comptroller;
+    address public rewardToken;
+    address public rewardDistributor;
 
     event UpdatedBorrowRatio(
         uint256 previousMinBorrowRatio,
@@ -32,10 +39,22 @@ abstract contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
     constructor(
         address _pool,
         address _swapManager,
-        address _receiptToken
-    ) Strategy(_pool, _swapManager, _receiptToken) {
+        address _comptroller,
+        address _rewardDistributor,
+        address _rewardToken,
+        address _aaveAddressesProvider,
+        address _receiptToken,
+        string memory _name
+    ) Strategy(_pool, _swapManager, _receiptToken) FlashLoanHelper(_aaveAddressesProvider) {
+        NAME = _name;
+        require(_comptroller != address(0), "comptroller-address-is-zero");
+        comptroller = Comptroller(_comptroller);
+        rewardToken = _rewardToken;
+
         require(_receiptToken != address(0), "cToken-address-is-zero");
         cToken = CToken(_receiptToken);
+
+        rewardDistributor = _rewardDistributor;
     }
 
     /**
@@ -45,7 +64,7 @@ abstract contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
      * @param _maxBorrowRatio Maximum % we want to borrow
      */
     function updateBorrowRatio(uint256 _minBorrowRatio, uint256 _maxBorrowRatio) external onlyGovernor {
-        (, uint256 _collateralFactor, ) = COMPTROLLER.markets(address(cToken));
+        uint256 _collateralFactor = _getCollateralFactor();
         require(_maxBorrowRatio < (_collateralFactor / 1e14), "invalid-max-borrow-limit");
         require(_maxBorrowRatio > _minBorrowRatio, "max-should-be-higher-than-min");
         emit UpdatedBorrowRatio(minBorrowRatio, _minBorrowRatio, maxBorrowRatio, _maxBorrowRatio);
@@ -57,19 +76,29 @@ abstract contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
         _updateAaveStatus(_status);
     }
 
-    function updateDyDxStatus(bool _status) external onlyGovernor {
+    function updateDyDxStatus(bool _status) external virtual onlyGovernor {
         _updateDyDxStatus(_status, address(collateralToken));
     }
 
     /**
-     * @notice Calculate total value based on COMP claimed, supply and borrow position
+     * @notice Get Collateral Factor
+     */
+    function _getCollateralFactor() internal view virtual returns (uint256 _collateralFactor) {
+        (, _collateralFactor, ) = comptroller.markets(address(cToken));
+        // Take 95% of collateralFactor to avoid any rounding issue.
+        _collateralFactor = (_collateralFactor * 95) / 100;
+    }
+
+    /**
+     * @notice Calculate total value based on rewardToken claimed, supply and borrow position
      * @dev Report total value in collateral token
-     * @dev Claimed COMP will stay in strategy until next rebalance
+     * @dev Claimed rewardToken will stay in strategy until next rebalance
      */
     function totalValueCurrent() public override returns (uint256 _totalValue) {
         cToken.exchangeRateCurrent();
-        _claimComp();
-        _totalValue = _calculateTotalValue(IERC20(COMP).balanceOf(address(this)));
+        _claimRewards();
+
+        _totalValue = _calculateTotalValue(IERC20(rewardToken).balanceOf(address(this)));
     }
 
     /**
@@ -82,18 +111,18 @@ abstract contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
     }
 
     /**
-     * @notice Calculate total value using COMP accrued, supply and borrow position
-     * @dev Compound calculate COMP accrued and store it when user interact with
+     * @notice Calculate total value using rewardToken accrued, supply and borrow position
+     * @dev Compound calculate rewardToken accrued and store it when user interact with
      * Compound contracts, i.e. deposit, withdraw or transfer tokens.
-     * So compAccrued() will return stored COMP accrued amount, which is older
+     * So compAccrued() will return stored rewardToken accrued amount, which is older
      * @dev For up to date value check totalValueCurrent()
      */
     function totalValue() public view virtual override returns (uint256 _totalValue) {
-        _totalValue = _calculateTotalValue(COMPTROLLER.compAccrued(address(this)));
+        _totalValue = _calculateTotalValue(_getRewardAccrued());
     }
 
     /**
-     * @notice Calculate current position using claimed COMP and current borrow.
+     * @notice Calculate current position using claimed rewardToken and current borrow.
      */
     function isLossMaking() external returns (bool) {
         // It's loss making if _totalValue < totalDebt
@@ -101,7 +130,7 @@ abstract contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
     }
 
     function isReservedToken(address _token) public view virtual override returns (bool) {
-        return _token == address(cToken) || _token == COMP || _token == address(collateralToken);
+        return _token == address(cToken) || _token == rewardToken || _token == address(collateralToken);
     }
 
     /// @notice Return supply and borrow position. Position may return few block old value
@@ -117,13 +146,13 @@ abstract contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
         collateralToken.safeApprove(pool, _amount);
         collateralToken.safeApprove(address(cToken), _amount);
         for (uint256 i = 0; i < swapManager.N_DEX(); i++) {
-            IERC20(COMP).safeApprove(address(swapManager.ROUTERS(i)), _amount);
+            IERC20(rewardToken).safeApprove(address(swapManager.ROUTERS(i)), _amount);
         }
         FlashLoanHelper._approveToken(address(collateralToken), _amount);
     }
 
     /**
-     * @notice Claim COMP and transfer to new strategy
+     * @notice Claim rewardToken and transfer to new strategy
      * @param _newStrategy Address of new strategy.
      */
     function _beforeMigration(address _newStrategy) internal virtual override {
@@ -174,39 +203,48 @@ abstract contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
         }
     }
 
+    /// @notice Get main Rewards accrued
+    function _getRewardAccrued() internal view virtual returns (uint256 _rewardAccrued) {
+        _rewardAccrued = comptroller.compAccrued(address(this));
+    }
+
     /**
-     * @dev COMP is converted to collateral and if we have some borrow interest to pay,
+     * @dev rewardToken is converted to collateral and if we have some borrow interest to pay,
      * it will go come from collateral.
      * @dev Report total value in collateral token
      */
-    function _calculateTotalValue(uint256 _compAccrued) internal view returns (uint256 _totalValue) {
+    function _calculateTotalValue(uint256 _rewardAccrued) internal view returns (uint256 _totalValue) {
         uint256 _compAsCollateral;
-        if (_compAccrued != 0) {
-            (, _compAsCollateral, ) = swapManager.bestOutputFixedInput(COMP, address(collateralToken), _compAccrued);
+        if (_rewardAccrued != 0) {
+            (, _compAsCollateral, ) = swapManager.bestOutputFixedInput(
+                rewardToken,
+                address(collateralToken),
+                _rewardAccrued
+            );
         }
         (uint256 _supply, uint256 _borrow) = getPosition();
         _totalValue = _compAsCollateral + collateralToken.balanceOf(address(this)) + _supply - _borrow;
     }
 
     /// @notice Claim comp
-    function _claimComp() internal {
+    function _claimRewards() internal virtual {
         address[] memory _markets = new address[](1);
         _markets[0] = address(cToken);
-        COMPTROLLER.claimComp(address(this), _markets);
+        comptroller.claimComp(address(this), _markets);
     }
 
-    /// @notice Claim COMP and convert COMP into collateral token.
+    /// @notice Claim rewardToken and convert rewardToken into collateral token.
     function _claimRewardsAndConvertTo(address _toToken) internal override {
-        _claimComp();
-        uint256 _compAmount = IERC20(COMP).balanceOf(address(this));
-        if (_compAmount != 0) {
-            _safeSwap(COMP, _toToken, _compAmount);
+        _claimRewards();
+        uint256 _rewardAmount = IERC20(rewardToken).balanceOf(address(this));
+        if (_rewardAmount != 0) {
+            _safeSwap(rewardToken, _toToken, _rewardAmount);
         }
     }
 
     /**
      * @notice Generate report for pools accounting and also send profit and any payback to pool.
-     * @dev Claim COMP and convert to collateral.
+     * @dev Claim rewardToken and convert to collateral.
      */
     function _generateReport()
         internal
@@ -220,7 +258,7 @@ abstract contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
         uint256 _excessDebt = IVesperPool(pool).excessDebt(address(this));
         (, , , , uint256 _totalDebt, , , uint256 _debtRatio) = IVesperPool(pool).strategy(address(this));
 
-        // Claim COMP and convert to collateral token
+        // Claim rewardToken and convert to collateral token
         _claimRewardsAndConvertTo(address(collateralToken));
 
         uint256 _supply = cToken.balanceOfUnderlying(address(this));
@@ -281,7 +319,7 @@ abstract contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
             return 0;
         }
 
-        (, uint256 collateralFactor, ) = COMPTROLLER.markets(address(cToken));
+        uint256 collateralFactor = _getCollateralFactor();
 
         if (_shouldRepay) {
             amount = _normalDeleverage(_adjustBy, _supply, _borrow, collateralFactor);
@@ -462,7 +500,7 @@ abstract contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
         address _tokenIn,
         address _tokenOut,
         uint256 _amountIn
-    ) private {
+    ) internal virtual {
         uint256 _minAmountOut =
             swapSlippage != 10000
                 ? _calcAmtOutAfterSlippage(

@@ -2,6 +2,7 @@
 
 pragma solidity 0.8.3;
 
+import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "../Strategy.sol";
 import "../../interfaces/vesper/ICollateralManager.sol";
 
@@ -10,11 +11,16 @@ import "../../interfaces/vesper/ICollateralManager.sol";
 abstract contract MakerStrategy is Strategy {
     using SafeERC20 for IERC20;
 
+    // solhint-disable-next-line var-name-mixedcase
+    string public NAME;
+    string public constant VERSION = "4.0.0";
+
     address internal constant DAI = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
     ICollateralManager public immutable cm;
     bytes32 public immutable collateralType;
     uint256 public highWater;
     uint256 public lowWater;
+    uint256 public decimalConversionFactor;
     uint256 private constant WAT = 10**16;
 
     constructor(
@@ -22,11 +28,16 @@ abstract contract MakerStrategy is Strategy {
         address _cm,
         address _swapManager,
         address _receiptToken,
-        bytes32 _collateralType
+        bytes32 _collateralType,
+        string memory _name
     ) Strategy(_pool, _swapManager, _receiptToken) {
         require(_cm != address(0), "cm-address-is-zero");
         collateralType = _collateralType;
         cm = ICollateralManager(_cm);
+        // Assuming token supports 18 or less decimals.
+        uint256 _decimals = IERC20Metadata(address(IVesperPool(_pool).token())).decimals();
+        decimalConversionFactor = 10**(18 - _decimals);
+        NAME = _name;
     }
 
     /// @notice Create new Maker vault
@@ -59,6 +70,11 @@ abstract contract MakerStrategy is Strategy {
         require(_highWater > _lowWater, "highWater-less-than-lowWater");
         highWater = _highWater * WAT;
         lowWater = _lowWater * WAT;
+    }
+
+    /// @dev Convert from 18 decimals to token defined decimals.
+    function convertFrom18(uint256 _amount) public view returns (uint256) {
+        return _amount / decimalConversionFactor;
     }
 
     /**

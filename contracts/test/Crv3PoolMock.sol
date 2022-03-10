@@ -4,16 +4,16 @@ pragma solidity 0.8.3;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "../strategies/curve/Crv3x.sol";
+import "../strategies/curve/CrvBase.sol";
 
-contract Crv3PoolMock is Crv3x {
+contract Crv3PoolMock is CrvBase {
     /* solhint-disable */
     using SafeERC20 for IERC20;
     address public constant THREEPOOL = 0xbEbc44782C7dB0a1A60Cb6fe97d0b483032FF1C7;
     address private constant THREECRV = 0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490;
     address private constant GAUGE = 0xbFcF63294aD7105dEa65aA58F8AE5BE2D9d0952A;
 
-    constructor() Crv3x(THREEPOOL, THREECRV, GAUGE) {}
+    constructor() CrvBase(THREEPOOL, THREECRV, GAUGE) {}
 
     /* solhint-enable */
 
@@ -60,7 +60,7 @@ contract Crv3PoolMock is Crv3x {
     }
 
     function claimCrv() external {
-        _claimCrv();
+        _claimRewards();
     }
 
     // if using this contract on its own.
