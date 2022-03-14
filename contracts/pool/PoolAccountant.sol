@@ -51,6 +51,7 @@ contract PoolAccountant is Initializable, Context, PoolAccountantStorageV2 {
         uint256 poolDebt,
         uint256 creditLine
     );
+    event LossReported(address indexed strategy, uint256 loss);
     event StrategyAdded(
         address indexed strategy,
         uint256 interestFee,
@@ -229,6 +230,16 @@ contract PoolAccountant is Initializable, Context, PoolAccountantStorageV2 {
     }
 
     /**
+     * @notice Recalculate pool external deposit fee. It is calculated using debtRatio and external deposit fee of each strategy.
+     * @dev Whenever debtRatio changes recalculation is required. DebtRatio changes if strategy reports loss and in that case an
+     * off chain application can watch for it and take action accordingly.
+     * @dev This function is gas heavy hence we do not want to call during reportLoss.
+     */
+    function recalculatePoolExternalDepositFee() external onlyKeeper {
+        _recalculatePoolExternalDepositFee();
+    }
+
+    /**
      * @dev Transfer given ERC20 token to pool
      * @param _fromToken Token address to sweep
      */
@@ -389,6 +400,7 @@ contract PoolAccountant is Initializable, Context, PoolAccountantStorageV2 {
     function reportLoss(address _strategy, uint256 _loss) external onlyPool {
         require(strategy[_strategy].active, Errors.STRATEGY_IS_NOT_ACTIVE);
         _reportLoss(_strategy, _loss);
+        emit LossReported(_strategy, _loss);
     }
 
     /**
