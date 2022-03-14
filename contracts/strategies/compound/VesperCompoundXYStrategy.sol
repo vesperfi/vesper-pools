@@ -12,7 +12,8 @@ contract VesperCompoundXYStrategy is CompoundXYStrategy {
 
     // Destination Grow Pool for borrowed Token
     address public immutable vPool;
-    address internal constant VSP = 0x1b40183EFB4Dd766f11bDa7A7c3AD8982e998421;
+    // VSP token address
+    address public immutable vsp;
 
     constructor(
         address _pool,
@@ -23,6 +24,7 @@ contract VesperCompoundXYStrategy is CompoundXYStrategy {
         address _receiptToken,
         address _borrowCToken,
         address _vPool,
+        address _vspAddress,
         string memory _name
     )
         CompoundXYStrategy(
@@ -36,8 +38,10 @@ contract VesperCompoundXYStrategy is CompoundXYStrategy {
             _name
         )
     {
-        require(address(IVesperPool(_vPool).token()) == borrowToken, "not-a-valid-dai-pool");
+        require(_vspAddress != address(0), "invalid-vsp-address");
+        require(address(IVesperPool(_vPool).token()) == borrowToken, "invalid-grow-pool");
         vPool = _vPool;
+        vsp = _vspAddress;
     }
 
     function updateBorrowCToken(address _newBorrowCToken) external override onlyGovernor {}
@@ -51,7 +55,7 @@ contract VesperCompoundXYStrategy is CompoundXYStrategy {
         super._approveToken(_amount);
         IERC20(borrowToken).safeApprove(vPool, _amount);
         for (uint256 i = 0; i < swapManager.N_DEX(); i++) {
-            IERC20(VSP).safeApprove(address(swapManager.ROUTERS(i)), _amount);
+            IERC20(vsp).safeApprove(address(swapManager.ROUTERS(i)), _amount);
         }
     }
 
@@ -96,9 +100,9 @@ contract VesperCompoundXYStrategy is CompoundXYStrategy {
 
     function _claimRewardsAndConvertTo(address _toToken) internal override {
         super._claimRewardsAndConvertTo(_toToken);
-        uint256 _vspAmount = IERC20(VSP).balanceOf(address(this));
+        uint256 _vspAmount = IERC20(vsp).balanceOf(address(this));
         if (_vspAmount > 0) {
-            _safeSwap(VSP, _toToken, _vspAmount, 1);
+            _safeSwap(vsp, _toToken, _vspAmount, 1);
         }
     }
 }
