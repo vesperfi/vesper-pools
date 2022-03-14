@@ -435,6 +435,7 @@ const StrategyConfig = {
       receiptToken: Address.Compound.cWBTC,
       borrowCToken: Address.Compound.cDAI,
       vPool: Address.vaDAI,
+      vspAddress: Address.VSP,
       strategyName: 'VesperCompoundXYStrategyWBTC',
     },
     config: { ...config },
