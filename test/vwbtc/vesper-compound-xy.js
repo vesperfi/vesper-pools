@@ -12,7 +12,7 @@ describe('vWBTC Pool with VesperCompoundXY Strategy', function () {
   const strategies = [strategy]
 
   prepareConfig(strategies)
-  shouldBehaveLikePool('vWBTC', 'WTBC')
+  shouldBehaveLikePool('vWBTC', 'WBTC')
   for (let i = 0; i < strategies.length; i++) {
     shouldBehaveLikeStrategy(i, strategies[i].type, strategies[i].contract)
   }
