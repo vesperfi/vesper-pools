@@ -80,8 +80,6 @@ interface IVesperPool is IERC20 {
 
     function totalValue() external view returns (uint256);
 
-    function withdrawFee() external view returns (uint256);
-
     // Function to get pricePerShare from V2 pools
     function getPricePerShare() external view returns (uint256);
 }

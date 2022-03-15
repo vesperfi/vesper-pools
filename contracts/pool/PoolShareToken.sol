@@ -107,17 +107,11 @@ abstract contract PoolShareToken is Initializable, PoolERC20Permit, Governed, Pa
     }
 
     /**
-     * @notice Withdraw collateral based on given shares and the current share price.
-     * @dev Burn shares and return collateral. No withdraw fee will be assessed
-     * when this function is called. Only some white listed address can call this function.
-     * @param _shares Pool shares. It will be in 18 decimals.
-     * This function is deprecated, normal withdraw will check for whitelisted address
+     * @notice This function is DEPRECATED. There is no withdraw fee and hence no whitelist.
+     *  It will execute normal withdraw flow. Keeping it here to support existing strategies.
      */
     function whitelistedWithdraw(uint256 _shares) external virtual nonReentrant whenNotShutdown {
-        require(_feeWhitelist.contains(_msgSender()), Errors.NOT_WHITELISTED_ADDRESS);
-        require(_shares != 0, Errors.INVALID_SHARE_AMOUNT);
-        _claimRewards(_msgSender());
-        _withdrawWithoutFee(_shares);
+        _withdrawAndClaim(_shares);
     }
 
     /**
@@ -258,46 +252,23 @@ abstract contract PoolShareToken is Initializable, PoolERC20Permit, Governed, Pa
     /// @dev Burns shares and returns the collateral value, after fee, of those.
     function _withdraw(uint256 _shares) internal virtual {
         require(_shares != 0, Errors.INVALID_SHARE_AMOUNT);
-        if (withdrawFee == 0 || _feeWhitelist.contains(_msgSender())) {
-            _withdrawWithoutFee(_shares);
-        } else {
-            uint256 _fee = (_shares * withdrawFee) / MAX_BPS;
-            uint256 _sharesAfterFee = _shares - _fee;
-            uint256 _amountWithdrawn = _beforeBurning(_sharesAfterFee);
-            // Recalculate proportional share on actual amount withdrawn
-            uint256 _proportionalShares = _calculateShares(_amountWithdrawn);
-
-            // Using convertFrom18() to avoid dust.
-            // Pool share token is in 18 decimal and collateral token decimal is <=18.
-            // Anything less than 10**(18-collateralTokenDecimal) is dust.
-            if (convertFrom18(_proportionalShares) < convertFrom18(_sharesAfterFee)) {
-                // Recalculate shares to withdraw, fee and shareAfterFee
-                _shares = (_proportionalShares * MAX_BPS) / (MAX_BPS - withdrawFee);
-                _fee = _shares - _proportionalShares;
-                _sharesAfterFee = _proportionalShares;
-            }
-            _burn(_msgSender(), _sharesAfterFee);
-            _transfer(_msgSender(), feeCollector, _fee);
-            _afterBurning(_amountWithdrawn);
-            emit Withdraw(_msgSender(), _shares, _amountWithdrawn);
-        }
-    }
-
-    /// @dev Withdraw collateral and claim rewards if any
-    function _withdrawAndClaim(uint256 _shares) internal {
-        _claimRewards(_msgSender());
-        _withdraw(_shares);
-    }
-
-    /// @dev Burns shares and returns the collateral value of those.
-    function _withdrawWithoutFee(uint256 _shares) internal {
         uint256 _amountWithdrawn = _beforeBurning(_shares);
+        // Recalculate proportional share on actual amount withdrawn
         uint256 _proportionalShares = _calculateShares(_amountWithdrawn);
+        // Using convertFrom18() to avoid dust.
+        // Pool share token is in 18 decimal and collateral token decimal is <=18.
+        // Anything less than 10**(18-collateralTokenDecimal) is dust.
         if (convertFrom18(_proportionalShares) < convertFrom18(_shares)) {
             _shares = _proportionalShares;
         }
         _burn(_msgSender(), _shares);
         _afterBurning(_amountWithdrawn);
         emit Withdraw(_msgSender(), _shares, _amountWithdrawn);
+    }
+
+    /// @dev Withdraw collateral and claim rewards if any
+    function _withdrawAndClaim(uint256 _shares) internal {
+        _claimRewards(_msgSender());
+        _withdraw(_shares);
     }
 }

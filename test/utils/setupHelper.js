@@ -31,10 +31,24 @@ const CollateralManager = 'CollateralManager'
  * @property {string} address - user account address
  */
 
-async function executeIfExist(fn) {
+async function executeIfExist(fn, param) {
   if (typeof fn === 'function') {
-    await fn()
+    if (param) {
+      await fn(param)
+    } else {
+      await fn()
+    }
   }
+}
+
+async function getIfExist(fn, param) {
+  if (typeof fn === 'function') {
+    if (param) {
+      return fn(param)
+    }
+    return fn()
+  }
+  return new Promise()
 }
 
 /**
@@ -198,7 +212,7 @@ async function createVesperMakerStrategy(strategy, poolAddress, options) {
   strategyInstance.collateralManager = collateralManager
   await Promise.all([strategyInstance.updateBalancingFactor(300, 250), collateralManager.addGemJoin(gemJoins)])
 
-  await options.vPool.addToFeeWhitelist(strategyInstance.address)
+  await executeIfExist(options.vPool.addToFeeWhitelist, strategyInstance.address)
 
   return strategyInstance
 }
@@ -221,7 +235,7 @@ async function createVesperCompoundXYStrategy(strategy, poolAddress, options) {
     ...Object.values(strategy.constructorArgs),
   ])
 
-  await options.vPool.addToFeeWhitelist(strategyInstance.address)
+  await executeIfExist(options.vPool.addToFeeWhitelist, strategyInstance.address)
 
   return strategyInstance
 }
@@ -270,10 +284,11 @@ async function createStrategy(strategy, poolAddress, options = {}) {
   } else {
     strategy.token = await ethers.getContractAt(strategyTokenName, strategyTokenAddress)
     if (strategyTokenName === IVesperPool) {
-      // TODO when 3.1.0 pools are deployed and used as receiptToken in VesperXXX strategy then
-      // we will have to fix below config
+      // If Vesper strategy is using the pool already deployed on mainnet for tests
+      // then there is high chance that the pool supports feeWhitelist so that into account
+
       // Mock feeWhitelist to withdraw without fee in case of Earn Vesper strategies
-      const mock = await smock.fake('IAddressList', { address: await strategy.token.feeWhitelist() })
+      const mock = await smock.fake('IAddressList', { address: await getIfExist(strategy.token.feeWhitelist) })
       // Pretend any address is whitelisted for withdraw without fee
       mock.contains.returns(true)
     }

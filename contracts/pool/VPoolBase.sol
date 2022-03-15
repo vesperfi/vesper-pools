@@ -82,18 +82,6 @@ abstract contract VPoolBase is PoolShareToken {
         poolRewards = _newPoolRewards;
     }
 
-    /**
-     * @notice Update withdraw fee for this pool
-     * @dev Format: 1500 = 15% fee, 100 = 1%
-     * @param _newWithdrawFee new withdraw fee
-     */
-    function updateWithdrawFee(uint256 _newWithdrawFee) external onlyGovernor {
-        require(feeCollector != address(0), Errors.FEE_COLLECTOR_NOT_SET);
-        require(_newWithdrawFee <= MAX_BPS, Errors.FEE_LIMIT_REACHED);
-        emit UpdatedWithdrawFee(withdrawFee, _newWithdrawFee);
-        withdrawFee = _newWithdrawFee;
-    }
-
     ///////////////////////////// Only Keeper ///////////////////////////////
     function pause() external onlyKeeper {
         _pause();
@@ -109,31 +97,6 @@ abstract contract VPoolBase is PoolShareToken {
 
     function open() external onlyKeeper {
         _open();
-    }
-
-    /// @notice Return list of whitelisted addresses
-    function feeWhitelist() external view returns (address[] memory) {
-        return _feeWhitelist.values();
-    }
-
-    function isFeeWhitelisted(address _address) external view returns (bool) {
-        return _feeWhitelist.contains(_address);
-    }
-
-    /**
-     * @notice Add given address in feeWhitelist.
-     * @param _addressToAdd Address to add in feeWhitelist.
-     */
-    function addToFeeWhitelist(address _addressToAdd) external onlyKeeper {
-        require(_feeWhitelist.add(_addressToAdd), Errors.ADD_IN_LIST_FAILED);
-    }
-
-    /**
-     * @notice Remove given address from feeWhitelist.
-     * @param _addressToRemove Address to remove from feeWhitelist.
-     */
-    function removeFromFeeWhitelist(address _addressToRemove) external onlyKeeper {
-        require(_feeWhitelist.remove(_addressToRemove), Errors.REMOVE_FROM_LIST_FAILED);
     }
 
     /// @notice Return list of keepers

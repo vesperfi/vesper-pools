@@ -26,7 +26,7 @@ const MAX_BPS = BN.from('10000')
 // Skipping some tests for collateral tokens due to low liquidity at forked block
 const SKIP_TEST_COLLATERAL_TOKENS = [FRAX]
 async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false) {
-  let pool, strategies, collateralToken, collateralDecimal, feeCollector, accountant
+  let pool, strategies, collateralToken, collateralDecimal, accountant
   let user1, user2, user3, user4
 
   async function deposit(amount, depositor) {
@@ -331,59 +331,6 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
           expect(value2).to.be.eq(value1, `${poolName} Pool value should not increase`)
         })
       }
-    })
-
-    describe(`Withdraw fee in ${poolName} pool`, function () {
-      const fee = BN.from(2000) // 20%
-      beforeEach(async function () {
-        await deposit(10, user2)
-        feeCollector = this.feeCollector
-        await pool.updateWithdrawFee(fee)
-        // Add fee collector to fee whitelist
-        await pool.addToFeeWhitelist(feeCollector)
-      })
-
-      it('Should collect fee on withdraw', async function () {
-        const withdrawAmount = await pool.balanceOf(user2.address)
-        await pool.connect(user2.signer).withdraw(withdrawAmount)
-        const feeToCollect = withdrawAmount.mul(fee).div(MAX_BPS)
-        const vPoolBalanceFC = await pool.balanceOf(feeCollector)
-        expect(vPoolBalanceFC).to.be.equal(feeToCollect, 'Withdraw fee transfer failed')
-      })
-
-      it('Should collect fee on withdraw after rebalance', async function () {
-        await rebalance(strategies)
-        const withdrawAmount = await pool.balanceOf(user2.address)
-        await pool.connect(user2.signer).withdraw(withdrawAmount)
-        const vPoolBalanceFC = await pool.balanceOf(feeCollector)
-        expect(vPoolBalanceFC).to.be.gt('0', 'Withdraw fee transfer failed')
-      })
-
-      it('Should not allow user to withdraw without fee', async function () {
-        await rebalance(strategies)
-        const withdrawAmount = await pool.balanceOf(user2.address)
-        const tx = pool.connect(user2.signer).whitelistedWithdraw(withdrawAmount)
-        await expect(tx).to.be.revertedWith('5')
-      })
-
-      it('Should allow fee collector to withdraw without fee', async function () {
-        const dust = DECIMAL18.div(BN.from(100)) // Dust is less than 1e16
-        await deposit(10, user1)
-        await deposit(10, user2)
-        await rebalance(strategies)
-        const withdrawAmount = await pool.balanceOf(user2.address)
-        await pool.connect(user2.signer).withdraw(withdrawAmount)
-        const feeCollected = await pool.balanceOf(feeCollector)
-        const signer = await ethers.getSigner(feeCollector)
-        await pool.connect(signer).whitelistedWithdraw(feeCollected)
-
-        const vPoolBalanceFC = await pool.balanceOf(feeCollector)
-        // Due to rounding some dust, 10000 wei, might left in case of Yearn strategy
-        expect(vPoolBalanceFC).to.be.lte(dust, `${poolName} balance of FC is not correct`)
-
-        const collateralBalance = await collateralToken.balanceOf(feeCollector)
-        expect(collateralBalance).to.be.gt('0', `${collateralName} balance of FC is not correct`)
-      })
     })
 
     describe(`Interest fee in ${poolName} pool`, function () {

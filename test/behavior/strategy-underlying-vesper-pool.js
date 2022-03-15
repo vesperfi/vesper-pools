@@ -12,6 +12,12 @@ async function shouldBehaveLikeUnderlyingVesperPoolStrategy(strategyIndex) {
   let collateralToken
   let user1, user2
 
+  async function executeIfExist(fn, param) {
+    if (typeof fn === 'function') {
+      await fn(param)
+    }
+  }
+
   describe(`Underlying Vesper pool strategy specific tests[${strategyIndex}]`, function () {
     beforeEach(async function () {
       ;[, user1, user2] = await getUsers()
@@ -36,7 +42,7 @@ async function shouldBehaveLikeUnderlyingVesperPoolStrategy(strategyIndex) {
         const amount = BN.from(10).mul(BN.from('1000000000000000000'))
         await hre.network.provider.send('hardhat_setBalance', [governor, amount.toHexString()])
         await vDai.connect(signer).updateFeeCollector(fc)
-        await vDai.connect(signer).updateWithdrawFee('2000')
+        await executeIfExist(vDai.connect(signer).updateWithdrawFee, '2000')
         const tokenBalanceBefore = await vDai.balanceOf(fc)
         await timeTravel(10 * 24 * 60 * 60)
         await rebalance(this.strategies)

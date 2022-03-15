@@ -1,7 +1,7 @@
 'use strict'
 
 const Address = require('./address')
-const setup = { feeCollector: Address.FEE_COLLECTOR, withdrawFee: 60 }
+const setup = { feeCollector: Address.FEE_COLLECTOR }
 
 // VFR pools do not need have PoolRewards contract hence no rewards object should not set for VFR pools
 const rewards = { contract: 'PoolRewards', tokens: [Address.VSP] }
@@ -84,13 +84,13 @@ const PoolConfig = {
   VEDAI_SHIB: {
     contractName: 'VPool',
     poolParams: ['veDAI-SHIB Earn Pool', 'veDAI-SHIB', Address.DAI],
-    setup: { ...setup, withdrawFee: 0 },
+    setup: { ...setup },
     rewards: { contract: 'VesperEarnDrip', tokens: [Address.SHIB, Address.VSP] },
   },
   VEDAI_PUNK: {
     contractName: 'VPool',
     poolParams: ['veDAI-PUNK Earn Pool', 'veDAI-PUNK', Address.DAI],
-    setup: { ...setup, withdrawFee: 0 },
+    setup: { ...setup },
     rewards: { contract: 'VesperEarnDrip', tokens: [Address.PUNK, Address.VSP] },
   },
   VLINK: {

@@ -579,21 +579,17 @@ abstract contract CompoundXYStrategy is Strategy {
         }
     }
 
-    /// @dev Hook that executes after borrowing collateral
-    /// solhint-disable-next-line no-empty-blocks
+    /* solhint-disable no-empty-blocks */
+    /// @dev Hook that executes after borrowing collateral=
     function _afterBorrowY(uint256 _amount) internal virtual {}
 
     /// @dev Hook that executes before repaying borrowed collateral
-    /// solhint-disable-next-line no-empty-blocks
     function _beforeRepayY(uint256 _amount) internal virtual {}
 
     /// @dev Hook to handle when actual borrowed balance is > compound borrow account
-    /// solhint-disable-next-line no-empty-blocks
     function _rebalanceBorrow(uint256 _excessBorrow) internal virtual {}
 
     //////////////////////////////////////////////////////////////////////////////
-
-    /* solhint-disable no-empty-blocks */
 
     // We overridden _generateReport which eliminates need of below function.
     function _liquidate(uint256 _excessDebt) internal override returns (uint256 _payback) {}
