@@ -89,7 +89,6 @@ abstract contract PoolShareToken is Initializable, PoolERC20Permit, Governed, Pa
 
     /**
      * @notice Withdraw collateral based on given shares and the current share price.
-     * Withdraw fee, if any, will be deduced from given shares and transferred to feeCollector.
      * Burn remaining shares and return collateral.
      * @param _shares Pool shares. It will be in 18 decimals.
      */

@@ -33,7 +33,7 @@ describe('vDAI Pool with Crv3PoolStrategy', function () {
       pool = this.pool
       collateralToken = this.collateralToken
       strategy = this.strategies[0].instance
-      feeCollector = this.feeCollector
+      feeCollector = await strategy.feeCollector()
       threePool = await ethers.getContractAt('IStableSwap3x', THREE_POOL)
     })
     it('Should calculate fees properly and reflect those in share price', async function () {

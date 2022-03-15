@@ -1,7 +1,7 @@
 'use strict'
 
 const Address = require('./address')
-const setup = { feeCollector: Address.FEE_COLLECTOR }
+const setup = {}
 
 // VFR pools do not need have PoolRewards contract hence no rewards object should not set for VFR pools
 const rewards = { contract: 'PoolRewards', tokens: [Address.VSP] }

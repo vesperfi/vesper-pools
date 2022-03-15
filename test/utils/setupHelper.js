@@ -341,7 +341,6 @@ async function makeNewStrategy(oldStrategy, poolAddress, _options) {
  * @property {object} poolConfig - Pool config
  * @property {object []} strategies - Array of strategy configuration
  * @property {object} [vPool] - Optional. Vesper pool instance
- * @property {string} feeCollector - Fee collector address of pool
  */
 
 /**
@@ -352,14 +351,13 @@ async function makeNewStrategy(oldStrategy, poolAddress, _options) {
  * @param {object} options optional data
  */
 async function setupVPool(obj, poolData, options = {}) {
-  const { poolConfig, strategies, vPool, feeCollector } = poolData
+  const { poolConfig, strategies, vPool } = poolData
   const isInCache = obj.snapshot === undefined ? false : await provider.send('evm_revert', [obj.snapshot])
   if (isInCache === true) {
     // Recreate the snapshot after rollback, reverting deletes the previous snapshot
     obj.snapshot = await provider.send('evm_snapshot')
   } else {
     obj.strategies = strategies
-    obj.feeCollector = feeCollector
     obj.accountant = await deployContract('PoolAccountant')
     obj.pool = await deployContract(poolConfig.contractName, poolConfig.poolParams)
 
@@ -369,7 +367,6 @@ async function setupVPool(obj, poolData, options = {}) {
 
     await createStrategies(obj, options)
     await addStrategies(obj)
-    await obj.pool.updateFeeCollector(feeCollector)
     const collateralTokenAddress = await obj.pool.token()
     obj.collateralToken = await ethers.getContractAt(TokenLike, collateralTokenAddress)
     obj.swapManager = await ethers.getContractAt('ISwapManager', Address.SWAP_MANAGER)

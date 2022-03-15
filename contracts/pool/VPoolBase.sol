@@ -10,7 +10,6 @@ abstract contract VPoolBase is PoolShareToken {
     using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.AddressSet;
 
-    event UpdatedFeeCollector(address indexed previousFeeCollector, address indexed newFeeCollector);
     event UpdatedPoolRewards(address indexed previousPoolRewards, address indexed newPoolRewards);
     event UpdatedWithdrawFee(uint256 previousWithdrawFee, uint256 newWithdrawFee);
 
@@ -60,16 +59,6 @@ abstract contract VPoolBase is PoolShareToken {
         );
         IPoolAccountant(poolAccountant).migrateStrategy(_old, _new);
         IStrategy(_old).migrate(_new);
-    }
-
-    /**
-     * @notice Update fee collector address for this pool
-     * @param _newFeeCollector new fee collector address
-     */
-    function updateFeeCollector(address _newFeeCollector) external onlyGovernor {
-        require(_newFeeCollector != address(0), Errors.INPUT_ADDRESS_IS_ZERO);
-        emit UpdatedFeeCollector(feeCollector, _newFeeCollector);
-        feeCollector = _newFeeCollector;
     }
 
     /**
@@ -193,13 +182,12 @@ abstract contract VPoolBase is PoolShareToken {
     }
 
     /**
-     * @dev Transfer given ERC20 token to feeCollector
+     * @dev Transfer given ERC20 token to governor
      * @param _fromToken Token address to sweep
      */
     function sweepERC20(address _fromToken) external virtual onlyKeeper {
         require(_fromToken != address(token), Errors.NOT_ALLOWED_TO_SWEEP);
-        require(feeCollector != address(0), Errors.FEE_COLLECTOR_NOT_SET);
-        IERC20(_fromToken).safeTransfer(feeCollector, IERC20(_fromToken).balanceOf(address(this)));
+        IERC20(_fromToken).safeTransfer(governor, IERC20(_fromToken).balanceOf(address(this)));
     }
 
     /**

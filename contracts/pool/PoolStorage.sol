@@ -13,7 +13,7 @@ contract PoolStorageV1 {
     address private feeWhitelistObsolete; // Obsolete in favor of AddressSet of feeWhitelist
     address private keepersObsolete; // Obsolete in favor of AddressSet of keepers
     address private maintainersObsolete; // Obsolete in favor of AddressSet of maintainers
-    address public feeCollector; // Fee collector address
+    address private feeCollectorObsolete; // Fee collector address. Obsolete as there is no fee to collect
     uint256 private withdrawFeeObsolete; // Withdraw fee for this pool. Obsolete in favor of management fee
     uint256 public decimalConversionFactor; // It can be used in converting value to/from 18 decimals
     bool internal withdrawInETH; // This flag will be used by VETH pool as switch to withdraw ETH or WETH

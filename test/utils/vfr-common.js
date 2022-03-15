@@ -17,7 +17,6 @@ function prepareConfig(stableStrategies, coverageStrategies) {
     this.stable = {}
     await setupVPool(this.stable, {
       poolConfig: poolConfig.VFRDAI.Stable,
-      feeCollector: users[7].address,
       strategies: stableStrategies.map((item, i) => ({
         ...item,
         // Leave first 8 users for other testing
@@ -28,7 +27,6 @@ function prepareConfig(stableStrategies, coverageStrategies) {
     this.coverage = {}
     await setupVPool(this.coverage, {
       poolConfig: poolConfig.VFRDAI.Coverage,
-      feeCollector: users[7].address,
       strategies: coverageStrategies.map((item, i) => ({
         ...item,
         // Leave first 8 users for other testing

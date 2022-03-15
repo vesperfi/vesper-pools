@@ -52,8 +52,6 @@ interface IVesperPool is IERC20 {
 
     function isMaintainer(address _address) external view returns (bool);
 
-    function feeCollector() external view returns (address);
-
     function pricePerShare() external view returns (uint256);
 
     function strategy(address _strategy)

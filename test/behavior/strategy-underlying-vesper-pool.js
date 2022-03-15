@@ -41,7 +41,7 @@ async function shouldBehaveLikeUnderlyingVesperPoolStrategy(strategyIndex) {
         const signer = await unlock(governor)
         const amount = BN.from(10).mul(BN.from('1000000000000000000'))
         await hre.network.provider.send('hardhat_setBalance', [governor, amount.toHexString()])
-        await vDai.connect(signer).updateFeeCollector(fc)
+        await executeIfExist(vDai.connect(signer).updateFeeCollector, fc)
         await executeIfExist(vDai.connect(signer).updateWithdrawFee, '2000')
         const tokenBalanceBefore = await vDai.balanceOf(fc)
         await timeTravel(10 * 24 * 60 * 60)

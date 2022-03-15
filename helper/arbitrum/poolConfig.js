@@ -2,7 +2,7 @@
 
 const Address = require('./address')
 
-const setup = { feeCollector: Address.FEE_COLLECTOR }
+const setup = {}
 const rewards = { contract: 'PoolRewards', tokens: [] }
 
 const PoolConfig = {

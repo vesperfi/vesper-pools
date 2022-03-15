@@ -397,17 +397,17 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
         await deposit(60, user2)
         await swapper.swapEthForToken(2, ANY_ERC20, user1, pool.address)
         await pool.sweepERC20(ANY_ERC20)
-        const fc = await pool.feeCollector()
+        const governor = await pool.governor()
         return Promise.all([
           pool.totalSupply(),
           pool.totalValue(),
           MET.balanceOf(pool.address),
-          MET.balanceOf(fc),
+          MET.balanceOf(governor),
         ]).then(function ([totalSupply, totalValue, metBalance, metBalanceFC]) {
           expect(totalSupply).to.be.gt(0, `Total supply of ${poolName} is wrong`)
           expect(totalValue).to.be.gt(0, `Total value of ${poolName} is wrong`)
           expect(metBalance).to.be.eq(0, 'ERC20 token balance of pool is wrong')
-          expect(metBalanceFC).to.be.gt(0, 'ERC20 token balance of pool is wrong')
+          expect(metBalanceFC).to.be.gt(0, 'ERC20 token balance of governor is wrong')
         })
       })
 
