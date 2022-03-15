@@ -25,8 +25,8 @@ contract EarnCrvSBTCPoolStrategy is CrvSBTCPoolStrategy, Earn {
         IVesperPool(pool).reportEarning(0, _loss, _payback);
         _reinvest();
         if (!depositError) {
-            uint256 depositLoss = _realizeLoss(IVesperPool(pool).totalDebtOf(address(this)));
-            if (depositLoss > _loss) IVesperPool(pool).reportLoss(depositLoss - _loss);
+            uint256 _depositLoss = _realizeLoss(IVesperPool(pool).totalDebtOf(address(this)));
+            IVesperPool(pool).reportLoss(_depositLoss);
         }
     }
 
