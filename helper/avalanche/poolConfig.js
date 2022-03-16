@@ -2,7 +2,7 @@
 
 const Address = require('./address')
 
-const setup = {}
+const setup = { universalFee: 200 }
 const rewards = { contract: 'PoolRewards', tokens: [Address.NATIVE_TOKEN] }
 
 const PoolConfig = {

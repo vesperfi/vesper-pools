@@ -354,6 +354,8 @@ async function setupVPool(obj, poolData, options = {}) {
   const { poolConfig, strategies, vPool } = poolData
   const isInCache = obj.snapshot === undefined ? false : await provider.send('evm_revert', [obj.snapshot])
   if (isInCache === true) {
+    // Rollback manual changes to objects
+    delete obj.pool.depositsCount
     // Recreate the snapshot after rollback, reverting deletes the previous snapshot
     obj.snapshot = await provider.send('evm_snapshot')
   } else {
@@ -363,6 +365,7 @@ async function setupVPool(obj, poolData, options = {}) {
 
     await obj.accountant.init(obj.pool.address)
     await obj.pool.initialize(...poolConfig.poolParams, obj.accountant.address)
+    await obj.pool.updateUniversalFee(poolConfig.setup.universalFee)
     options.vPool = vPool
 
     await createStrategies(obj, options)

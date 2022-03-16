@@ -2,7 +2,7 @@
 
 const Address = require('./address')
 
-const setup = {}
+const setup = { universalFee: 200 }
 const rewards = { contract: 'PoolRewards', tokens: [Address.VSP] }
 // Earn pool will have extra data in 'rewards' object. Below is default value for 'rewards' object for Earn pools
 const earnRewards = { contract: 'VesperEarnDrip', tokens: [Address.vaDAI, Address.VSP], growToken: Address.vaDAI }

@@ -5,7 +5,7 @@ const Address = require('../../helper/mainnet/address')
 const AvalancheAddress = require('../../helper/avalanche/address')
 const ethers = hre.ethers
 const { BigNumber } = require('ethers')
-const { hexlify, solidityKeccak256, zeroPad, getAddress } = ethers.utils
+const { hexlify, solidityKeccak256, zeroPad, getAddress, hexStripZeros } = ethers.utils
 
 // Slot number mapping for a token. Prepared using utility https://github.com/kendricktan/slot20
 const slots = {
@@ -50,7 +50,8 @@ async function adjustBalance(token, targetAddress, balance) {
   }
 
   // reason: https://github.com/nomiclabs/hardhat/issues/1585 comments
-  const index = hexlify(solidityKeccak256(['uint256', 'uint256'], [targetAddress, slot])).replace('0x0', '0x')
+  // Create solidity has for index, convert it into hex string and remove all the leading zeros
+  const index = hexStripZeros(hexlify(solidityKeccak256(['uint256', 'uint256'], [targetAddress, slot])))
 
   if (!BigNumber.isBigNumber(balance)) {
     // eslint-disable-next-line no-param-reassign

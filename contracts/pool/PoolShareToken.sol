@@ -15,7 +15,7 @@ import "../interfaces/vesper/IPoolRewards.sol";
 
 /// @title Holding pool share token
 // solhint-disable no-empty-blocks
-abstract contract PoolShareToken is Initializable, PoolERC20Permit, Governed, Pausable, ReentrancyGuard, PoolStorageV2 {
+abstract contract PoolShareToken is Initializable, PoolERC20Permit, Governed, Pausable, ReentrancyGuard, PoolStorageV3 {
     using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.AddressSet;
 

@@ -6,7 +6,7 @@ import "./VPoolBase.sol";
 
 //solhint-disable no-empty-blocks
 contract VPool is VPoolBase {
-    string public constant VERSION = "4.0.0";
+    string public constant VERSION = "5.0.0";
 
     constructor(
         string memory _name,

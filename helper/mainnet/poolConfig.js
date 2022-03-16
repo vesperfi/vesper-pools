@@ -1,7 +1,7 @@
 'use strict'
 
 const Address = require('./address')
-const setup = {}
+const setup = { universalFee: 200 }
 
 // VFR pools do not need have PoolRewards contract hence no rewards object should not set for VFR pools
 const rewards = { contract: 'PoolRewards', tokens: [Address.VSP] }
