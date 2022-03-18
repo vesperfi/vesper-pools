@@ -196,7 +196,7 @@ abstract contract VPoolBase is PoolShareToken {
         }
 
         // Mint interest fee worth shares at feeCollector address
-        if (_interestFee != 0) {
+        if (_interestFee > 0) {
             _mint(_feeCollector, _calculateShares(_interestFee));
         }
     }
@@ -209,7 +209,7 @@ abstract contract VPoolBase is PoolShareToken {
      * @param _loss Loss that strategy want to report
      */
     function reportLoss(uint256 _loss) external {
-        if (_loss != 0) {
+        if (_loss > 0) {
             IPoolAccountant(poolAccountant).reportLoss(_msgSender(), _loss);
         }
     }
@@ -332,15 +332,22 @@ abstract contract VPoolBase is PoolShareToken {
      * @dev Before burning hook.
      * withdraw amount from strategies
      */
-    function _beforeBurning(uint256 _share) internal override returns (uint256 actualWithdrawn) {
+    function _beforeBurning(uint256 _share) internal override returns (uint256 _actualWithdrawn, bool _isPartial) {
         uint256 _amount = (_share * pricePerShare()) / 1e18;
-        uint256 _balanceNow = tokensHere();
-        if (_amount > _balanceNow) {
-            _withdrawCollateral(_amount - _balanceNow);
-            _balanceNow = tokensHere();
+        uint256 _tokensHere = tokensHere();
+        _actualWithdrawn = _amount;
+        // Check for partial withdraw scenario
+        // If we do not have enough tokens then withdraw whats needed from strategy
+        if (_amount > _tokensHere) {
+            // Strategy may withdraw partial
+            _withdrawCollateral(_amount - _tokensHere);
+            _tokensHere = tokensHere();
+            if (_amount > _tokensHere) {
+                _actualWithdrawn = _tokensHere;
+                _isPartial = true;
+            }
         }
-        actualWithdrawn = _balanceNow < _amount ? _balanceNow : _amount;
-        require(actualWithdrawn != 0, Errors.INVALID_COLLATERAL_AMOUNT);
+        require(_actualWithdrawn > 0, Errors.INVALID_COLLATERAL_AMOUNT);
     }
 
     /**

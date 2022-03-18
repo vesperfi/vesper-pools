@@ -145,7 +145,7 @@ abstract contract PoolShareToken is Initializable, PoolERC20Permit, Governed, Pa
      * @return _shares Amount of share that user will get
      */
     function calculateMintage(uint256 _amount) public view returns (uint256 _shares) {
-        require(_amount != 0, Errors.INVALID_COLLATERAL_AMOUNT);
+        require(_amount > 0, Errors.INVALID_COLLATERAL_AMOUNT);
         uint256 _externalDepositFee = (_amount * IPoolAccountant(poolAccountant).externalDepositFee()) / MAX_BPS;
         _shares = _calculateShares(_amount - _externalDepositFee);
     }
@@ -170,7 +170,7 @@ abstract contract PoolShareToken is Initializable, PoolERC20Permit, Governed, Pa
      * @dev Hook that is called just before burning tokens. This withdraw collateral from withdraw queue
      * @param _share Pool share in 18 decimals
      */
-    function _beforeBurning(uint256 _share) internal virtual returns (uint256) {}
+    function _beforeBurning(uint256 _share) internal virtual returns (uint256, bool) {}
 
     /**
      * @dev Hook that is called just after burning tokens.
@@ -250,15 +250,16 @@ abstract contract PoolShareToken is Initializable, PoolERC20Permit, Governed, Pa
 
     /// @dev Burns shares and returns the collateral value, after fee, of those.
     function _withdraw(uint256 _shares) internal virtual {
-        require(_shares != 0, Errors.INVALID_SHARE_AMOUNT);
-        uint256 _amountWithdrawn = _beforeBurning(_shares);
-        // Recalculate proportional share on actual amount withdrawn
-        uint256 _proportionalShares = _calculateShares(_amountWithdrawn);
-        // Using convertFrom18() to avoid dust.
-        // Pool share token is in 18 decimal and collateral token decimal is <=18.
-        // Anything less than 10**(18-collateralTokenDecimal) is dust.
-        if (convertFrom18(_proportionalShares) < convertFrom18(_shares)) {
-            _shares = _proportionalShares;
+        require(_shares > 0, Errors.INVALID_SHARE_AMOUNT);
+
+        (uint256 _amountWithdrawn, bool _isPartial) = _beforeBurning(_shares);
+        // There may be scenarios when pool is not able to withdraw all of requested amount
+        if (_isPartial) {
+            // Recalculate proportional share on actual amount withdrawn
+            uint256 _proportionalShares = _calculateShares(_amountWithdrawn);
+            if (_proportionalShares < _shares) {
+                _shares = _proportionalShares;
+            }
         }
         _burn(_msgSender(), _shares);
         _afterBurning(_amountWithdrawn);
