@@ -15,6 +15,19 @@ interface AToken is IERC20 {
      * @dev Returns the address of the incentives controller contract
      **/
     function getIncentivesController() external view returns (address);
+
+    function mint(
+        address user,
+        uint256 amount,
+        uint256 index
+    ) external returns (bool);
+
+    function burn(
+        address user,
+        address receiverOfUnderlying,
+        uint256 amount,
+        uint256 index
+    ) external;
 }
 
 interface AaveIncentivesController {
@@ -50,6 +63,21 @@ interface AaveLendingPool {
         bytes calldata params,
         uint16 referralCode
     ) external;
+
+    function borrow(
+        address asset,
+        uint256 amount,
+        uint256 interestRateMode,
+        uint16 referralCode,
+        address onBehalfOf
+    ) external;
+
+    function repay(
+        address asset,
+        uint256 amount,
+        uint256 rateMode,
+        address onBehalfOf
+    ) external;
 }
 
 interface AaveProtocolDataProvider {
@@ -76,6 +104,22 @@ interface AaveProtocolDataProvider {
             uint256 liquidityIndex,
             uint256 variableBorrowIndex,
             uint40 lastUpdateTimestamp
+        );
+
+    function getReserveConfigurationData(address asset)
+        external
+        view
+        returns (
+            uint256 decimals,
+            uint256 ltv,
+            uint256 liquidationThreshold,
+            uint256 liquidationBonus,
+            uint256 reserveFactor,
+            bool usageAsCollateralEnabled,
+            bool borrowingEnabled,
+            bool stableBorrowRateEnabled,
+            bool isActive,
+            bool isFrozen
         );
 }
 

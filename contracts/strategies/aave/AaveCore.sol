@@ -3,6 +3,8 @@
 pragma solidity 0.8.3;
 
 import "../../interfaces/aave/IAave.sol";
+import "@openzeppelin/contracts/utils/math/Math.sol";
+import "../../pool/Errors.sol";
 
 /// @title This contract provide core operations for Aave
 abstract contract AaveCore {
@@ -10,23 +12,22 @@ abstract contract AaveCore {
     StakedAave public constant stkAAVE = StakedAave(0x4da27a545c0c5B758a6BA100e3a049001de870f5);
     address public constant AAVE = 0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9;
 
-    AaveLendingPoolAddressesProvider public aaveAddressesProvider =
-        AaveLendingPoolAddressesProvider(0xB53C1a33016B2DC2fF3653530bfF1848a515c8c5);
     AaveLendingPool public immutable aaveLendingPool;
-    AaveProtocolDataProvider public immutable aaveProtocolDataProvider;
+    AaveProtocolDataProvider public aaveProtocolDataProvider;
     AaveIncentivesController public immutable aaveIncentivesController;
 
     AToken internal immutable aToken;
     bytes32 private constant AAVE_PROVIDER_ID = 0x0100000000000000000000000000000000000000000000000000000000000000;
 
     constructor(address _receiptToken) {
-        require(_receiptToken != address(0), "aToken-address-is-zero");
+        require(_receiptToken != address(0), Errors.INPUT_ADDRESS_IS_ZERO);
         aToken = AToken(_receiptToken);
         // If there is no AAVE incentive then below call will fail
         try AToken(_receiptToken).getIncentivesController() returns (address _aaveIncentivesController) {
             aaveIncentivesController = AaveIncentivesController(_aaveIncentivesController);
         } catch {} //solhint-disable no-empty-blocks
-
+        AaveLendingPoolAddressesProvider aaveAddressesProvider =
+            AaveLendingPoolAddressesProvider(0xB53C1a33016B2DC2fF3653530bfF1848a515c8c5);
         aaveLendingPool = AaveLendingPool(aaveAddressesProvider.getLendingPool());
         aaveProtocolDataProvider = AaveProtocolDataProvider(aaveAddressesProvider.getAddress(AAVE_PROVIDER_ID));
     }
@@ -99,9 +100,7 @@ abstract contract AaveCore {
         (uint256 _cooldownStart, uint256 _cooldownEnd, uint256 _unstakeEnd) = cooldownData();
         if (_cooldownStart == 0 || block.timestamp > _unstakeEnd) {
             // claim stkAave when its first rebalance or unstake period passed.
-            address[] memory _assets = new address[](1);
-            _assets[0] = address(aToken);
-            aaveIncentivesController.claimRewards(_assets, type(uint256).max, address(this));
+            aaveIncentivesController.claimRewards(getAssets(), type(uint256).max, address(this));
         }
         // Fetch and check again for next action.
         (_cooldownStart, _cooldownEnd, _unstakeEnd) = cooldownData();
@@ -120,6 +119,12 @@ abstract contract AaveCore {
         if (_amount != 0) {
             aaveLendingPool.deposit(_asset, _amount, address(this), 0);
         }
+    }
+
+    function getAssets() internal view returns (address[] memory) {
+        address[] memory _assets = new address[](1);
+        _assets[0] = address(aToken);
+        return _assets;
     }
 
     /**
@@ -142,7 +147,7 @@ abstract contract AaveCore {
         // _amount against available liquidity.
         (uint256 _availableLiquidity, , , , , , , , , ) = aaveProtocolDataProvider.getReserveData(_asset);
         // Get minimum of _amount, _aTokenBalance and _availableLiquidity
-        return _withdraw(_asset, _to, _min(_amount, _min(_aTokenBalance, _availableLiquidity)));
+        return _withdraw(_asset, _to, Math.min(_amount, Math.min(_aTokenBalance, _availableLiquidity)));
     }
 
     /**
@@ -158,7 +163,7 @@ abstract contract AaveCore {
         uint256 _amount
     ) internal returns (uint256) {
         if (_amount != 0) {
-            require(aaveLendingPool.withdraw(_asset, _amount, _to) == _amount, "withdrawn-amount-is-not-correct");
+            require(aaveLendingPool.withdraw(_asset, _amount, _to) == _amount, Errors.INCORRECT_WITHDRAW_AMOUNT);
         }
         return _amount;
     }
@@ -191,19 +196,12 @@ abstract contract AaveCore {
         if (address(aaveIncentivesController) == address(0)) {
             return 0;
         }
-        address[] memory _assets = new address[](1);
-        _assets[0] = address(aToken);
         // TotalAave = Get current StakedAave rewards from controller +
         //             StakedAave balance here +
         //             Aave rewards by staking Aave in StakedAave contract
         return
-            aaveIncentivesController.getRewardsBalance(_assets, address(this)) +
+            aaveIncentivesController.getRewardsBalance(getAssets(), address(this)) +
             stkAAVE.balanceOf(address(this)) +
             stkAAVE.getTotalRewardsBalance(address(this));
-    }
-
-    /// @notice Returns minimum of 2 given numbers
-    function _min(uint256 a, uint256 b) internal pure returns (uint256) {
-        return a < b ? a : b;
     }
 }

@@ -50,7 +50,7 @@ async function shouldMigrateStrategies(poolName) {
       totalDebtRatioBefore,
       `${poolName} total debt ratio after migration is not correct`,
     )
-    if (newStrategy.type === StrategyType.COMPOUND_LEVERAGE) {
+    if (newStrategy.type === StrategyType.COMPOUND_LEVERAGE || newStrategy.type === StrategyType.AAVE_LEVERAGE) {
       // new strategy will have less receipt tokens due to deleverage at migration
       expect(receiptTokenAfter2).to.be.lt(
         receiptTokenBefore,

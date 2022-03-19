@@ -10,6 +10,7 @@ const { shouldBehaveLikeCompoundStrategy } = require('../behavior/compound-strat
 const { shouldBehaveLikeTraderJoeStrategy } = require('../behavior/traderjoe-strategy')
 const { shouldBehaveLikeCompoundXYStrategy } = require('../behavior/compound-xy')
 const { shouldBehaveLikeCompoundLeverageStrategy } = require('../behavior/compound-leverage')
+const { shouldBehaveLikeAaveLeverageStrategy } = require('../behavior/aave-leverage')
 const { shouldBehaveLikeMakerStrategy } = require('../behavior/maker-strategy')
 const { shouldBehaveLikeCrvStrategy } = require('../behavior/crv-strategy')
 const { shouldBehaveLikeEarnMakerStrategy } = require('../behavior/earn-maker-strategy')
@@ -33,6 +34,7 @@ function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
     [StrategyType.COMPOUND_MAKER]: shouldBehaveLikeMakerStrategy,
     [StrategyType.COMPOUND_XY]: shouldBehaveLikeCompoundXYStrategy,
     [StrategyType.COMPOUND_LEVERAGE]: shouldBehaveLikeCompoundLeverageStrategy,
+    [StrategyType.AAVE_LEVERAGE]: shouldBehaveLikeAaveLeverageStrategy,
     [StrategyType.CURVE]: shouldBehaveLikeCrvStrategy,
     [StrategyType.CONVEX]: shouldBehaveLikeCrvStrategy,
     [StrategyType.EARN_MAKER]: shouldBehaveLikeEarnMakerStrategy,
