@@ -181,11 +181,8 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
         if (SKIP_TEST_COLLATERAL_TOKENS.includes(collateralToken.address)) {
           return true
         }
-        // reset interest fee and universal fee to 0.
-        for (const strategy of strategies) {
-          await accountant.updateInterestFee(strategy.instance.address, '0')
-          await pool.updateUniversalFee('0')
-        }
+        // reset universal fee to 0.
+        await pool.updateUniversalFee('0')
         depositAmount = await deposit(15, user2)
         const dust = DECIMAL18.div(BN.from(100)) // Dust is less than 1e16
         await rebalance(strategies)
@@ -341,7 +338,6 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
 
       beforeEach(async function () {
         await deposit(30, user1)
-        await accountant.updateInterestFee(strategies[0].instance.address, '0')
         blocksPerYear = await pool.BLOCKS_PER_YEAR()
         universalFee = await pool.universalFee()
       })
@@ -372,64 +368,6 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
         expect(await pool.balanceOf(feeCollector.address), `${poolName} balance of FC should be equal to 0`).to.eq(0)
         const collateralBalance = await collateralToken.balanceOf(feeCollector.address)
         expect(collateralBalance, 'Incorrect fee collected').to.gte(fee)
-      })
-    })
-
-    describe(`Interest fee in ${poolName} pool`, function () {
-      beforeEach(async function () {
-        await deposit(30, user1)
-      })
-
-      it('Should earn interest fee on rebalance', async function () {
-        await rebalance(strategies)
-        const fc = strategies[0].feeCollector
-        await timeTravel()
-        // Another deposit
-        await deposit(30, user2)
-        await rebalance(strategies)
-
-        if (isEarnPool === false) {
-          const feeEarned1 = await pool.balanceOf(fc)
-          expect(feeEarned1).to.be.gt(0, 'Fee collected is not correct')
-          await timeTravel()
-          await rebalance(strategies)
-          const feeEarned2 = await pool.balanceOf(fc)
-          expect(feeEarned2).to.be.gt(feeEarned1, 'Fee collected is not correct')
-        } else {
-          const EarnDrip = await ethers.getContractAt('IEarnDrip', await pool.poolRewards())
-          const growToken = await ethers.getContractAt('ERC20', await EarnDrip.growToken())
-          const rewardToken =
-            growToken.address === ethers.constants.AddressZero
-              ? await ethers.getContractAt('ERC20', strategies[0].constructorArgs.dripToken)
-              : growToken
-          await rebalance(strategies)
-          const feeEarned1 = await rewardToken.balanceOf(fc)
-          expect(feeEarned1).to.be.gt(0, 'Fee collected is not correct')
-          await timeTravel()
-          await rebalance(strategies)
-          await rebalance(strategies)
-          const feeEarned2 = await rewardToken.balanceOf(fc)
-          expect(feeEarned2).to.be.gt(feeEarned1, 'Fee collected is not correct')
-        }
-      })
-
-      it('Should rebalance when interest fee is zero', async function () {
-        await accountant.updateInterestFee(strategies[0].instance.address, '0')
-        await pool.updateUniversalFee('0')
-        await rebalance(strategies)
-        // Time travel to generate earning
-        await timeTravel()
-        await deposit(50, user2)
-        await rebalance(strategies)
-        const fc = strategies[0].feeCollector
-        let vPoolBalanceFC = await pool.balanceOf(fc)
-        expect(vPoolBalanceFC.toString()).to.eq('0', 'Collected fee should be zero')
-        // Another time travel and rebalance to run scenario again
-        await timeTravel()
-        await rebalance(strategies)
-        await strategies[0].instance.sweepERC20(pool.address)
-        vPoolBalanceFC = await pool.balanceOf(fc)
-        expect(vPoolBalanceFC.toString()).to.eq('0', 'Collected fee should be zero')
       })
     })
 

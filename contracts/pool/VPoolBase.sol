@@ -184,7 +184,7 @@ abstract contract VPoolBase is PoolShareToken {
             _mint(_feeCollector, _calculateShares(_fee));
         }
         // Report earning in pool accountant
-        (uint256 _actualPayback, uint256 _creditLine, uint256 _interestFee) =
+        (uint256 _actualPayback, uint256 _creditLine) =
             IPoolAccountant(poolAccountant).reportEarning(_strategy, _profit, _loss, _payback);
         uint256 _totalPayback = _profit + _actualPayback;
         // After payback, if strategy has credit line available then send more fund to strategy
@@ -193,11 +193,6 @@ abstract contract VPoolBase is PoolShareToken {
             token.safeTransfer(_strategy, _creditLine - _totalPayback);
         } else if (_totalPayback > _creditLine) {
             token.safeTransferFrom(_strategy, address(this), _totalPayback - _creditLine);
-        }
-
-        // Mint interest fee worth shares at feeCollector address
-        if (_interestFee > 0) {
-            _mint(_feeCollector, _calculateShares(_interestFee));
         }
     }
 
@@ -255,7 +250,7 @@ abstract contract VPoolBase is PoolShareToken {
         view
         returns (
             bool _active,
-            uint256 _interestFee,
+            uint256 interestFeeObsolete,
             uint256 _debtRate,
             uint256 _lastRebalance,
             uint256 _totalDebt,

@@ -5,8 +5,11 @@ const Address = require('./address')
 const StrategyTypes = require('../../test/utils/strategyTypes')
 
 const swapManager = Address.SWAP_MANAGER
-const interestFee = '2000' // 20%
-const config = { interestFee, debtRatio: 0, debtRate: ethers.utils.parseEther('1000000').toString() }
+const config = {
+  debtRatio: 0,
+  debtRate: ethers.utils.parseEther('1000000').toString(),
+  externalDepositFee: 0,
+}
 const setup = {
   feeCollector: Address.FEE_COLLECTOR,
   keepers: [Address.KEEPER],
@@ -34,7 +37,7 @@ const StrategyConfig = {
       receiptToken: Address.Aave.amUSDC,
       strategyName: 'AaveStrategyPolygonUSDC',
     },
-    config: { interestFee, debtRatio: 0, debtRate: ethers.utils.parseUnits('1000000', 6) },
+    config: { debtRatio: 0, debtRate: ethers.utils.parseUnits('1000000', 6), externalDepositFee: 0 },
     setup: { ...setup },
   },
 
@@ -46,7 +49,7 @@ const StrategyConfig = {
       receiptToken: Address.Aave.amUSDT,
       strategyName: 'AaveStrategyPolygonUSDT',
     },
-    config: { interestFee, debtRatio: 0, debtRate: ethers.utils.parseUnits('1000000', 6) },
+    config: { debtRatio: 0, debtRate: ethers.utils.parseUnits('1000000', 6), externalDepositFee: 0 },
     setup: { ...setup },
   },
 
@@ -58,7 +61,7 @@ const StrategyConfig = {
       receiptToken: Address.Aave.amWBTC,
       strategyName: 'AaveStrategyPolygonWBTC',
     },
-    config: { interestFee, debtRatio: 0, debtRate: ethers.utils.parseUnits('1000000', 8) },
+    config: { debtRatio: 0, debtRate: ethers.utils.parseUnits('1000000', 8), externalDepositFee: 0 },
     setup: { ...setup },
   },
 

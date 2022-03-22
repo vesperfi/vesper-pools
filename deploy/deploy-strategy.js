@@ -155,13 +155,7 @@ const deployFunction = async function ({ getNamedAccounts, deployments, poolConf
   const config = strategyConfig.config
   const poolAccountantAddress = (await deployments.get(PoolAccountant)).address
   params.methodName = 'addStrategy'
-  params.methodArgs = [
-    deployed.address,
-    config.interestFee,
-    config.debtRatio,
-    config.debtRate,
-    config.externalDepositFee,
-  ]
+  params.methodArgs = [deployed.address, config.debtRatio, config.debtRate, config.externalDepositFee]
   await executeOrProposeTx(PoolAccountant, poolAccountantAddress, PoolAccountant, params)
 
   return true

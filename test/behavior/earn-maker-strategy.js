@@ -4,7 +4,6 @@ const { deposit, executeIfExist, timeTravel, rebalanceStrategy } = require('../u
 const { expect } = require('chai')
 const { ethers } = require('hardhat')
 const { getUsers } = require('../utils/setupHelper')
-const Address = require('../../helper/mainnet/address')
 const { shouldValidateMakerCommonBehavior } = require('./maker-common')
 async function shouldBehaveLikeEarnMakerStrategy(strategyIndex) {
   let pool, strategy
@@ -31,20 +30,6 @@ async function shouldBehaveLikeEarnMakerStrategy(strategyIndex) {
       beforeEach(async function () {
         await deposit(pool, collateralToken, 20, user1)
         await rebalanceStrategy(strategy)
-      })
-
-      describe('Interest fee calculation via Jug Drip', function () {
-        it('Should earn interest fee', async function () {
-          const dai = await ethers.getContractAt('ERC20', Address.DAI)
-          const fc = await strategy.instance.feeCollector()
-          const feeBalanceBefore = await dai.balanceOf(fc)
-          await deposit(pool, collateralToken, 50, user2)
-          await strategy.instance.rebalance()
-          await timeTravel(5 * 24 * 60 * 60, 'compound')
-          await strategy.instance.rebalance()
-          const feeBalanceAfter = await dai.balanceOf(fc)
-          expect(feeBalanceAfter).to.be.gt(feeBalanceBefore, 'Fee should increase')
-        })
       })
 
       it('Should increase vault debt on rebalance', async function () {

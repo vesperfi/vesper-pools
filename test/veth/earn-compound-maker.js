@@ -6,7 +6,6 @@ const { strategyConfig } = require('../utils/chains').getChainData()
 
 describe('vETH pool EarnCompoundMakerStrategyETH strategy', function () {
   const strategy = strategyConfig.EarnCompoundMakerStrategyETH
-  strategy.config.interestFee = 2500
   strategy.config.debtRatio = 9000
   const strategies = [strategy]
   prepareConfig(strategies)

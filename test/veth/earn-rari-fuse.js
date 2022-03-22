@@ -7,7 +7,6 @@ const { address: Address, strategyConfig } = require('../utils/chains').getChain
 
 describe('veETH pool strategies', function () {
   const strategy = strategyConfig.EarnRariFuseStrategyETH
-  strategy.config.interestFee = 2500
   strategy.config.debtRatio = 9000
   const strategies = [strategy]
   prepareConfig(strategies, { growPool: { address: Address.vaDAI } })

@@ -6,7 +6,6 @@ const { strategyConfig } = require('../utils/chains').getChainData()
 
 describe('vUNI pool strategies', function () {
   const strategy = strategyConfig.CompoundMakerStrategyUNI
-  strategy.config.interestFee = 2500
   strategy.config.debtRatio = 9000
   const strategies = [strategy]
   prepareConfig(strategies)

@@ -7,7 +7,6 @@ const { address: Address, strategyConfig } = require('../utils/chains').getChain
 
 describe('veETH pool with EarnYearnStrategyETH strategy', function () {
   const strategy = strategyConfig.EarnYearnStrategyETH
-  strategy.config.interestFee = 2500
   strategy.config.debtRatio = 9000
   const strategies = [strategy]
 
