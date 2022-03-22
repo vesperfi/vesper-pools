@@ -4,6 +4,7 @@
 const { ethers } = require('hardhat')
 const { isDelegateOrOwner, getMultiSigNonce, submitGnosisTxn } = require('./gnosis-txn')
 const CollateralManager = 'CollateralManager'
+const PoolAccountant = 'PoolAccountant'
 let multiSigNonce = 0
 
 function sleep(ms) {
@@ -54,8 +55,7 @@ const deployFunction = async function ({ getNamedAccounts, deployments, poolConf
     execute,
   }
 
-  const poolDeploymentName = poolConfig.deploymentName ? poolConfig.deploymentName : poolConfig.contractName
-  const poolProxy = await deployments.get(poolDeploymentName)
+  const poolProxy = await deployments.get(poolConfig.contractName)
   const strategyAlias = strategyConfig.alias
 
   const constructorArgs = [poolProxy.address, ...Object.values(strategyConfig.constructorArgs)]
@@ -111,7 +111,7 @@ const deployFunction = async function ({ getNamedAccounts, deployments, poolConf
 
   const strategyVersion = await read(strategyAlias, {}, 'VERSION')
   deployFunction.id = `${strategyAlias}-v${strategyVersion}`
-  params.governor = await read(poolDeploymentName, {}, 'governor')
+  params.governor = await read(poolConfig.contractName, {}, 'governor')
   params.isDelegateOrOwner =
     Address.MultiSig.safe === params.governor && (await isDelegateOrOwner(Address.MultiSig.safe, deployer))
 
@@ -152,12 +152,6 @@ const deployFunction = async function ({ getNamedAccounts, deployments, poolConf
     await executeOrProposeTx(strategyConfig.contract, deployed.address, strategyConfig.alias, params)
   }
 
-  let PoolAccountant = 'PoolAccountant'
-  if (strategyAlias.includes('Coverage')) {
-    PoolAccountant = 'PoolAccountantCoverage'
-  } else if (strategyAlias.includes('Stable')) {
-    PoolAccountant = 'PoolAccountantStable'
-  }
   const config = strategyConfig.config
   const poolAccountantAddress = (await deployments.get(PoolAccountant)).address
   params.methodName = 'addStrategy'

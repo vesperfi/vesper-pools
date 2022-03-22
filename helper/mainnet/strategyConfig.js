@@ -330,34 +330,6 @@ const StrategyConfig = {
     setup: { ...setup },
   },
 
-  CompoundCoverageStrategyDAI: {
-    contract: 'CompoundCoverageStrategy',
-    type: StrategyTypes.COMPOUND,
-    constructorArgs: {
-      swapManager,
-      comptroller: Address.Compound.COMPTROLLER,
-      rewardToken: Address.Compound.COMP,
-      receiptToken: Address.Compound.cDAI,
-      strategyName: 'CompoundCoverageStrategyDAI',
-    },
-    config: { ...config },
-    setup: { ...setup },
-  },
-
-  CompoundStableStrategyDAI: {
-    contract: 'CompoundStableStrategy',
-    type: StrategyTypes.COMPOUND,
-    constructorArgs: {
-      swapManager,
-      comptroller: Address.Compound.COMPTROLLER,
-      rewardToken: Address.Compound.COMP,
-      receiptToken: Address.Compound.cDAI,
-      strategyName: 'CompoundStableStrategyDAI',
-    },
-    config: { ...config },
-    setup: { ...setup },
-  },
-
   CompoundLeverageStrategyETH: {
     contract: 'CompoundLeverageStrategyETH',
     type: StrategyTypes.COMPOUND_LEVERAGE,
@@ -655,30 +627,6 @@ const StrategyConfig = {
       swapManager,
       collateralIdx: 0,
       strategyName: 'Convex3PoolStrategyDAI',
-    },
-    config: { ...config },
-    setup: { ...setup },
-  },
-
-  ConvexCoverage3poolStrategyDAI: {
-    contract: 'ConvexCoverage3poolStrategy',
-    type: StrategyTypes.CONVEX,
-    constructorArgs: {
-      swapManager,
-      collateralIdx: 0,
-      strategyName: 'ConvexCoverage3poolStrategyDAI',
-    },
-    config: { ...config },
-    setup: { ...setup },
-  },
-
-  ConvexStable3PoolStrategyDAI: {
-    contract: 'ConvexStable3PoolStrategy',
-    type: StrategyTypes.CONVEX,
-    constructorArgs: {
-      swapManager,
-      collateralIdx: 0,
-      strategyName: 'ConvexStable3PoolStrategyDAI',
     },
     config: { ...config },
     setup: { ...setup },
@@ -1206,32 +1154,6 @@ const StrategyConfig = {
       dripToken: Address.DAI,
       vsp: Address.VSP,
       strategyName: 'EarnVesperStrategyWBTCDAI',
-    },
-    config: { ...config },
-    setup: { ...setup },
-  },
-
-  VesperCoverageStrategyDAI: {
-    contract: 'VesperCoverageStrategy',
-    type: StrategyTypes.VESPER,
-    constructorArgs: {
-      swapManager,
-      receiptToken: Address.vaDAI,
-      vsp: Address.VSP,
-      strategyName: 'VesperCoverageStrategyDAI',
-    },
-    config: { ...config },
-    setup: { ...setup },
-  },
-
-  VesperStableStrategyDAI: {
-    contract: 'VesperStableStrategy',
-    type: StrategyTypes.VESPER,
-    constructorArgs: {
-      swapManager,
-      receiptToken: Address.vaDAI,
-      vsp: Address.VSP,
-      strategyName: 'VesperStableStrategyDAI',
     },
     config: { ...config },
     setup: { ...setup },
