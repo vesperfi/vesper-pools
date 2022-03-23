@@ -4,6 +4,8 @@ pragma solidity 0.8.3;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 interface IVesperPool is IERC20 {
+    function calculateUniversalFee(uint256 _profit) external view returns (uint256 _fee);
+
     function deposit() external payable;
 
     function deposit(uint256 _share) external;
@@ -65,7 +67,8 @@ interface IVesperPool is IERC20 {
             uint256 _totalDebt,
             uint256 _totalLoss,
             uint256 _totalProfit,
-            uint256 _debtRatio
+            uint256 _debtRatio,
+            uint256 _externalDepositFee
         );
 
     function stopEverything() external view returns (bool);

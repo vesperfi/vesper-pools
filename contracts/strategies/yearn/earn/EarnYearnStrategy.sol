@@ -23,8 +23,8 @@ contract EarnYearnStrategy is YearnStrategy, Earn {
         if (_collateralBalance > _totalDebt) {
             _withdrawHere(_collateralBalance - _totalDebt);
         }
-        _convertCollateralToDrip();
-        _forwardEarning();
+        // Any collateral here is profit
+        _handleProfit(collateralToken.balanceOf(address(this)));
         return 0;
     }
 

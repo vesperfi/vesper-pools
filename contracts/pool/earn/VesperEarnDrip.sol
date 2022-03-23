@@ -55,7 +55,7 @@ contract VesperEarnDrip is PoolRewards {
         uint256 _rewardAmount,
         uint256 _rewardDuration
     ) external override {
-        (bool isStrategy, , , , , , , ) = IVesperPool(pool).strategy(msg.sender);
+        (bool isStrategy, , , , , , , , ) = IVesperPool(pool).strategy(msg.sender);
         require(
             msg.sender == IVesperPool(pool).governor() || (isRewardToken[_rewardToken] && isStrategy),
             "not-authorized"

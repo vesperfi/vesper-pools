@@ -32,13 +32,13 @@ contract EarnAlphaLendStrategy is AlphaLendStrategy, Earn {
         override(Strategy, AlphaLendStrategy)
         returns (uint256)
     {
-        _claimRewardsAndConvertTo(address(dripToken));
+        _claimRewardsAndConvertTo(address(collateralToken));
         uint256 _collateralBalance = _convertToCollateral(safeBox.balanceOf(address(this)));
         if (_collateralBalance > _totalDebt) {
             _withdrawHere(_collateralBalance - _totalDebt);
         }
-        _convertCollateralToDrip();
-        _forwardEarning();
+        // Any collateral here is profit
+        _handleProfit(collateralToken.balanceOf(address(this)));
         return 0;
     }
 
