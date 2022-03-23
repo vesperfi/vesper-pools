@@ -20,7 +20,8 @@ const { BigNumber: BN } = require('ethers')
 const { ethers } = require('hardhat')
 const { advanceBlock } = require('../utils/time')
 const { getChain } = require('../utils/chains')
-const { ANY_ERC20, NATIVE_TOKEN, FRAX } = require(`../../helper/${getChain()}/address`)
+const StrategyType = require('../utils/strategyTypes')
+const { ANY_ERC20, NATIVE_TOKEN, FRAX, VSP } = require(`../../helper/${getChain()}/address`)
 
 const DECIMAL18 = BN.from('1000000000000000000')
 const MAX_BPS = BN.from('10000')
@@ -341,34 +342,62 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
         blocksPerYear = await pool.BLOCKS_PER_YEAR()
         universalFee = await pool.universalFee()
       })
-      it('Should collect universal fee on rebalance', async function () {
-        // TODO Remove below if once Earn strategies are updated to use universal fee
-        if (strategies[0].type.startsWith('earn')) {
-          // eslint-disable-next-line no-console
-          console.log('Skipping this test')
-          return
-        }
-        const feeCollector = await unlock(strategies[0].feeCollector)
-        const mineBlocks = 100
-        await rebalanceStrategy(strategies[0])
+      if (isEarnPool === true) {
+        it('Earn Pool:: Should collect universal fee on rebalance', async function () {
+          const earnDrip = await ethers.getContractAt('IEarnDrip', await pool.poolRewards())
+          let rewardToken = await ethers.getContractAt('ERC20', await earnDrip.growToken())
+          const dripToken = await ethers.getContractAt('ERC20', strategies[0].constructorArgs.dripToken)
+          if (rewardToken.address === ethers.constants.AddressZero) {
+            rewardToken = dripToken
+          }
+          const feeCollector = strategies[0].feeCollector
+          const rewardBalanceBefore = await rewardToken.balanceOf(feeCollector)
+          const dripBalanceBefore = await dripToken.balanceOf(feeCollector)
+          const collateralBalanceBefore = await collateralToken.balanceOf(feeCollector)
 
-        await advanceBlock(mineBlocks)
-        const totalDebt = await accountant.totalDebtOf(strategies[0].instance.address)
-        const blocksBetweenRebalance = mineBlocks + 1 // +1 for current running block
+          await deposit(20, user1)
+          await rebalance(strategies)
+          // Time travel to generate earning
+          await timeTravel(30 * 24 * 60 * 60)
+          await rebalance(strategies)
+          await rebalance(strategies)
 
-        const tx = await rebalanceStrategy(strategies[0])
-        const profit = (await getEvent(tx, accountant, 'EarningReported')).profit
-        let fee = universalFee.mul(blocksBetweenRebalance).mul(totalDebt).div(blocksPerYear).div(MAX_BPS)
-        if (fee.gt(profit.div(2))) {
-          fee = profit.div(2)
-        }
-        const vPoolBalance = await pool.balanceOf(feeCollector.address)
-        expect(vPoolBalance, 'Fee earned by FC should be > 0').to.gt(0)
-        await pool.connect(feeCollector).withdraw(vPoolBalance)
-        expect(await pool.balanceOf(feeCollector.address), `${poolName} balance of FC should be equal to 0`).to.eq(0)
-        const collateralBalance = await collateralToken.balanceOf(feeCollector.address)
-        expect(collateralBalance, 'Incorrect fee collected').to.gte(fee)
-      })
+          const rewardBalanceAfter = await rewardToken.balanceOf(feeCollector)
+          const dripBalanceAfter = await dripToken.balanceOf(feeCollector)
+          const collateralBalanceAfter = await collateralToken.balanceOf(feeCollector)
+          const type = strategies[0].type
+          if (dripToken.address === VSP || type === StrategyType.EARN_MAKER) {
+            expect(dripBalanceAfter, 'Fee collected by FC is wrong').to.be.gt(dripBalanceBefore)
+          } else if (type === StrategyType.EARN_VESPER_MAKER) {
+            expect(rewardBalanceAfter, 'Fee collected by FC is wrong').to.be.gt(rewardBalanceBefore)
+          } else {
+            expect(collateralBalanceAfter, 'Fee collected by FC is wrong').to.be.gt(collateralBalanceBefore)
+          }
+        })
+      } else {
+        it('Should collect universal fee on rebalance', async function () {
+          const feeCollector = await unlock(strategies[0].feeCollector)
+          const mineBlocks = 100
+          await rebalanceStrategy(strategies[0])
+
+          await advanceBlock(mineBlocks)
+          const totalDebt = await accountant.totalDebtOf(strategies[0].instance.address)
+          const blocksBetweenRebalance = mineBlocks + 1 // +1 for current running block
+
+          const tx = await rebalanceStrategy(strategies[0])
+          const profit = (await getEvent(tx, accountant, 'EarningReported')).profit
+          let fee = universalFee.mul(blocksBetweenRebalance).mul(totalDebt).div(blocksPerYear).div(MAX_BPS)
+          if (fee.gt(profit.div(2))) {
+            fee = profit.div(2)
+          }
+          const vPoolBalance = await pool.balanceOf(feeCollector.address)
+          expect(vPoolBalance, 'Fee earned by FC should be > 0').to.gt(0)
+          await pool.connect(feeCollector).withdraw(vPoolBalance)
+          expect(await pool.balanceOf(feeCollector.address), `${poolName} balance of FC should be equal to 0`).to.eq(0)
+          const collateralBalance = await collateralToken.balanceOf(feeCollector.address)
+          expect(collateralBalance, 'Incorrect fee collected').to.gte(fee)
+        })
+      }
     })
 
     describe(`Sweep ERC20 token in ${poolName} pool`, function () {
@@ -536,7 +565,7 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
           if (rewardToken.address === ethers.constants.AddressZero) rewardToken = dripToken
         })
 
-        it('Earn Pool should collect profits in rewardToken', async function () {
+        it('Earn Pool should collect profits in rewardToken in drip contract', async function () {
           const rewardTokenBalanceBefore = await rewardToken.balanceOf(earnDrip.address)
 
           await deposit(20, user1)
