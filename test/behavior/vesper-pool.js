@@ -23,7 +23,7 @@ const { getChain } = require('../utils/chains')
 const StrategyType = require('../utils/strategyTypes')
 const { ANY_ERC20, NATIVE_TOKEN, FRAX, VSP } = require(`../../helper/${getChain()}/address`)
 
-const DECIMAL18 = BN.from('1000000000000000000')
+const DECIMAL18 = ethers.utils.parseEther('1')
 const MAX_BPS = BN.from('10000')
 // Skipping some tests for collateral tokens due to low liquidity at forked block
 const SKIP_TEST_COLLATERAL_TOKENS = [FRAX]
@@ -169,7 +169,7 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
       it(`Should withdraw partial ${collateralName} after rebalance`, async function () {
         await rebalance(strategies)
         const collateralBalanceBefore = await collateralToken.balanceOf(user1.address)
-        const withdrawAmount = (await pool.balanceOf(user1.address)).div(BN.from(2))
+        const withdrawAmount = (await pool.balanceOf(user1.address)).div(2)
         await pool.connect(user1.signer).withdraw(withdrawAmount)
         const totalDebt = await pool.totalDebt()
         const totalDebtOfStrategies = await totalDebtOfAllStrategy(strategies, pool)
@@ -185,7 +185,7 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
         // reset universal fee to 0.
         await pool.updateUniversalFee('0')
         depositAmount = await deposit(15, user2)
-        const dust = DECIMAL18.div(BN.from(100)) // Dust is less than 1e16
+        const dust = DECIMAL18.div(100) // Dust is less than 1e16
         await rebalance(strategies)
         // Some strategies can report a loss if they don't have time to earn anything
         // Time travel based on type of strategy. For compound strategy mine 500 blocks, else time travel
@@ -235,7 +235,7 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
 
       it('Should have same size for recipients and amounts', async function () {
         await deposit(10, user1)
-        const tx = pool.connect(user1.signer).multiTransfer([user3.address, user4.address], [DECIMAL18.mul(BN.from(1))])
+        const tx = pool.connect(user1.signer).multiTransfer([user3.address, user4.address], [DECIMAL18])
         await expect(tx).to.be.revertedWith('4')
       })
     })
@@ -297,7 +297,20 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
     })
 
     describe(`Price per share of ${poolName} pool`, function () {
-      if (isEarnPool === false) {
+      if (isEarnPool) {
+        it('Should not increase pool value', async function () {
+          await deposit(20, user1)
+          await rebalance(strategies)
+          // Curve strategy takes a loss initially hence taking value after 1st rebalance
+          const value1 = await pool.totalValue()
+          // Time travel to generate earning
+          await timeTravel(30 * 24 * 60 * 60)
+          await rebalance(strategies)
+          await rebalance(strategies)
+          const value2 = await pool.totalValue()
+          expect(value2).to.be.eq(value1, `${poolName} Pool value should not increase`)
+        })
+      } else {
         it('Should increase pool value', async function () {
           await deposit(20, user1)
           await rebalance(strategies)
@@ -317,19 +330,6 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
           const value3 = await pool.totalValue()
           expect(value3).to.be.gt(value2, `${poolName} Pool value should increase`)
         })
-      } else {
-        it('Should not increase pool value', async function () {
-          await deposit(20, user1)
-          await rebalance(strategies)
-          // Curve strategy takes a loss initially hence taking value after 1st rebalance
-          const value1 = await pool.totalValue()
-          // Time travel to generate earning
-          await timeTravel(30 * 24 * 60 * 60)
-          await rebalance(strategies)
-          await rebalance(strategies)
-          const value2 = await pool.totalValue()
-          expect(value2).to.be.eq(value1, `${poolName} Pool value should not increase`)
-        })
       }
     })
 
@@ -342,7 +342,7 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
         blocksPerYear = await pool.BLOCKS_PER_YEAR()
         universalFee = await pool.universalFee()
       })
-      if (isEarnPool === true) {
+      if (isEarnPool) {
         it('Earn Pool:: Should collect universal fee on rebalance', async function () {
           const earnDrip = await ethers.getContractAt('IEarnDrip', await pool.poolRewards())
           let rewardToken = await ethers.getContractAt('ERC20', await earnDrip.growToken())
@@ -396,6 +396,22 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
           expect(await pool.balanceOf(feeCollector.address), `${poolName} balance of FC should be equal to 0`).to.eq(0)
           const collateralBalance = await collateralToken.balanceOf(feeCollector.address)
           expect(collateralBalance, 'Incorrect fee collected').to.gte(fee)
+        })
+
+        it('Should collect universal fee equal to half of profit', async function () {
+          const strategySigner = await unlock(strategies[0].instance.address)
+          // Manual and force report earning to get fund from pool
+          await pool.connect(strategySigner).reportEarning(0, 0, 0)
+          await advanceBlock(100)
+
+          // Manual and force report earning with 1000 as profit
+          const profit = 1000 // wei
+          // This will trigger fee calculation
+          await pool.connect(strategySigner).reportEarning(profit, 0, 0)
+          // Fee calculation on TVL will be higher than profit/2 so final fee will be profit/2
+          // fee is in 18 decimals, profit is in collateral decimals
+          const expectedFee = ethers.utils.parseUnits((profit / 2).toString(), 18 - collateralDecimal)
+          expect(await pool.balanceOf(strategies[0].feeCollector), 'Fee earned by FC is wrong').to.eq(expectedFee)
         })
       }
     })
@@ -492,10 +508,10 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
         await rebalance(strategies)
         const strategyParams = await pool.strategy(strategies[0].instance.address)
         const totalProfit = strategyParams._totalProfit
-        if (isEarnPool === false) {
-          expect(totalProfit).to.be.gt(0, `Total debt of strategy in ${poolName} is wrong`)
-        } else {
+        if (isEarnPool) {
           expect(totalProfit).to.be.eq(0, `Total debt of strategy in ${poolName} is wrong`)
+        } else {
+          expect(totalProfit).to.be.gt(0, `Total debt of strategy in ${poolName} is wrong`)
         }
       })
     })
@@ -531,7 +547,7 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
       })
 
       it('Credit line should be min of debtRate, tokens here', async function () {
-        const dust = DECIMAL18.div(BN.from(100)) // Dust is less than 1e16
+        const dust = DECIMAL18.div(100) // Dust is less than 1e16
         await deposit(60, user2)
         await rebalance(strategies)
         await deposit(40, user1)
@@ -554,7 +570,7 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
       })
     })
 
-    if (isEarnPool === true) {
+    if (isEarnPool) {
       describe(`${poolName}: Earn specific tests`, function () {
         let earnDrip, rewardToken, dripToken
 

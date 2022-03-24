@@ -175,14 +175,15 @@ abstract contract VPoolBase is PoolShareToken {
         uint256 _payback
     ) external virtual {
         address _strategy = _msgSender();
-        address _feeCollector = IStrategy(_strategy).feeCollector();
         // Calculate universal fee
-        uint256 _fee = _calculateUniversalFee(_strategy, _profit);
-
-        // Mint shares equal to universal fee
-        if (_fee > 0) {
-            _mint(_feeCollector, _calculateShares(_fee));
+        if (_profit > 0) {
+            uint256 _fee = _calculateUniversalFee(_strategy, _profit);
+            // Mint shares equal to universal fee
+            if (_fee > 0) {
+                _mint(IStrategy(_strategy).feeCollector(), _calculateShares(_fee));
+            }
         }
+
         // Report earning in pool accountant
         (uint256 _actualPayback, uint256 _creditLine) =
             IPoolAccountant(poolAccountant).reportEarning(_strategy, _profit, _loss, _payback);
