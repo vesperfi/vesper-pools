@@ -495,6 +495,19 @@ const StrategyConfig = {
     setup: { ...setup },
   },
 
+  RariFuseStrategyAPE: {
+    contract: 'RariFuseStrategyAPE',
+    type: StrategyTypes.RARI_FUSE,
+    constructorArgs: {
+      swapManager,
+      fusePoolId: 127,
+      fusePoolDirectory: Address.Rari.fusePoolDirectory,
+      strategyName: 'RariFuseStrategyAPE',
+    },
+    config: { ...config },
+    setup: { ...setup },
+  },
+
   RariFuseLeverageStrategyDAI: {
     contract: 'RariFuseLeverageStrategy',
     type: StrategyTypes.COMPOUND_LEVERAGE,

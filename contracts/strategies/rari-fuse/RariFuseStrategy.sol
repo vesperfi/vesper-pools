@@ -72,6 +72,12 @@ contract RariFuseStrategy is CompoundStrategy {
         (rewardDistributor, rewardToken) = fusePoolDirectory.getRewardToken(fusePoolId);
     }
 
+    /// @dev Manually claim rewards from rewardDistributor by keeper
+    /// @notice Properly tests if reward claim works
+    function claimRewards() external onlyKeeper {
+        _claimRewards();
+    }
+
     /// @notice Claim rewards from Fuse Pool' rewardDistributor
     function _claimRewards() internal virtual override {
         IRariRewardDistributor(rewardDistributor).claimRewards(address(this));
