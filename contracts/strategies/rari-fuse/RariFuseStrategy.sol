@@ -69,6 +69,7 @@ contract RariFuseStrategy is CompoundStrategy {
         cToken = CToken(_newCToken);
         receiptToken = _newCToken;
         fusePoolId = _newPoolId;
+        (rewardDistributor, rewardToken) = fusePoolDirectory.getRewardToken(fusePoolId);
     }
 
     /// @notice Claim rewards from Fuse Pool' rewardDistributor
