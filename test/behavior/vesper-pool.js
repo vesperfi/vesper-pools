@@ -338,6 +338,8 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
       let universalFee
 
       beforeEach(async function () {
+        // Set external deposit fee to 0 for curve strategies
+        await accountant.updateExternalDepositFee(strategies[0].instance.address, '0')
         await deposit(30, user1)
         blocksPerYear = await pool.BLOCKS_PER_YEAR()
         universalFee = await pool.universalFee()
@@ -402,7 +404,8 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
           const strategySigner = await unlock(strategies[0].instance.address)
           // Manual and force report earning to get fund from pool
           await pool.connect(strategySigner).reportEarning(0, 0, 0)
-          await advanceBlock(100)
+          // Using higher blocks here for WBTC strategies
+          await advanceBlock(500)
 
           // Manual and force report earning with 1000 as profit
           const profit = 1000 // wei
