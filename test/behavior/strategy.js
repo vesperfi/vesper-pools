@@ -18,6 +18,8 @@ const { shouldBehaveLikeEarnVesperMakerStrategy } = require('../behavior/earn-ve
 const { shouldBehaveLikeRariFuseStrategy } = require('./rari-fuse-strategy')
 const { shouldBehaveLikeEarnVesperStrategy } = require('../behavior/earn-vesper-strategy')
 const { shouldBehaveLikeVesperCompoundXYStrategy } = require('./vesper-compound-xy')
+const { shouldBehaveLikeVesperAaveXYStrategy } = require('./vesper-aave-xy')
+
 const swapper = require('../utils/tokenSwapper')
 const { deposit, rebalanceStrategy } = require('../utils/poolOps')
 const { advanceBlock } = require('../utils/time')
@@ -35,6 +37,7 @@ function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
     [StrategyType.COMPOUND_XY]: shouldBehaveLikeCompoundXYStrategy,
     [StrategyType.COMPOUND_LEVERAGE]: shouldBehaveLikeCompoundLeverageStrategy,
     [StrategyType.AAVE_LEVERAGE]: shouldBehaveLikeAaveLeverageStrategy,
+    [StrategyType.VESPER_AAVE_XY]: shouldBehaveLikeVesperAaveXYStrategy,
     [StrategyType.CURVE]: shouldBehaveLikeCrvStrategy,
     [StrategyType.CONVEX]: shouldBehaveLikeCrvStrategy,
     [StrategyType.EARN_MAKER]: shouldBehaveLikeEarnMakerStrategy,

@@ -24,7 +24,7 @@ interface IVesperPool is IERC20 {
         bytes32
     ) external;
 
-    function poolRewards() external returns (address);
+    function poolRewards() external view returns (address);
 
     function reportEarning(
         uint256 _profit,
