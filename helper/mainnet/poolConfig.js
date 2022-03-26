@@ -179,6 +179,12 @@ const PoolConfig = {
     setup: { ...setup },
     rewards: { ...rewards },
   },
+  VAAPE: {
+    contractName: 'VPool',
+    poolParams: ['vaAPE Pool', 'vaAPE', Address.APE],
+    setup: { ...setup },
+    rewards: { ...rewards },
+  },
 }
 
 module.exports = Object.freeze(PoolConfig)

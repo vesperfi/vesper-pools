@@ -32,6 +32,7 @@ contract RariFuseStrategyETH is RariFuseStrategy {
         cToken = CToken(_newCToken);
         receiptToken = _newCToken;
         fusePoolId = _newPoolId;
+        (rewardDistributor, rewardToken) = fusePoolDirectory.getRewardToken(fusePoolId);
     }
 
     /**
