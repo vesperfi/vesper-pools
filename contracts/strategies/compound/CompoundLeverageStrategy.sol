@@ -215,7 +215,7 @@ contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
      */
     function _calculateTotalValue(uint256 _rewardAccrued) internal view returns (uint256 _totalValue) {
         uint256 _compAsCollateral;
-        if (_rewardAccrued != 0) {
+        if (_rewardAccrued > 0) {
             (, _compAsCollateral, ) = swapManager.bestOutputFixedInput(
                 rewardToken,
                 address(collateralToken),
@@ -237,7 +237,7 @@ contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
     function _claimRewardsAndConvertTo(address _toToken) internal override {
         _claimRewards();
         uint256 _rewardAmount = IERC20(rewardToken).balanceOf(address(this));
-        if (_rewardAmount != 0) {
+        if (_rewardAmount > 0) {
             _safeSwap(rewardToken, _toToken, _rewardAmount);
         }
     }
@@ -256,7 +256,7 @@ contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
         )
     {
         uint256 _excessDebt = IVesperPool(pool).excessDebt(address(this));
-        (, , , , uint256 _totalDebt, , , uint256 _debtRatio) = IVesperPool(pool).strategy(address(this));
+        (, , , , uint256 _totalDebt, , , uint256 _debtRatio, ) = IVesperPool(pool).strategy(address(this));
 
         // Claim rewardToken and convert to collateral token
         _claimRewardsAndConvertTo(address(collateralToken));
@@ -286,7 +286,7 @@ contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
 
         uint256 _paybackToWithdraw = _excessDebt - _payback;
         uint256 _totalAmountToWithdraw = _paybackToWithdraw + _profitToWithdraw;
-        if (_totalAmountToWithdraw != 0) {
+        if (_totalAmountToWithdraw > 0) {
             uint256 _withdrawn = _withdrawHere(_totalAmountToWithdraw);
             // Any amount withdrawn over _profitToWithdraw is payback for pool
             if (_withdrawn > _profitToWithdraw) {
@@ -297,7 +297,7 @@ contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
         // Handle scenario if debtRatio is zero and some supply left.
         // Remaining tokens, after payback withdrawal, are profit
         (_supply, _borrow) = getPosition();
-        if (_debtRatio == 0 && _supply != 0 && _borrow == 0) {
+        if (_debtRatio == 0 && _supply > 0 && _borrow == 0) {
             // This will redeem all cTokens this strategy has
             _redeemUnderlying(MAX_UINT_VALUE);
             _profit += _supply;
@@ -341,7 +341,7 @@ contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
     ) internal returns (uint256 _deleveragedAmount) {
         uint256 _theoreticalSupply;
 
-        if (_collateralFactor != 0) {
+        if (_collateralFactor > 0) {
             // Calculate minimum supply required to support _borrow
             _theoreticalSupply = (_borrow * 1e18) / _collateralFactor;
         }
@@ -419,12 +419,12 @@ contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
             }
 
             // There may be scenario where we are not able to deleverage enough
-            if (_position != 0) {
+            if (_position > 0) {
                 // Calculate redeemable at current borrow and supply.
                 (uint256 _supply, uint256 _borrow) = getPosition();
 
                 uint256 _supplyToSupportBorrow;
-                if (maxBorrowRatio != 0) {
+                if (maxBorrowRatio > 0) {
                     _supplyToSupportBorrow = (_borrow * MAX_BPS) / maxBorrowRatio;
                 }
                 // Current supply minus supply required to support _borrow at _maxBorrowRatio

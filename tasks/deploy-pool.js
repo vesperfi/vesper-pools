@@ -19,12 +19,7 @@ function validatePoolConfig(poolConfig, targetChain) {
   if (!poolConfig) {
     throw new Error(`Missing pool configuration in /helper/${targetChain}/poolConfig file`)
   }
-  const topLevelKeys = ['contractName', 'poolParams', 'setup']
-  if (poolConfig.contractName.includes('VFR')) {
-    topLevelKeys.push('deploymentName')
-  } else {
-    topLevelKeys.push('rewards')
-  }
+  const topLevelKeys = ['contractName', 'poolParams', 'rewards', 'setup']
   // Validate top level properties in config object
   validateObject(poolConfig, topLevelKeys)
 
@@ -34,7 +29,7 @@ function validatePoolConfig(poolConfig, targetChain) {
   }
 
   // Validate setup in config object
-  const setupKeys = ['feeCollector', 'withdrawFee']
+  const setupKeys = ['universalFee']
   validateObject(poolConfig.setup, setupKeys)
 
   // Validate rewards in config object
@@ -45,7 +40,7 @@ function validatePoolConfig(poolConfig, targetChain) {
     if (poolConfig.rewards.contract !== 'VesperEarnDrip') {
       throw new Error('Wrong contract name for Earn Rewards pool')
     }
-  } else if (!poolConfig.contractName.includes('VFR')) {
+  } else {
     validateObject(poolConfig.rewards, rewardsKeys)
     if (poolConfig.rewards.contract !== 'PoolRewards') {
       throw new Error('Wrong contract name for Rewards Pool')
@@ -154,17 +149,7 @@ task('deploy-pool', 'Deploy vesper pool')
     hre.poolConfig = require(`../helper/${targetChain}/poolConfig`)[pool.toUpperCase()]
     hre.poolName = pool.toLowerCase()
 
-    if (pool.includes('VFR')) {
-      validatePoolConfig(hre.poolConfig.Coverage, targetChain)
-      validatePoolConfig(hre.poolConfig.Stable, targetChain)
-      if (strategyName && strategyName.includes('Coverage')) {
-        hre.poolConfig = require(`../helper/${targetChain}/poolConfig`)[pool.toUpperCase()].Coverage
-      } else if (strategyName && strategyName.includes('Stable')) {
-        hre.poolConfig = require(`../helper/${targetChain}/poolConfig`)[pool.toUpperCase()].Stable
-      }
-    } else {
-      validatePoolConfig(hre.poolConfig, targetChain)
-    }
+    validatePoolConfig(hre.poolConfig, targetChain)
 
     // Set target chain in hre
     hre.targetChain = targetChain

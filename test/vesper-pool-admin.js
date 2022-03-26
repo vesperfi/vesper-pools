@@ -162,14 +162,7 @@ describe('Vesper Pool: Admin only function tests', function () {
       const tx = pool.migrateStrategy(strategy.address, newStrategy.address)
       await expect(tx)
         .to.emit(accountant, 'StrategyMigrated')
-        .withArgs(
-          strategy.address,
-          newStrategy.address,
-          config.interestFee,
-          config.debtRatio,
-          config.debtRate,
-          config.externalDepositFee,
-        )
+        .withArgs(strategy.address, newStrategy.address, config.debtRatio, config.debtRate, config.externalDepositFee)
       expect((await accountant.strategy(newStrategy.address)).active, 'Strategy should be active').to.be.true
       expect((await accountant.strategy(strategy.address)).active, 'Old strategy should be de-active').to.be.false
     })

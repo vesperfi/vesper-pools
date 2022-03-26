@@ -31,10 +31,24 @@ const CollateralManager = 'CollateralManager'
  * @property {string} address - user account address
  */
 
-async function executeIfExist(fn) {
+async function executeIfExist(fn, param) {
   if (typeof fn === 'function') {
-    await fn()
+    if (param) {
+      await fn(param)
+    } else {
+      await fn()
+    }
   }
+}
+
+async function getIfExist(fn, param) {
+  if (typeof fn === 'function') {
+    if (param) {
+      return fn(param)
+    }
+    return fn()
+  }
+  return new Promise()
 }
 
 /**
@@ -198,7 +212,7 @@ async function createVesperMakerStrategy(strategy, poolAddress, options) {
   strategyInstance.collateralManager = collateralManager
   await Promise.all([strategyInstance.updateBalancingFactor(300, 250), collateralManager.addGemJoin(gemJoins)])
 
-  await options.vPool.addToFeeWhitelist(strategyInstance.address)
+  await executeIfExist(options.vPool.addToFeeWhitelist, strategyInstance.address)
 
   return strategyInstance
 }
@@ -221,7 +235,7 @@ async function createVesperCompoundXYStrategy(strategy, poolAddress, options) {
     ...Object.values(strategy.constructorArgs),
   ])
 
-  await options.vPool.addToFeeWhitelist(strategyInstance.address)
+  await executeIfExist(options.vPool.addToFeeWhitelist, strategyInstance.address)
 
   return strategyInstance
 }
@@ -270,10 +284,11 @@ async function createStrategy(strategy, poolAddress, options = {}) {
   } else {
     strategy.token = await ethers.getContractAt(strategyTokenName, strategyTokenAddress)
     if (strategyTokenName === IVesperPool) {
-      // TODO when 3.1.0 pools are deployed and used as receiptToken in VesperXXX strategy then
-      // we will have to fix below config
+      // If Vesper strategy is using the pool already deployed on mainnet for tests
+      // then there is high chance that the pool supports feeWhitelist so that into account
+
       // Mock feeWhitelist to withdraw without fee in case of Earn Vesper strategies
-      const mock = await smock.fake('IAddressList', { address: await strategy.token.feeWhitelist() })
+      const mock = await smock.fake('IAddressList', { address: await getIfExist(strategy.token.feeWhitelist) })
       // Pretend any address is whitelisted for withdraw without fee
       mock.contains.returns(true)
     }
@@ -326,7 +341,6 @@ async function makeNewStrategy(oldStrategy, poolAddress, _options) {
  * @property {object} poolConfig - Pool config
  * @property {object []} strategies - Array of strategy configuration
  * @property {object} [vPool] - Optional. Vesper pool instance
- * @property {string} feeCollector - Fee collector address of pool
  */
 
 /**
@@ -337,24 +351,25 @@ async function makeNewStrategy(oldStrategy, poolAddress, _options) {
  * @param {object} options optional data
  */
 async function setupVPool(obj, poolData, options = {}) {
-  const { poolConfig, strategies, vPool, feeCollector } = poolData
+  const { poolConfig, strategies, vPool } = poolData
   const isInCache = obj.snapshot === undefined ? false : await provider.send('evm_revert', [obj.snapshot])
   if (isInCache === true) {
+    // Rollback manual changes to objects
+    delete obj.pool.depositsCount
     // Recreate the snapshot after rollback, reverting deletes the previous snapshot
     obj.snapshot = await provider.send('evm_snapshot')
   } else {
     obj.strategies = strategies
-    obj.feeCollector = feeCollector
     obj.accountant = await deployContract('PoolAccountant')
     obj.pool = await deployContract(poolConfig.contractName, poolConfig.poolParams)
 
     await obj.accountant.init(obj.pool.address)
     await obj.pool.initialize(...poolConfig.poolParams, obj.accountant.address)
+    await obj.pool.updateUniversalFee(poolConfig.setup.universalFee)
     options.vPool = vPool
 
     await createStrategies(obj, options)
     await addStrategies(obj)
-    await obj.pool.updateFeeCollector(feeCollector)
     const collateralTokenAddress = await obj.pool.token()
     obj.collateralToken = await ethers.getContractAt(TokenLike, collateralTokenAddress)
     obj.swapManager = await ethers.getContractAt('ISwapManager', Address.SWAP_MANAGER)

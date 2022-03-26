@@ -15,7 +15,7 @@ import "../interfaces/vesper/IPoolRewards.sol";
 
 /// @title Holding pool share token
 // solhint-disable no-empty-blocks
-abstract contract PoolShareToken is Initializable, PoolERC20Permit, Governed, Pausable, ReentrancyGuard, PoolStorageV2 {
+abstract contract PoolShareToken is Initializable, PoolERC20Permit, Governed, Pausable, ReentrancyGuard, PoolStorageV3 {
     using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.AddressSet;
 
@@ -89,7 +89,6 @@ abstract contract PoolShareToken is Initializable, PoolERC20Permit, Governed, Pa
 
     /**
      * @notice Withdraw collateral based on given shares and the current share price.
-     * Withdraw fee, if any, will be deduced from given shares and transferred to feeCollector.
      * Burn remaining shares and return collateral.
      * @param _shares Pool shares. It will be in 18 decimals.
      */
@@ -107,17 +106,11 @@ abstract contract PoolShareToken is Initializable, PoolERC20Permit, Governed, Pa
     }
 
     /**
-     * @notice Withdraw collateral based on given shares and the current share price.
-     * @dev Burn shares and return collateral. No withdraw fee will be assessed
-     * when this function is called. Only some white listed address can call this function.
-     * @param _shares Pool shares. It will be in 18 decimals.
-     * This function is deprecated, normal withdraw will check for whitelisted address
+     * @notice This function is DEPRECATED. There is no withdraw fee and hence no whitelist.
+     *  It will execute normal withdraw flow. Keeping it here to support existing strategies.
      */
     function whitelistedWithdraw(uint256 _shares) external virtual nonReentrant whenNotShutdown {
-        require(_feeWhitelist.contains(_msgSender()), Errors.NOT_WHITELISTED_ADDRESS);
-        require(_shares != 0, Errors.INVALID_SHARE_AMOUNT);
-        _claimRewards(_msgSender());
-        _withdrawWithoutFee(_shares);
+        _withdrawAndClaim(_shares);
     }
 
     /**
@@ -152,7 +145,7 @@ abstract contract PoolShareToken is Initializable, PoolERC20Permit, Governed, Pa
      * @return _shares Amount of share that user will get
      */
     function calculateMintage(uint256 _amount) public view returns (uint256 _shares) {
-        require(_amount != 0, Errors.INVALID_COLLATERAL_AMOUNT);
+        require(_amount > 0, Errors.INVALID_COLLATERAL_AMOUNT);
         uint256 _externalDepositFee = (_amount * IPoolAccountant(poolAccountant).externalDepositFee()) / MAX_BPS;
         _shares = _calculateShares(_amount - _externalDepositFee);
     }
@@ -177,7 +170,7 @@ abstract contract PoolShareToken is Initializable, PoolERC20Permit, Governed, Pa
      * @dev Hook that is called just before burning tokens. This withdraw collateral from withdraw queue
      * @param _share Pool share in 18 decimals
      */
-    function _beforeBurning(uint256 _share) internal virtual returns (uint256) {}
+    function _beforeBurning(uint256 _share) internal virtual returns (uint256, bool) {}
 
     /**
      * @dev Hook that is called just after burning tokens.
@@ -257,47 +250,25 @@ abstract contract PoolShareToken is Initializable, PoolERC20Permit, Governed, Pa
 
     /// @dev Burns shares and returns the collateral value, after fee, of those.
     function _withdraw(uint256 _shares) internal virtual {
-        require(_shares != 0, Errors.INVALID_SHARE_AMOUNT);
-        if (withdrawFee == 0 || _feeWhitelist.contains(_msgSender())) {
-            _withdrawWithoutFee(_shares);
-        } else {
-            uint256 _fee = (_shares * withdrawFee) / MAX_BPS;
-            uint256 _sharesAfterFee = _shares - _fee;
-            uint256 _amountWithdrawn = _beforeBurning(_sharesAfterFee);
+        require(_shares > 0, Errors.INVALID_SHARE_AMOUNT);
+
+        (uint256 _amountWithdrawn, bool _isPartial) = _beforeBurning(_shares);
+        // There may be scenarios when pool is not able to withdraw all of requested amount
+        if (_isPartial) {
             // Recalculate proportional share on actual amount withdrawn
             uint256 _proportionalShares = _calculateShares(_amountWithdrawn);
-
-            // Using convertFrom18() to avoid dust.
-            // Pool share token is in 18 decimal and collateral token decimal is <=18.
-            // Anything less than 10**(18-collateralTokenDecimal) is dust.
-            if (convertFrom18(_proportionalShares) < convertFrom18(_sharesAfterFee)) {
-                // Recalculate shares to withdraw, fee and shareAfterFee
-                _shares = (_proportionalShares * MAX_BPS) / (MAX_BPS - withdrawFee);
-                _fee = _shares - _proportionalShares;
-                _sharesAfterFee = _proportionalShares;
+            if (_proportionalShares < _shares) {
+                _shares = _proportionalShares;
             }
-            _burn(_msgSender(), _sharesAfterFee);
-            _transfer(_msgSender(), feeCollector, _fee);
-            _afterBurning(_amountWithdrawn);
-            emit Withdraw(_msgSender(), _shares, _amountWithdrawn);
         }
+        _burn(_msgSender(), _shares);
+        _afterBurning(_amountWithdrawn);
+        emit Withdraw(_msgSender(), _shares, _amountWithdrawn);
     }
 
     /// @dev Withdraw collateral and claim rewards if any
     function _withdrawAndClaim(uint256 _shares) internal {
         _claimRewards(_msgSender());
         _withdraw(_shares);
-    }
-
-    /// @dev Burns shares and returns the collateral value of those.
-    function _withdrawWithoutFee(uint256 _shares) internal {
-        uint256 _amountWithdrawn = _beforeBurning(_shares);
-        uint256 _proportionalShares = _calculateShares(_amountWithdrawn);
-        if (convertFrom18(_proportionalShares) < convertFrom18(_shares)) {
-            _shares = _proportionalShares;
-        }
-        _burn(_msgSender(), _shares);
-        _afterBurning(_amountWithdrawn);
-        emit Withdraw(_msgSender(), _shares, _amountWithdrawn);
     }
 }

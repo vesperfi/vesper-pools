@@ -10,7 +10,6 @@ function sleep(ms) {
 const deployFunction = async function ({ getNamedAccounts, deployments, poolConfig }) {
   const { deploy, execute, read } = deployments
   const { deployer } = await getNamedAccounts()
-  const setup = poolConfig.setup
   // Deploy PoolAccountant. This call will deploy ProxyAdmin, proxy and PoolAccountant
   const accountantProxy = await deploy(PoolAccountant, {
     from: deployer,
@@ -46,12 +45,13 @@ const deployFunction = async function ({ getNamedAccounts, deployments, poolConf
     await execute(PoolAccountant, { from: deployer, log: true }, 'init', poolProxy.address)
   }
 
-  // Update pool fee collector and withdraw fee
   await sleep(5000)
-  await execute(poolConfig.contractName, { from: deployer, log: true }, 'updateFeeCollector', setup.feeCollector)
-
-  await sleep(5000)
-  await execute(poolConfig.contractName, { from: deployer, log: true }, 'updateWithdrawFee', setup.withdrawFee)
+  await execute(
+    poolConfig.contractName,
+    { from: deployer, log: true },
+    'updateUniversalFee',
+    poolConfig.setup.universalFee,
+  )
 
   // Prepare id of deployment, next deployment will be triggered if id is changed
   const poolVersion = await read(poolConfig.contractName, {}, 'VERSION')

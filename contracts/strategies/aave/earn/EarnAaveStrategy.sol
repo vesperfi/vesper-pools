@@ -30,13 +30,13 @@ contract EarnAaveStrategy is AaveStrategy, Earn {
     }
 
     function _realizeProfit(uint256 _totalDebt) internal virtual override(Strategy, AaveStrategy) returns (uint256) {
-        _claimRewardsAndConvertTo(address(dripToken));
+        _claimRewardsAndConvertTo(address(collateralToken));
         uint256 _aTokenBalance = aToken.balanceOf(address(this));
         if (_aTokenBalance > _totalDebt) {
             _withdraw(address(collateralToken), address(this), _aTokenBalance - _totalDebt);
         }
-        _convertCollateralToDrip();
-        _forwardEarning();
+        // Any collateral here is profit
+        _handleProfit(collateralToken.balanceOf(address(this)));
         return 0;
     }
 

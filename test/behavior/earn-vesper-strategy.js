@@ -121,7 +121,7 @@ async function shouldBehaveLikeEarnVesperStrategy(strategyIndex) {
 
       it('Should verify that VSP rewards are claimed', async function () {
         // Set VSP reward token
-        await adjustBalance(Address.VSP, strategy.instance.address, ethers.utils.parseUnits('1000'))
+        await adjustBalance(Address.VSP, strategy.instance.address, ethers.utils.parseEther('1000'))
         const vspBalanceBefore = await vspToken.balanceOf(strategy.instance.address)
 
         await rebalanceAndAssert()

@@ -40,9 +40,9 @@ contract EarnVesperStrategy is VesperStrategy, Earn {
         virtual
         override
         returns (
-            uint256 _profit,
-            uint256 _loss,
-            uint256 _payback
+            uint256,
+            uint256,
+            uint256
         )
     {
         uint256 _excessDebt = IVesperPool(pool).excessDebt(address(this));
@@ -51,8 +51,8 @@ contract EarnVesperStrategy is VesperStrategy, Earn {
         _claimRewardsAndConvertTo(address(collateralToken));
         uint256 _investedCollateral = _getCollateralBalance();
         uint256 _collateralHere = collateralToken.balanceOf(address(this));
-
         uint256 _totalCollateral = _investedCollateral + _collateralHere;
+        uint256 _profit;
         if (_totalCollateral > _totalDebt) {
             _profit = _totalCollateral - _totalDebt;
         }
@@ -65,15 +65,12 @@ contract EarnVesperStrategy is VesperStrategy, Earn {
             }
         }
 
-        uint256 _dripAmount = Math.min(_collateralHere, _profit);
-        if (_dripAmount > 0) {
-            _convertCollateralToDrip(_dripAmount);
-            _forwardEarning();
-            _collateralHere = collateralToken.balanceOf(address(this));
-        }
-
+        // Min of available collateral and _profit is actual profit at this point
+        _profit = Math.min(_collateralHere, _profit);
+        _handleProfit(_profit);
+        uint256 _payback;
         if (_excessDebt > 0) {
-            _payback = Math.min(_collateralHere, _excessDebt);
+            _payback = Math.min(collateralToken.balanceOf(address(this)), _excessDebt);
         }
         // Earn always report 0 profit and 0 loss.
         return (0, 0, _payback);

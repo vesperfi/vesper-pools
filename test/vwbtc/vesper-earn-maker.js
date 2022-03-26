@@ -7,7 +7,6 @@ const { strategyConfig } = require('../utils/chains').getChainData()
 
 describe('veWBTC pool EarnVesperMakerStrategyWBTC strategy', function () {
   const strategy = strategyConfig.EarnVesperMakerStrategyWBTC
-  strategy.config.interestFee = 2500
   strategy.config.debtRatio = 9000
   const strategies = [strategy]
   prepareConfig(strategies)

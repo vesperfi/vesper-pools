@@ -17,12 +17,9 @@ contract EarnCrvSBTCPoolStrategy is CrvSBTCPoolStrategy, Earn {
     ) CrvSBTCPoolStrategy(_pool, _swapManager, 1, _name) Earn(_dripToken) {}
 
     function rebalance() external override(Strategy, CrvPoolStrategyBase) onlyKeeper {
-        (uint256 _profit, uint256 _loss, uint256 _payback) = _generateReport();
-        if (_profit > 0) {
-            _convertCollateralToDrip(_profit);
-            _forwardEarning();
-        }
-        IVesperPool(pool).reportEarning(0, _loss, _payback);
+        (uint256 _profit, , uint256 _payback) = _generateReport();
+        _handleProfit(_profit);
+        IVesperPool(pool).reportEarning(0, 0, _payback);
         _reinvest();
         if (!depositError) {
             uint256 _depositLoss = _realizeLoss(IVesperPool(pool).totalDebtOf(address(this)));

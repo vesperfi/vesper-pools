@@ -46,25 +46,6 @@ function shouldBehaveLikeMakerStrategy(strategyIndex) {
         expect(tokensHereAfter).to.be.gt(tokensHere, 'Collateral token in pool should increase')
       })
 
-      describe('Interest fee calculation via Jug Drip', function () {
-        it('Should earn interest fee', async function () {
-          const feeCollector = await strategy.instance.feeCollector()
-          const feeBalanceBefore = await pool.balanceOf(feeCollector)
-          const totalSupplyBefore = await pool.totalSupply()
-          await deposit(pool, collateralToken, 50, user2)
-
-          await rebalanceStrategy(strategy)
-          await timeTravel()
-          await updateRate()
-
-          const feeBalanceAfter = await pool.balanceOf(feeCollector)
-          expect(feeBalanceAfter).to.be.gt(feeBalanceBefore, 'Fee should increase')
-
-          const totalSupplyAfter = await pool.totalSupply()
-          expect(totalSupplyAfter).to.be.gt(totalSupplyBefore, 'Total supply should increase')
-        })
-      })
-
       it('Should increase dai balance on rebalance', async function () {
         await deposit(pool, collateralToken, 40, user2)
         await rebalanceStrategy(strategy)

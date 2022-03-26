@@ -32,51 +32,54 @@ contract EarnVesperMakerStrategy is VesperMakerStrategy, Earn {
         VesperMakerStrategy._claimRewardsAndConvertTo(_toToken);
     }
 
+    /// @dev Maker strategy has DAI as drip token and vaDAI as growPool and vaDAI as receiptToken
+    /// with that being said, growPool and receiptToken are same.
     function _rebalanceDaiInLender() internal override {
-        uint256 _daiDebt = cm.getVaultDebt(address(this));
-
         // DAI balance collected from _claimRewardsAndConvertTo (VSP rewards)
         uint256 _daiFromRewards = IERC20(dripToken).balanceOf(address(this));
 
-        address _dripContract = IVesperPool(pool).poolRewards();
-        address _growPool = IEarnDrip(_dripContract).growToken();
-
-        if (_daiFromRewards != 0) {
+        if (_daiFromRewards > 0) {
             // If we have any spare DAI collected from _claimRewardsAndConvertTo
             // We want to deposit them in vPool
-            IVesperPool(_growPool).deposit(_daiFromRewards);
+            IVesperPool(receiptToken).deposit(_daiFromRewards);
         }
 
-        // DAI balance deposited in vPool
+        // DAI balance deposited in vPool including above deposited amount.
         uint256 _daiBalance = _getDaiBalance();
+        // DAI debt in Maker
+        uint256 _daiDebt = cm.getVaultDebt(address(this));
 
         if (_daiBalance > _daiDebt) {
             // If actual DAI balance in vPool has increased we want to forward this to EarnDrip
             uint256 _daiEarned = _daiBalance - _daiDebt;
             uint256 _vAmount = (_daiEarned * 1e18) / IVesperPool(receiptToken).pricePerShare();
 
-            if (_vAmount != 0) {
-                totalEarned += _daiEarned;
-
-                (, uint256 _interestFee, , , , , , ) = IVesperPool(pool).strategy(address(this));
-                uint256 _growPoolBalance = IERC20(_growPool).balanceOf(address(this));
-                uint256 _growPoolShares = (_vAmount > _growPoolBalance) ? _growPoolBalance : _vAmount;
-                uint256 _fee = (_growPoolShares * _interestFee) / 10000;
-                if (_fee != 0) {
-                    IERC20(_growPool).safeTransfer(feeCollector, _fee);
-                    _growPoolShares = _growPoolShares - _fee;
+            if (_vAmount > 0) {
+                // Get collateral equivalent of _daiEarned
+                (, uint256 _collateralEarned, ) =
+                    swapManager.bestOutputFixedInput(DAI, address(collateralToken), _daiEarned);
+                // Get fee on collateralEarned
+                uint256 _feeInCollateral = IVesperPool(pool).calculateUniversalFee(_collateralEarned);
+                // Get DAI equivalent of _feeInCollateral
+                (, uint256 _feeInDAI, ) =
+                    swapManager.bestInputFixedOutput(DAI, address(collateralToken), _feeInCollateral);
+                totalEarned = totalEarned + _daiEarned - _feeInDAI;
+                // Get fee in vaDAI
+                uint256 _fee = (_feeInDAI * 1e18) / IVesperPool(receiptToken).pricePerShare();
+                if (_fee > 0) {
+                    IERC20(receiptToken).safeTransfer(feeCollector, _fee);
+                    // _vAmount is higher than _fee
+                    _vAmount = _vAmount - _fee;
                 }
-                IERC20(_growPool).safeTransfer(_dripContract, _growPoolShares);
-                IEarnDrip(_dripContract).notifyRewardAmount(_growPool, _growPoolShares, dripPeriod);
+                address _dripContract = IVesperPool(pool).poolRewards();
+                IERC20(receiptToken).safeTransfer(_dripContract, _vAmount);
+                IEarnDrip(_dripContract).notifyRewardAmount(receiptToken, _vAmount, dripPeriod);
             }
         }
     }
 
     /**
-     * @notice Calculate earning and convert it to collateral token
-     * @dev Also claim rewards if available.
-     *      Withdraw excess DAI from lender.
-     *      Swap net earned DAI to collateral token
+     * @dev ClaimRewards and calculate profit. Forward profit, after fee, to EarnDrip.
      * @return profit in collateral token
      */
     function _realizeProfit(
@@ -84,6 +87,6 @@ contract EarnVesperMakerStrategy is VesperMakerStrategy, Earn {
     ) internal virtual override(Strategy, MakerStrategy) returns (uint256) {
         _claimRewardsAndConvertTo(dripToken);
         _rebalanceDaiInLender();
-        return collateralToken.balanceOf(address(this));
+        return 0;
     }
 }

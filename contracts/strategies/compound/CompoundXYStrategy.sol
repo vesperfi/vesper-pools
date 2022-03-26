@@ -90,7 +90,7 @@ abstract contract CompoundXYStrategy is Strategy {
         if (_borrowBalanceHere > _borrowInCompound) {
             uint256 _extraBorrowBalance = _borrowBalanceHere - _borrowInCompound;
             uint256 _recoveryAmount =
-                (_amountToRecover != 0 && _extraBorrowBalance > _amountToRecover)
+                (_amountToRecover > 0 && _extraBorrowBalance > _amountToRecover)
                     ? _amountToRecover
                     : _extraBorrowBalance;
             // Do swap and transfer
@@ -308,7 +308,7 @@ abstract contract CompoundXYStrategy is Strategy {
      */
     function _calculateTotalValue(uint256 _rewardAccrued) internal view virtual returns (uint256 _totalValue) {
         uint256 _rewardAsCollateral;
-        if (_rewardAccrued != 0) {
+        if (_rewardAccrued > 0) {
             (, _rewardAsCollateral, ) = swapManager.bestOutputFixedInput(
                 rewardToken,
                 address(collateralToken),
@@ -353,7 +353,7 @@ abstract contract CompoundXYStrategy is Strategy {
     function _claimRewardsAndConvertTo(address _toToken) internal virtual override {
         _claimRewards();
         uint256 _rewardAmount = IERC20(rewardToken).balanceOf(address(this));
-        if (_rewardAmount != 0) {
+        if (_rewardAmount > 0) {
             _safeSwap(rewardToken, _toToken, _rewardAmount);
         }
     }
@@ -394,7 +394,7 @@ abstract contract CompoundXYStrategy is Strategy {
         }
 
         uint256 _rewardRemaining = IERC20(rewardToken).balanceOf(address(this));
-        if (_rewardRemaining != 0) {
+        if (_rewardRemaining > 0) {
             _safeSwap(rewardToken, address(collateralToken), _rewardRemaining);
         }
 
@@ -411,7 +411,7 @@ abstract contract CompoundXYStrategy is Strategy {
         }
 
         uint256 _totalAmountToWithdraw = _excessDebt + _profitToWithdraw;
-        if (_totalAmountToWithdraw != 0) {
+        if (_totalAmountToWithdraw > 0) {
             uint256 _withdrawn = _withdrawHere(_totalAmountToWithdraw);
             // Any amount withdrawn over _profitToWithdraw is payback for pool
             if (_withdrawn > _profitToWithdraw) {
@@ -443,7 +443,7 @@ abstract contract CompoundXYStrategy is Strategy {
      * @param _shouldClaimComp Flag indicating should we claim rewardToken and convert to collateral or not.
      */
     function _repay(uint256 _repayAmount, bool _shouldClaimComp) internal {
-        if (_repayAmount != 0) {
+        if (_repayAmount > 0) {
             uint256 _borrowBalanceHere = _getBorrowBalance();
             // Liability is more than what we have.
             // To repay loan - convert all rewards to collateral, if asked, and redeem collateral(if needed).
@@ -477,7 +477,7 @@ abstract contract CompoundXYStrategy is Strategy {
         // Looking for _amountIn using fixed output amount
         (address[] memory _path, uint256 _amountIn, uint256 _rIdx) =
             swapManager.bestInputFixedOutput(_from, borrowToken, _shortOnBorrow);
-        if (_amountIn != 0) {
+        if (_amountIn > 0) {
             uint256 _fromBalanceHere = IERC20(_from).balanceOf(address(this));
             // If we do not have enough _from token to get expected output, either get
             // some _from token or adjust expected output.
@@ -513,10 +513,10 @@ abstract contract CompoundXYStrategy is Strategy {
             _repay(_repayAmount, true);
         }
         uint256 _collateralBefore = collateralToken.balanceOf(address(this));
-        _redeemX(_amount);
-        uint256 _collateralAfter = collateralToken.balanceOf(address(this));
 
-        return _collateralAfter - _collateralBefore;
+        uint256 _supply = supplyCToken.balanceOfUnderlying(address(this));
+        _redeemX(_supply > _amount ? _amount : _supply);
+        return collateralToken.balanceOf(address(this)) - _collateralBefore;
     }
 
     function _getBorrowToken(address _cToken) private view returns (address) {
@@ -548,7 +548,7 @@ abstract contract CompoundXYStrategy is Strategy {
      * _mintX and _redeemX functions and handle wrap/unwrap of WETH.
      */
     function _mintX(uint256 _amount) internal virtual {
-        if (_amount != 0) {
+        if (_amount > 0) {
             require(supplyCToken.mint(_amount) == 0, "supply-to-compound-failed");
         }
     }
@@ -559,7 +559,7 @@ abstract contract CompoundXYStrategy is Strategy {
 
     /// @dev BorrowToken can be updated at run time and if it is WETH then wrap borrowed ETH into WETH
     function _borrowY(uint256 _amount) internal {
-        if (_amount != 0) {
+        if (_amount > 0) {
             require(borrowCToken.borrow(_amount) == 0, "borrow-from-compound-failed");
             if (borrowToken == WETH) {
                 TokenLike(WETH).deposit{value: address(this).balance}();
@@ -579,21 +579,17 @@ abstract contract CompoundXYStrategy is Strategy {
         }
     }
 
-    /// @dev Hook that executes after borrowing collateral
-    /// solhint-disable-next-line no-empty-blocks
+    /* solhint-disable no-empty-blocks */
+    /// @dev Hook that executes after borrowing collateral=
     function _afterBorrowY(uint256 _amount) internal virtual {}
 
     /// @dev Hook that executes before repaying borrowed collateral
-    /// solhint-disable-next-line no-empty-blocks
     function _beforeRepayY(uint256 _amount) internal virtual {}
 
     /// @dev Hook to handle when actual borrowed balance is > compound borrow account
-    /// solhint-disable-next-line no-empty-blocks
     function _rebalanceBorrow(uint256 _excessBorrow) internal virtual {}
 
     //////////////////////////////////////////////////////////////////////////////
-
-    /* solhint-disable no-empty-blocks */
 
     // We overridden _generateReport which eliminates need of below function.
     function _liquidate(uint256 _excessDebt) internal override returns (uint256 _payback) {}

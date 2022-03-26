@@ -1,9 +1,8 @@
 'use strict'
 
 const Address = require('./address')
-const setup = { feeCollector: Address.FEE_COLLECTOR, withdrawFee: 60 }
+const setup = { universalFee: 200 }
 
-// VFR pools do not need have PoolRewards contract hence no rewards object should not set for VFR pools
 const rewards = { contract: 'PoolRewards', tokens: [Address.VSP] }
 // Earn pool will have extra data in 'rewards' object. Below is default value for 'rewards' object for Earn pools
 const earnRewards = { contract: 'VesperEarnDrip', tokens: [Address.vaDAI, Address.VSP], growToken: Address.vaDAI }
@@ -84,13 +83,13 @@ const PoolConfig = {
   VEDAI_SHIB: {
     contractName: 'VPool',
     poolParams: ['veDAI-SHIB Earn Pool', 'veDAI-SHIB', Address.DAI],
-    setup: { ...setup, withdrawFee: 0 },
+    setup: { ...setup },
     rewards: { contract: 'VesperEarnDrip', tokens: [Address.SHIB, Address.VSP] },
   },
   VEDAI_PUNK: {
     contractName: 'VPool',
     poolParams: ['veDAI-PUNK Earn Pool', 'veDAI-PUNK', Address.DAI],
-    setup: { ...setup, withdrawFee: 0 },
+    setup: { ...setup },
     rewards: { contract: 'VesperEarnDrip', tokens: [Address.PUNK, Address.VSP] },
   },
   VLINK: {
@@ -146,20 +145,6 @@ const PoolConfig = {
     poolParams: ['vaALUSD Pool', 'vaALUSD', Address.ALUSD],
     setup: { ...setup },
     rewards: { ...rewards },
-  },
-  VFRDAI: {
-    Coverage: {
-      contractName: 'VFRPool',
-      deploymentName: 'VFRCoverageDAI',
-      poolParams: ['vfrcDAI Pool', 'vfrcDAI', Address.DAI],
-      setup: { ...setup },
-    },
-    Stable: {
-      contractName: 'VFRStablePool',
-      deploymentName: 'VFRStableDAI',
-      poolParams: ['vfrsDAI Pool', 'vfrsDAI', Address.DAI],
-      setup: { ...setup },
-    },
   },
   VADPI: {
     contractName: 'VPool',

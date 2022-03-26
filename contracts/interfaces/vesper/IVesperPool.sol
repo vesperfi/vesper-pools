@@ -4,6 +4,8 @@ pragma solidity 0.8.3;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 interface IVesperPool is IERC20 {
+    function calculateUniversalFee(uint256 _profit) external view returns (uint256 _fee);
+
     function deposit() external payable;
 
     function deposit(uint256 _share) external;
@@ -52,8 +54,6 @@ interface IVesperPool is IERC20 {
 
     function isMaintainer(address _address) external view returns (bool);
 
-    function feeCollector() external view returns (address);
-
     function pricePerShare() external view returns (uint256);
 
     function strategy(address _strategy)
@@ -61,13 +61,14 @@ interface IVesperPool is IERC20 {
         view
         returns (
             bool _active,
-            uint256 _interestFee,
+            uint256 interestFeeObsolete,
             uint256 _debtRate,
             uint256 _lastRebalance,
             uint256 _totalDebt,
             uint256 _totalLoss,
             uint256 _totalProfit,
-            uint256 _debtRatio
+            uint256 _debtRatio,
+            uint256 _externalDepositFee
         );
 
     function stopEverything() external view returns (bool);
@@ -79,8 +80,6 @@ interface IVesperPool is IERC20 {
     function totalDebtOf(address _strategy) external view returns (uint256);
 
     function totalValue() external view returns (uint256);
-
-    function withdrawFee() external view returns (uint256);
 
     // Function to get pricePerShare from V2 pools
     function getPricePerShare() external view returns (uint256);

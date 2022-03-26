@@ -58,7 +58,7 @@ function validateStrategyConfig(strategyName, strategyConfig) {
   // Validate top level properties in config object
   validateObject(strategyConfig, topLevelKeys)
   // Validate Strategy config. It will be added in PoolAccountant
-  const configKeys = ['interestFee', 'debtRatio', 'debtRate']
+  const configKeys = ['debtRatio', 'debtRate']
   validateObject(strategyConfig.config, configKeys)
   // Validate constructor args
   validateObject(strategyConfig.constructorArgs, getConstructorArgKeys(strategyName))
