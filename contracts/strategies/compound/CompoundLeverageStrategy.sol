@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GNU LGPLv3
 // Heavily inspired from CompoundLeverage strategy of Yearn. https://etherscan.io/address/0x4031afd3B0F71Bace9181E554A9E680Ee4AbE7dF#code
 
-pragma solidity 0.8.3;
+pragma solidity 0.8.9;
 
 import "../Strategy.sol";
 import "../../interfaces/compound/ICompound.sol";

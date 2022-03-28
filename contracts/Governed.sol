@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.3;
+pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
@@ -42,7 +42,7 @@ contract Governed is Context, Initializable {
     /**
      * @dev Throws if called by any account other than the governor.
      */
-    modifier onlyGovernor {
+    modifier onlyGovernor() {
         require(governor == _msgSender(), "not-the-governor");
         _;
     }

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.3;
+pragma solidity 0.8.9;
 
 import "../AaveStrategy.sol";
 import "../../Earn.sol";

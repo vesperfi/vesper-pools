@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 /* solhint-disable */
-pragma solidity 0.8.3;
+pragma solidity 0.8.9;
 
 interface IDeposit4x {
     function add_liquidity(uint256[4] memory _amounts, uint256 _min_mint_amount) external;
