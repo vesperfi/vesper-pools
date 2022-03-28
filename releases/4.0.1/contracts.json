@@ -351,6 +351,23 @@
           "RariFuseStrategyETH": "0x67893865686C22f0a243114B0893De65117d2f3b",
           "VesperMakerStrategyETH": "0xc5cdf8cbe886fc5c1ef5cd4fdd599c975ec6bb54"
         }
+      },
+      "vaape": {
+        "pool": {
+          "proxy": "0xA5Bc6eB0A7E6738e2F2Ac6c92280b32771aC52Ad",
+          "implementation": "0x9852C6cbc226F328Db41FF27dFfFb42e408d86DC",
+          "poolAccountant": {
+            "proxy": "0x88dF6adBecDFB7A58cB4C27f59eee1bDF7d113Dd",
+            "implementation": "0x39450c358b499caec553d15d6588cC186DC4DE19"
+          }
+        },
+        "poolRewards": {
+          "proxy": "0x41f4e1Fdafecc84c13488d6DBC1C623fffF73EAc",
+          "implementation": "0xa163dc188e14c3B3c8f3FBa6F4351Ea5147ad9aC"
+        },
+        "strategies": {
+          "RariFuseStrategyAPE#127": "0xb436d8a2e3e23aF57040B2dA8E01463c818e0999"
+        }
       }
     },
     "polygon": {
