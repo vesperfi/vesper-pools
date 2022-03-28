@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.3;
+pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
@@ -49,7 +49,7 @@ abstract contract Strategy is IStrategy, Context {
         require(_keepers.add(_msgSender()), "add-keeper-failed");
     }
 
-    modifier onlyGovernor {
+    modifier onlyGovernor() {
         require(_msgSender() == IVesperPool(pool).governor(), "caller-is-not-the-governor");
         _;
     }

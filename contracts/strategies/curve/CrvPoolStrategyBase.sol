@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.3;
+pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -248,7 +248,7 @@ abstract contract CrvPoolStrategyBase is CrvBase, Strategy {
     }
 
     /**
-     * @notice some strategy may want to prepare before doing migration. 
+     * @notice some strategy may want to prepare before doing migration.
         Example In Maker old strategy want to give vault ownership to new strategy
      */
     function _beforeMigration(

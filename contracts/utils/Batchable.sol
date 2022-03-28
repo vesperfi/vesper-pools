@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.3;
+pragma solidity 0.8.9;
 
 /// @dev Based on https://github.com/boringcrypto/BoringSolidity/blob/master/contracts/BoringBatchable.sol
 /// @dev WARNING!!! Combining Batchable with `msg.value` can cause double spending issues

@@ -69,7 +69,7 @@
     "patch-package": "^6.4.7",
     "prettier-plugin-solidity": "1.0.0-beta.10",
     "recursive-copy": "^2.0.13",
-    "solc": "0.8.3",
+    "solc": "0.8.9",
     "solhint": "^3.3.5",
     "solhint-plugin-prettier": "0.0.5",
     "solidity-coverage": "^0.7.16"
