@@ -5,6 +5,7 @@ on:
       - "test/vaApe/rari-fuse.js"
       - "contracts/strategies/Strategy.sol"
       - "contracts/strategies/compound/CompoundStrategy.sol"
+      - "contracts/strategies/rari-fuse/RariCore.sol"
       - "contracts/strategies/rari-fuse/RariFuseStrategy.sol"
       - "contracts/strategies/rari-fuse/RariFuseStrategyAPE.sol"
 
