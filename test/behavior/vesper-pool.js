@@ -21,6 +21,7 @@ const { ethers } = require('hardhat')
 const { advanceBlock } = require('../utils/time')
 const { getChain } = require('../utils/chains')
 const StrategyType = require('../utils/strategyTypes')
+const { adjustBalance } = require('../utils/balance')
 const { ANY_ERC20, NATIVE_TOKEN, FRAX, VSP } = require(`../../helper/${getChain()}/address`)
 
 const DECIMAL18 = ethers.utils.parseEther('1')
@@ -340,7 +341,12 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
       beforeEach(async function () {
         // Set external deposit fee to 0 for curve strategies
         await accountant.updateExternalDepositFee(strategies[0].instance.address, '0')
-        await deposit(30, user1)
+
+        // TODO this is temporary, update poolOps.js deposit to always use adjustBalance library
+        const depositAmount = ethers.utils.parseUnits('30', collateralDecimal)
+        await adjustBalance(collateralToken.address, user1.address, depositAmount)
+        await collateralToken.connect(user1.signer).approve(pool.address, depositAmount)
+        await pool.connect(user1.signer).deposit(depositAmount)
         blocksPerYear = await pool.BLOCKS_PER_YEAR()
         universalFee = await pool.universalFee()
       })
