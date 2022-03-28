@@ -56,6 +56,11 @@ library RariCore {
         // Low level static call to prevent revert in case the Comptroller doesn't have
         // rewardsDistributors function exposed
         // which may happen to older Fuse Pools
+        uint256 _comptrollerSize;
+        assembly {
+            _comptrollerSize := extcodesize(_comptroller)
+        }
+        require(_comptrollerSize > 0, "comptroller-not-a-contract");
 
         assembly {
             let x := mload(0x40) // Find empty storage location using "free memory pointer"
