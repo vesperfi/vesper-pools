@@ -19,9 +19,12 @@ const slots = {
   [Address.ALUSD]: 1,
   [Address.LINK]: 1,
   [Address.VSP]: 0,
-  '0x5d3a536E4D6DbD6114cc1Ead35777bAB948E3643': 14, // cDAI
-  '0xc00e94Cb662C3520282E6f5717214004A7f26888': 1, // COMP
+  [Address.Compound.cDAI]: 14,
+  [Address.Compound.COMP]: 1,
+
+  // Avalanche addresses
   [AvalancheAddress.DAI]: 0,
+  [AvalancheAddress.WBTC]: 0,
 }
 
 /**
