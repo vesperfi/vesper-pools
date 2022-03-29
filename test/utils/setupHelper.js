@@ -8,6 +8,7 @@ const ethers = hre.ethers
 const provider = hre.waffle.provider
 const { smock } = require('@defi-wonderland/smock')
 const StrategyType = require('./strategyTypes')
+const { adjustBalance } = require('./balance')
 const chainData = require('./chains').getChainData()
 const Address = chainData.address
 hre.address = Address
@@ -105,12 +106,20 @@ async function addStrategies(obj) {
   }
 }
 
-async function setupVDAIPool() {
-  const vDAI = chainData.poolConfig.VDAI
-  const vPool = await deployContract(vDAI.contractName, vDAI.poolParams)
+/**
+ * Setups a local Vesper Pool for strategies that use it as underlying
+ *
+ * @param {string} collateralToken Address of collateralToken
+ * @returns {object} Pool Contract instance
+ */
+async function setupVesperPool(collateralToken = Address.DAI) {
+  const token = await ethers.getContractAt('IERC20Metadata', collateralToken)
+  const tokenName = await token.symbol()
+  const poolParams = [`v${tokenName} Pool`, `v${tokenName}`, collateralToken]
+  const vPool = await deployContract('VPool', poolParams)
   const accountant = await deployContract('PoolAccountant')
   await accountant.init(vPool.address)
-  await vPool.initialize(...vDAI.poolParams, accountant.address)
+  await vPool.initialize(...poolParams, accountant.address)
   return vPool
 }
 
@@ -128,7 +137,7 @@ async function setupEarnDrip(obj, options) {
     if (strategy.type.toUpperCase().includes('EARN')) {
       let growPool
       if (strategy.type === 'earnVesperMaker') {
-        growPool = await setupVDAIPool()
+        growPool = await setupVesperPool()
       } else {
         growPool = options.growPool ? options.growPool : { address: ethers.constants.AddressZero }
       }
@@ -192,7 +201,7 @@ async function createVesperMakerStrategy(strategy, poolAddress, options) {
   }
   // For VesperMaker if no vPool and then deploy one vDAI pool
   if (!options.vPool) {
-    options.vPool = await setupVDAIPool()
+    options.vPool = await setupVesperPool()
   }
   // For test purpose we will not use receiptToken defined in config. Update vPool in config
   strategy.constructorArgs.receiptToken = options.vPool.address
@@ -226,7 +235,7 @@ async function createVesperMakerStrategy(strategy, poolAddress, options) {
  * @returns {object} Strategy instance
  */
 async function createVesperCompoundXYStrategy(strategy, poolAddress, options) {
-  options.vPool = await setupVDAIPool()
+  options.vPool = await setupVesperPool()
 
   strategy.constructorArgs.vPool = options.vPool.address
 
@@ -236,6 +245,46 @@ async function createVesperCompoundXYStrategy(strategy, poolAddress, options) {
   ])
 
   await executeIfExist(options.vPool.addToFeeWhitelist, strategyInstance.address)
+
+  return strategyInstance
+}
+
+/**
+ * Create and configure a EarnVesper Strategy.
+ * Using an up-to-date underlying vPool and VSP rewards enabled
+ *
+ * @param {object} strategy  Strategy config object
+ * @param {object} poolAddress pool address
+ * @param {object} options extra params
+ * @returns {object} Strategy instance
+ */
+async function createEarnVesperStrategy(strategy, poolAddress, options) {
+  const underlyingVesperPool = await ethers.getContractAt('IVesperPool', strategy.constructorArgs.receiptToken)
+  const collateralToken = await underlyingVesperPool.token()
+
+  options.vPool = await setupVesperPool(collateralToken)
+
+  const TOTAL_REWARD = ethers.utils.parseUnits('150000')
+  const REWARD_DURATION = 30 * 24 * 60 * 60
+
+  const vPoolRewards = await deployContract('PoolRewards', [])
+  const rewardTokens = [Address.VSP]
+  await vPoolRewards.initialize(poolAddress, rewardTokens)
+  await options.vPool.updatePoolRewards(vPoolRewards.address)
+
+  const vsp = await ethers.getContractAt('IVSP', Address.VSP)
+
+  await adjustBalance(Address.VSP, vPoolRewards.address, TOTAL_REWARD)
+
+  const notifyMultiSignature = 'notifyRewardAmount(address[],uint256[],uint256[])'
+  await vPoolRewards[`${notifyMultiSignature}`]([vsp.address], [TOTAL_REWARD], [REWARD_DURATION])
+
+  strategy.constructorArgs.receiptToken = options.vPool.address
+
+  const strategyInstance = await deployContract(strategy.contract, [
+    poolAddress,
+    ...Object.values(strategy.constructorArgs),
+  ])
 
   return strategyInstance
 }
@@ -254,6 +303,8 @@ async function createStrategy(strategy, poolAddress, options = {}) {
     instance = await createVesperMakerStrategy(strategy, poolAddress, options)
   } else if (strategyType === StrategyType.VESPER_COMPOUND_XY) {
     instance = await createVesperCompoundXYStrategy(strategy, poolAddress, options)
+  } else if (strategyType === StrategyType.EARN_VESPER) {
+    instance = await createEarnVesperStrategy(strategy, poolAddress, options)
   } else {
     instance = await deployContract(strategy.contract, [poolAddress, ...Object.values(strategy.constructorArgs)])
   }
@@ -286,11 +337,15 @@ async function createStrategy(strategy, poolAddress, options = {}) {
     if (strategyTokenName === IVesperPool) {
       // If Vesper strategy is using the pool already deployed on mainnet for tests
       // then there is high chance that the pool supports feeWhitelist so that into account
-
       // Mock feeWhitelist to withdraw without fee in case of Earn Vesper strategies
-      const mock = await smock.fake('IAddressList', { address: await getIfExist(strategy.token.feeWhitelist) })
-      // Pretend any address is whitelisted for withdraw without fee
-      mock.contains.returns(true)
+      try {
+        const mock = await smock.fake('IAddressList', { address: await getIfExist(strategy.token.feeWhitelist) })
+        // Pretend any address is whitelisted for withdraw without fee
+        mock.contains.returns(true)
+      } catch (e) {
+        // Newer pools don't have feeWhitelist,
+        // Even if the interface has feeWhitelist, mocking will fail in that case
+      }
     }
   }
   // Earn strategies require call to approveGrowToken

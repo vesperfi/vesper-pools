@@ -60,7 +60,7 @@ contract EarnVesperStrategy is VesperStrategy, Earn {
         if (_collateralHere < _profitAndExcessDebt) {
             uint256 _totalAmountToWithdraw = Math.min((_profitAndExcessDebt - _collateralHere), _investedCollateral);
             if (_totalAmountToWithdraw > 0) {
-                vToken.whitelistedWithdraw(_convertToShares(_totalAmountToWithdraw));
+                vToken.withdraw(_convertToShares(_totalAmountToWithdraw));
                 _collateralHere = collateralToken.balanceOf(address(this));
             }
         }

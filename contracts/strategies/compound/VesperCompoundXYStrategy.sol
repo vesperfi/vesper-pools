@@ -4,6 +4,7 @@ pragma solidity 0.8.9;
 
 import "./CompoundXYStrategy.sol";
 import "../../interfaces/vesper/IVesperPool.sol";
+import "../../interfaces/vesper/IPoolRewards.sol";
 
 // solhint-disable no-empty-blocks
 /// @title Deposit Collateral in Compound and earn interest by depositing borrowed token in a Vesper Pool.
@@ -67,7 +68,7 @@ contract VesperCompoundXYStrategy is CompoundXYStrategy {
 
         uint256 _maxShares = IERC20(vPool).balanceOf(address(this));
 
-        IVesperPool(vPool).whitelistedWithdraw(_shares > _maxShares ? _maxShares : _shares);
+        IVesperPool(vPool).withdraw(_shares > _maxShares ? _maxShares : _shares);
     }
 
     /// @notice After borrowing Y, deposit to Vesper Pool
@@ -100,9 +101,13 @@ contract VesperCompoundXYStrategy is CompoundXYStrategy {
 
     function _claimRewardsAndConvertTo(address _toToken) internal override {
         super._claimRewardsAndConvertTo(_toToken);
-        uint256 _vspAmount = IERC20(vsp).balanceOf(address(this));
-        if (_vspAmount > 0) {
-            _safeSwap(vsp, _toToken, _vspAmount, 1);
+        address _poolRewards = IVesperPool(vPool).poolRewards();
+        if (_poolRewards != address(0)) {
+            IPoolRewards(_poolRewards).claimReward(address(this));
+            uint256 _vspAmount = IERC20(vsp).balanceOf(address(this));
+            if (_vspAmount != 0) {
+                _safeSwap(vsp, _toToken, _vspAmount, 1);
+            }
         }
     }
 }
