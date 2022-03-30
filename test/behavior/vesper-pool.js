@@ -342,11 +342,15 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
         // Set external deposit fee to 0 for curve strategies
         await accountant.updateExternalDepositFee(strategies[0].instance.address, '0')
 
-        // TODO this is temporary, update poolOps.js deposit to always use adjustBalance library
-        const depositAmount = ethers.utils.parseUnits('30', collateralDecimal)
-        await adjustBalance(collateralToken.address, user1.address, depositAmount)
-        await collateralToken.connect(user1.signer).approve(pool.address, depositAmount)
-        await pool.connect(user1.signer).deposit(depositAmount)
+        if (collateralToken.address === NATIVE_TOKEN) {
+          await deposit(30, user1)
+        } else {
+          // TODO this is temporary, update poolOps.js deposit to always use adjustBalance library
+          const depositAmount = ethers.utils.parseUnits('30', collateralDecimal)
+          await adjustBalance(collateralToken.address, user1.address, depositAmount)
+          await collateralToken.connect(user1.signer).approve(pool.address, depositAmount)
+          await pool.connect(user1.signer).deposit(depositAmount)
+        }
         blocksPerYear = await pool.BLOCKS_PER_YEAR()
         universalFee = await pool.universalFee()
       })

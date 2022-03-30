@@ -6,7 +6,6 @@ const provider = hre.waffle.provider
 const { BigNumber } = require('ethers')
 const { depositTokenToAave, depositTokenToCompound } = require('./market')
 const DECIMAL = BigNumber.from('1000000000000000000')
-const StrategyType = require('../utils/strategyTypes')
 const { parseEther } = require('@ethersproject/units')
 const { adjustBalance } = require('./balance')
 const { getChain } = require('../utils/chains')
@@ -89,9 +88,9 @@ async function timeTravel(
 async function bringAboveWater(strategy, amount) {
   if (strategy.instance.isUnderwater !== undefined && (await strategy.instance.isUnderwater())) {
     // deposit some amount in aave/compound to bring it above water.
-    if (strategy.type === StrategyType.AAVE_MAKER) {
+    if (strategy.contract.includes('AaveMaker')) {
       await depositTokenToAave(amount, DAI, strategy.instance.address)
-    } else if (strategy.type === StrategyType.COMPOUND_MAKER) {
+    } else if (strategy.contract.includes('CompoundMaker')) {
       await depositTokenToCompound(amount, DAI, strategy.instance.address)
     }
     const lowWater = await strategy.instance.isUnderwater()
