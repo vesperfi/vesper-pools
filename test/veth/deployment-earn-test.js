@@ -7,7 +7,7 @@ const DECIMAL18 = BN.from('1000000000000000000')
 const ONE_MILLION = DECIMAL18.mul('1000000')
 const { ethers } = require('hardhat')
 const poolConfig = require('../../helper/mainnet/poolConfig').VEETH_DAI
-describe('veETH-DAI Pool', function () {
+xdescribe('veETH-DAI Pool', function () {
   const interestFee = '1500' // 15%
   const feeCollector = '0x223809E09ec28C28219769C3FF05c790c213152C'
 

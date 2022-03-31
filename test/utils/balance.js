@@ -22,11 +22,16 @@ const slots = {
   [Address.DPI]: 0,
   [Address.Compound.cDAI]: 14,
   [Address.Compound.COMP]: 1,
+  [Address.FEI]: 0,
+  [Address.FRAX]: 0,
+  [Address.APE]: 0,
+  [Address.MUSD]: 51,
 
   // Avalanche addresses
   [AvalancheAddress.DAI]: 0,
   [AvalancheAddress.USDC]: 0,
   [AvalancheAddress.WBTC]: 0,
+  [AvalancheAddress.WETH]: 0,
 }
 
 /**

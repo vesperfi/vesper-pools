@@ -1,9 +1,10 @@
 'use strict'
 const fs = require('fs')
 const path = require('path')
+const network = require('./network')
 
 function getChain() {
-  const chain = process.env.TEST_CHAIN ? process.env.TEST_CHAIN : 'mainnet'
+  const chain = process.env.TEST_CHAIN ? process.env.TEST_CHAIN : network.MAINNET
   const supported = fs.readdirSync(path.join(__dirname, '../../helper'))
   if (!supported.includes(chain)) {
     throw Error(`Unexpected process.env.TEST_CHAIN=${chain}. Use: [${supported}]`)

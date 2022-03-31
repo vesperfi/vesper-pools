@@ -15,6 +15,12 @@ describe('Pool accountant proxy', function () {
 
   const strategyConfig = {
     name: 'AaveStrategyDAI',
+    contract: 'AaveStrategy',
+    constructorArgs: {
+      swapManager: Address.Vesper.SWAP_MANAGER,
+      receiptToken: Address.Aave.aDAI,
+      strategyName: 'AaveStrategyDAI',
+    },
     type: StrategyType.AAVE,
     config: { debtRatio: 9000, debtRate: oneMillion, externalDepositFee: 500 },
   }
