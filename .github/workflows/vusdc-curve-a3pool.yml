@@ -1,4 +1,4 @@
-name: vDAI with Curve a3Pool
+name: vUSDC with Curve a3Pool
 on:
   pull_request:
     paths:
@@ -32,4 +32,4 @@ jobs:
         run: npm install
 
       - name: Running tests for vDAI with Curve 3Pool
-        run: npm test "test/vdai/crv-a3pool.js"
+        run: npm test "test/vusdc/crv-a3pool.js"

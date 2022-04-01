@@ -64,7 +64,7 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
         const depositAmount = await deposit(10, user1)
 
         const externalDepositFee = await accountant.externalDepositFee()
-        let expectedShares = depositAmount
+        let expectedShares = depositAmount.mul(10 ** (18 - collateralDecimal))
         if (externalDepositFee.gt(0)) {
           const amountAfterFee = depositAmount.sub(depositAmount.mul(externalDepositFee).div('10000'))
           expectedShares = amountAfterFee.mul(ethers.utils.parseEther('1')).div(pricePerShareBefore)
@@ -72,9 +72,9 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
           expect(pricePerShareAfter).to.gt(pricePerShareBefore, 'Price per share should increase')
         }
 
-        const totalSupply = await pool.convertFrom18(await pool.totalSupply())
+        const totalSupply = await pool.totalSupply()
         const totalValue = await pool.totalValue()
-        const vPoolBalance = await pool.convertFrom18(await pool.balanceOf(user1.address))
+        const vPoolBalance = await pool.balanceOf(user1.address)
 
         expect(vPoolBalance).to.be.equal(expectedShares, `${poolName} balance of user is wrong`)
         expect(totalSupply).to.be.equal(vPoolBalance, `Total supply of ${poolName} is wrong`)
@@ -389,7 +389,7 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
       } else {
         it('Should collect universal fee on rebalance', async function () {
           const feeCollector = await unlock(strategies[0].feeCollector)
-          const mineBlocks = 100
+          const mineBlocks = 500
           await rebalanceStrategy(strategies[0])
 
           await advanceBlock(mineBlocks)
@@ -416,7 +416,8 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
           await pool.connect(strategySigner).reportEarning(0, 0, 0)
           // Using higher blocks here for WBTC strategies
           await advanceBlock(500)
-
+          // set universal fee super high.
+          await pool.updateUniversalFee('5000')
           // Manual and force report earning with 1000 as profit
           const profit = 1000 // wei
           // This will trigger fee calculation

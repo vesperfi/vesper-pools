@@ -72,6 +72,28 @@ const StrategyConfig = {
     config: { ...config }, // Shallow copy
     setup: { ...setup },
   },
+  CrvA3PoolStrategyDAI: {
+    contract: 'CrvA3PoolAvaxStrategy',
+    type: StrategyTypes.CURVE,
+    constructorArgs: {
+      swapManager,
+      collateralIdx: 0,
+      strategyName: 'CrvA3PoolStrategyDAI',
+    },
+    config: { ...config, externalDepositFee: 100 },
+    setup: { ...setup },
+  },
+  CrvA3PoolStrategyUSDC: {
+    contract: 'CrvA3PoolAvaxStrategy',
+    type: StrategyTypes.CURVE,
+    constructorArgs: {
+      swapManager,
+      collateralIdx: 1,
+      strategyName: 'CrvA3PoolStrategyUSDC',
+    },
+    config: { ...config, externalDepositFee: 100 },
+    setup: { ...setup },
+  },
   TraderJoeCompoundStrategyAvalancheUSDC: {
     contract: 'CompoundMultiRewardAvalancheStrategy',
     type: StrategyTypes.TRADER_JOE,
