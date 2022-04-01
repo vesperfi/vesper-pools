@@ -24,6 +24,7 @@ const slots = {
 
   // Avalanche addresses
   [AvalancheAddress.DAI]: 0,
+  [AvalancheAddress.USDC]: 0,
   [AvalancheAddress.WBTC]: 0,
 }
 

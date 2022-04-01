@@ -881,7 +881,17 @@ const StrategyConfig = {
     config: { ...config, externalDepositFee: 100 },
     setup: { ...setup },
   },
-
+  CrvA3PoolStrategyUSDC: {
+    contract: 'CrvA3PoolStrategy',
+    type: StrategyTypes.CURVE,
+    constructorArgs: {
+      swapManager,
+      collateralIdx: 1,
+      strategyName: 'CrvA3PoolStrategyUSDC',
+    },
+    config: { ...config, externalDepositFee: 100 },
+    setup: { ...setup },
+  },
   AaveMakerStrategyETH: {
     contract: 'AaveMakerStrategy',
     type: StrategyTypes.AAVE_MAKER,
