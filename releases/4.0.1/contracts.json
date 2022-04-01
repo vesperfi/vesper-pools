@@ -86,6 +86,7 @@
         },
         "strategies": {
           "AaveStrategyAvalancheUSDC": "0x718E58C448116FE7315caEE135b12793AFc4FDf4",
+          "TraderJoeCompoundLeverageStrategyAvalancheUSDC": "0x24dD3687C21Ac6295DC6dC7F173267CA89860068",
           "TraderJoeCompoundStrategyAvalancheUSDC": "0xe25d8F3F659E2a44602eC91538F9818793fd844F"
         }
       }
