@@ -19,6 +19,7 @@ const slots = {
   [Address.ALUSD]: 1,
   [Address.LINK]: 1,
   [Address.VSP]: 0,
+  [Address.DPI]: 0,
   [Address.Compound.cDAI]: 14,
   [Address.Compound.COMP]: 1,
 

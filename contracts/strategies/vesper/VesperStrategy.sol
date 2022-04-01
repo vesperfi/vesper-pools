@@ -2,6 +2,7 @@
 
 pragma solidity 0.8.9;
 import "../../interfaces/vesper/IVesperPool.sol";
+import "../../interfaces/vesper/IPoolRewards.sol";
 import "../Strategy.sol";
 
 /// @title This Strategy will deposit collateral token in a Vesper Grow Pool
@@ -79,9 +80,13 @@ abstract contract VesperStrategy is Strategy {
 
     /// @notice Claim VSP rewards in underlying Grow Pool, if any
     function _claimRewardsAndConvertTo(address _toToken) internal virtual override {
-        uint256 _vspAmount = IERC20(vsp).balanceOf(address(this));
-        if (_vspAmount != 0) {
-            _safeSwap(vsp, _toToken, _vspAmount, 1);
+        address _poolRewards = vToken.poolRewards();
+        if (_poolRewards != address(0)) {
+            IPoolRewards(_poolRewards).claimReward(address(this));
+            uint256 _vspAmount = IERC20(vsp).balanceOf(address(this));
+            if (_vspAmount != 0) {
+                _safeSwap(vsp, _toToken, _vspAmount, 1);
+            }
         }
     }
 
@@ -125,7 +130,7 @@ abstract contract VesperStrategy is Strategy {
     /// @dev Withdraw collateral here. Do not transfer to pool
     function _withdrawHere(uint256 _amount) internal returns (uint256) {
         uint256 _collateralBefore = collateralToken.balanceOf(address(this));
-        vToken.whitelistedWithdraw(_convertToShares(_amount));
+        vToken.withdraw(_convertToShares(_amount));
         return collateralToken.balanceOf(address(this)) - _collateralBefore;
     }
 
