@@ -14,5 +14,7 @@
   "TraderJoeCompoundStrategyAvalancheUSDC-v4.0.0": 1644524429,
   "TraderJoeCompoundStrategyAvalancheWBTC-v4.0.0": 1644535729,
   "TraderJoeCompoundStrategyAvalancheWETH-v4.0.0": 1644584047,
-  "TraderJoeCompoundStrategyAvalancheAVAX-v4.0.0": 1644584871
+  "TraderJoeCompoundStrategyAvalancheAVAX-v4.0.0": 1644584871,
+  "BenqiCompoundLeverageStrategyAvalancheWBTC-v4.0.0": 1648836502,
+  "BenqiCompoundLeverageStrategyAvalancheWETH-v4.0.0": 1648836750
 }
