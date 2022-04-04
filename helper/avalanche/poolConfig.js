@@ -25,7 +25,7 @@ const PoolConfig = {
     rewards: { contract: 'PoolRewards', tokens: [] }, // no rewards
   },
   VAAVAX: {
-    contractName: 'VPool',
+    contractName: 'VETH',
     poolParams: ['vaAVAX Pool', 'vaAVAX', Address.NATIVE_TOKEN],
     setup: { ...setup }, // Shallow copy
     rewards: { contract: 'PoolRewards', tokens: [] }, // no rewards
