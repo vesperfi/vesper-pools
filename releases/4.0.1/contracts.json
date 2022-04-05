@@ -43,17 +43,16 @@
       "vaavax": {
         "pool": {
           "proxyAdmin": "0xd9A5df2877a42460E9055C4134946668dfcf51f8",
-          "proxy": "0x148a829492bEc827FE9638c690Ee6A71De6f1736",
-          "implementation": "0xd208121e66d017806a6f4Ec5f3Cc2CA1e887c70C",
+          "proxy": "0xEa94eBB08E9604AFD225f2c61fa61401F1ed1047",
+          "implementation": "0x27E6111A9b2c43a7a5F57B2e003372c5d0d9073B",
           "poolAccountant": {
             "proxyAdmin": "0xd9A5df2877a42460E9055C4134946668dfcf51f8",
-            "proxy": "0x3Ad8cA4b9c651D75368812F6a0F3F18282381c28",
-            "implementation": "0xcE9053Ee524dCB628e1bC387fC6e341611eD1AF2"
+            "proxy": "0x3cd21EBAAf08c1D04F2943C6BCB1759018b95Fc6",
+            "implementation": "0x7752a4db11f1808439EA0e0B47D7572D16fEcc8d"
           }
         },
         "strategies": {
-          "AaveStrategyAvalancheAVAX": "0xef9a768880b4996cddB8C24a26F4b00d6e8ed35E",
-          "TraderJoeCompoundStrategyAvalancheAVAX": "0xf4BB5824F3e5b6314e1c0A8BE60c733B3dB53786"
+          "TraderJoeCompoundStrategyAvalancheAVAX": "0x53eb2fA63d587493399C44A2DffC6Ac9E213d50c"
         }
       },
       "vawbtc": {
