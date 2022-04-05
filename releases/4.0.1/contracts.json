@@ -36,6 +36,7 @@
         },
         "strategies": {
           "AaveStrategyAvalancheWETH": "0x0a46A9716b4632A57863d52123c5c10FDF9e10F8",
+          "BenqiCompoundLeverageStrategyAvalancheWETH": "0x589E116B1B9Ec445145e2FB20468222cd2DAEe00",
           "TraderJoeCompoundStrategyAvalancheWETH": "0xedDd1B6c51749183595D2c6e6140B73dE086ac68"
         }
       },
@@ -68,6 +69,7 @@
         },
         "strategies": {
           "AaveStrategyAvalancheWBTC": "0x604af53401f7e84C3c332CB3C64a3FfE48A68cBf",
+          "BenqiCompoundLeverageStrategyAvalancheWBTC": "0x9519Ec6402304Fe66d09Ee6ADE655Aa989D0239C",
           "TraderJoeCompoundStrategyAvalancheWBTC": "0xeF8737Ec1180ddaD26438e4675bCFE9773A0E8c8"
         }
       },
@@ -84,6 +86,7 @@
         },
         "strategies": {
           "AaveStrategyAvalancheUSDC": "0x718E58C448116FE7315caEE135b12793AFc4FDf4",
+          "TraderJoeCompoundLeverageStrategyAvalancheUSDC": "0x24dD3687C21Ac6295DC6dC7F173267CA89860068",
           "TraderJoeCompoundStrategyAvalancheUSDC": "0xe25d8F3F659E2a44602eC91538F9818793fd844F"
         }
       }
