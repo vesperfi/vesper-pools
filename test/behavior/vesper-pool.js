@@ -22,7 +22,7 @@ const { advanceBlock } = require('../utils/time')
 const { getChain } = require('../utils/chains')
 const StrategyType = require('../utils/strategyTypes')
 const { adjustBalance } = require('../utils/balance')
-const { ANY_ERC20, NATIVE_TOKEN, FRAX, VSP } = require(`../../helper/${getChain()}/address`)
+const { ANY_ERC20, NATIVE_TOKEN, FRAX, Vesper } = require(`../../helper/${getChain()}/address`)
 
 const DECIMAL18 = ethers.utils.parseEther('1')
 const MAX_BPS = BN.from('10000')
@@ -378,7 +378,7 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
           const dripBalanceAfter = await dripToken.balanceOf(feeCollector)
           const collateralBalanceAfter = await collateralToken.balanceOf(feeCollector)
           const type = strategies[0].type
-          if (dripToken.address === VSP || type === StrategyType.EARN_MAKER) {
+          if (dripToken.address === Vesper.VSP || type === StrategyType.EARN_MAKER) {
             expect(dripBalanceAfter, 'Fee collected by FC is wrong').to.be.gt(dripBalanceBefore)
           } else if (type === StrategyType.EARN_VESPER_MAKER) {
             expect(rewardBalanceAfter, 'Fee collected by FC is wrong').to.be.gt(rewardBalanceBefore)

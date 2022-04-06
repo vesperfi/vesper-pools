@@ -120,7 +120,7 @@ async function shouldBehaveLikeMultiPool(poolName) {
         await rebalance(strategies)
 
         const newStrategy = await makeNewStrategy(strategies[0], pool.address, {
-          swapManager: hre.address.SWAP_MANAGER,
+          swapManager: hre.address.Vesper.SWAP_MANAGER,
         })
 
         await accountant.connect(gov.signer).updateDebtRatio(strategies[0].instance.address, 3000)

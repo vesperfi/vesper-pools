@@ -268,13 +268,13 @@ async function createEarnVesperStrategy(strategy, poolAddress, options) {
   const REWARD_DURATION = 30 * 24 * 60 * 60
 
   const vPoolRewards = await deployContract('PoolRewards', [])
-  const rewardTokens = [Address.VSP]
+  const rewardTokens = [Address.Vesper.VSP]
   await vPoolRewards.initialize(poolAddress, rewardTokens)
   await options.vPool.updatePoolRewards(vPoolRewards.address)
 
-  const vsp = await ethers.getContractAt('IVSP', Address.VSP)
+  const vsp = await ethers.getContractAt('IVSP', Address.Vesper.VSP)
 
-  await adjustBalance(Address.VSP, vPoolRewards.address, TOTAL_REWARD)
+  await adjustBalance(Address.Vesper.VSP, vPoolRewards.address, TOTAL_REWARD)
 
   const notifyMultiSignature = 'notifyRewardAmount(address[],uint256[],uint256[])'
   await vPoolRewards[`${notifyMultiSignature}`]([vsp.address], [TOTAL_REWARD], [REWARD_DURATION])
@@ -427,7 +427,7 @@ async function setupVPool(obj, poolData, options = {}) {
     await addStrategies(obj)
     const collateralTokenAddress = await obj.pool.token()
     obj.collateralToken = await ethers.getContractAt(TokenLike, collateralTokenAddress)
-    obj.swapManager = await ethers.getContractAt('ISwapManager', Address.SWAP_MANAGER)
+    obj.swapManager = await ethers.getContractAt('ISwapManager', Address.Vesper.SWAP_MANAGER)
 
     // Must wait an hour for oracles to be effective, unless they were created before the strategy
     await provider.send('evm_increaseTime', [3600])

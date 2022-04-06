@@ -9,7 +9,7 @@ describe('veDAI Pool with EarnVesperStrategyDAIVSP', function () {
   const strategy1 = strategyConfig.EarnVesperStrategyDAIVSP
   strategy1.config.debtRatio = 9000
   const strategies = [strategy1]
-  prepareConfig(strategies, { growPool: { address: Address.vVSP } })
+  prepareConfig(strategies, { growPool: { address: Address.Vesper.vVSP } })
 
   describe('Pool Tests', function () {
     shouldBehaveLikePool('veDAI', 'DAI', true)

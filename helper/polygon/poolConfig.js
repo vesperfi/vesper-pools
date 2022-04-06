@@ -3,9 +3,13 @@
 const Address = require('./address')
 
 const setup = { universalFee: 200 }
-const rewards = { contract: 'PoolRewards', tokens: [Address.VSP] }
+const rewards = { contract: 'PoolRewards', tokens: [Address.Vesper.VSP] }
 // Earn pool will have extra data in 'rewards' object. Below is default value for 'rewards' object for Earn pools
-const earnRewards = { contract: 'VesperEarnDrip', tokens: [Address.vaDAI, Address.VSP], growToken: Address.vaDAI }
+const earnRewards = {
+  contract: 'VesperEarnDrip',
+  tokens: [Address.Vesper.vaDAI, Address.Vesper.VSP],
+  growToken: Address.Vesper.vaDAI,
+}
 
 const PoolConfig = {
   VDAI: {
@@ -48,13 +52,13 @@ const PoolConfig = {
     contractName: 'VPool',
     poolParams: ['veDAI-WETH Earn Pool', 'veDAI-WETH', Address.DAI],
     setup: { ...setup },
-    rewards: { ...earnRewards, tokens: [Address.VWETH, Address.VSP], growToken: Address.VWETH },
+    rewards: { ...earnRewards, tokens: [Address.VWETH, Address.Vesper.VSP], growToken: Address.VWETH },
   },
   VEDAI_WBTC: {
     contractName: 'VPool',
     poolParams: ['veDAI-WBTC Earn Pool', 'veDAI-WBTC', Address.DAI],
     setup: { ...setup },
-    rewards: { ...earnRewards, tokens: [Address.VWBTC, Address.VSP], growToken: Address.VWBTC },
+    rewards: { ...earnRewards, tokens: [Address.Vesper.vWBTC, Address.Vesper.VSP], growToken: Address.Vesper.vWBTC },
   },
 }
 

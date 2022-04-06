@@ -9,7 +9,7 @@ describe('veETH pool strategies', function () {
   const strategy = strategyConfig.EarnRariFuseStrategyETH
   strategy.config.debtRatio = 9000
   const strategies = [strategy]
-  prepareConfig(strategies, { growPool: { address: Address.vaDAI } })
+  prepareConfig(strategies, { growPool: { address: Address.Vesper.vaDAI } })
 
   describe('Pool Tests', function () {
     shouldBehaveLikePool('veETH', 'ETH', true)

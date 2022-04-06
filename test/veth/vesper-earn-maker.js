@@ -9,7 +9,7 @@ describe('vETH pool EarnVesperMakerStrategyETH strategy', function () {
   const strategy1 = strategyConfig.EarnVesperMakerStrategyETH
   strategy1.config.debtRatio = 9000
   const strategies = [strategy1]
-  prepareConfig(strategies, { growPool: { address: Address.vaDAI } })
+  prepareConfig(strategies, { growPool: { address: Address.Vesper.vaDAI } })
 
   describe('Pool Tests', function () {
     shouldBehaveLikePool('veETH', 'ETH', true)

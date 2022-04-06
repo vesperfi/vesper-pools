@@ -45,7 +45,7 @@ async function shouldBehaveLikeEarnVesperStrategy(strategyIndex) {
       collateralToken = this.collateralToken
       collateralTokenDecimals = await this.collateralToken.decimals()
       dripToken = await ethers.getContractAt('ERC20', await strategy.instance.dripToken())
-      vspToken = await ethers.getContractAt('ERC20', await Address.VSP)
+      vspToken = await ethers.getContractAt('ERC20', await Address.Vesper.VSP)
       vToken = await ethers.getContractAt('ERC20', await strategy.instance.token())
       dripTokenSymbol = await dripToken.symbol()
       EarnDrip = await ethers.getContractAt('IEarnDrip', await pool.poolRewards())
@@ -113,7 +113,7 @@ async function shouldBehaveLikeEarnVesperStrategy(strategyIndex) {
         const rewardTokenBalanceAfter = await rewardToken.balanceOf(EarnDrip.address)
         const vTokenBalAfter = await vToken.balanceOf(strategy.instance.address)
         // Ignore assert when drip and reward same token (VSP here)
-        if (dripToken.address !== Address.VSP) {
+        if (dripToken.address !== Address.Vesper.VSP) {
           expect(rewardTokenBalanceAfter).to.gt(rewardTokenBalanceBefore, `${dripTokenSymbol} drip failed`)
           expect(vTokenBalAfter).to.lt(vTokenBalBefore, `${dripTokenSymbol} withdraw failed`)
         }
@@ -121,7 +121,7 @@ async function shouldBehaveLikeEarnVesperStrategy(strategyIndex) {
 
       it('Should verify that VSP rewards are claimed', async function () {
         // Set VSP reward token
-        await adjustBalance(Address.VSP, strategy.instance.address, ethers.utils.parseEther('1000'))
+        await adjustBalance(Address.Vesper.VSP, strategy.instance.address, ethers.utils.parseEther('1000'))
         const vspBalanceBefore = await vspToken.balanceOf(strategy.instance.address)
 
         await rebalanceAndAssert()
@@ -145,7 +145,7 @@ async function shouldBehaveLikeEarnVesperStrategy(strategyIndex) {
         const rewardTokenBalanceAfter = await rewardToken.balanceOf(EarnDrip.address)
         const vTokenBalAfter = await vToken.balanceOf(strategy.instance.address)
         // Ignore assert when drip and reward same token (VSP here)
-        if (dripToken.address !== Address.VSP) {
+        if (dripToken.address !== Address.Vesper.VSP) {
           expect(rewardTokenBalanceAfter).to.gt(rewardTokenBalanceBefore, `${dripTokenSymbol} drip failed`)
         }
         expect(vTokenBalAfter).to.lt(vTokenBalBefore, `${dripTokenSymbol} withdraw failed`)
@@ -178,7 +178,7 @@ async function shouldBehaveLikeEarnVesperStrategy(strategyIndex) {
         const rewardTokenBalanceAfter = await rewardToken.balanceOf(EarnDrip.address)
         const vTokenBalAfter = await vToken.balanceOf(strategy.instance.address)
         // Ignore assert when drip and reward same token (VSP here)
-        if (dripToken.address !== Address.VSP) {
+        if (dripToken.address !== Address.Vesper.VSP) {
           expect(rewardTokenBalanceAfter).to.gt(rewardTokenBalanceBefore, `${dripTokenSymbol} drip failed`)
         }
         expect(vTokenBalAfter).to.lt(vTokenBalBefore, 'Wrong vToken balance')
@@ -195,7 +195,7 @@ async function shouldBehaveLikeEarnVesperStrategy(strategyIndex) {
         const rewardTokenBalanceAfter = await rewardToken.balanceOf(EarnDrip.address)
         const vTokenBalAfter = await vToken.balanceOf(strategy.instance.address)
         // Ignore assert when drip and reward same token (VSP here)
-        if (dripToken.address !== Address.VSP) {
+        if (dripToken.address !== Address.Vesper.VSP) {
           expect(rewardTokenBalanceAfter).to.gt(rewardTokenBalanceBefore, `${dripTokenSymbol} drip failed`)
         }
         expect(vTokenBalAfter).to.lt(vTokenBalBefore, 'Wrong vToken balance')
