@@ -413,7 +413,6 @@ async function makeNewStrategy(oldStrategy, poolAddress, _options) {
  * @typedef {object} PoolData
  * @property {object} poolConfig - Pool config
  * @property {object []} strategies - Array of strategy configuration
- * @property {object} [vPool] - Optional. Vesper pool instance
  */
 
 /**
@@ -424,7 +423,7 @@ async function makeNewStrategy(oldStrategy, poolAddress, _options) {
  * @param {object} options optional data
  */
 async function setupVPool(obj, poolData, options = {}) {
-  const { poolConfig, strategies, vPool } = poolData
+  const { poolConfig, strategies } = poolData
   const isInCache = obj.snapshot === undefined ? false : await provider.send('evm_revert', [obj.snapshot])
   if (isInCache === true) {
     // Rollback manual changes to objects
@@ -439,7 +438,6 @@ async function setupVPool(obj, poolData, options = {}) {
     await obj.accountant.init(obj.pool.address)
     await obj.pool.initialize(...poolConfig.poolParams, obj.accountant.address)
     await obj.pool.updateUniversalFee(poolConfig.setup.universalFee)
-    options.vPool = vPool
 
     await createStrategies(obj, options)
     await addStrategies(obj)

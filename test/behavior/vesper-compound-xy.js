@@ -11,9 +11,14 @@ async function simulateVesperPoolProfit(strategy) {
   const vPool = await ethers.getContractAt('IVesperPool', await strategy.instance.vPool())
   const collateralTokenAddress = await vPool.token()
 
-  const collateralToken = await ethers.getContractAt('IERC20', collateralTokenAddress)
+  const collateralToken = await ethers.getContractAt('IERC20Metadata', collateralTokenAddress)
+  const collateralDecimal = await collateralToken.decimals()
   const poolBalance = await collateralToken.balanceOf(vPool.address)
-  await adjustBalance(collateralTokenAddress, vPool.address, poolBalance.add(ethers.utils.parseEther('5')))
+  await adjustBalance(
+    collateralTokenAddress,
+    vPool.address,
+    poolBalance.add(ethers.utils.parseUnits('5', collateralDecimal)),
+  )
 }
 
 // Vesper Compound XY strategy specific tests
@@ -129,15 +134,6 @@ function shouldBehaveLikeVesperCompoundXYStrategy(strategyIndex) {
       await rebalanceStrategy(this.strategies[strategyIndex])
       const borrowAfter = await strategy.borrowBalance()
       expect(borrowAfter).to.be.eq(0, 'Borrow amount should be = 0')
-    })
-
-    it('Should calculate current totalValue', async function () {
-      await deposit(pool, collateralToken, 10, user1)
-      await rebalanceStrategy(this.strategies[strategyIndex])
-      await advanceBlock(100)
-      const totalValue = await strategy.callStatic.totalValueCurrent()
-      const totalDebt = await pool.totalDebt()
-      expect(totalValue).to.be.gt(totalDebt, 'loss making strategy')
     })
 
     it('Should calculate totalValue', async function () {

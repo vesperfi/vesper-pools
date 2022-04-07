@@ -2,6 +2,7 @@
 
 pragma solidity 0.8.9;
 
+import "@openzeppelin/contracts/utils/math/Math.sol";
 import "../Strategy.sol";
 import "../../interfaces/compound/ICompound.sol";
 import "../../interfaces/oracle/IUniswapV3Oracle.sol";
@@ -9,7 +10,7 @@ import "../../interfaces/token/IToken.sol";
 
 /// @title This strategy will deposit collateral token in Compound and based on position
 /// it will borrow another token. Supply X borrow Y and keep borrowed amount here
-abstract contract CompoundXYStrategy is Strategy {
+contract CompoundXYStrategy is Strategy {
     using SafeERC20 for IERC20;
 
     // solhint-disable-next-line var-name-mixedcase
@@ -76,6 +77,14 @@ abstract contract CompoundXYStrategy is Strategy {
         maxBorrowLimit = (maxBorrowRatio * 1e18) / _collateralFactorMantissa;
     }
 
+    /// @dev Only receive ETH from either cToken or WETH
+    receive() external payable {
+        require(
+            msg.sender == address(supplyCToken) || msg.sender == address(borrowCToken) || msg.sender == WETH,
+            "not-allowed-to-send-ether"
+        );
+    }
+
     /**
      * @notice Recover extra borrow tokens from strategy
      * @dev If we get liquidation in Compound, we will have borrowToken sitting in strategy.
@@ -98,38 +107,6 @@ abstract contract CompoundXYStrategy is Strategy {
             _safeSwap(borrowToken, address(collateralToken), _recoveryAmount);
             collateralToken.transfer(pool, collateralToken.balanceOf(address(this)) - _collateralBefore);
         }
-    }
-
-    /**
-     * @notice Update borrow CToken
-     * @dev Repay borrow for old borrow CToken and borrow for new borrow CToken
-     * @param _newBorrowCToken Address of new CToken
-     */
-    function updateBorrowCToken(address _newBorrowCToken) external virtual onlyGovernor {
-        require(_newBorrowCToken != address(0), "newBorrowCToken-address-is-zero");
-        // Repay whole borrow
-        _repay(borrowCToken.borrowBalanceCurrent(address(this)), true);
-
-        // Manage market position in Compound
-        comptroller.exitMarket(address(borrowCToken));
-        address[] memory _cTokens = new address[](1);
-        _cTokens[0] = _newBorrowCToken;
-        comptroller.enterMarkets(_cTokens);
-
-        // Reset approval for old borrowCToken
-        IERC20(borrowToken).safeApprove(address(borrowCToken), 0);
-
-        // Update token address
-        emit UpdatedBorrowCToken(address(borrowCToken), _newBorrowCToken);
-        borrowCToken = CToken(_newBorrowCToken);
-        borrowToken = _getBorrowToken(_newBorrowCToken);
-
-        // Approve new borrowCToken
-        IERC20(borrowToken).safeApprove(_newBorrowCToken, type(uint256).max);
-
-        // Borrow again
-        (uint256 _borrowAmount, ) = _calculateBorrowPosition(0, true);
-        _borrowY(_borrowAmount);
     }
 
     /**
@@ -162,18 +139,6 @@ abstract contract CompoundXYStrategy is Strategy {
     }
 
     /**
-     * @notice Calculate total value based on rewardToken claimed, supply and borrow position
-     * @dev Report total value in collateral token
-     * @dev Claimed rewardToken will stay in strategy until next rebalance
-     */
-    function totalValueCurrent() external override returns (uint256 _totalValue) {
-        _claimRewards();
-        supplyCToken.exchangeRateCurrent();
-        borrowCToken.exchangeRateCurrent();
-        _totalValue = _calculateTotalValue(IERC20(rewardToken).balanceOf(address(this)));
-    }
-
-    /**
      * @notice Current borrow ratio, calculated as current borrow divide by current supply as borrow
      * Return value is based on basis points, i.e. 7500 = 75% ratio
      */
@@ -188,6 +153,11 @@ abstract contract CompoundXYStrategy is Strategy {
         return _maxBorrow == 0 ? 0 : (_currentBorrow * MAX_BPS) / _maxBorrow;
     }
 
+    /// @notice Calculate current position based on totalValue and debt of strategy
+    function isLossMaking() external view returns (bool) {
+        return totalValue() < IVesperPool(pool).totalDebtOf(address(this));
+    }
+
     /**
      * @notice Calculate total value using rewardToken accrued, supply and borrow position
      * @dev Compound calculate rewardToken accrued and store it when user interact with
@@ -197,26 +167,6 @@ abstract contract CompoundXYStrategy is Strategy {
      */
     function totalValue() public view virtual override returns (uint256 _totalValue) {
         _totalValue = _calculateTotalValue(_getRewardAccrued());
-    }
-
-    /**
-     * @notice Calculate current position using claimed rewardToken and current borrow.
-     */
-    function isLossMaking() external returns (bool) {
-        _claimRewards();
-        uint256 _rewardAccrued = IERC20(rewardToken).balanceOf(address(this));
-        uint256 _borrow = borrowCToken.borrowBalanceCurrent(address(this));
-        uint256 _borrowBalanceHere = _getBorrowBalance();
-        // If we are short on borrow amount then check if we can pay interest using accrued rewardToken
-        if (_borrow > _borrowBalanceHere) {
-            (, uint256 _rewardNeededForRepay, ) =
-                swapManager.bestInputFixedOutput(rewardToken, borrowToken, _borrow - _borrowBalanceHere);
-            // Accrued rewardToken are not enough to pay interest on borrow
-            if (_rewardNeededForRepay > _rewardAccrued) {
-                return true;
-            }
-        }
-        return false;
     }
 
     function isReservedToken(address _token) public view virtual override returns (bool) {
@@ -341,20 +291,16 @@ abstract contract CompoundXYStrategy is Strategy {
         return IERC20(borrowToken).balanceOf(address(this));
     }
 
-    /// @notice Claim rewardToken
-    function _claimRewards() internal virtual {
+    /// @notice Claim rewardToken and convert rewardToken into collateral token.
+    function _claimRewardsAndConvertTo(address _toToken) internal virtual override {
+        // _claimRewards();
         address[] memory _markets = new address[](2);
         _markets[0] = address(supplyCToken);
         _markets[1] = address(borrowCToken);
         comptroller.claimComp(address(this), _markets);
-    }
-
-    /// @notice Claim rewardToken and convert rewardToken into collateral token.
-    function _claimRewardsAndConvertTo(address _toToken) internal virtual override {
-        _claimRewards();
         uint256 _rewardAmount = IERC20(rewardToken).balanceOf(address(this));
         if (_rewardAmount > 0) {
-            _safeSwap(rewardToken, _toToken, _rewardAmount);
+            _safeSwap(rewardToken, _toToken, _rewardAmount, 1);
         }
     }
 
@@ -376,7 +322,7 @@ abstract contract CompoundXYStrategy is Strategy {
         uint256 _totalDebt = IVesperPool(pool).totalDebtOf(address(this));
 
         // Claim any reward we have.
-        _claimRewards();
+        _claimRewardsAndConvertTo(address(collateralToken));
 
         uint256 _borrow = borrowCToken.borrowBalanceCurrent(address(this));
         uint256 _borrowBalanceHere = _getBorrowBalance();
@@ -384,7 +330,7 @@ abstract contract CompoundXYStrategy is Strategy {
         // enough to cover interest diff for borrow, reinvest function will handle
         // collateral liquidation
         if (_borrow > _borrowBalanceHere) {
-            _swapToBorrowToken(rewardToken, _borrow - _borrowBalanceHere);
+            _swapToBorrowToken(_borrow - _borrowBalanceHere);
             // Read borrow balance again as we just swap some rewardToken to borrow token
             _borrowBalanceHere = _getBorrowBalance();
         } else {
@@ -393,30 +339,26 @@ abstract contract CompoundXYStrategy is Strategy {
             _rebalanceBorrow(_borrowBalanceHere - _borrow);
         }
 
-        uint256 _rewardRemaining = IERC20(rewardToken).balanceOf(address(this));
-        if (_rewardRemaining > 0) {
-            _safeSwap(rewardToken, address(collateralToken), _rewardRemaining);
-        }
-
-        // Any collateral here is profit
-        _profit = collateralToken.balanceOf(address(this));
+        uint256 _collateralHere = collateralToken.balanceOf(address(this));
         uint256 _collateralInCompound = supplyCToken.balanceOfUnderlying(address(this));
-        uint256 _profitToWithdraw;
+        uint256 _totalCollateral = _collateralInCompound + _collateralHere;
 
-        if (_collateralInCompound > _totalDebt) {
-            _profitToWithdraw = _collateralInCompound - _totalDebt;
-            _profit += _profitToWithdraw;
+        if (_totalCollateral > _totalDebt) {
+            _profit = _totalCollateral - _totalDebt;
         } else {
-            _loss = _totalDebt - _collateralInCompound;
+            _loss = _totalDebt - _totalCollateral;
+        }
+        uint256 _profitAndExcessDebt = _profit + _excessDebt;
+        if (_collateralHere < _profitAndExcessDebt) {
+            uint256 _totalAmountToWithdraw = Math.min((_profitAndExcessDebt - _collateralHere), _collateralInCompound);
+            if (_totalAmountToWithdraw > 0) {
+                _withdrawHere(_totalAmountToWithdraw);
+                _collateralHere = collateralToken.balanceOf(address(this));
+            }
         }
 
-        uint256 _totalAmountToWithdraw = _excessDebt + _profitToWithdraw;
-        if (_totalAmountToWithdraw > 0) {
-            uint256 _withdrawn = _withdrawHere(_totalAmountToWithdraw);
-            // Any amount withdrawn over _profitToWithdraw is payback for pool
-            if (_withdrawn > _profitToWithdraw) {
-                _payback = _withdrawn - _profitToWithdraw;
-            }
+        if (_excessDebt > 0) {
+            _payback = Math.min(_collateralHere, _excessDebt);
         }
     }
 
@@ -462,7 +404,7 @@ abstract contract CompoundXYStrategy is Strategy {
 
                 // Swap collateral to borrowToken to repay borrow and also maintain safe position
                 // Here borrowToken amount needed is (_currentBorrow - _borrowBalanceHere)
-                _swapToBorrowToken(address(collateralToken), _currentBorrow - _borrowBalanceHere);
+                _swapToBorrowToken(_currentBorrow - _borrowBalanceHere);
             }
             _repayY(_repayAmount);
         }
@@ -470,26 +412,19 @@ abstract contract CompoundXYStrategy is Strategy {
 
     /**
      * @notice Swap given token to borrowToken
-     * @param _from From token, token which will be swapped with borrowToken
      * @param _shortOnBorrow Expected output of this swap
      */
-    function _swapToBorrowToken(address _from, uint256 _shortOnBorrow) internal {
+    function _swapToBorrowToken(uint256 _shortOnBorrow) internal {
         // Looking for _amountIn using fixed output amount
         (address[] memory _path, uint256 _amountIn, uint256 _rIdx) =
-            swapManager.bestInputFixedOutput(_from, borrowToken, _shortOnBorrow);
+            swapManager.bestInputFixedOutput(address(collateralToken), borrowToken, _shortOnBorrow);
         if (_amountIn > 0) {
-            uint256 _fromBalanceHere = IERC20(_from).balanceOf(address(this));
+            uint256 _collateralHere = collateralToken.balanceOf(address(this));
             // If we do not have enough _from token to get expected output, either get
             // some _from token or adjust expected output.
-            if (_amountIn > _fromBalanceHere) {
-                if (_from == address(collateralToken)) {
-                    // Redeem some collateral, so that we have enough collateral to get expected output
-                    _redeemX(_amountIn - _fromBalanceHere);
-                } else {
-                    _amountIn = _fromBalanceHere;
-                    // Adjust expected output based on _from token balance we have.
-                    _shortOnBorrow = swapManager.safeGetAmountsOut(_amountIn, _path, _rIdx)[_path.length - 1];
-                }
+            if (_amountIn > _collateralHere) {
+                // Redeem some collateral, so that we have enough collateral to get expected output
+                _redeemX(_amountIn - _collateralHere);
             }
             swapManager.ROUTERS(_rIdx).swapTokensForExactTokens(
                 _shortOnBorrow,

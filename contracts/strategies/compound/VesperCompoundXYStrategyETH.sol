@@ -2,11 +2,15 @@
 
 pragma solidity 0.8.9;
 
-import "./CompoundXYStrategy.sol";
+import "./VesperCompoundXYStrategy.sol";
+import "../../interfaces/vesper/IVesperPool.sol";
+import "../../interfaces/vesper/IPoolRewards.sol";
 
 // solhint-disable no-empty-blocks
-/// @title Deposit ETH/WETH in Compound and earn interest.
-contract CompoundXYStrategyETH is CompoundXYStrategy {
+/// @title Deposit ETH in Compound and earn interest by depositing borrowed token in a Vesper Pool.
+contract VesperCompoundXYStrategyETH is VesperCompoundXYStrategy {
+    using SafeERC20 for IERC20;
+
     constructor(
         address _pool,
         address _swapManager,
@@ -15,9 +19,11 @@ contract CompoundXYStrategyETH is CompoundXYStrategy {
         address _rewardToken,
         address _receiptToken,
         address _borrowCToken,
+        address _vPool,
+        address _vspAddress,
         string memory _name
     )
-        CompoundXYStrategy(
+        VesperCompoundXYStrategy(
             _pool,
             _swapManager,
             _comptroller,
@@ -25,6 +31,8 @@ contract CompoundXYStrategyETH is CompoundXYStrategy {
             _rewardToken,
             _receiptToken,
             _borrowCToken,
+            _vPool,
+            _vspAddress,
             _name
         )
     {}
