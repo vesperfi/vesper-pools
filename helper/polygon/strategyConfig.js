@@ -4,15 +4,15 @@ const { ethers } = require('hardhat')
 const Address = require('./address')
 const StrategyTypes = require('../../test/utils/strategyTypes')
 
-const swapManager = Address.SWAP_MANAGER
+const swapManager = Address.Vesper.SWAP_MANAGER
 const config = {
   debtRatio: 0,
   debtRate: ethers.utils.parseEther('1000000').toString(),
   externalDepositFee: 0,
 }
 const setup = {
-  feeCollector: Address.FEE_COLLECTOR,
-  keepers: [Address.KEEPER],
+  feeCollector: Address.Vesper.FEE_COLLECTOR,
+  keepers: [Address.Vesper.KEEPER],
 }
 
 // TODO update setup to remove strategy type, once done remove type from heres too
@@ -93,9 +93,9 @@ const StrategyConfig = {
     type: StrategyTypes.EARN_VESPER,
     constructorArgs: {
       swapManager,
-      receiptToken: Address.VDAI,
+      receiptToken: Address.Vesper.vDAI,
       dripToken: Address.WETH,
-      vsp: Address.VSP,
+      vsp: Address.Vesper.VSP,
       strategyName: 'EarnVesperStrategyDAIWETH',
     },
     config: { ...config },
@@ -106,9 +106,9 @@ const StrategyConfig = {
     type: StrategyTypes.EARN_VESPER,
     constructorArgs: {
       swapManager,
-      receiptToken: Address.VDAI,
+      receiptToken: Address.Vesper.vDAI,
       dripToken: Address.WBTC,
-      vsp: Address.VSP,
+      vsp: Address.Vesper.VSP,
       strategyName: 'EarnVesperStrategyDAIWBTC',
     },
     config: { ...config },

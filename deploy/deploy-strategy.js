@@ -64,7 +64,7 @@ const deployFunction = async function ({ getNamedAccounts, deployments, poolConf
   if (strategyAlias.includes('Maker')) {
     // Maker strategy of any type, EarnXXXMaker, XXXMaker
     // TODO move this to constructorArgs?
-    let cm = Address.COLLATERAL_MANAGER
+    let cm = Address.Vesper.COLLATERAL_MANAGER
     if (!cm) {
       // Deploy collateral manager
       await sleep(5000)
@@ -140,7 +140,7 @@ const deployFunction = async function ({ getNamedAccounts, deployments, poolConf
     if (gemJoinInCM !== setup.maker.gemJoin) {
       params.methodName = 'addGemJoin'
       params.methodArgs = [setup.maker.gemJoin]
-      await executeOrProposeTx(CollateralManager, Address.COLLATERAL_MANAGER, CollateralManager, params)
+      await executeOrProposeTx(CollateralManager, Address.Vesper.COLLATERAL_MANAGER, CollateralManager, params)
     }
 
     params.methodName = 'createVault'

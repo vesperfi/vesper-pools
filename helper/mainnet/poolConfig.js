@@ -3,9 +3,13 @@
 const Address = require('./address')
 const setup = { universalFee: 200 }
 
-const rewards = { contract: 'PoolRewards', tokens: [Address.VSP] }
+const rewards = { contract: 'PoolRewards', tokens: [Address.Vesper.VSP] }
 // Earn pool will have extra data in 'rewards' object. Below is default value for 'rewards' object for Earn pools
-const earnRewards = { contract: 'VesperEarnDrip', tokens: [Address.vaDAI, Address.VSP], growToken: Address.vaDAI }
+const earnRewards = {
+  contract: 'VesperEarnDrip',
+  tokens: [Address.Vesper.vaDAI, Address.Vesper.VSP],
+  growToken: Address.Vesper.vaDAI,
+}
 
 const PoolConfig = {
   VDAI: {
@@ -54,43 +58,43 @@ const PoolConfig = {
     contractName: 'VPool',
     poolParams: ['veDAI-WBTC Earn Pool', 'veDAI-WBTC', Address.DAI],
     setup: { ...setup },
-    rewards: { ...earnRewards, tokens: [Address.vaWBTC, Address.VSP], growToken: Address.vaWBTC },
+    rewards: { ...earnRewards, tokens: [Address.Vesper.vaWBTC, Address.Vesper.VSP], growToken: Address.Vesper.vaWBTC },
   },
   VEDAI_ETH: {
     contractName: 'VPool',
     poolParams: ['veDAI-ETH Earn Pool', 'veDAI-ETH', Address.DAI],
     setup: { ...setup },
-    rewards: { ...earnRewards, tokens: [Address.vaETH, Address.VSP], growToken: Address.vaETH },
+    rewards: { ...earnRewards, tokens: [Address.Vesper.vaETH, Address.Vesper.VSP], growToken: Address.Vesper.vaETH },
   },
   VEDAI_DPI: {
     contractName: 'VPool',
     poolParams: ['veDAI-DPI Earn Pool', 'veDAI-DPI', Address.DAI],
     setup: { ...setup },
-    rewards: { ...earnRewards, tokens: [Address.vaDPI, Address.VSP], growToken: Address.vaDPI },
+    rewards: { ...earnRewards, tokens: [Address.Vesper.vaDPI, Address.Vesper.VSP], growToken: Address.Vesper.vaDPI },
   },
   VEDAI_LINK: {
     contractName: 'VPool',
     poolParams: ['veDAI-LINK Earn Pool', 'veDAI-LINK', Address.DAI],
     setup: { ...setup },
-    rewards: { ...earnRewards, tokens: [Address.vaLINK, Address.VSP], growToken: Address.vaLINK },
+    rewards: { ...earnRewards, tokens: [Address.Vesper.vaLINK, Address.Vesper.VSP], growToken: Address.Vesper.vaLINK },
   },
   VEDAI_VSP: {
     contractName: 'VPool',
     poolParams: ['veDAI-VSP Earn Pool', 'veDAI-VSP', Address.DAI],
     setup: { ...setup },
-    rewards: { ...earnRewards, tokens: [Address.vVSP], growToken: Address.vVSP },
+    rewards: { ...earnRewards, tokens: [Address.Vesper.vVSP], growToken: Address.Vesper.vVSP },
   },
   VEDAI_SHIB: {
     contractName: 'VPool',
     poolParams: ['veDAI-SHIB Earn Pool', 'veDAI-SHIB', Address.DAI],
     setup: { ...setup },
-    rewards: { contract: 'VesperEarnDrip', tokens: [Address.SHIB, Address.VSP] },
+    rewards: { contract: 'VesperEarnDrip', tokens: [Address.SHIB, Address.Vesper.VSP] },
   },
   VEDAI_PUNK: {
     contractName: 'VPool',
     poolParams: ['veDAI-PUNK Earn Pool', 'veDAI-PUNK', Address.DAI],
     setup: { ...setup },
-    rewards: { contract: 'VesperEarnDrip', tokens: [Address.PUNK, Address.VSP] },
+    rewards: { contract: 'VesperEarnDrip', tokens: [Address.PUNK, Address.Vesper.VSP] },
   },
   VLINK: {
     contractName: 'VPool',

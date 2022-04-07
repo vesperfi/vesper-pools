@@ -9,8 +9,7 @@ const DECIMAL = BigNumber.from('1000000000000000000')
 const { parseEther } = require('@ethersproject/units')
 const { adjustBalance } = require('./balance')
 const { getChain } = require('../utils/chains')
-const address = require('../../helper/mainnet/address')
-const { NATIVE_TOKEN, DAI, MIM, ALUSD } = require(`../../helper/${getChain()}/address`)
+const { NATIVE_TOKEN, DAI, MIM, ALUSD, Vesper } = require(`../../helper/${getChain()}/address`)
 
 async function executeIfExist(fn) {
   if (typeof fn === 'function') {
@@ -186,7 +185,7 @@ async function harvestVesper(strategy) {
   }
   if (strategy.type.includes('earnVesper')) {
     const dripToken = await strategy.instance.dripToken()
-    if (dripToken === ethers.utils.getAddress(address.VSP)) {
+    if (dripToken === ethers.utils.getAddress(Vesper.VSP)) {
       // wait 24hrs between rebalance due to vVSP's lock period
       await timeTravel(3600 * 24)
     }

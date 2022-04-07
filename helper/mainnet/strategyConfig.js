@@ -4,7 +4,7 @@ const { ethers } = require('hardhat')
 const Address = require('./address')
 const StrategyTypes = require('../../test/utils/strategyTypes')
 
-const swapManager = Address.SWAP_MANAGER
+const swapManager = Address.Vesper.SWAP_MANAGER
 const config = {
   debtRatio: 0,
   debtRate: ethers.utils.parseEther('1000000').toString(),
@@ -12,8 +12,8 @@ const config = {
 }
 
 const setup = {
-  feeCollector: Address.FEE_COLLECTOR,
-  keepers: [Address.KEEPER],
+  feeCollector: Address.Vesper.FEE_COLLECTOR,
+  keepers: [Address.Vesper.KEEPER],
 }
 // Maker related strategies will have to add more setup config.
 // For example const maker = { gemJoin: Address.MCD_JOIN_ETH_A, highWater: 275, lowWater: 250 }
@@ -135,9 +135,9 @@ const StrategyConfig = {
     type: StrategyTypes.EARN_VESPER,
     constructorArgs: {
       swapManager,
-      receiptToken: Address.VDAI,
-      dripToken: Address.VSP,
-      vsp: Address.VSP,
+      receiptToken: Address.Vesper.vDAI,
+      dripToken: Address.Vesper.VSP,
+      vsp: Address.Vesper.VSP,
       strategyName: 'EarnVesperStrategyDAIVSP',
     },
     config: { ...config },
@@ -418,8 +418,8 @@ const StrategyConfig = {
       rewardToken: Address.Compound.COMP,
       receiptToken: Address.Compound.cWBTC,
       borrowCToken: Address.Compound.cDAI,
-      vPool: Address.vaDAI,
-      vspAddress: Address.VSP,
+      vPool: Address.Vesper.vaDAI,
+      vspAddress: Address.Vesper.VSP,
       strategyName: 'VesperCompoundXYStrategyWBTC',
     },
     config: { ...config },
@@ -936,7 +936,7 @@ const StrategyConfig = {
     type: StrategyTypes.VESPER_MAKER,
     constructorArgs: {
       swapManager,
-      receiptToken: Address.vaDAI,
+      receiptToken: Address.Vesper.vaDAI,
       collateralType: ethers.utils.formatBytes32String('ETH-C'),
       strategyName: 'VesperMakerStrategyETH',
     },
@@ -949,7 +949,7 @@ const StrategyConfig = {
     type: StrategyTypes.VESPER_MAKER,
     constructorArgs: {
       swapManager,
-      receiptToken: Address.vaDAI,
+      receiptToken: Address.Vesper.vaDAI,
       collateralType: ethers.utils.formatBytes32String('LINK-A'),
       strategyName: 'VesperMakerStrategyLINK',
     },
@@ -962,7 +962,7 @@ const StrategyConfig = {
     type: StrategyTypes.VESPER_MAKER,
     constructorArgs: {
       swapManager,
-      receiptToken: Address.vaDAI,
+      receiptToken: Address.Vesper.vaDAI,
       collateralType: ethers.utils.formatBytes32String('WBTC-C'),
       strategyName: 'VesperMakerStrategyWBTC',
     },
@@ -1003,7 +1003,7 @@ const StrategyConfig = {
     type: StrategyTypes.EARN_VESPER_MAKER,
     constructorArgs: {
       swapManager,
-      receiptToken: Address.vaDAI,
+      receiptToken: Address.Vesper.vaDAI,
       collateralType: ethers.utils.formatBytes32String('ETH-C'),
       dripToken: Address.DAI,
       strategyName: 'EarnVesperMakerStrategyETH',
@@ -1017,7 +1017,7 @@ const StrategyConfig = {
     type: StrategyTypes.EARN_VESPER_MAKER,
     constructorArgs: {
       swapManager,
-      receiptToken: Address.vaDAI,
+      receiptToken: Address.Vesper.vaDAI,
       collateralType: ethers.utils.formatBytes32String('LINK-A'),
       dripToken: Address.DAI,
       strategyName: 'EarnVesperMakerStrategyLINK',
@@ -1031,7 +1031,7 @@ const StrategyConfig = {
     type: StrategyTypes.EARN_VESPER_MAKER,
     constructorArgs: {
       swapManager,
-      receiptToken: Address.vaDAI,
+      receiptToken: Address.Vesper.vaDAI,
       collateralType: ethers.utils.formatBytes32String('WBTC-A'),
       dripToken: Address.DAI,
       strategyName: 'EarnVesperMakerStrategyWBTC',
@@ -1045,9 +1045,9 @@ const StrategyConfig = {
     type: StrategyTypes.EARN_VESPER,
     constructorArgs: {
       swapManager,
-      receiptToken: Address.vaDAI,
+      receiptToken: Address.Vesper.vaDAI,
       dripToken: Address.DPI,
-      vsp: Address.VSP,
+      vsp: Address.Vesper.VSP,
       strategyName: 'EarnVesperStrategyDAIDPI',
     },
     config: { ...config },
@@ -1059,9 +1059,9 @@ const StrategyConfig = {
     type: StrategyTypes.EARN_VESPER,
     constructorArgs: {
       swapManager,
-      receiptToken: Address.vaDAI,
+      receiptToken: Address.Vesper.vaDAI,
       dripToken: Address.LINK,
-      vsp: Address.VSP,
+      vsp: Address.Vesper.VSP,
       strategyName: 'EarnVesperStrategyDAILINK',
     },
     config: { ...config },
@@ -1073,9 +1073,9 @@ const StrategyConfig = {
     type: StrategyTypes.EARN_VESPER,
     constructorArgs: {
       swapManager,
-      receiptToken: Address.vaLINK,
+      receiptToken: Address.Vesper.vaLINK,
       dripToken: Address.DAI,
-      vsp: Address.VSP,
+      vsp: Address.Vesper.VSP,
       strategyName: 'EarnVesperStrategyLINKDAI',
     },
     config: { ...config },
@@ -1087,9 +1087,9 @@ const StrategyConfig = {
     type: StrategyTypes.EARN_VESPER,
     constructorArgs: {
       swapManager,
-      receiptToken: Address.vaDAI,
+      receiptToken: Address.Vesper.vaDAI,
       dripToken: Address.SHIB,
-      vsp: Address.VSP,
+      vsp: Address.Vesper.VSP,
       strategyName: 'EarnVesperStrategyDAISHIB',
     },
     config: { ...config },
@@ -1101,9 +1101,9 @@ const StrategyConfig = {
     type: StrategyTypes.EARN_VESPER,
     constructorArgs: {
       swapManager,
-      receiptToken: Address.vaDAI,
+      receiptToken: Address.Vesper.vaDAI,
       dripToken: Address.PUNK,
-      vsp: Address.VSP,
+      vsp: Address.Vesper.VSP,
       strategyName: 'EarnVesperStrategyDAIPUNK',
     },
     config: { ...config },
@@ -1115,9 +1115,9 @@ const StrategyConfig = {
     type: StrategyTypes.EARN_VESPER,
     constructorArgs: {
       swapManager,
-      receiptToken: Address.vaDAI,
-      dripToken: Address.VSP,
-      vsp: Address.VSP,
+      receiptToken: Address.Vesper.vaDAI,
+      dripToken: Address.Vesper.VSP,
+      vsp: Address.Vesper.VSP,
       strategyName: 'EarnVesperStrategyDAIVSP',
     },
     config: { ...config },
@@ -1129,9 +1129,9 @@ const StrategyConfig = {
     type: StrategyTypes.EARN_VESPER,
     constructorArgs: {
       swapManager,
-      receiptToken: Address.vaDAI,
+      receiptToken: Address.Vesper.vaDAI,
       dripToken: Address.WBTC,
-      vsp: Address.VSP,
+      vsp: Address.Vesper.VSP,
       strategyName: 'EarnVesperStrategyDAIWBTC',
     },
     config: { ...config },
@@ -1143,9 +1143,9 @@ const StrategyConfig = {
     type: StrategyTypes.EARN_VESPER,
     constructorArgs: {
       swapManager,
-      receiptToken: Address.vaDAI,
+      receiptToken: Address.Vesper.vaDAI,
       dripToken: Address.WETH,
-      vsp: Address.VSP,
+      vsp: Address.Vesper.VSP,
       strategyName: 'EarnVesperStrategyDAIWETH',
     },
     config: { ...config },
@@ -1157,9 +1157,9 @@ const StrategyConfig = {
     type: StrategyTypes.EARN_VESPER,
     constructorArgs: {
       swapManager,
-      receiptToken: Address.vaETH,
+      receiptToken: Address.Vesper.vaETH,
       dripToken: Address.DAI,
-      vsp: Address.VSP,
+      vsp: Address.Vesper.VSP,
       strategyName: 'EarnVesperStrategyETHDAI',
     },
     config: { ...config },
@@ -1171,9 +1171,9 @@ const StrategyConfig = {
     type: StrategyTypes.EARN_VESPER,
     constructorArgs: {
       swapManager,
-      receiptToken: Address.vaWBTC,
+      receiptToken: Address.Vesper.vaWBTC,
       dripToken: Address.DAI,
-      vsp: Address.VSP,
+      vsp: Address.Vesper.VSP,
       strategyName: 'EarnVesperStrategyWBTCDAI',
     },
     config: { ...config },

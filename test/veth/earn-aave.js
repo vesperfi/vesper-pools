@@ -11,7 +11,7 @@ describe('veETH pool strategies', function () {
   strategy.config.debtRatio = '9000' // 90%
 
   const strategies = [strategy]
-  prepareConfig(strategies, { growPool: { address: Address.vaDAI } })
+  prepareConfig(strategies, { growPool: { address: Address.Vesper.vaDAI } })
 
   describe('Pool Tests', function () {
     shouldBehaveLikePool('veETH', 'ETH', true)
