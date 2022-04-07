@@ -1,0 +1,30 @@
+name: vETH with Vesper IronBank XY
+on:
+  pull_request:
+    paths:
+      - "test/veth/vesper-iron-bank-xy.js"
+      - "contracts/strategies/Strategy.sol"
+      - "contracts/strategies/iron-bank/IronBankXYStrategy.sol"
+      - "contracts/strategies/iron-bank/VesperIronBankXYStrategy.sol"
+
+jobs:
+  veth-vesper-iron-bank-xy-test:
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.NODE_URL }}
+    steps:
+      - uses: actions/checkout@v2.3.1
+        with:
+          submodules: true
+      - run: cat "${GITHUB_WORKSPACE}/.github/env.properties" >> $GITHUB_ENV
+
+      - name: Use Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version-file: ".nvmrc"
+
+      - name: Running npm install
+        run: npm install
+
+      - name: Running vETH with Vesper IronBank XY
+        run: npm test "test/veth/vesper-iron-bank-xy.js"

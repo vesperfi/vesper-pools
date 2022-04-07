@@ -476,6 +476,36 @@ const StrategyConfig = {
     setup: { ...setup },
   },
 
+  IronBankXYStrategyETH: {
+    contract: 'IronBankXYStrategy',
+    type: StrategyTypes.COMPOUND_XY,
+    constructorArgs: {
+      swapManager,
+      comptroller: Address.IronBank.Unitroller,
+      receiptToken: Address.IronBank.iWETH,
+      borrowCToken: Address.IronBank.iDAI,
+      strategyName: 'IronBankXYStrategyETH',
+    },
+    config: { ...config },
+    setup: { ...setup },
+  },
+
+  VesperIronBankXYStrategyETH: {
+    contract: 'VesperIronBankXYStrategy',
+    type: StrategyTypes.VESPER_COMPOUND_XY,
+    constructorArgs: {
+      swapManager,
+      comptroller: Address.IronBank.Unitroller,
+      receiptToken: Address.IronBank.iWETH,
+      borrowCToken: Address.IronBank.iDAI,
+      vPool: Address.Vesper.vaDAI,
+      vspAddress: Address.Vesper.VSP,
+      strategyName: 'VesperIronBankXYStrategyETH',
+    },
+    config: { ...config },
+    setup: { ...setup },
+  },
+
   RariFuseStrategy: {
     contract: 'RariFuseStrategy',
     type: StrategyTypes.RARI_FUSE,
