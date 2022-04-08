@@ -227,29 +227,6 @@ async function createVesperMakerStrategy(strategy, poolAddress, options) {
 }
 
 /**
- * Create and configure VesperCompoundXY Strategy.
- *
- * @param {object} strategy  Strategy config object
- * @param {object} poolAddress pool address
- * @param {object} options extra params
- * @returns {object} Strategy instance
- */
-async function createVesperCompoundXYStrategy(strategy, poolAddress, options) {
-  options.vPool = await setupVesperPool()
-
-  strategy.constructorArgs.vPool = options.vPool.address
-
-  const strategyInstance = await deployContract(strategy.contract, [
-    poolAddress,
-    ...Object.values(strategy.constructorArgs),
-  ])
-
-  await executeIfExist(options.vPool.addToFeeWhitelist, strategyInstance.address)
-
-  return strategyInstance
-}
-
-/**
  * Create and configure a EarnVesper Strategy.
  * Using an up-to-date underlying vPool and VSP rewards enabled
  *
@@ -289,6 +266,47 @@ async function createEarnVesperStrategy(strategy, poolAddress, options) {
   return strategyInstance
 }
 
+/**
+ * Create and configure VesperXY Strategy.
+ *
+ * @param {object} strategy  Strategy config object
+ * @param {object} poolAddress pool address
+ * @param {object} options extra params
+ * @returns {object} Strategy instance
+ */
+async function createVesperXYStrategy(strategy, poolAddress, options) {
+  const underlyingVesperPool = await ethers.getContractAt('IVesperPool', strategy.constructorArgs.vPool)
+  const collateralToken = await underlyingVesperPool.token()
+
+  options.vPool = await setupVesperPool(collateralToken)
+
+  const TOTAL_REWARD = ethers.utils.parseUnits('150000')
+  const REWARD_DURATION = 30 * 24 * 60 * 60
+
+  const vPoolRewards = await deployContract('PoolRewards', [])
+  const rewardTokens = [Address.Vesper.VSP]
+  await vPoolRewards.initialize(poolAddress, rewardTokens)
+  await options.vPool.updatePoolRewards(vPoolRewards.address)
+
+  const vsp = await ethers.getContractAt('IVSP', Address.Vesper.VSP)
+
+  await adjustBalance(Address.Vesper.VSP, vPoolRewards.address, TOTAL_REWARD)
+
+  const notifyMultiSignature = 'notifyRewardAmount(address[],uint256[],uint256[])'
+  await vPoolRewards[`${notifyMultiSignature}`]([vsp.address], [TOTAL_REWARD], [REWARD_DURATION])
+
+  strategy.constructorArgs.vPool = options.vPool.address
+
+  const strategyInstance = await deployContract(strategy.contract, [
+    poolAddress,
+    ...Object.values(strategy.constructorArgs),
+  ])
+
+  await executeIfExist(options.vPool.addToFeeWhitelist, strategyInstance.address)
+
+  return strategyInstance
+}
+
 // eslint-disable-next-line complexity
 async function createStrategy(strategy, poolAddress, options = {}) {
   const strategyType = strategy.type
@@ -301,8 +319,8 @@ async function createStrategy(strategy, poolAddress, options = {}) {
     instance = await createMakerStrategy(strategy, poolAddress, options)
   } else if (strategyType === StrategyType.VESPER_MAKER || strategyType === StrategyType.EARN_VESPER_MAKER) {
     instance = await createVesperMakerStrategy(strategy, poolAddress, options)
-  } else if (strategyType === StrategyType.VESPER_COMPOUND_XY) {
-    instance = await createVesperCompoundXYStrategy(strategy, poolAddress, options)
+  } else if (strategyType === StrategyType.VESPER_COMPOUND_XY || strategyType === StrategyType.VESPER_AAVE_XY) {
+    instance = await createVesperXYStrategy(strategy, poolAddress, options)
   } else if (strategyType === StrategyType.EARN_VESPER) {
     instance = await createEarnVesperStrategy(strategy, poolAddress, options)
   } else {

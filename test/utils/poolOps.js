@@ -152,13 +152,13 @@ async function harvestVesperMaker(strategy) {
 }
 
 /**
- * Simulates harvesting in a VesperCompoundXY strategy
+ * Simulates harvesting in a VesperCompoundXY/VesperAaveXY strategy
  * 1. Swaps some ethers for collateral into the underlying vPool
  * 2. This causes vPool' pricePerShare to increase
  *
  * @param {object} strategy - strategy object
  */
-async function harvestVesperCompoundXY(strategy) {
+async function harvestVesperXY(strategy) {
   const vPool = await ethers.getContractAt('IVesperPool', await strategy.instance.vPool())
   const collateralTokenAddress = await vPool.token()
 
@@ -209,8 +209,8 @@ async function rebalanceStrategy(strategy) {
       await harvestYearn(strategy)
     }
     if (strategy.type.includes('earnVesper') || strategy.type.includes('vesper')) {
-      if (strategy.type.includes('vesperCompoundXY')) {
-        await harvestVesperCompoundXY(strategy)
+      if (strategy.type.includes('XY')) {
+        await harvestVesperXY(strategy)
       } else {
         await harvestVesper(strategy)
       }
@@ -225,6 +225,7 @@ async function rebalanceStrategy(strategy) {
     }
     tx = await strategy.instance.rebalance()
   } catch (error) {
+    console.log(error)
     // ignore under water error and give one more try.
     await bringAboveWater(strategy, 50)
     tx = await strategy.instance.rebalance()
