@@ -7,10 +7,10 @@ const { deposit } = require('../utils/poolOps')
 const { advanceBlock } = require('../utils/time')
 const { adjustBalance } = require('../utils/balance')
 
-const cUNIAddress = '0x35A18000230DA775CAc24873d00Ff85BccdeD550'
-const cAAVEAddress = '0xe65cdB6479BaC1e22340E4E755fAE7E509EcD06c'
-const comptrollerAddress = '0x3d9819210A31b4961b30EF54bE2aeD79B9c9Cd3B'
-const compAddress = '0xc00e94Cb662C3520282E6f5717214004A7f26888'
+// Read addresses of Compound in Address object
+const {
+  address: { Compound: Address },
+} = require('../utils/chains').getChainData()
 
 // Compound XY strategy specific tests
 function shouldBehaveLikeCompoundXYStrategy(strategyIndex) {
@@ -66,8 +66,8 @@ function shouldBehaveLikeCompoundXYStrategy(strategyIndex) {
       const minBorrowRatio = await strategy.minBorrowRatio()
       const maxBorrowRatio = await strategy.maxBorrowRatio()
 
-      expect(borrowRatio).to.be.gte(minBorrowRatio, 'Borrow should be >= min borrow ratio')
-      expect(borrowRatio).to.be.lte(maxBorrowRatio, 'Borrow should be <= max borrow ratio')
+      expect(borrowRatio, 'Borrow should be >= min borrow ratio').to.gte(minBorrowRatio)
+      expect(borrowRatio, 'Borrow should be <= max borrow ratio').to.lte(maxBorrowRatio)
     })
 
     it('Should adjust borrow to keep it within defined limits', async function () {
@@ -109,21 +109,6 @@ function shouldBehaveLikeCompoundXYStrategy(strategyIndex) {
       expect(newMinBorrowRatio).to.be.eq(0, 'minBorrowRatio should be 0')
     })
 
-    it('Should update borrow CToken', async function () {
-      await deposit(pool, collateralToken, 50, user2)
-      await strategy.connect(governor.signer).rebalance()
-      let borrowBalance = await borrowToken.balanceOf(strategy.address)
-      expect(borrowBalance).to.be.gt(0, 'Borrow balance should be > 0')
-
-      await strategy.connect(governor.signer).updateBorrowCToken(cUNIAddress)
-      const newBorrowToken = await ethers.getContractAt('ERC20', await strategy.borrowToken())
-
-      borrowBalance = await borrowToken.balanceOf(strategy.address)
-      expect(borrowBalance).to.be.eq(0, 'Old borrow token balance should be = 0')
-      const newBorrowBalance = await newBorrowToken.balanceOf(strategy.address)
-      expect(newBorrowBalance).to.be.gt(0, 'New borrow token balance should be > 0')
-    })
-
     it('Should update borrow ratio', async function () {
       await deposit(pool, collateralToken, 100, user1)
       await strategy.connect(governor.signer).rebalance()
@@ -138,28 +123,11 @@ function shouldBehaveLikeCompoundXYStrategy(strategyIndex) {
       expect(borrowRatio).to.be.gte(minBorrowRatio, 'Borrow should be >= min borrow ratio')
       expect(newMinBorrowRatio).to.be.eq(5000, 'Min borrow ratio is wrong')
 
-      let tx = strategy.connect(governor.signer).updateBorrowRatio(5000, 8000)
+      let tx = strategy.connect(governor.signer).updateBorrowRatio(5000, ethers.constants.MaxUint256)
       await expect(tx).to.be.revertedWith('invalid-max-borrow-ratio')
 
       tx = strategy.connect(governor.signer).updateBorrowRatio(5500, 5000)
       await expect(tx).to.be.revertedWith('max-should-be-higher-than-min')
-    })
-
-    // TODO investigate why this is failing after new compound proposals
-    // eslint-disable-next-line mocha/no-skipped-tests
-    it.skip('Should rebalance when loss making', async function () {
-      await strategy.connect(governor.signer).updateBorrowCToken(cAAVEAddress)
-      borrowToken = await ethers.getContractAt('ERC20', await strategy.borrowToken())
-      await deposit(pool, collateralToken, 50, user2)
-      await strategy.connect(governor.signer).rebalance()
-      const borrowBalance = await borrowToken.balanceOf(strategy.address)
-      expect(borrowBalance).to.be.gt(0, 'Borrow balance should be > 0')
-
-      // Advance some blocks to generate interest on borrow
-      await advanceBlock(10)
-      expect(await strategy.callStatic.isLossMaking()).to.be.true
-      // Even though it is loss making strategy, let rebalance work
-      await strategy.connect(governor.signer).rebalance()
     })
 
     it('Should repay borrow if borrow ratio set to 0', async function () {
@@ -174,11 +142,11 @@ function shouldBehaveLikeCompoundXYStrategy(strategyIndex) {
     })
 
     it('Should get COMP token as reserve token', async function () {
-      expect(await strategy.isReservedToken(compAddress)).to.be.equal(true, 'COMP token is reserved')
+      expect(await strategy.isReservedToken(Address.COMP)).to.be.equal(true, 'COMP token is reserved')
     })
 
     it('Should claim COMP when rebalance is called', async function () {
-      const comptroller = await ethers.getContractAt('Comptroller', comptrollerAddress)
+      const comptroller = await ethers.getContractAt('Comptroller', Address.COMPTROLLER)
       await deposit(pool, collateralToken, 10, user1)
       await deposit(pool, collateralToken, 2, user2)
       await strategy.connect(governor.signer).rebalance()
@@ -196,8 +164,8 @@ function shouldBehaveLikeCompoundXYStrategy(strategyIndex) {
     })
 
     it('Should liquidate COMP when claimed by external source', async function () {
-      const comptroller = await ethers.getContractAt('Comptroller', comptrollerAddress)
-      const comp = await ethers.getContractAt('ERC20', compAddress)
+      const comptroller = await ethers.getContractAt('Comptroller', Address.COMPTROLLER)
+      const comp = await ethers.getContractAt('ERC20', Address.COMP)
       await deposit(pool, collateralToken, 10, user2)
       await strategy.connect(governor.signer).rebalance()
       await advanceBlock(100)
@@ -208,15 +176,6 @@ function shouldBehaveLikeCompoundXYStrategy(strategyIndex) {
       await strategy.connect(governor.signer).rebalance()
       const compBalance = await comp.balanceOf(strategy.address)
       expect(compBalance).to.be.equal('0', 'COMP balance should be 0 on rebalance')
-    })
-
-    it('Should calculate current totalValue', async function () {
-      await deposit(pool, collateralToken, 10, user1)
-      await strategy.connect(governor.signer).rebalance()
-      await advanceBlock(100)
-      const totalValue = await strategy.callStatic.totalValueCurrent()
-      const totalDebt = await pool.totalDebt()
-      expect(totalValue).to.be.gt(totalDebt, 'loss making strategy')
     })
 
     it('Should calculate totalValue', async function () {
@@ -245,7 +204,7 @@ function shouldBehaveLikeCompoundXYStrategy(strategyIndex) {
     it('Should calculate APY', async function () {
       /* eslint-disable no-console */
       await deposit(pool, collateralToken, 10, user1)
-      let blockNumberStart = (await ethers.provider.getBlock()).number
+      const blockNumberStart = (await ethers.provider.getBlock()).number
       await strategy.connect(governor.signer).rebalance()
       await advanceBlock(100)
       await strategy.connect(governor.signer).rebalance()
@@ -253,21 +212,13 @@ function shouldBehaveLikeCompoundXYStrategy(strategyIndex) {
       let blockNumberEnd = (await ethers.provider.getBlock()).number
       let blockElapsed = blockNumberEnd - blockNumberStart
       console.log('\nAPY for WBTC::', calculateAPY(pricePerShare, blockElapsed))
-      console.log('\nUpdating borrow token to UNI')
-      await strategy.connect(governor.signer).updateBorrowCToken(cUNIAddress)
-      blockNumberStart = (await ethers.provider.getBlock()).number
+      console.log('Calculating APY again over 100 blocks')
+      await advanceBlock(100)
       await strategy.connect(governor.signer).rebalance()
-
-      const isLossMaking = await strategy.callStatic.isLossMaking()
-      console.log('Is UNI loss making?', isLossMaking)
-      if (!isLossMaking) {
-        await advanceBlock(100)
-        await strategy.connect(governor.signer).rebalance()
-        pricePerShare = await pool.pricePerShare()
-        blockNumberEnd = (await ethers.provider.getBlock()).number
-        blockElapsed = blockNumberEnd - blockNumberStart
-        console.log('APY for UNI::', calculateAPY(pricePerShare, blockElapsed))
-      }
+      pricePerShare = await pool.pricePerShare()
+      blockNumberEnd = (await ethers.provider.getBlock()).number
+      blockElapsed = blockNumberEnd - blockNumberStart
+      console.log('APY for WBTC::', calculateAPY(pricePerShare, blockElapsed))
       /* eslint-enable no-console */
     })
   })

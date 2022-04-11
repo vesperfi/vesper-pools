@@ -6,7 +6,6 @@ import "./CompoundXYStrategy.sol";
 import "../../interfaces/vesper/IVesperPool.sol";
 import "../../interfaces/vesper/IPoolRewards.sol";
 
-// solhint-disable no-empty-blocks
 /// @title Deposit Collateral in Compound and earn interest by depositing borrowed token in a Vesper Pool.
 contract VesperCompoundXYStrategy is CompoundXYStrategy {
     using SafeERC20 for IERC20;
@@ -45,11 +44,24 @@ contract VesperCompoundXYStrategy is CompoundXYStrategy {
         vsp = _vspAddress;
     }
 
-    function updateBorrowCToken(address _newBorrowCToken) external override onlyGovernor {}
-
     /// @notice Gets amount of borrowed Y collateral in strategy + Y collateral amount deposited in vPool
     function borrowBalance() external view returns (uint256) {
         return _getBorrowBalance();
+    }
+
+    function totalValue() public view override returns (uint256 _totalValue) {
+        _totalValue = super.totalValue();
+
+        address _poolRewards = IVesperPool(vPool).poolRewards();
+        if (_poolRewards != address(0)) {
+            (, uint256[] memory _claimableAmounts) = IPoolRewards(_poolRewards).claimable(address(this));
+            uint256 _vspAmount = _claimableAmounts[0];
+            if (_vspAmount > 0) {
+                (, uint256 _vspAsCollateral, ) =
+                    swapManager.bestOutputFixedInput(vsp, address(collateralToken), _vspAmount);
+                _totalValue += _vspAsCollateral;
+            }
+        }
     }
 
     function _approveToken(uint256 _amount) internal override {
@@ -67,7 +79,6 @@ contract VesperCompoundXYStrategy is CompoundXYStrategy {
         _shares = _amount > ((_shares * _pricePerShare) / 1e18) ? _shares + 1 : _shares;
 
         uint256 _maxShares = IERC20(vPool).balanceOf(address(this));
-
         IVesperPool(vPool).withdraw(_shares > _maxShares ? _maxShares : _shares);
     }
 
@@ -89,11 +100,11 @@ contract VesperCompoundXYStrategy is CompoundXYStrategy {
     }
 
     function _rebalanceBorrow(uint256 _excessBorrow) internal override {
-        if (_excessBorrow != 0) {
+        if (_excessBorrow > 0) {
             uint256 _borrowedHereBefore = IERC20(borrowToken).balanceOf(address(this));
             _withdrawFromVesperPool(_excessBorrow);
             uint256 _borrowedHere = IERC20(borrowToken).balanceOf(address(this)) - _borrowedHereBefore;
-            if (_borrowedHere != 0) {
+            if (_borrowedHere > 0) {
                 _safeSwap(borrowToken, address(collateralToken), _borrowedHere, 1);
             }
         }
@@ -105,7 +116,7 @@ contract VesperCompoundXYStrategy is CompoundXYStrategy {
         if (_poolRewards != address(0)) {
             IPoolRewards(_poolRewards).claimReward(address(this));
             uint256 _vspAmount = IERC20(vsp).balanceOf(address(this));
-            if (_vspAmount != 0) {
+            if (_vspAmount > 0) {
                 _safeSwap(vsp, _toToken, _vspAmount, 1);
             }
         }

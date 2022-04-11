@@ -6,10 +6,11 @@ const { shouldBehaveLikeStrategy } = require('../behavior/strategy')
 const { shouldMigrateStrategies } = require('../behavior/strategy-migration')
 const { strategyConfig } = require('../utils/chains').getChainData()
 
-describe('vETH Pool with Compound XY Strategy', function () {
-  const strategy = strategyConfig.CompoundXYStrategyETH
+describe('vETH Pool with VesperCompoundXY Strategy', function () {
+  const strategy = strategyConfig.VesperCompoundXYStrategyETH
   strategy.config.debtRatio = 9000
   const strategies = [strategy]
+
   prepareConfig(strategies)
   shouldBehaveLikePool('vETH', 'WETH')
   for (let i = 0; i < strategies.length; i++) {
