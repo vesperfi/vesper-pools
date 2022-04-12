@@ -3,7 +3,7 @@
 pragma solidity 0.8.9;
 
 import "../../interfaces/aave/IAave.sol";
-import "@openzeppelin/contracts/utils/math/Math.sol";
+import "../../dependencies/openzeppelin/contracts/utils/math/Math.sol";
 import "../../pool/Errors.sol";
 
 /// @title This contract provide core operations for Aave

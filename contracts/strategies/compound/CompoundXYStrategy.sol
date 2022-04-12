@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.9;
 
-import "@openzeppelin/contracts/utils/math/Math.sol";
+import "../../dependencies/openzeppelin/contracts/utils/math/Math.sol";
 import "../Strategy.sol";
 import "../../interfaces/compound/ICompound.sol";
 import "../../interfaces/oracle/IUniswapV3Oracle.sol";

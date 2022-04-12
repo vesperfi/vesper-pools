@@ -4,7 +4,7 @@ pragma solidity 0.8.9;
 import "../../Earn.sol";
 import "../VesperStrategy.sol";
 import "../../../interfaces/vesper/IVesperPool.sol";
-import "@openzeppelin/contracts/utils/math/Math.sol";
+import "../../../dependencies/openzeppelin/contracts/utils/math/Math.sol";
 
 /// @title This Earn strategy will deposit collateral token in a Vesper Grow Pool
 /// and converts the yield to another Drip Token

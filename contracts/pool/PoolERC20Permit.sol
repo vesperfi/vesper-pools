@@ -2,8 +2,8 @@
 
 pragma solidity 0.8.9;
 
-import "@openzeppelin/contracts/token/ERC20/extensions/draft-IERC20Permit.sol";
-import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "../dependencies/openzeppelin/contracts/token/ERC20/extensions/draft-IERC20Permit.sol";
+import "../dependencies/openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "./PoolERC20.sol";
 
 ///@title Pool ERC20 Permit to use with proxy. Inspired by OpenZeppelin ERC20Permit

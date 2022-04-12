@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.9;
 
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "../dependencies/openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../Governed.sol";
 import "../interfaces/bloq/ISwapManager.sol";
 

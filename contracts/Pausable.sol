@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.9;
 
-import "@openzeppelin/contracts/utils/Context.sol";
+import "./dependencies/openzeppelin/contracts/utils/Context.sol";
 
 /**
  * @dev Contract module which allows children to implement an emergency stop

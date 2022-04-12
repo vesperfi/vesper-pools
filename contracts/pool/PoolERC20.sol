@@ -2,9 +2,9 @@
 
 pragma solidity 0.8.9;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import "@openzeppelin/contracts/utils/Context.sol";
+import "../dependencies/openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "../dependencies/openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import "../dependencies/openzeppelin/contracts/utils/Context.sol";
 
 // solhint-disable reason-string, no-empty-blocks
 ///@title Pool ERC20 to use with proxy. Inspired by OpenZeppelin ERC20

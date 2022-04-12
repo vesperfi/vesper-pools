@@ -2,9 +2,9 @@
 
 pragma solidity 0.8.9;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import "../../dependencies/openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "../../dependencies/openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "../../dependencies/openzeppelin/contracts/utils/math/SafeCast.sol";
 import "../../interfaces/curve/IStableSwap.sol";
 import "../../interfaces/curve/ILiquidityGauge.sol";
 import "../../interfaces/curve/ITokenMinter.sol";
