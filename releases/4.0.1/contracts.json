@@ -233,7 +233,6 @@
         },
         "strategies": {
           "Convex4MetaPoolStrategyFRAXPoolUSDC": "0x938F7babD1895984D1ba57b8b06EBB5f5060DFB1",
-          "RariFuseStrategy#18": "0x3f46812E5b11A1b88B7b757b3caFF965e458f380",
           "RariFuseStrategy#6": "0xA92F21CF2923cd634922d193fC8eEaf05CBefb65"
         }
       },
