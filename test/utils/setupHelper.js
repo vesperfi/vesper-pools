@@ -404,6 +404,7 @@ async function makeNewStrategy(oldStrategy, poolAddress, _options) {
     instance,
     token: oldStrategy.token,
     type: oldStrategy.type,
+    contract: oldStrategy.contract,
   }
 
   return newStrategy

@@ -51,7 +51,9 @@ function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
   const shouldBehaveLikeSpecificStrategy = behaviors[type]
 
   describe(`${strategyName} Strategy common behavior tests`, function () {
+    let snapshotId
     beforeEach(async function () {
+      snapshotId = await ethers.provider.send('evm_snapshot', [])
       const users = await getUsers()
       ;[owner, user1, user2, user3, user4, user5] = users
       strategy = this.strategies[strategyIndex].instance
@@ -60,6 +62,10 @@ function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
       collateralToken = this.collateralToken
       feeCollector = this.strategies[strategyIndex].feeCollector
     })
+    afterEach(async function () {
+      await ethers.provider.send('evm_revert', [snapshotId])
+    })
+
     describe('Swap token', function () {
       it('Should sweep erc20 token', async function () {
         const token = await ethers.getContractAt('ERC20', ANY_ERC20)

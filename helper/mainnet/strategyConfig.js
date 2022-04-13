@@ -365,8 +365,8 @@ const StrategyConfig = {
     type: StrategyTypes.COMPOUND_LEVERAGE,
     constructorArgs: {
       swapManager,
-      rewardDistributor: Address.Compound.COMPTROLLER,
       comptroller: Address.Compound.COMPTROLLER,
+      rewardDistributor: Address.Compound.COMPTROLLER,
       rewardToken: Address.Compound.COMP,
       aaveAddressProvider: Address.Aave.AddressProvider,
       receiptToken: Address.Compound.cUNI,
