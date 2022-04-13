@@ -12,6 +12,12 @@ const PoolConfig = {
     setup: { ...setup }, // Shallow copy
     rewards: { ...rewards },
   },
+  VDAI: {
+    contractName: 'VPool',
+    poolParams: ['vaDAI Pool', 'vaDAI', Address.DAI],
+    setup: { ...setup }, // Shallow copy
+    rewards: { ...rewards },
+  },
   VAWETH: {
     contractName: 'VPool',
     poolParams: ['vaWETH Pool', 'vaWETH', Address.WETH],

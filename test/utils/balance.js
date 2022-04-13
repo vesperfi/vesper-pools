@@ -20,6 +20,8 @@ const slots = {
   '0x5d3a536E4D6DbD6114cc1Ead35777bAB948E3643': 14, // cDAI
   '0xc00e94Cb662C3520282E6f5717214004A7f26888': 1, // COMP
   [AvalancheAddress.DAI]: 0,
+  [AvalancheAddress.USDC]: 0,
+  [AvalancheAddress.WBTC]: 0,
 }
 
 /**
