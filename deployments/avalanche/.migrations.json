@@ -19,5 +19,8 @@
   "BenqiCompoundLeverageStrategyAvalancheWETH-v4.0.0": 1648836750,
   "TraderJoeCompoundLeverageStrategyAvalancheUSDC-v4.0.0": 1648843151,
   "CrvA3PoolStrategyDAI-v4.0.0": 1649855069,
-  "CrvA3PoolStrategyUSDC-v4.0.0": 1649855228
+  "CrvA3PoolStrategyUSDC-v4.0.0": 1649855228,
+  "BenqiCompoundLeverageStrategyAvalancheUSDC-v4.0.0": 1649869035,
+  "BenqiCompoundLeverageStrategyAvalancheAVAX-v4.0.0": 1649871072,
+  "BenqiCompoundLeverageStrategyAvalancheDAI-v4.0.0": 1649871833
 }

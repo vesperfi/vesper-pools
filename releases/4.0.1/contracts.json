@@ -20,6 +20,7 @@
         },
         "strategies": {
           "AaveStrategyAvalancheDAI": "0x867E89E47b7c252F4D991DF75eBd2CFD9188B929",
+          "BenqiCompoundLeverageStrategyAvalancheDAI": "0xBb4fCEf90D4259F476Ccb3BB7bc4842355B46c76",
           "CrvA3PoolStrategyDAI": "0xAf147FD4C72807AFdd3CCFDcf3CF6a2587E88127",
           "TraderJoeCompoundStrategyAvalancheDAI": "0x6871c4e1582D36980Fa6ED0b482294325a83570e"
         }
@@ -53,6 +54,7 @@
           }
         },
         "strategies": {
+          "BenqiCompoundLeverageStrategyAvalancheAVAX": "0x2727c4de420d94013b5cbcbec4e73b7893c4f818",
           "TraderJoeCompoundStrategyAvalancheAVAX": "0x53eb2fA63d587493399C44A2DffC6Ac9E213d50c"
         }
       },
@@ -86,6 +88,7 @@
         },
         "strategies": {
           "AaveStrategyAvalancheUSDC": "0x718E58C448116FE7315caEE135b12793AFc4FDf4",
+          "BenqiCompoundLeverageStrategyAvalancheUSDC": "0x570d1Baa39809aca59b51202179e1E5d8A08D993",
           "CrvA3PoolStrategyUSDC": "0x45D5Ff2793f516287A953A18EA88C360Fff94678",
           "TraderJoeCompoundLeverageStrategyAvalancheUSDC": "0x24dD3687C21Ac6295DC6dC7F173267CA89860068",
           "TraderJoeCompoundStrategyAvalancheUSDC": "0xe25d8F3F659E2a44602eC91538F9818793fd844F"
