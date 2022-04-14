@@ -2,10 +2,10 @@
 
 pragma solidity 0.8.9;
 
-import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/utils/Context.sol";
+import "../dependencies/openzeppelin/contracts/proxy/utils/Initializable.sol";
+import "../dependencies/openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "../dependencies/openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "../dependencies/openzeppelin/contracts/utils/Context.sol";
 import "./Errors.sol";
 import "../interfaces/vesper/IVesperPool.sol";
 import "./PoolAccountantStorage.sol";

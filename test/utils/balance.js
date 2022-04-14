@@ -18,8 +18,10 @@ const slots = {
   [Address.MIM]: 0,
   [Address.ALUSD]: 1,
   [Address.LINK]: 1,
-  [Address.Vesper.VSP]: 0,
+  [Address.APE]: 0,
+  [Address.MUSD]: 51,
   [Address.DPI]: 0,
+  [Address.Vesper.VSP]: 0,
   [Address.Compound.cDAI]: 14,
   [Address.Compound.COMP]: 1,
   [Address.FEI]: 0,
@@ -30,6 +32,7 @@ const slots = {
   // Avalanche addresses
   [AvalancheAddress.DAI]: 0,
   [AvalancheAddress.USDC]: 0,
+  [AvalancheAddress.WETH]: 0,
   [AvalancheAddress.WBTC]: 0,
   [AvalancheAddress.WETH]: 0,
 }

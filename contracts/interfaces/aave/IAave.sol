@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.9;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "../../dependencies/openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 interface AaveLendingPoolAddressesProvider {
     function getLendingPool() external view returns (address);

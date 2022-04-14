@@ -2,8 +2,8 @@
 
 pragma solidity 0.8.9;
 
-import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts/utils/Context.sol";
+import "./dependencies/openzeppelin/contracts/proxy/utils/Initializable.sol";
+import "./dependencies/openzeppelin/contracts/utils/Context.sol";
 
 /**
  * @dev Contract module which provides a basic access control mechanism, where

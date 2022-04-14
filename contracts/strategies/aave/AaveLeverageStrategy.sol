@@ -9,7 +9,7 @@ import "../../interfaces/oracle/IUniswapV3Oracle.sol";
 import "../../FlashLoanHelper.sol";
 import "../../pool/Errors.sol";
 import "./AaveCore.sol";
-import "@openzeppelin/contracts/utils/math/Math.sol";
+import "../../dependencies/openzeppelin/contracts/utils/math/Math.sol";
 
 /// @title This strategy will deposit collateral token in Aave and based on position
 /// it will borrow same collateral token. It will use borrowed asset as supply and borrow again.

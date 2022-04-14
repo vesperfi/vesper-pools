@@ -400,13 +400,9 @@ async function makeNewStrategy(oldStrategy, poolAddress, _options) {
     ..._options,
   }
   const instance = await createStrategy(oldStrategy, poolAddress, options)
-  const newStrategy = {
-    instance,
-    token: oldStrategy.token,
-    type: oldStrategy.type,
-    contract: oldStrategy.contract,
-  }
-
+  // New is copy of old except that it has new instance
+  const newStrategy = { ...oldStrategy }
+  newStrategy.instance = instance
   return newStrategy
 }
 

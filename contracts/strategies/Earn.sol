@@ -2,8 +2,8 @@
 
 pragma solidity 0.8.9;
 
-import "@openzeppelin/contracts/utils/Context.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "../dependencies/openzeppelin/contracts/utils/Context.sol";
+import "../dependencies/openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../interfaces/vesper/IEarnDrip.sol";
 import "../interfaces/vesper/IVesperPool.sol";
 import "./Strategy.sol";

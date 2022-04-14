@@ -2,7 +2,7 @@
 /* solhint-disable */
 pragma solidity 0.8.9;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "../../dependencies/openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 // Not a complete interface, but should have what we need
 interface ILiquidityGaugeV2 is IERC20 {
