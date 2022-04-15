@@ -15,6 +15,7 @@ abstract contract VPoolBase is PoolShareToken {
     event UpdatedUniversalFee(uint256 oldUniversalFee, uint256 newUniversalFee);
     event UpdatedPoolRewards(address indexed previousPoolRewards, address indexed newPoolRewards);
     event UpdatedWithdrawFee(uint256 previousWithdrawFee, uint256 newWithdrawFee);
+    event UniversalFeePaid(uint256 strategyDebt, uint256 profit, uint256 fee);
 
     constructor(
         string memory _name,
@@ -177,10 +178,13 @@ abstract contract VPoolBase is PoolShareToken {
         address _strategy = _msgSender();
         // Calculate universal fee
         if (_profit > 0) {
-            uint256 _fee = _calculateUniversalFee(_strategy, _profit);
+            (, , , uint256 _lastRebalanceAt, uint256 _totalDebt, , , , ) =
+                IPoolAccountant(poolAccountant).strategy(_strategy);
+            uint256 _fee = _calculateUniversalFee(_lastRebalanceAt, _totalDebt, _profit);
             // Mint shares equal to universal fee
             if (_fee > 0) {
                 _mint(IStrategy(_strategy).feeCollector(), _calculateShares(_fee));
+                emit UniversalFeePaid(_totalDebt, _profit, _fee);
             }
         }
 
@@ -353,6 +357,14 @@ abstract contract VPoolBase is PoolShareToken {
         // Calculate universal fee
         (, , , uint256 _lastRebalanceAt, uint256 _totalDebt, , , , ) =
             IPoolAccountant(poolAccountant).strategy(_strategy);
+        return _calculateUniversalFee(_lastRebalanceAt, _totalDebt, _profit);
+    }
+
+    function _calculateUniversalFee(
+        uint256 _lastRebalanceAt,
+        uint256 _totalDebt,
+        uint256 _profit
+    ) private view returns (uint256 _fee) {
         _fee = (universalFee * (block.number - _lastRebalanceAt) * _totalDebt) / (MAX_BPS * BLOCKS_PER_YEAR);
         if (_fee > (_profit / 2)) {
             _fee = _profit / 2;
