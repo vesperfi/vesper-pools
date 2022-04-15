@@ -72,6 +72,18 @@ const StrategyConfig = {
     config: { ...config }, // Shallow copy
     setup: { ...setup },
   },
+
+  AaveLeverageAvalancheStrategyAVAX: {
+    contract: 'AaveLeverageAvalancheStrategy',
+    type: StrategyTypes.AAVE_LEVERAGE,
+    constructorArgs: {
+      swapManager,
+      receiptToken: Address.Aave.avWAVAX,
+      strategyName: 'AaveLeverageAvalancheStrategyAVAX',
+    },
+    config: { ...config }, // Shallow copy
+    setup: { ...setup },
+  },
   CrvA3PoolStrategyDAI: {
     contract: 'CrvA3PoolAvaxStrategy',
     type: StrategyTypes.CURVE,
