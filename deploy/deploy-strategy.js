@@ -172,5 +172,5 @@ const deployFunction = async function ({ getNamedAccounts, deployments, poolConf
 
   return true
 }
-module.exports = deployFunction
+module.exports = { deployFunction, executeOrProposeTx }
 module.exports.tags = ['deploy-strategy']

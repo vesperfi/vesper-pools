@@ -3,7 +3,7 @@
 const Address = require('./address')
 
 const setup = { feeCollector: Address.FEE_COLLECTOR, withdrawFee: 60 }
-const rewards = { contract: 'PoolRewards', tokens: [Address.NATIVE_TOKEN] }
+const rewards = { contract: 'PoolRewards', tokens: [Address.VSP] }
 
 const PoolConfig = {
   VADAI: {
@@ -22,31 +22,31 @@ const PoolConfig = {
     contractName: 'VPool',
     poolParams: ['vaWETH Pool', 'vaWETH', Address.WETH],
     setup: { ...setup }, // Shallow copy
-    rewards: { contract: 'PoolRewards', tokens: [] }, // no rewards
+    rewards: { ...rewards },
   },
   VAWBTC: {
     contractName: 'VPool',
     poolParams: ['vaWBTC Pool', 'vaWBTC', Address.WBTC],
     setup: { ...setup }, // Shallow copy
-    rewards: { contract: 'PoolRewards', tokens: [] }, // no rewards
+    rewards: { ...rewards },
   },
   VAAVAX: {
     contractName: 'VETH',
     poolParams: ['vaAVAX Pool', 'vaAVAX', Address.NATIVE_TOKEN],
     setup: { ...setup }, // Shallow copy
-    rewards: { contract: 'PoolRewards', tokens: [] }, // no rewards
+    rewards: { ...rewards },
   },
   VAUSDC: {
     contractName: 'VPool',
     poolParams: ['vaUSDC Pool', 'vaUSDC', Address.USDC],
     setup: { ...setup }, // Shallow copy
-    rewards: { contract: 'PoolRewards', tokens: [] }, // no rewards
+    rewards: { ...rewards },
   },
   VUSDC: {
     contractName: 'VPool',
     poolParams: ['vUSDC Pool', 'vUSDC', Address.USDC],
     setup: { ...setup }, // Shallow copy
-    rewards: { contract: 'PoolRewards', tokens: [] }, // no rewards
+    rewards: { ...rewards },
   },
 }
 
