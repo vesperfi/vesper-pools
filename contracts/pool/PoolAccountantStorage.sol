@@ -13,7 +13,7 @@ abstract contract PoolAccountantStorageV1 {
 abstract contract PoolAccountantStorageV2 is PoolAccountantStorageV1 {
     struct StrategyConfig {
         bool active;
-        uint256 interestFeeObsolete; // Obsolete in favor of universal fee
+        uint256 interestFee; // Obsolete in favor of universal fee
         uint256 debtRate; // Strategy can not borrow large amount in short durations. Can set big limit for trusted strategy
         uint256 lastRebalance; // Timestamp of last rebalance
         uint256 totalDebt; // Total outstanding debt strategy has

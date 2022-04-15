@@ -101,7 +101,7 @@ contract PoolAccountant is Initializable, Context, PoolAccountantStorageV2 {
         StrategyConfig memory newStrategy =
             StrategyConfig({
                 active: true,
-                interestFeeObsolete: 0,
+                interestFee: 0,
                 debtRatio: _debtRatio,
                 totalDebt: 0,
                 totalProfit: 0,
@@ -253,7 +253,7 @@ contract PoolAccountant is Initializable, Context, PoolAccountantStorageV2 {
         StrategyConfig memory _newStrategy =
             StrategyConfig({
                 active: true,
-                interestFeeObsolete: 0,
+                interestFee: 0,
                 debtRatio: strategy[_old].debtRatio,
                 totalDebt: strategy[_old].totalDebt,
                 totalProfit: 0,
