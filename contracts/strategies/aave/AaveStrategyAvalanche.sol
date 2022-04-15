@@ -1,76 +1,46 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity 0.8.9;
+
+import "./AaveCoreAvalanche.sol";
 import "../Strategy.sol";
 import "../../interfaces/aave/IAave.sol";
+import "../../dependencies/openzeppelin/contracts/utils/math/Math.sol";
 
 /// @dev This strategy will deposit collateral token in Aave and earn interest.
-contract AaveStrategyAvalanche is Strategy {
+contract AaveStrategyAvalanche is Strategy, AaveCoreAvalanche {
     using SafeERC20 for IERC20;
     // solhint-disable-next-line var-name-mixedcase
     string public NAME;
     string public constant VERSION = "4.0.1";
-
-    bytes32 private constant AAVE_PROVIDER_ID = 0x0100000000000000000000000000000000000000000000000000000000000000;
-    AaveLendingPool public aaveLendingPool;
-    AaveProtocolDataProvider public aaveProtocolDataProvider;
-    AaveIncentivesController public aaveIncentivesController;
-    AaveLendingPoolAddressesProvider public aaveAddressesProvider =
-        AaveLendingPoolAddressesProvider(0xb6A86025F0FE1862B372cb0ca18CE3EDe02A318f);
-    address public rewardToken = 0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7;
-    AToken internal immutable aToken;
-    event UpdatedAddressesProvider(address _previousProvider, address _newProvider);
 
     constructor(
         address _pool,
         address _swapManager,
         address _receiptToken,
         string memory _name
-    ) Strategy(_pool, _swapManager, _receiptToken) {
-        require(_receiptToken != address(0), "aToken-address-is-zero");
-        aToken = AToken(_receiptToken);
-        // If there is no incentive then below call will fail
-        try AToken(_receiptToken).getIncentivesController() returns (address _aaveIncentivesController) {
-            aaveIncentivesController = AaveIncentivesController(_aaveIncentivesController);
-        } catch {} //solhint-disable no-empty-blocks
-        aaveLendingPool = AaveLendingPool(aaveAddressesProvider.getLendingPool());
-        aaveProtocolDataProvider = AaveProtocolDataProvider(aaveAddressesProvider.getAddress(AAVE_PROVIDER_ID));
+    ) Strategy(_pool, _swapManager, _receiptToken) AaveCoreAvalanche(_receiptToken) {
         NAME = _name;
+    }
+
+    function isReservedToken(address _token) public view override returns (bool) {
+        return _isReservedToken(_token);
     }
 
     /**
      * @notice Report total value
      * @dev aToken and collateral are 1:1
      */
-    function totalValue() public view virtual override returns (uint256) {
-        if (address(aaveIncentivesController) == address(0)) {
-            // As there is no incentive return aToken balance as totalValue
-            return aToken.balanceOf(address(this));
+    function totalValue() public view virtual override returns (uint256 _totalValue) {
+        _totalValue = aToken.balanceOf(address(this));
+
+        uint256 _rewardAccrued = _getRewardAccrued();
+        if (_rewardAccrued > 0) {
+            (, uint256 _rewardAsCollateral, ) =
+                swapManager.bestOutputFixedInput(rewardToken, address(collateralToken), _rewardAccrued);
+            // Total value = reward as collateral + aToken balance
+            _totalValue += _rewardAsCollateral;
         }
-        address[] memory _assets = new address[](1);
-        _assets[0] = address(aToken);
-        uint256 _rewardAccrued = aaveIncentivesController.getRewardsBalance(_assets, address(this));
-        (, uint256 _rewardAsCollateral, ) =
-            swapManager.bestOutputFixedInput(rewardToken, address(collateralToken), _rewardAccrued);
-        // Total value = reward as collateral + aToken balance
-        return _rewardAsCollateral + aToken.balanceOf(address(this));
-    }
-
-    /**
-     * @notice Update address of Aave LendingPoolAddressesProvider
-     * @dev We will use new address to fetch lendingPool address and update that too.
-     */
-    function updateAddressesProvider(address _newAddressesProvider) external onlyGovernor {
-        require(_newAddressesProvider != address(0), "provider-address-is-zero");
-        require(address(aaveAddressesProvider) != _newAddressesProvider, "same-addresses-provider");
-        emit UpdatedAddressesProvider(address(aaveAddressesProvider), _newAddressesProvider);
-        aaveAddressesProvider = AaveLendingPoolAddressesProvider(_newAddressesProvider);
-        aaveLendingPool = AaveLendingPool(aaveAddressesProvider.getLendingPool());
-        aaveProtocolDataProvider = AaveProtocolDataProvider(aaveAddressesProvider.getAddress(AAVE_PROVIDER_ID));
-    }
-
-    function isReservedToken(address _token) public view override returns (bool) {
-        return _token == address(aToken) || _token == rewardToken;
     }
 
     /// @notice Large approval of token
@@ -92,42 +62,23 @@ contract AaveStrategyAvalanche is Strategy {
     /// @notice Claim Aave rewards and convert to _toToken.
     function _claimRewardsAndConvertTo(address _toToken) internal override {
         uint256 _rewardAmount = _claimRewards();
-        if (rewardToken != _toToken && _rewardAmount != 0) {
+        if (rewardToken != _toToken && _rewardAmount > 0) {
             _safeSwap(rewardToken, _toToken, _rewardAmount, 1);
         }
     }
 
-    /**
-     * @notice Claim rewards from Aave incentive controller
-     * @dev Return 0 if collateral has no incentive
-     */
-    function _claimRewards() internal returns (uint256) {
-        if (address(aaveIncentivesController) == address(0)) {
-            return 0;
-        }
-        address[] memory _assets = new address[](1);
-        _assets[0] = address(aToken);
-        aaveIncentivesController.claimRewards(_assets, type(uint256).max, address(this));
-        return IERC20(rewardToken).balanceOf(address(this));
-    }
-
     /// @notice Deposit asset into Aave
     function _deposit(uint256 _amount) internal {
-        if (_amount != 0) {
+        if (_amount > 0) {
             aaveLendingPool.deposit(address(collateralToken), _amount, address(this), 0);
         }
     }
 
     /// @notice Withdraw collateral to payback excess debt
     function _liquidate(uint256 _excessDebt) internal override returns (uint256 _payback) {
-        if (_excessDebt != 0) {
+        if (_excessDebt > 0) {
             _payback = _safeWithdraw(address(this), _excessDebt);
         }
-    }
-
-    /// @notice Returns minimum of 2 given numbers
-    function _min(uint256 a, uint256 b) internal pure returns (uint256) {
-        return a < b ? a : b;
     }
 
     /**
@@ -178,7 +129,7 @@ contract AaveStrategyAvalanche is Strategy {
         (uint256 _availableLiquidity, , , , , , , , , ) =
             aaveProtocolDataProvider.getReserveData(address(collateralToken));
         // Get minimum of _amount, _aTokenBalance and _availableLiquidity
-        return _withdraw(_to, _min(_amount, _min(_aTokenBalance, _availableLiquidity)));
+        return _withdraw(_to, Math.min(_amount, Math.min(_aTokenBalance, _availableLiquidity)));
     }
 
     /**
@@ -196,7 +147,7 @@ contract AaveStrategyAvalanche is Strategy {
      * @return Actual collateral withdrawn
      */
     function _withdraw(address _to, uint256 _amount) internal returns (uint256) {
-        if (_amount != 0) {
+        if (_amount > 0) {
             require(
                 aaveLendingPool.withdraw(address(collateralToken), _amount, _to) == _amount,
                 "withdrawn-amount-is-not-correct"

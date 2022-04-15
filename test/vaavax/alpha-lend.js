@@ -3,7 +3,7 @@
 const { prepareConfig } = require('./config')
 const { shouldBehaveLikePool } = require('../behavior/vesper-pool')
 const { shouldBehaveLikeStrategy } = require('../behavior/strategy')
-const network = require('./../utils/network')
+const network = require('../utils/network')
 const { strategyConfig } = require('../utils/chains').getChainData()
 
 describe('vaAVAX Pool', function () {
