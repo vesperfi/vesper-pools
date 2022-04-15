@@ -20,7 +20,7 @@ contract AlphaLendStrategyETH is AlphaLendStrategy {
         require((_msgSender() == address(safeBox)) || (_msgSender() == WETH), "invalid-eth-sender");
     }
 
-    function _setupCheck(address _pool) internal view override {
+    function _setupCheck(address _pool) internal view virtual override {
         require(address(IVesperPool(_pool).token()) == WETH, "u-token-mismatch");
     }
 

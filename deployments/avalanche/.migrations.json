@@ -14,7 +14,6 @@
   "TraderJoeCompoundStrategyAvalancheUSDC-v4.0.0": 1644524429,
   "TraderJoeCompoundStrategyAvalancheWBTC-v4.0.0": 1644535729,
   "TraderJoeCompoundStrategyAvalancheWETH-v4.0.0": 1644584047,
-  "TraderJoeCompoundStrategyAvalancheAVAX-v4.0.0": 1649173532,
   "BenqiCompoundLeverageStrategyAvalancheWBTC-v4.0.0": 1648836502,
   "BenqiCompoundLeverageStrategyAvalancheWETH-v4.0.0": 1648836750,
   "TraderJoeCompoundLeverageStrategyAvalancheUSDC-v4.0.0": 1648843151,
@@ -22,5 +21,11 @@
   "CrvA3PoolStrategyUSDC-v4.0.0": 1649855228,
   "BenqiCompoundLeverageStrategyAvalancheUSDC-v4.0.0": 1649869035,
   "BenqiCompoundLeverageStrategyAvalancheAVAX-v4.0.0": 1649871072,
-  "BenqiCompoundLeverageStrategyAvalancheDAI-v4.0.0": 1649871833
+  "BenqiCompoundLeverageStrategyAvalancheDAI-v4.0.0": 1649871833,
+  "TraderJoeCompoundStrategyAvalancheAVAX-v4.0.0": 1644584871,
+  "BenqiCompoundStrategyAvalancheUSDC-v4.0.0": 1646438496,
+  "BenqiCompoundStrategyAvalancheWBTC-v4.0.0": 1646485949,
+  "BenqiCompoundStrategyAvalancheWETH-v4.0.0": 1646493637,
+  "BenqiCompoundStrategyAvalancheDAI-v4.0.0": 1646494348,
+  "BenqiCompoundStrategyAvalancheAVAX-v4.0.0": 1646494716
 }

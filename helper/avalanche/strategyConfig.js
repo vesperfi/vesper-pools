@@ -186,6 +186,66 @@ const StrategyConfig = {
     setup: { ...setup },
   },
 
+  BenqiCompoundStrategyAvalancheDAI: {
+    contract: 'CompoundMultiRewardAvalancheStrategy',
+    type: StrategyTypes.COMPOUND,
+    constructorArgs: {
+      swapManager,
+      comptroller: Address.Benqi.COMPTROLLER,
+      rewardDistributor: Address.Benqi.REWARD_DISTRIBUTOR,
+      rewardToken: Address.Benqi.QI,
+      receiptToken: Address.Benqi.qiDAI,
+      strategyName: 'BenqiCompoundStrategyAvalancheDAI',
+    },
+    config: { ...config }, // Shallow copy
+    setup: { ...setup },
+  },
+
+  BenqiCompoundStrategyAvalancheWETH: {
+    contract: 'CompoundMultiRewardAvalancheStrategy',
+    type: StrategyTypes.COMPOUND,
+    constructorArgs: {
+      swapManager,
+      comptroller: Address.Benqi.COMPTROLLER,
+      rewardDistributor: Address.Benqi.REWARD_DISTRIBUTOR,
+      rewardToken: Address.Benqi.QI,
+      receiptToken: Address.Benqi.qiETH,
+      strategyName: 'BenqiCompoundStrategyAvalancheWETH',
+    },
+    config: { ...config }, // Shallow copy
+    setup: { ...setup },
+  },
+
+  BenqiCompoundStrategyAvalancheWBTC: {
+    contract: 'CompoundMultiRewardAvalancheStrategy',
+    type: StrategyTypes.COMPOUND,
+    constructorArgs: {
+      swapManager,
+      comptroller: Address.Benqi.COMPTROLLER,
+      rewardDistributor: Address.Benqi.REWARD_DISTRIBUTOR,
+      rewardToken: Address.Benqi.QI,
+      receiptToken: Address.Benqi.qiBTC,
+      strategyName: 'BenqiCompoundStrategyAvalancheWBTC',
+    },
+    config: { ...config }, // Shallow copy
+    setup: { ...setup },
+  },
+
+  BenqiCompoundStrategyAvalancheAVAX: {
+    contract: 'BenqiCompoundMultiRewardAvalancheStrategyAVAX',
+    type: StrategyTypes.COMPOUND,
+    constructorArgs: {
+      swapManager,
+      comptroller: Address.Benqi.COMPTROLLER,
+      rewardDistributor: Address.Benqi.REWARD_DISTRIBUTOR,
+      rewardToken: Address.Benqi.QI,
+      receiptToken: Address.Benqi.qiAVAX,
+      strategyName: 'BenqiCompoundStrategyAvalancheAVAX',
+    },
+    config: { ...config }, // Shallow copy
+    setup: { ...setup },
+  },
+
   BenqiCompoundLeverageStrategyAvalancheUSDC: {
     contract: 'CompoundLeverageAvalancheStrategy',
     type: StrategyTypes.COMPOUND_LEVERAGE,
@@ -343,6 +403,66 @@ const StrategyConfig = {
       strategyName: 'TraderJoeCompoundLeverageStrategyAvalancheWBTC',
     },
     config: { ...config }, // Shallow copy
+    setup: { ...setup },
+  },
+
+  AlphaLendAvalancheStrategyDAI: {
+    contract: 'AlphaLendAvalancheStrategy',
+    type: StrategyTypes.ALPHA_LEND,
+    constructorArgs: {
+      swapManager,
+      receiptToken: Address.Alpha.ibDAIv2,
+      strategyName: 'AlphaLendAvalancheStrategyDAI',
+    },
+    config: { ...config },
+    setup: { ...setup },
+  },
+
+  AlphaLendAvalancheStrategyWETH: {
+    contract: 'AlphaLendAvalancheStrategy',
+    type: StrategyTypes.ALPHA_LEND,
+    constructorArgs: {
+      swapManager,
+      receiptToken: Address.Alpha.ibWETHv2,
+      strategyName: 'AlphaLendAvalancheStrategyWETH',
+    },
+    config: { ...config },
+    setup: { ...setup },
+  },
+
+  AlphaLendAvalancheStrategyUSDC: {
+    contract: 'AlphaLendAvalancheStrategy',
+    type: StrategyTypes.ALPHA_LEND,
+    constructorArgs: {
+      swapManager,
+      receiptToken: Address.Alpha.ibUSDCv2,
+      strategyName: 'AlphaLendAvalancheStrategyUSDC',
+    },
+    config: { ...config },
+    setup: { ...setup },
+  },
+
+  AlphaLendAvalancheStrategyWBTC: {
+    contract: 'AlphaLendAvalancheStrategy',
+    type: StrategyTypes.ALPHA_LEND,
+    constructorArgs: {
+      swapManager,
+      receiptToken: Address.Alpha.ibWBTCv2,
+      strategyName: 'AlphaLendAvalancheStrategyWBTC',
+    },
+    config: { ...config },
+    setup: { ...setup },
+  },
+
+  AlphaLendAvalancheStrategyAVAX: {
+    contract: 'AlphaLendAvalancheStrategyAVAX',
+    type: StrategyTypes.ALPHA_LEND,
+    constructorArgs: {
+      swapManager,
+      receiptToken: Address.Alpha.ibAVAXv2,
+      strategyName: 'AlphaLendAvalancheStrategyAVAX',
+    },
+    config: { ...config },
     setup: { ...setup },
   },
 }

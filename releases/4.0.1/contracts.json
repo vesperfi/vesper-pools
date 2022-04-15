@@ -4,17 +4,17 @@
     "avalanche": {
       "vadai": {
         "pool": {
-          "proxyAdmin": "0xB6D75A53442844e8F1eed35d7A65225c57B282EB",
+          "proxyAdmin": "0xd9A5df2877a42460E9055C4134946668dfcf51f8",
           "proxy": "0x5323F445A8665239222b117aE095423a238F5706",
           "implementation": "0x30a35969AdBb8B437c44C8BdC162501Efa8eE018",
           "poolAccountant": {
-            "proxyAdmin": "0xB6D75A53442844e8F1eed35d7A65225c57B282EB",
+            "proxyAdmin": "0xd9A5df2877a42460E9055C4134946668dfcf51f8",
             "proxy": "0x1450E77CA4a646676A051118320efe3ed1c4831b",
             "implementation": "0x59246B1E23240fAb9a51cE97FB3F907Eb9758489"
           }
         },
         "poolRewards": {
-          "proxyAdmin": "0xB6D75A53442844e8F1eed35d7A65225c57B282EB",
+          "proxyAdmin": "0xd9A5df2877a42460E9055C4134946668dfcf51f8",
           "proxy": "0x57282f2ED5a39De0c2517E8E0D93003608B657D7",
           "implementation": "0x13A3f5769164D86CA87D70B006249B25F3429CFE"
         },
@@ -22,6 +22,7 @@
           "AaveStrategyAvalancheDAI": "0x867E89E47b7c252F4D991DF75eBd2CFD9188B929",
           "BenqiCompoundLeverageStrategyAvalancheDAI": "0xBb4fCEf90D4259F476Ccb3BB7bc4842355B46c76",
           "CrvA3PoolStrategyDAI": "0xAf147FD4C72807AFdd3CCFDcf3CF6a2587E88127",
+          "BenqiCompoundStrategyAvalancheDAI": "0x847930F3DffC03043a6f59064B049c1Ff128f56A",
           "TraderJoeCompoundStrategyAvalancheDAI": "0x6871c4e1582D36980Fa6ED0b482294325a83570e"
         }
       },
@@ -39,6 +40,7 @@
         "strategies": {
           "AaveStrategyAvalancheWETH": "0x0a46A9716b4632A57863d52123c5c10FDF9e10F8",
           "BenqiCompoundLeverageStrategyAvalancheWETH": "0x589E116B1B9Ec445145e2FB20468222cd2DAEe00",
+          "BenqiCompoundStrategyAvalancheWETH": "0x85E646909D6a1E251a0b7f24909a03931A708463",
           "TraderJoeCompoundStrategyAvalancheWETH": "0xedDd1B6c51749183595D2c6e6140B73dE086ac68"
         }
       },
@@ -54,7 +56,6 @@
           }
         },
         "strategies": {
-          "AaveStrategyAvalancheAVAX": "0x93bD05BA341B9f40C232cA9C05e5F28e3aa917D2",
           "BenqiCompoundLeverageStrategyAvalancheAVAX": "0x2727c4de420d94013b5cbcbec4e73b7893c4f818",
           "TraderJoeCompoundStrategyAvalancheAVAX": "0x53eb2fA63d587493399C44A2DffC6Ac9E213d50c"
         }
@@ -73,6 +74,7 @@
         "strategies": {
           "AaveStrategyAvalancheWBTC": "0x604af53401f7e84C3c332CB3C64a3FfE48A68cBf",
           "BenqiCompoundLeverageStrategyAvalancheWBTC": "0x9519Ec6402304Fe66d09Ee6ADE655Aa989D0239C",
+          "BenqiCompoundStrategyAvalancheWBTC": "0xFd01E8Db5fB5B170E9d290ab24Ae63df0b26A317",
           "TraderJoeCompoundStrategyAvalancheWBTC": "0xeF8737Ec1180ddaD26438e4675bCFE9773A0E8c8"
         }
       },
@@ -92,6 +94,7 @@
           "BenqiCompoundLeverageStrategyAvalancheUSDC": "0x570d1Baa39809aca59b51202179e1E5d8A08D993",
           "CrvA3PoolStrategyUSDC": "0x45D5Ff2793f516287A953A18EA88C360Fff94678",
           "TraderJoeCompoundLeverageStrategyAvalancheUSDC": "0x24dD3687C21Ac6295DC6dC7F173267CA89860068",
+          "BenqiCompoundStrategyAvalancheUSDC": "0x182F72FfDB674250746A103272bbFBCA56d4510C",
           "TraderJoeCompoundStrategyAvalancheUSDC": "0xe25d8F3F659E2a44602eC91538F9818793fd844F"
         }
       }
@@ -269,17 +272,17 @@
       },
       "vewbtc_dai": {
         "pool": {
-          "proxyAdmin": "0xe1444fEA423Bf8614c6E731C5BD5e45602AE6afC",
+          "proxyAdmin": "0x19A02f3512BdF78114B3c50f7d22a34b1B2798cA",
           "proxy": "0x7a74B6D3A07D3249Ea2FBb58e47F0DaF6d6a2ebf",
-          "implementation": "0x84323D50425eA63E5D9cC493b47C58dfCFB64D68",
+          "implementation": "0x8d48fD51FfEB99b1Ad1224038E46166Cfc7d9dE3",
           "poolAccountant": {
-            "proxyAdmin": "0xe1444fEA423Bf8614c6E731C5BD5e45602AE6afC",
+            "proxyAdmin": "0x19A02f3512BdF78114B3c50f7d22a34b1B2798cA",
             "proxy": "0x11aAb1b00c62EA9528c3286C53c2308Aad6f64ea",
-            "implementation": "0xADb6a931af81FE7E2430e12e125d8f8a72769274"
+            "implementation": "0x2Ad6DefC823D6DF64117C6dB0A17596faD90C767"
           }
         },
         "poolRewards": {
-          "proxyAdmin": "0xe1444fEA423Bf8614c6E731C5BD5e45602AE6afC",
+          "proxyAdmin": "0x19A02f3512BdF78114B3c50f7d22a34b1B2798cA",
           "proxy": "0x92659c1293f74d76249a72601C9Bf36bf6d738cA",
           "implementation": "0xacff2dc81fc8a99ec310E35DB006e36FC947F351"
         },
