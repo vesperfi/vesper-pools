@@ -10,7 +10,8 @@ abstract contract VPoolBase is PoolShareToken {
     using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.AddressSet;
 
-    uint256 public constant BLOCKS_PER_YEAR = 2336000;
+    // For simplicity we are assuming 365 days as 1 year
+    uint256 public constant ONE_YEAR = 365 days;
 
     event UpdatedUniversalFee(uint256 oldUniversalFee, uint256 newUniversalFee);
     event UpdatedPoolRewards(address indexed previousPoolRewards, address indexed newPoolRewards);
@@ -355,17 +356,17 @@ abstract contract VPoolBase is PoolShareToken {
      */
     function _calculateUniversalFee(address _strategy, uint256 _profit) private view returns (uint256 _fee) {
         // Calculate universal fee
-        (, , , uint256 _lastRebalanceAt, uint256 _totalDebt, , , , ) =
+        (, , , uint256 _lastRebalance, uint256 _totalDebt, , , , ) =
             IPoolAccountant(poolAccountant).strategy(_strategy);
-        return _calculateUniversalFee(_lastRebalanceAt, _totalDebt, _profit);
+        return _calculateUniversalFee(_lastRebalance, _totalDebt, _profit);
     }
 
     function _calculateUniversalFee(
-        uint256 _lastRebalanceAt,
+        uint256 _lastRebalance,
         uint256 _totalDebt,
         uint256 _profit
     ) private view returns (uint256 _fee) {
-        _fee = (universalFee * (block.number - _lastRebalanceAt) * _totalDebt) / (MAX_BPS * BLOCKS_PER_YEAR);
+        _fee = (universalFee * (block.timestamp - _lastRebalance) * _totalDebt) / (MAX_BPS * ONE_YEAR);
         if (_fee > (_profit / 2)) {
             _fee = _profit / 2;
         }
