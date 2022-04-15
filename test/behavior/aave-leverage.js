@@ -167,35 +167,30 @@ function shouldBehaveLikeAaveLeverageStrategy(strategyIndex) {
       expect(borrowRatio).to.lt(maxBorrowRatio, 'Borrow should be < max borrow ratio')
     })
 
-    it('Should update leverage config', async function () {
+    it('Should update borrow ratio', async function () {
       await deposit(pool, collateralToken, 100, user2)
       await strategy.connect(governor.signer).rebalance()
       await advanceBlock(100)
       const borrowRatioBefore = await strategy.currentBorrowRatio()
-      await strategy.connect(governor.signer).updateLeverageConfig(5100, 5500, 1100)
+      await strategy.connect(governor.signer).updateBorrowRatio(5100, 5500)
       const newMinBorrowRatio = await strategy.minBorrowRatio()
       expect(newMinBorrowRatio).to.eq(5100, 'Min borrow limit is wrong')
       const newMaxBorrowRatio = await strategy.maxBorrowRatio()
       expect(newMaxBorrowRatio).to.eq(5500, 'Max borrow limit is wrong')
-      const newSlippage = await strategy.slippage()
-      expect(newSlippage).to.eq(1100, 'Slippage is wrong')
 
       await strategy.connect(governor.signer).rebalance()
       const borrowRatioAfter = await strategy.currentBorrowRatio()
       expect(borrowRatioAfter).to.gt(borrowRatioBefore, 'Borrow ratio after should be greater')
       expect(parseInt(borrowRatioAfter) - parseInt(newMinBorrowRatio)).to.lt(1, 'Borrow should be ~= min borrow ratio')
 
-      let tx = strategy.connect(governor.signer).updateLeverageConfig(5500, 9500, 1100)
+      let tx = strategy.connect(governor.signer).updateBorrowRatio(5500, 9500)
       await expect(tx).to.revertedWith('21')
 
-      tx = strategy.connect(governor.signer).updateLeverageConfig(5500, 5000, 1200)
+      tx = strategy.connect(governor.signer).updateBorrowRatio(5500, 5000)
       await expect(tx).to.revertedWith('22')
 
-      tx = strategy.connect(governor.signer).updateLeverageConfig(5500, 5000, 1200)
+      tx = strategy.connect(governor.signer).updateBorrowRatio(5500, 5000)
       await expect(tx).to.revertedWith('22')
-
-      tx = strategy.connect(governor.signer).updateLeverageConfig(5500, 6500, 10100)
-      await expect(tx).to.revertedWith('23')
     })
 
     it('Should repay borrow if borrow limit set to 0', async function () {
@@ -203,7 +198,7 @@ function shouldBehaveLikeAaveLeverageStrategy(strategyIndex) {
       await strategy.connect(governor.signer).rebalance()
       const borrowBefore = await vdToken.balanceOf(strategy.address)
       expect(borrowBefore).to.gt(0, 'Borrow amount should be > 0')
-      await strategy.connect(governor.signer).updateLeverageConfig(0, 5500, 1300)
+      await strategy.connect(governor.signer).updateBorrowRatio(0, 5500)
       await strategy.connect(governor.signer).rebalance()
       const borrowAfter = await vdToken.balanceOf(strategy.address)
       expect(borrowAfter).to.eq(0, 'Borrow amount should be = 0')
@@ -240,7 +235,7 @@ function shouldBehaveLikeAaveLeverageStrategy(strategyIndex) {
       console.log('APY::', calculateAPY(pricePerShare, blockElapsed, collateralDecimal))
 
       console.log('\nUpdating borrow limit and calculating APY again')
-      await strategy.connect(governor.signer).updateLeverageConfig(5000, 5500, 1500)
+      await strategy.connect(governor.signer).updateBorrowRatio(5000, 5500)
       blockNumberStart = (await ethers.provider.getBlock()).number
       minBorrowRatio = await strategy.minBorrowRatio()
       console.log('Borrowing upto', minBorrowRatio.toNumber() / 100, '% of collateral')
