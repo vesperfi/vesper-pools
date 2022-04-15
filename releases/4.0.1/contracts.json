@@ -15,8 +15,8 @@
         },
         "poolRewards": {
           "proxyAdmin": "0xB6D75A53442844e8F1eed35d7A65225c57B282EB",
-          "proxy": "0x57282f2ED5a39De0c2517E8E0D93003608B657D7",
-          "implementation": "0x13A3f5769164D86CA87D70B006249B25F3429CFE"
+          "proxy": "0x371eabb194C5e9B462C134cBcD699Ef3cb0d4468",
+          "implementation": "0x1b6c5bddaf46f5e28a4b2730f64ca060e2325513"
         },
         "strategies": {
           "AaveStrategyAvalancheDAI": "0x867E89E47b7c252F4D991DF75eBd2CFD9188B929",
@@ -36,6 +36,11 @@
             "implementation": "0xEeD0E5AACe8Cee7c5fEDfCB858bcb2082e1B94EE"
           }
         },
+        "poolRewards": {
+          "proxyAdmin": "0xB6D75A53442844e8F1eed35d7A65225c57B282EB",
+          "proxy": "0x9001633faa986Ec2fc8eb8e3EAea3a3642ea5946",
+          "implementation": "0x161B4cba576112a3a3A3c358c1915C3b157BEC19"
+        },
         "strategies": {
           "AaveStrategyAvalancheWETH": "0x0a46A9716b4632A57863d52123c5c10FDF9e10F8",
           "BenqiCompoundLeverageStrategyAvalancheWETH": "0x589E116B1B9Ec445145e2FB20468222cd2DAEe00",
@@ -52,6 +57,11 @@
             "proxy": "0x3cd21EBAAf08c1D04F2943C6BCB1759018b95Fc6",
             "implementation": "0x7752a4db11f1808439EA0e0B47D7572D16fEcc8d"
           }
+        },
+        "poolRewards": {
+          "proxyAdmin": "0xB6D75A53442844e8F1eed35d7A65225c57B282EB",
+          "proxy": "0x7b766D8c537ea47f8FFaf13d8dce7A0d89ab5259",
+          "implementation": "0x3c5e955B91F38CfcE898b10384E308d85C24D894"
         },
         "strategies": {
           "AaveStrategyAvalancheAVAX": "0x93bD05BA341B9f40C232cA9C05e5F28e3aa917D2",
@@ -70,6 +80,11 @@
             "implementation": "0x463C835f2959c52F99D65b5E712F3806c7E6A46F"
           }
         },
+        "poolRewards": {
+          "proxyAdmin": "0xB6D75A53442844e8F1eed35d7A65225c57B282EB",
+          "proxy": "0x53D574e6CCA7aD67f2b6fBa9EeCE3744952BE639",
+          "implementation": "0x6637d1520D356699d4AD3A26d732E8A7f3bF49D3"
+        },
         "strategies": {
           "AaveStrategyAvalancheWBTC": "0x604af53401f7e84C3c332CB3C64a3FfE48A68cBf",
           "BenqiCompoundLeverageStrategyAvalancheWBTC": "0x9519Ec6402304Fe66d09Ee6ADE655Aa989D0239C",
@@ -86,6 +101,11 @@
             "proxy": "0xdBDA0B497BbF4dbaDD58E84BBebD32e43e0a1332",
             "implementation": "0xacf16eDE5d213827eCfb63459dCF58542Fa2aeBf"
           }
+        },
+        "poolRewards": {
+          "proxyAdmin": "0xB6D75A53442844e8F1eed35d7A65225c57B282EB",
+          "proxy": "0x2b6e15924F936b2310b6F074A1634B32b5ac31eD",
+          "implementation": "0xAe03688106b119a6Fa9D52024413A1BD029408E6"
         },
         "strategies": {
           "AaveStrategyAvalancheUSDC": "0x718E58C448116FE7315caEE135b12793AFc4FDf4",

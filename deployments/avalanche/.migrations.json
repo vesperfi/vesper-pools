@@ -22,5 +22,7 @@
   "CrvA3PoolStrategyUSDC-v4.0.0": 1649855228,
   "BenqiCompoundLeverageStrategyAvalancheUSDC-v4.0.0": 1649869035,
   "BenqiCompoundLeverageStrategyAvalancheAVAX-v4.0.0": 1649871072,
-  "BenqiCompoundLeverageStrategyAvalancheDAI-v4.0.0": 1649871833
+  "BenqiCompoundLeverageStrategyAvalancheDAI-v4.0.0": 1649871833,
+  "VETH-poolRewards-v4.0.0": 1650027883,
+  "VPool-poolRewards-v4.0.0": 1650030862
 }
