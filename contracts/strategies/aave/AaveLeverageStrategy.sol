@@ -7,7 +7,7 @@ import "../Strategy.sol";
 import "../../interfaces/aave/IAave.sol";
 import "../../interfaces/oracle/IUniswapV3Oracle.sol";
 import "../../FlashLoanHelper.sol";
-import "../../pool/Errors.sol";
+import "../../Errors.sol";
 import "./AaveCore.sol";
 import "../../dependencies/openzeppelin/contracts/utils/math/Math.sol";
 

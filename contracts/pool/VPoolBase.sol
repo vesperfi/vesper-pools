@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.9;
 
-import "./Errors.sol";
+import "../Errors.sol";
 import "./PoolShareToken.sol";
 import "../interfaces/vesper/IStrategy.sol";
 
