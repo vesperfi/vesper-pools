@@ -14,8 +14,8 @@ abstract contract PoolAccountantStorageV2 is PoolAccountantStorageV1 {
     struct StrategyConfig {
         bool active;
         uint256 interestFee; // Obsolete in favor of universal fee
-        uint256 debtRate; // Strategy can not borrow large amount in short durations. Can set big limit for trusted strategy
-        uint256 lastRebalance; // Timestamp of last rebalance
+        uint256 debtRate; // Obsolete
+        uint256 lastRebalance; // Timestamp of last rebalance. It is used in universal fee calculation
         uint256 totalDebt; // Total outstanding debt strategy has
         uint256 totalLoss; // Total loss that strategy has realized
         uint256 totalProfit; // Total gain that strategy has realized
