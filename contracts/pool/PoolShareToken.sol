@@ -84,6 +84,7 @@ abstract contract PoolShareToken is Initializable, PoolERC20Permit, Governed, Pa
         bytes32 _s
     ) external virtual nonReentrant whenNotPaused {
         IERC20Permit(address(token)).permit(_msgSender(), address(this), _amount, _deadline, _v, _r, _s);
+        _updateRewards(_msgSender());
         _deposit(_amount);
     }
 
