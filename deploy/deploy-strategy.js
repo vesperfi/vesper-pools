@@ -11,13 +11,14 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms))
 }
 
-async function sendGnosisSafeTxn(encodedData, safe, deployer, nonce) {
+async function sendGnosisSafeTxn(encodedData, params) {
   const txnParams = {
     data: encodedData.data,
     to: encodedData.to,
-    safe,
-    nonce,
-    sender: deployer,
+    safe: params.safe,
+    nonce: params.nonce,
+    sender: params.deployer,
+    targetChain: params.targetChain,
   }
   await submitGnosisTxn(txnParams)
 }
@@ -30,11 +31,13 @@ async function executeOrProposeTx(contractName, contractAddress, alias, params) 
       : await params.execute(alias, { from: params.deployer, log: true }, params.methodName)
   } else if (params.isDelegateOrOwner) {
     const contract = await ethers.getContractAt(contractName, contractAddress)
-    multiSigNonce = multiSigNonce === 0 ? (await getMultiSigNonce(params.safe)).nonce : multiSigNonce + 1
+    multiSigNonce =
+      multiSigNonce === 0 ? (await getMultiSigNonce(params.safe, params.targetChain)).nonce : multiSigNonce + 1
+    params.nonce = multiSigNonce
     const data = params.methodArgs
       ? await contract.populateTransaction[params.methodName](...params.methodArgs)
       : await contract.populateTransaction[params.methodName]()
-    await sendGnosisSafeTxn(data, params.safe, params.deployer, multiSigNonce)
+    await sendGnosisSafeTxn(data, params)
   } else {
     console.log(`Pool governor is not deployer, skipping ${params.methodName} operation`)
   }
@@ -112,8 +115,10 @@ const deployFunction = async function ({ getNamedAccounts, deployments, poolConf
   const strategyVersion = await read(strategyAlias, {}, 'VERSION')
   deployFunction.id = `${strategyAlias}-v${strategyVersion}`
   params.governor = await read(poolDeploymentName, {}, 'governor')
+  params.targetChain = targetChain
   params.isDelegateOrOwner =
-    Address.MultiSig.safe === params.governor && (await isDelegateOrOwner(Address.MultiSig.safe, deployer))
+    Address.MultiSig.safe === params.governor &&
+    (await isDelegateOrOwner(Address.MultiSig.safe, deployer, params.targetChain))
 
   // update fee collector
   params.methodName = 'updateFeeCollector'
@@ -172,5 +177,6 @@ const deployFunction = async function ({ getNamedAccounts, deployments, poolConf
 
   return true
 }
-module.exports = { deployFunction, executeOrProposeTx }
+module.exports = deployFunction
+module.exports.executeOrProposeTx = executeOrProposeTx
 module.exports.tags = ['deploy-strategy']
