@@ -9,6 +9,7 @@ const DECIMAL = BigNumber.from('1000000000000000000')
 const { parseEther } = require('@ethersproject/units')
 const { adjustBalance } = require('./balance')
 const { getChain } = require('../utils/chains')
+const { unlock } = require('./setupHelper')
 const { NATIVE_TOKEN, DAI, MIM, ALUSD, Vesper } = require(`../../helper/${getChain()}/address`)
 
 async function executeIfExist(fn) {
@@ -248,6 +249,23 @@ async function rebalance(strategies) {
   return txs
 }
 
+// It will be useful for Vesper strategy if we use real Vesper pool
+async function rebalanceUnderlying(strategy) {
+  const vPool = await ethers.getContractAt('VPool', await strategy.vPool())
+  const accountant = await ethers.getContractAt('PoolAccountant', await vPool.poolAccountant())
+  const strategies = await accountant.getStrategies()
+
+  const keeper = await unlock(Vesper.KEEPER)
+  const promises = []
+  for (const underlyingStrategy of strategies) {
+    if ((await accountant.totalDebtOf(underlyingStrategy)).gt(0)) {
+      const strategyObj = await ethers.getContractAt('IStrategy', underlyingStrategy)
+      promises.push(strategyObj.connect(keeper).rebalance())
+    }
+  }
+  return Promise.all(promises)
+}
+
 /**
  *
  * @param {*} strategies .
@@ -263,4 +281,12 @@ async function totalDebtOfAllStrategy(strategies, pool) {
   return totalDebt
 }
 
-module.exports = { deposit, rebalance, rebalanceStrategy, totalDebtOfAllStrategy, executeIfExist, timeTravel }
+module.exports = {
+  deposit,
+  rebalance,
+  rebalanceStrategy,
+  rebalanceUnderlying,
+  totalDebtOfAllStrategy,
+  executeIfExist,
+  timeTravel,
+}
