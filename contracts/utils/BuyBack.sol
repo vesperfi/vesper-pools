@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.9;
 
-import "../pool/Errors.sol";
+import "../Errors.sol";
 import "../interfaces/bloq/IAddressList.sol";
 import "../interfaces/bloq/IAddressListFactory.sol";
 import "../interfaces/vesper/IVesperPool.sol";

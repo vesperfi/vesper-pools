@@ -7,7 +7,7 @@ import "../dependencies/openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../dependencies/openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./PoolERC20Permit.sol";
 import "./PoolStorage.sol";
-import "./Errors.sol";
+import "../Errors.sol";
 import "../Governed.sol";
 import "../Pausable.sol";
 import "../interfaces/vesper/IPoolAccountant.sol";

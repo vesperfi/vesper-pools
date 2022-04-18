@@ -3,7 +3,7 @@
 pragma solidity 0.8.9;
 
 import "../../interfaces/aave/IAave.sol";
-import "../../pool/Errors.sol";
+import "../../Errors.sol";
 
 abstract contract AaveCoreAvalanche {
     bytes32 private constant AAVE_PROVIDER_ID = 0x0100000000000000000000000000000000000000000000000000000000000000;
