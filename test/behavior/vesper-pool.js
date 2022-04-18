@@ -18,7 +18,7 @@ chai.use(chaiAlmost(1))
 const expect = chai.expect
 const { BigNumber: BN } = require('ethers')
 const { ethers } = require('hardhat')
-const { advanceBlock } = require('../utils/time')
+const { advanceBlock, increase } = require('../utils/time')
 const { getChain } = require('../utils/chains')
 const StrategyType = require('../utils/strategyTypes')
 const { adjustBalance } = require('../utils/balance')
@@ -335,7 +335,7 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
     })
 
     describe(`Universal fee in ${poolName} pool`, function () {
-      let blocksPerYear
+      let secondsPerYear
       let universalFee
 
       beforeEach(async function () {
@@ -351,7 +351,7 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
           await collateralToken.connect(user1.signer).approve(pool.address, depositAmount)
           await pool.connect(user1.signer).deposit(depositAmount)
         }
-        blocksPerYear = await pool.BLOCKS_PER_YEAR()
+        secondsPerYear = await pool.ONE_YEAR()
         universalFee = await pool.universalFee()
       })
       if (isEarnPool) {
@@ -389,19 +389,17 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
       } else {
         it('Should collect universal fee on rebalance', async function () {
           const feeCollector = await unlock(strategies[0].feeCollector)
-          const mineBlocks = 500
+          const timeBetweenRebalance = 60 * 60
           await rebalanceStrategy(strategies[0])
-
-          await advanceBlock(mineBlocks)
-          const blocksBetweenRebalance = mineBlocks + 1 // +1 for current running block
-
+          await increase(timeBetweenRebalance)
+          const totalDebt = await accountant.totalDebtOf(strategies[0].instance.address)
           const tx = await rebalanceStrategy(strategies[0])
-          const { strategyDebt, profit, fee } = await getEvent(tx, pool, 'UniversalFeePaid')
-          let expectedFee = universalFee.mul(blocksBetweenRebalance).mul(strategyDebt).div(blocksPerYear).div(MAX_BPS)
-          if (expectedFee.gt(profit.div(2))) {
-            expectedFee = profit.div(2)
+          const profit = (await getEvent(tx, accountant, 'EarningReported')).profit
+          let fee = universalFee.mul(timeBetweenRebalance).mul(totalDebt).div(secondsPerYear).div(MAX_BPS)
+          if (fee.gt(profit.div(2))) {
+            fee = profit.div(2)
           }
-          expect(fee, 'Incorrect fee').to.eq(expectedFee)
+
           const vPoolBalance = await pool.balanceOf(feeCollector.address)
           expect(vPoolBalance, 'Fee earned by FC should be > 0').to.gt(0)
           await pool.connect(feeCollector).withdraw(vPoolBalance)
@@ -414,8 +412,8 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
           const strategySigner = await unlock(strategies[0].instance.address)
           // Manual and force report earning to get fund from pool
           await pool.connect(strategySigner).reportEarning(0, 0, 0)
-          // Using higher blocks here for WBTC strategies
-          await advanceBlock(500)
+          // Increase time
+          await increase(60 * 60)
           // set universal fee super high.
           await pool.updateUniversalFee('5000')
           // Manual and force report earning with 1000 as profit
@@ -572,8 +570,8 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
         await deposit(40, user1)
         await accountant.updateDebtRate(strategies[0].instance.address, 20000)
         const strategyParams = await pool.strategy(strategies[0].instance.address)
-        const blockNumber = (await ethers.provider.getBlock()).number
-        let expectedLimit = BN.from(blockNumber).sub(strategyParams._lastRebalance).mul(strategyParams._debtRate)
+        const blockTimestamp = (await ethers.provider.getBlock()).timestamp
+        let expectedLimit = BN.from(blockTimestamp).sub(strategyParams._lastRebalance).mul(strategyParams._debtRate)
         const creditLimit = await pool.availableCreditLimit(strategies[0].instance.address)
         expect(creditLimit).to.almost.equal(expectedLimit, `Credit limit of strategy in ${poolName} is wrong`)
         const debtBefore = strategyParams._totalDebt

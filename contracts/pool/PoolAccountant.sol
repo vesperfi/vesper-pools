@@ -107,7 +107,7 @@ contract PoolAccountant is Initializable, Context, PoolAccountantStorageV2 {
                 totalProfit: 0,
                 totalLoss: 0,
                 debtRate: _debtRate,
-                lastRebalance: block.number,
+                lastRebalance: block.timestamp,
                 externalDepositFee: _externalDepositFee
             });
         strategy[_strategy] = newStrategy;
@@ -321,7 +321,7 @@ contract PoolAccountant is Initializable, Context, PoolAccountantStorageV2 {
         if (_profit != 0) {
             strategy[_strategy].totalProfit += _profit;
         }
-        strategy[_strategy].lastRebalance = block.number;
+        strategy[_strategy].lastRebalance = block.timestamp;
         emit EarningReported(
             _strategy,
             _profit,
@@ -449,7 +449,7 @@ contract PoolAccountant is Initializable, Context, PoolAccountantStorageV2 {
         uint256 _available = _maxDebt - _currentDebt;
         _available = _min(_min(IVesperPool(pool).tokensHere(), _available), _poolDebtLimit - totalDebt);
         _available = _min(
-            (block.number - strategy[_strategy].lastRebalance) * strategy[_strategy].debtRate,
+            (block.timestamp - strategy[_strategy].lastRebalance) * strategy[_strategy].debtRate,
             _available
         );
         return _available;
