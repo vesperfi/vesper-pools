@@ -13,6 +13,7 @@ abstract contract VPoolBase is PoolShareToken {
     // For simplicity we are assuming 365 days as 1 year
     uint256 public constant ONE_YEAR = 365 days;
 
+    event UpdateMinimumDepositLimit(uint256 oldDepositLimit, uint256 newDepositLimit);
     event UpdatedUniversalFee(uint256 oldUniversalFee, uint256 newUniversalFee);
     event UpdatedPoolRewards(address indexed previousPoolRewards, address indexed newPoolRewards);
     event UpdatedWithdrawFee(uint256 previousWithdrawFee, uint256 newWithdrawFee);
@@ -64,6 +65,16 @@ abstract contract VPoolBase is PoolShareToken {
         );
         IPoolAccountant(poolAccountant).migrateStrategy(_old, _new);
         IStrategy(_old).migrate(_new);
+    }
+
+    /**
+     * Only Governor:: Update minimum deposit limit
+     * @param _newLimit New minimum deposit limit
+     */
+    function updateMinimumDepositLimit(uint256 _newLimit) external onlyGovernor {
+        require(_newLimit != minDepositLimit, Errors.SAME_AS_PREVIOUS);
+        emit UpdateMinimumDepositLimit(minDepositLimit, _newLimit);
+        minDepositLimit = _newLimit;
     }
 
     /**

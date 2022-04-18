@@ -144,9 +144,10 @@ abstract contract PoolShareToken is Initializable, PoolERC20Permit, Governed, Pa
      * @notice Calculate how much shares user will get for given amount. Also return externalDepositFee if any.
      * @param _amount Collateral amount
      * @return _shares Amount of share that user will get
+     * @dev Amount should be >= minimum deposit limit which default to 1
      */
     function calculateMintage(uint256 _amount) public view returns (uint256 _shares) {
-        require(_amount > 0, Errors.INVALID_COLLATERAL_AMOUNT);
+        require(_amount >= minDepositLimit, Errors.INVALID_COLLATERAL_AMOUNT);
         uint256 _externalDepositFee = (_amount * IPoolAccountant(poolAccountant).externalDepositFee()) / MAX_BPS;
         _shares = _calculateShares(_amount - _externalDepositFee);
     }

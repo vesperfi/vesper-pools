@@ -1,5 +1,5 @@
 'use strict'
-
+const { ethers } = require('hardhat')
 const { expect } = require('chai')
 const { getUsers, deployContract, createStrategy } = require('./utils/setupHelper')
 
@@ -201,6 +201,33 @@ describe('Vesper Pool: Admin only function tests', function () {
       const tx = pool.migrateStrategy(strategy.address, newStrategy.address)
       // 15 = STRATEGY_IS_ACTIVE
       await expect(tx).to.be.revertedWith('15', 'New strategy is already active')
+    })
+  })
+
+  describe('Minimum deposit limit', function () {
+    it('Should update minimum deposit limit', async function () {
+      expect(await pool.minDepositLimit(), 'Incorrect minimum deposit fee').eq('1')
+      const newLimit = ethers.utils.parseEther('1000000')
+      await pool.updateMinimumDepositLimit(newLimit)
+      expect(await pool.minDepositLimit(), 'Incorrect minimum deposit fee').eq(newLimit)
+    })
+
+    it('Should revert if updating to same limit', async function () {
+      expect(await pool.minDepositLimit(), 'Incorrect minimum deposit fee').eq('1')
+      const tx = pool.updateMinimumDepositLimit('1')
+      // SAME_AS_PREVIOUS = 31
+      await expect(tx, 'Should fail with same amount error').to.revertedWith('31')
+    })
+
+    it('Should revert if depositing less than limit', async function () {
+      expect(await pool.minDepositLimit(), 'Incorrect minimum deposit fee').eq('1')
+      const newLimit = ethers.utils.parseEther('100')
+      // Update minimum limit to 100 DAI
+      await pool.updateMinimumDepositLimit(newLimit)
+      // Deposit 1 wei less than 100 DAI limit
+      const tx = pool.deposit(newLimit.sub('1'))
+      // INVALID_COLLATERAL_AMOUNT = 1
+      await expect(tx, 'Should with error code 1').to.revertedWith('1')
     })
   })
 })

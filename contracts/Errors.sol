@@ -3,7 +3,7 @@ pragma solidity 0.8.9;
 
 /// @title Errors library
 library Errors {
-    string public constant INVALID_COLLATERAL_AMOUNT = "1"; // Collateral must be greater than 0
+    string public constant INVALID_COLLATERAL_AMOUNT = "1"; // Collateral must be greater than 0 or > defined limit
     string public constant INVALID_SHARE_AMOUNT = "2"; // Share must be greater than 0
     string public constant INVALID_INPUT_LENGTH = "3"; // Input array length must be greater than 0
     string public constant INPUT_LENGTH_MISMATCH = "4"; // Input array length mismatch with another array length
@@ -33,4 +33,5 @@ library Errors {
     string public constant INVALID_INITIATOR = "28"; // "invalid-initiator"
     string public constant INCORRECT_WITHDRAW_AMOUNT = "29"; // withdrawn amount is not correct
     string public constant NO_MARKET_ID_FOUND = "30"; // dydx flash loan no marketId found for token
+    string public constant SAME_AS_PREVIOUS = "31"; // Input should not be same as previous value.
 }
