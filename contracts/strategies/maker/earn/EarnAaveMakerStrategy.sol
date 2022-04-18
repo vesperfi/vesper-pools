@@ -63,6 +63,6 @@ contract EarnAaveMakerStrategy is AaveMakerStrategy, Earn {
         _claimRewardsAndConvertTo(dripToken);
         _rebalanceDaiInLender();
         _handleProfit(IERC20(DAI).balanceOf(address(this)));
-        return collateralToken.balanceOf(address(this));
+        return 0;
     }
 }
