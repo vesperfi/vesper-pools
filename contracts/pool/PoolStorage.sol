@@ -28,8 +28,10 @@ contract PoolStorageV2 is PoolStorageV1 {
 }
 
 abstract contract PoolStorageV3 is PoolStorageV2 {
-    /// @notice // Universal fee of this pool.
+    /// @notice Universal fee of this pool.
     uint256 public universalFee;
+    /// @notice Maximum percentage of profit that can be counted as universal fee. Default to 50%
+    uint256 public maxProfitAsFee = 5_000;
     /// @notice Minimum deposit limit.
     /// @dev Do not set it to 0 as at time of deposit we are checking >=.
     uint256 public minDepositLimit = 1;

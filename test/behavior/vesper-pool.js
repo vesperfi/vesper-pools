@@ -396,8 +396,9 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
           const tx = await rebalanceStrategy(strategies[0])
           const profit = (await getEvent(tx, accountant, 'EarningReported')).profit
           let fee = universalFee.mul(timeBetweenRebalance).mul(totalDebt).div(secondsPerYear).div(MAX_BPS)
-          if (fee.gt(profit.div(2))) {
-            fee = profit.div(2)
+          const maxFee = profit.mul(await pool.maxProfitAsFee()).div(MAX_BPS)
+          if (fee.gt(maxFee)) {
+            fee = maxFee
           }
 
           const vPoolBalance = await pool.balanceOf(feeCollector.address)
@@ -408,7 +409,7 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
           expect(collateralBalance, 'Incorrect fee collected').to.gte(fee)
         })
 
-        it('Should collect universal fee equal to half of profit', async function () {
+        it('Should collect universal fee equal to maxProfitAsFee', async function () {
           const strategySigner = await unlock(strategies[0].instance.address)
           // Manual and force report earning to get fund from pool
           await pool.connect(strategySigner).reportEarning(0, 0, 0)
@@ -417,15 +418,15 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
           // set universal fee super high.
           await pool.updateUniversalFee('5000')
           // Manual and force report earning with 1000 as profit
-          const profit = 1000 // wei
+          const profit = BN.from(1000) // wei
           // Actual fee calculation on TVL will be higher than profit/2 so final fee will be profit/2
-          const expectedFee = (profit / 2).toString()
+          const expectedFee = profit.mul(await pool.maxProfitAsFee()).div(MAX_BPS)
           const totalDebt = await accountant.totalDebtOf(strategies[0].instance.address)
           // This will trigger fee calculation
           const tx = pool.connect(strategySigner).reportEarning(profit, 0, 0)
           await expect(tx).emit(pool, 'UniversalFeePaid').withArgs(totalDebt, 1000, expectedFee)
           // feeAsShare is in 18 decimals, profit is in collateral decimals
-          const expectedFeeAsShare = ethers.utils.parseUnits(expectedFee, 18 - collateralDecimal)
+          const expectedFeeAsShare = ethers.utils.parseUnits(expectedFee.toString(), 18 - collateralDecimal)
           expect(await pool.balanceOf(strategies[0].feeCollector), 'Fee earned by FC is wrong').to.eq(
             expectedFeeAsShare,
           )
