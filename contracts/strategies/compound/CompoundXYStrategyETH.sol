@@ -11,23 +11,11 @@ contract CompoundXYStrategyETH is CompoundXYStrategy {
         address _pool,
         address _swapManager,
         address _comptroller,
-        address _rewardDistributor,
         address _rewardToken,
         address _receiptToken,
         address _borrowCToken,
         string memory _name
-    )
-        CompoundXYStrategy(
-            _pool,
-            _swapManager,
-            _comptroller,
-            _rewardDistributor,
-            _rewardToken,
-            _receiptToken,
-            _borrowCToken,
-            _name
-        )
-    {}
+    ) CompoundXYStrategy(_pool, _swapManager, _comptroller, _rewardToken, _receiptToken, _borrowCToken, _name) {}
 
     /// @dev Unwrap ETH and supply in Compound
     function _mintX(uint256 _amount) internal override {

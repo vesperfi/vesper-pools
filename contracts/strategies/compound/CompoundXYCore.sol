@@ -7,9 +7,12 @@ import "../Strategy.sol";
 import "../../interfaces/compound/ICompound.sol";
 import "../../interfaces/oracle/IUniswapV3Oracle.sol";
 
-/// @title This strategy will deposit collateral token in IronBank and based on position
-/// it will borrow another token. Supply X borrow Y and keep borrowed amount here
-contract IronBankXYStrategy is Strategy {
+// solhint-disable no-empty-blocks
+
+/// @title This strategy will deposit collateral token in Compound and based on position it will
+/// borrow another token. Supply X borrow Y and keep borrowed amount here.
+/// It does not handle rewards and ETH as collateral
+abstract contract CompoundXYCore is Strategy {
     using SafeERC20 for IERC20;
 
     // solhint-disable-next-line var-name-mixedcase
@@ -19,17 +22,17 @@ contract IronBankXYStrategy is Strategy {
     uint256 internal constant MAX_BPS = 10_000; //100%
     uint256 public minBorrowRatio = 4_500; // 45%
     uint256 public maxBorrowRatio = 6_000; // 60%
+    uint32 internal constant TWAP_PERIOD = 3_600;
     uint256 public minBorrowLimit;
     uint256 public maxBorrowLimit;
     address public borrowToken;
 
-    Comptroller public unitroller;
+    Comptroller public comptroller;
 
     CToken public immutable supplyCToken;
     CToken public immutable borrowCToken;
 
     IUniswapV3Oracle internal constant ORACLE = IUniswapV3Oracle(0x0F1f5A87f99f0918e6C81F16E59F3518698221Ff);
-    uint32 internal constant TWAP_PERIOD = 3600;
 
     event UpdatedBorrowRatio(
         uint256 previousMinBorrowRatio,
@@ -41,26 +44,26 @@ contract IronBankXYStrategy is Strategy {
     constructor(
         address _pool,
         address _swapManager,
-        address _unitroller,
+        address _comptroller,
         address _receiptToken,
         address _borrowCToken,
         string memory _name
     ) Strategy(_pool, _swapManager, _receiptToken) {
         require(_receiptToken != address(0), "cToken-address-is-zero");
-        require(_unitroller != address(0), "unitroller-address-is-zero");
+        require(_comptroller != address(0), "comptroller-address-is-zero");
 
         NAME = _name;
 
-        unitroller = Comptroller(_unitroller);
+        comptroller = Comptroller(_comptroller);
         supplyCToken = CToken(_receiptToken);
         borrowCToken = CToken(_borrowCToken);
-        borrowToken = CToken(_borrowCToken).underlying();
+        borrowToken = _getUnderlyingToken(_borrowCToken);
 
         address[] memory _cTokens = new address[](2);
         _cTokens[0] = _receiptToken;
         _cTokens[1] = _borrowCToken;
-        unitroller.enterMarkets(_cTokens);
-        (, uint256 _collateralFactorMantissa, ) = unitroller.markets(_receiptToken);
+        comptroller.enterMarkets(_cTokens);
+        (, uint256 _collateralFactorMantissa, ) = comptroller.markets(_receiptToken);
         minBorrowLimit = (minBorrowRatio * 1e18) / _collateralFactorMantissa;
         maxBorrowLimit = (maxBorrowRatio * 1e18) / _collateralFactorMantissa;
     }
@@ -91,22 +94,28 @@ contract IronBankXYStrategy is Strategy {
 
     /// @notice Calculate total value based on supply and borrow position
     function totalValue() public view virtual override returns (uint256 _totalValue) {
-        uint256 _collateralInIronBank =
+        uint256 _collateralInCompound =
             (supplyCToken.balanceOf(address(this)) * supplyCToken.exchangeRateStored()) / 1e18;
 
         uint256 _borrowBalanceHere = _getBorrowBalance();
-        uint256 _borrowInIronBank = borrowCToken.borrowBalanceStored(address(this));
+        uint256 _borrowInCompound = borrowCToken.borrowBalanceStored(address(this));
 
         uint256 _collateralNeededForRepay;
-        if (_borrowInIronBank > _borrowBalanceHere) {
+        if (_borrowInCompound > _borrowBalanceHere) {
             (, _collateralNeededForRepay, ) = swapManager.bestInputFixedOutput(
                 address(collateralToken),
                 borrowToken,
-                _borrowInIronBank - _borrowBalanceHere
+                _borrowInCompound - _borrowBalanceHere
             );
         }
-        _totalValue = _collateralInIronBank + collateralToken.balanceOf(address(this)) - _collateralNeededForRepay;
+        _totalValue = _collateralInCompound + collateralToken.balanceOf(address(this)) - _collateralNeededForRepay;
     }
+
+    /// @dev Hook that executes after collateral borrow.
+    function _afterBorrowY(uint256 _amount) internal virtual {}
+
+    /// @dev Approve dex router
+    function _approveRouter(address _router, uint256 _amount) internal virtual {}
 
     /// @notice Approve all required tokens
     function _approveToken(uint256 _amount) internal virtual override {
@@ -114,8 +123,10 @@ contract IronBankXYStrategy is Strategy {
         collateralToken.safeApprove(address(supplyCToken), _amount);
         IERC20(borrowToken).safeApprove(address(borrowCToken), _amount);
         for (uint256 i = 0; i < swapManager.N_DEX(); i++) {
-            collateralToken.safeApprove(address(swapManager.ROUTERS(i)), _amount);
-            IERC20(borrowToken).safeApprove(address(swapManager.ROUTERS(i)), _amount);
+            address _router = address(swapManager.ROUTERS(i));
+            _approveRouter(_router, _amount);
+            collateralToken.safeApprove(_router, _amount);
+            IERC20(borrowToken).safeApprove(_router, _amount);
         }
     }
 
@@ -126,6 +137,17 @@ contract IronBankXYStrategy is Strategy {
     function _beforeMigration(address _newStrategy) internal virtual override {
         require(IStrategy(_newStrategy).token() == address(supplyCToken), "wrong-receipt-token");
         _repay(borrowCToken.borrowBalanceCurrent(address(this)), true);
+    }
+
+    /// @dev Hook that executes before repaying borrowed collateral
+    function _beforeRepayY(uint256 _amount) internal virtual {}
+
+    /// @dev Borrow Y from Compound. _afterBorrowY hook can be used to do anything with borrowed amount.
+    function _borrowY(uint256 _amount) internal virtual {
+        if (_amount > 0) {
+            require(borrowCToken.borrow(_amount) == 0, "borrow-failed");
+            _afterBorrowY(_amount);
+        }
     }
 
     /**
@@ -147,7 +169,7 @@ contract IronBankXYStrategy is Strategy {
         }
 
         uint256 _supply = supplyCToken.balanceOfUnderlying(address(this));
-        (, uint256 _collateralFactorMantissa, ) = unitroller.markets(address(supplyCToken));
+        (, uint256 _collateralFactorMantissa, ) = comptroller.markets(address(supplyCToken));
 
         // In case of withdraw, _amount can be greater than _supply
         uint256 _newSupply = _isDeposit ? _supply + _amount : _supply > _amount ? _supply - _amount : 0;
@@ -205,14 +227,14 @@ contract IronBankXYStrategy is Strategy {
         if (_borrow > _borrowBalanceHere) {
             _swapToBorrowToken(_borrow - _borrowBalanceHere);
         } else {
-            // When _borrowBalanceHere exceeds _borrow balance from IronBank
+            // When _borrowBalanceHere exceeds _borrow balance from Compound
             // Customize this hook to handle the excess profit
             _rebalanceBorrow(_borrowBalanceHere - _borrow);
         }
 
         uint256 _collateralHere = collateralToken.balanceOf(address(this));
-        uint256 _collateralInIronBank = supplyCToken.balanceOfUnderlying(address(this));
-        uint256 _totalCollateral = _collateralInIronBank + _collateralHere;
+        uint256 _collateralInCompound = supplyCToken.balanceOfUnderlying(address(this));
+        uint256 _totalCollateral = _collateralInCompound + _collateralHere;
 
         if (_totalCollateral > _totalDebt) {
             _profit = _totalCollateral - _totalDebt;
@@ -221,7 +243,7 @@ contract IronBankXYStrategy is Strategy {
         }
         uint256 _profitAndExcessDebt = _profit + _excessDebt;
         if (_collateralHere < _profitAndExcessDebt) {
-            uint256 _totalAmountToWithdraw = Math.min((_profitAndExcessDebt - _collateralHere), _collateralInIronBank);
+            uint256 _totalAmountToWithdraw = Math.min((_profitAndExcessDebt - _collateralHere), _collateralInCompound);
             if (_totalAmountToWithdraw > 0) {
                 _withdrawHere(_totalAmountToWithdraw);
                 _collateralHere = collateralToken.balanceOf(address(this));
@@ -233,12 +255,32 @@ contract IronBankXYStrategy is Strategy {
         }
     }
 
-    /// @notice Get the borrow balance strategy is holding
+    /// @dev Get the borrow balance strategy is holding
     function _getBorrowBalance() internal view virtual returns (uint256) {
         return IERC20(borrowToken).balanceOf(address(this));
     }
 
-    /// @notice Deposit collateral in IronBank and adjust borrow position
+    /// @dev Get underlying token
+    function _getUnderlyingToken(address _cToken) internal view virtual returns (address) {
+        return CToken(_cToken).underlying();
+    }
+
+    /// @dev Deposit collateral aka X in Compound
+    function _mintX(uint256 _amount) internal virtual {
+        if (_amount > 0) {
+            require(supplyCToken.mint(_amount) == 0, "supply-failed");
+        }
+    }
+
+    /// @dev Hook to handle profit scenario i.e. actual borrowed balance > Compound borrow account.
+    function _rebalanceBorrow(uint256 _excessBorrow) internal virtual {}
+
+    /// @dev Withdraw collateral aka X from Compound
+    function _redeemX(uint256 _amount) internal virtual {
+        require(supplyCToken.redeemUnderlying(_amount) == 0, "withdraw-failed");
+    }
+
+    /// @dev Deposit collateral in Compound and adjust borrow position
     function _reinvest() internal virtual override {
         uint256 _collateralBalance = collateralToken.balanceOf(address(this));
 
@@ -255,7 +297,7 @@ contract IronBankXYStrategy is Strategy {
     }
 
     /**
-     * @notice Repay borrow amount
+     * @dev Repay borrow amount
      * @dev Claim rewardToken and convert to collateral. Swap collateral to borrowToken as needed.
      * @param _repayAmount BorrowToken amount that we should repay to maintain safe position.
      * @param _shouldClaimComp Flag indicating should we claim rewardToken and convert to collateral or not.
@@ -284,6 +326,12 @@ contract IronBankXYStrategy is Strategy {
             }
             _repayY(_repayAmount);
         }
+    }
+
+    /// @dev Repay Y to Compound. _beforeRepayY hook can be used to pre-repay actions.
+    function _repayY(uint256 _amount) internal virtual {
+        _beforeRepayY(_amount);
+        require(borrowCToken.repayBorrow(_amount) == 0, "repay-failed");
     }
 
     /// @dev Safe swap, it will not revert.
@@ -346,64 +394,22 @@ contract IronBankXYStrategy is Strategy {
         return collateralToken.balanceOf(address(this)) - _collateralBefore;
     }
 
-    //////////////////// IronBank wrapper functions //////////////////////////////
-    function _mintX(uint256 _amount) internal virtual {
-        if (_amount > 0) {
-            require(supplyCToken.mint(_amount) == 0, "supply-to-iron-bank-failed");
-        }
-    }
-
-    function _redeemX(uint256 _amount) internal virtual {
-        require(supplyCToken.redeemUnderlying(_amount) == 0, "withdraw-from-iron-bank-failed");
-    }
-
-    function _borrowY(uint256 _amount) internal {
-        if (_amount > 0) {
-            require(borrowCToken.borrow(_amount) == 0, "borrow-from-iron-bank-failed");
-            _afterBorrowY(_amount);
-        }
-    }
-
-    function _repayY(uint256 _amount) internal {
-        _beforeRepayY(_amount);
-        require(borrowCToken.repayBorrow(_amount) == 0, "repay-to-iron-bank-failed");
-    }
-
-    /* solhint-disable no-empty-blocks */
-    /// @dev Hook that executes after borrowing collateral=
-    function _afterBorrowY(uint256 _amount) internal virtual {}
-
-    /// @dev Hook that executes before repaying borrowed collateral
-    function _beforeRepayY(uint256 _amount) internal virtual {}
-
-    /// @dev Hook to handle when actual borrowed balance is > IronBank borrow account
-    function _rebalanceBorrow(uint256 _excessBorrow) internal virtual {}
-
-    // We overridden _generateReport which eliminates need of below function.
-    function _liquidate(uint256 _excessDebt) internal override returns (uint256 _payback) {}
-
-    function _realizeProfit(uint256 _totalDebt) internal virtual override returns (uint256) {}
-
-    function _realizeLoss(uint256 _totalDebt) internal view override returns (uint256 _loss) {}
-
-    /* solhint-enable no-empty-blocks */
-
     /************************************************************************************************
      *                          Governor/admin/keeper function                                      *
      ***********************************************************************************************/
     /**
      * @notice Recover extra borrow tokens from strategy
-     * @dev If we get liquidation in IronBank, we will have borrowToken sitting in strategy.
+     * @dev If we get liquidation in Compound, we will have borrowToken sitting in strategy.
      * This function allows to recover idle borrow token amount.
      * @param _amountToRecover Amount of borrow token we want to recover in 1 call.
      *      Set it 0 to recover all available borrow tokens
      */
     function recoverBorrowToken(uint256 _amountToRecover) external onlyKeeper {
         uint256 _borrowBalanceHere = IERC20(borrowToken).balanceOf(address(this));
-        uint256 _borrowInIronBank = borrowCToken.borrowBalanceStored(address(this));
+        uint256 _borrowInCompound = borrowCToken.borrowBalanceStored(address(this));
 
-        if (_borrowBalanceHere > _borrowInIronBank) {
-            uint256 _extraBorrowBalance = _borrowBalanceHere - _borrowInIronBank;
+        if (_borrowBalanceHere > _borrowInCompound) {
+            uint256 _extraBorrowBalance = _borrowBalanceHere - _borrowInCompound;
             uint256 _recoveryAmount =
                 (_amountToRecover > 0 && _extraBorrowBalance > _amountToRecover)
                     ? _amountToRecover
@@ -416,13 +422,24 @@ contract IronBankXYStrategy is Strategy {
     }
 
     /**
+     * @notice Repay all borrow amount and set min borrow limit to 0.
+     * @dev This action usually done when loss is detected in strategy.
+     * @dev 0 borrow limit make sure that any future rebalance do not borrow again.
+     */
+    function repayAll() external onlyKeeper {
+        _repay(borrowCToken.borrowBalanceCurrent(address(this)), true);
+        minBorrowLimit = 0;
+        minBorrowRatio = 0;
+    }
+
+    /**
      * @notice Update upper and lower borrow ratio
      * @dev It is possible to set 0 as _minBorrowRatio to not borrow anything
      * @param _minBorrowRatio Minimum % we want to borrow
      * @param _maxBorrowRatio Maximum % we want to borrow
      */
     function updateBorrowRatio(uint256 _minBorrowRatio, uint256 _maxBorrowRatio) external onlyGovernor {
-        (, uint256 _collateralFactorMantissa, ) = unitroller.markets(address(supplyCToken));
+        (, uint256 _collateralFactorMantissa, ) = comptroller.markets(address(supplyCToken));
         require(_maxBorrowRatio < (_collateralFactorMantissa / 1e14), "invalid-max-borrow-ratio");
         require(_maxBorrowRatio > _minBorrowRatio, "max-should-be-higher-than-min");
         emit UpdatedBorrowRatio(minBorrowRatio, _minBorrowRatio, maxBorrowRatio, _maxBorrowRatio);
@@ -433,14 +450,10 @@ contract IronBankXYStrategy is Strategy {
         maxBorrowLimit = (_maxBorrowRatio * 1e18) / _collateralFactorMantissa;
     }
 
-    /**
-     * @notice Repay all borrow amount and set min borrow limit to 0.
-     * @dev This action usually done when loss is detected in strategy.
-     * @dev 0 borrow limit make sure that any future rebalance do not borrow again.
-     */
-    function repayAll() external onlyKeeper {
-        _repay(borrowCToken.borrowBalanceCurrent(address(this)), true);
-        minBorrowLimit = 0;
-        minBorrowRatio = 0;
-    }
+    // We overridden _generateReport which eliminates need of below function.
+    function _liquidate(uint256 _excessDebt) internal override returns (uint256 _payback) {}
+
+    function _realizeProfit(uint256 _totalDebt) internal virtual override returns (uint256) {}
+
+    function _realizeLoss(uint256 _totalDebt) internal view override returns (uint256 _loss) {}
 }
