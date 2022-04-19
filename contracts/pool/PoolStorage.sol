@@ -6,10 +6,12 @@ import "../dependencies/openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../dependencies/openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 contract PoolStorageV1 {
-    IERC20 public token; // Collateral token
-
-    address public poolAccountant; // PoolAccountant address
-    address public poolRewards; // PoolRewards contract address
+    ///@notice Collateral token address
+    IERC20 public token;
+    /// @notice PoolAccountant address
+    address public poolAccountant;
+    /// @notice PoolRewards contract address
+    address public poolRewards;
     address private feeWhitelistObsolete; // Obsolete in favor of AddressSet of feeWhitelist
     address private keepersObsolete; // Obsolete in favor of AddressSet of keepers
     address private maintainersObsolete; // Obsolete in favor of AddressSet of maintainers
@@ -26,5 +28,9 @@ contract PoolStorageV2 is PoolStorageV1 {
 }
 
 abstract contract PoolStorageV3 is PoolStorageV2 {
-    uint256 public universalFee; // Universal fee on this pool.
+    /// @notice // Universal fee of this pool.
+    uint256 public universalFee;
+    /// @notice Minimum deposit limit.
+    /// @dev Do not set it to 0 as at time of deposit we are checking >=.
+    uint256 public minDepositLimit = 1;
 }
