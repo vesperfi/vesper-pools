@@ -127,7 +127,11 @@ contract CompoundStrategy is Strategy {
         _claimRewardsAndConvertTo(address(collateralToken));
         uint256 _collateralBalance = _convertToCollateral(cToken.balanceOf(address(this)));
         if (_collateralBalance > _totalDebt) {
-            _withdrawHere(_collateralBalance - _totalDebt);
+            uint256 _amountToWithdraw = _collateralBalance - _totalDebt;
+            uint256 _expectedCToken = (_amountToWithdraw * 1e18) / cToken.exchangeRateStored();
+            if (_expectedCToken > 0) {
+                _withdrawHere(_amountToWithdraw);
+            }
         }
         return collateralToken.balanceOf(address(this));
     }

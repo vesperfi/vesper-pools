@@ -59,11 +59,9 @@ contract CompoundMultiRewardAvalancheStrategy is CompoundStrategy {
     function _claimRewardsAndConvertTo(address _toToken) internal virtual override {
         ComptrollerMultiReward(address(COMPTROLLER)).claimReward(0, address(this)); // Claim protocol rewards
         ComptrollerMultiReward(address(COMPTROLLER)).claimReward(1, address(this)); // Claim native AVAX (optional)
-        if (rewardToken != _toToken) {
-            uint256 _rewardAmount = IERC20(rewardToken).balanceOf(address(this));
-            if (_rewardAmount != 0) {
-                _safeSwap(rewardToken, _toToken, _rewardAmount, 1);
-            }
+        uint256 _rewardAmount = IERC20(rewardToken).balanceOf(address(this));
+        if (_rewardAmount != 0) {
+            _safeSwap(rewardToken, _toToken, _rewardAmount, 1);
         }
         uint256 _avaxRewardAmount = address(this).balance;
         if (_avaxRewardAmount != 0) {
