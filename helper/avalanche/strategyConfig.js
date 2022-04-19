@@ -186,6 +186,21 @@ const StrategyConfig = {
     setup: { ...setup },
   },
 
+  BenqiCompoundStrategyAvalancheQI: {
+    contract: 'CompoundMultiRewardAvalancheStrategy',
+    type: StrategyTypes.COMPOUND,
+    constructorArgs: {
+      swapManager,
+      comptroller: Address.Benqi.COMPTROLLER,
+      rewardDistributor: Address.Benqi.REWARD_DISTRIBUTOR,
+      rewardToken: Address.Benqi.QI,
+      receiptToken: Address.Benqi.qiQI,
+      strategyName: 'BenqiCompoundStrategyAvalancheQI',
+    },
+    config: { ...config }, // Shallow copy
+    setup: { ...setup },
+  },
+
   BenqiCompoundLeverageStrategyAvalancheUSDC: {
     contract: 'CompoundLeverageAvalancheStrategy',
     type: StrategyTypes.COMPOUND_LEVERAGE,
