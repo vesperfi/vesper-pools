@@ -1,11 +1,10 @@
 'use strict'
 
-const { ethers } = require('hardhat')
 const Address = require('./address')
 const StrategyTypes = require('../../test/utils/strategyTypes')
 
 const swapManager = Address.Vesper.SWAP_MANAGER
-const config = { debtRatio: 0, debtRate: ethers.utils.parseEther('1000000').toString(), externalDepositFee: 0 }
+const config = { debtRatio: 0, externalDepositFee: 0 }
 
 const setup = {
   feeCollector: Address.Vesper.FEE_COLLECTOR,

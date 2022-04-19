@@ -29,8 +29,8 @@ interface IPoolAccountant {
         view
         returns (
             bool _active,
-            uint256 _interestFee,
-            uint256 _debtRate,
+            uint256 _interestFee, // Obsolete
+            uint256 _debtRate, // Obsolete
             uint256 _lastRebalance,
             uint256 _totalDebt,
             uint256 _totalLoss,

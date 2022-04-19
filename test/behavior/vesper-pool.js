@@ -562,29 +562,6 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
         const creditLimit = await pool.availableCreditLimit(strategies[0].instance.address)
         expect(creditLimit).to.be.gt(0, `Credit limit of strategy in ${poolName} is wrong`)
       })
-
-      it('Credit line should be min of debtRate, tokens here', async function () {
-        const dust = DECIMAL18.div(100) // Dust is less than 1e16
-        await deposit(60, user2)
-        await rebalance(strategies)
-        await deposit(40, user1)
-        await accountant.updateDebtRate(strategies[0].instance.address, 20000)
-        const strategyParams = await pool.strategy(strategies[0].instance.address)
-        const blockTimestamp = (await ethers.provider.getBlock()).timestamp
-        let expectedLimit = BN.from(blockTimestamp).sub(strategyParams._lastRebalance).mul(strategyParams._debtRate)
-        const creditLimit = await pool.availableCreditLimit(strategies[0].instance.address)
-        expect(creditLimit).to.almost.equal(expectedLimit, `Credit limit of strategy in ${poolName} is wrong`)
-        const debtBefore = strategyParams._totalDebt
-        await strategies[0].instance.rebalance()
-        // add limit of one more block
-        expectedLimit = expectedLimit.add(strategyParams._debtRate)
-        const debtAfter = await pool.totalDebtOf(strategies[0].instance.address)
-        // Due to rounding some dust, 10000 wei, might left in case of Yearn strategy
-        expect(Math.abs(debtAfter.sub(debtBefore).sub(expectedLimit))).to.lte(
-          dust,
-          `Debt of strategy in ${poolName} is wrong`,
-        )
-      })
     })
 
     if (isEarnPool) {

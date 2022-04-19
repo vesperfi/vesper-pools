@@ -9,7 +9,6 @@ const StrategyType = require('./utils/strategyTypes')
 const VDAI = require('../helper/mainnet/poolConfig').VDAI
 
 describe('Pool accountant proxy', function () {
-  const oneMillion = ethers.utils.parseEther('1000000')
   let pool, strategy, accountant
   let governor, user1
 
@@ -22,7 +21,7 @@ describe('Pool accountant proxy', function () {
       strategyName: 'AaveStrategyDAI',
     },
     type: StrategyType.AAVE,
-    config: { debtRatio: 9000, debtRate: oneMillion, externalDepositFee: 500 },
+    config: { debtRatio: 9000, externalDepositFee: 500 },
   }
 
   beforeEach(async function () {
@@ -66,14 +65,14 @@ describe('Pool accountant proxy', function () {
     })
 
     it('Should revert if debt ratio is above limit', async function () {
-      const config = { debtRatio: '10001', debtRate: oneMillion, externalDepositFee: '1000' }
+      const config = { debtRatio: '10001', externalDepositFee: '1000' }
       const tx = accountant.connect(governor).addStrategy(strategy.address, ...Object.values(config))
       // 18 = DEBT_RATIO_LIMIT_REACHED, Limit is 10,000
       await expect(tx).to.revertedWith('18', 'Input debt ratio is above max limit')
     })
 
     it('Should revert if external deposit fee is above limit', async function () {
-      const config = { debtRatio: '9000', debtRate: oneMillion, externalDepositFee: '10001' }
+      const config = { debtRatio: '9000', externalDepositFee: '10001' }
       const tx = accountant.connect(governor).addStrategy(strategy.address, ...Object.values(config))
       // 11 = FEE_LIMIT_REACHED, Limit is 10,000
       await expect(tx).to.revertedWith('11', 'Input external deposit fee is above max limit')
@@ -133,7 +132,7 @@ describe('Pool accountant proxy', function () {
     beforeEach(async function () {
       await accountant.connect(governor).addStrategy(strategy.address, ...Object.values(strategyConfig.config))
       initialPoolExternalDepositFee = await accountant.externalDepositFee()
-      config = { debtRatio: 500, debtRate: oneMillion, externalDepositFee: 1000 }
+      config = { debtRatio: 500, externalDepositFee: 1000 }
       strategy2 = await createStrategy({ config, ...strategyConfig }, pool.address)
     })
 
