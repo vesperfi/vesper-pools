@@ -410,7 +410,6 @@ const StrategyConfig = {
     constructorArgs: {
       swapManager,
       comptroller: Address.Compound.COMPTROLLER,
-      rewardDistributor: Address.Compound.COMPTROLLER,
       rewardToken: Address.Compound.COMP,
       receiptToken: Address.Compound.cETH,
       borrowCToken: Address.Compound.cWBTC,
@@ -426,7 +425,6 @@ const StrategyConfig = {
     constructorArgs: {
       swapManager,
       comptroller: Address.Compound.COMPTROLLER,
-      rewardDistributor: Address.Compound.COMPTROLLER,
       rewardToken: Address.Compound.COMP,
       receiptToken: Address.Compound.cWBTC,
       borrowCToken: Address.Compound.cDAI,
@@ -442,7 +440,6 @@ const StrategyConfig = {
     constructorArgs: {
       swapManager,
       comptroller: Address.Compound.COMPTROLLER,
-      rewardDistributor: Address.Compound.COMPTROLLER,
       rewardToken: Address.Compound.COMP,
       receiptToken: Address.Compound.cETH,
       borrowCToken: Address.Compound.cWBTC,
@@ -460,7 +457,6 @@ const StrategyConfig = {
     constructorArgs: {
       swapManager,
       comptroller: Address.Compound.COMPTROLLER,
-      rewardDistributor: Address.Compound.COMPTROLLER,
       rewardToken: Address.Compound.COMP,
       receiptToken: Address.Compound.cWBTC,
       borrowCToken: Address.Compound.cDAI,

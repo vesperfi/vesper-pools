@@ -2,16 +2,17 @@
 
 pragma solidity 0.8.9;
 
-import "./IronBankXYStrategy.sol";
+import "./CompoundXYCore.sol";
 import "../../interfaces/vesper/IVesperPool.sol";
 import "../../interfaces/vesper/IPoolRewards.sol";
 
-/// @title Deposit Collateral in Compound and earn interest by depositing borrowed token in a Vesper Pool.
-contract VesperIronBankXYStrategy is IronBankXYStrategy {
+/// @title Deposit Collateral in IronBank and earn interest by depositing borrowed token in a Vesper Pool.
+contract VesperIronBankXYStrategy is CompoundXYCore {
     using SafeERC20 for IERC20;
 
     // Destination Grow Pool for borrowed Token
     IVesperPool public immutable vPool;
+    // VSP token address
     address public immutable vsp;
 
     constructor(
@@ -23,7 +24,7 @@ contract VesperIronBankXYStrategy is IronBankXYStrategy {
         address _vPool,
         address _vsp,
         string memory _name
-    ) IronBankXYStrategy(_pool, _swapManager, _unitroller, _receiptToken, _borrowCToken, _name) {
+    ) CompoundXYCore(_pool, _swapManager, _unitroller, _receiptToken, _borrowCToken, _name) {
         require(_vsp != address(0), "vsp-address-is-zero");
         require(address(IVesperPool(_vPool).token()) == borrowToken, "invalid-grow-pool");
         vPool = IVesperPool(_vPool);
@@ -35,7 +36,7 @@ contract VesperIronBankXYStrategy is IronBankXYStrategy {
         return _getBorrowBalance();
     }
 
-    /// @notice Calculate total value based on VSP rewards and supply and borrow position.
+    /// @notice Calculate total value based VSP rewards, supply and borrow position
     function totalValue() public view override returns (uint256 _totalValue) {
         _totalValue = super.totalValue();
         address _poolRewards = vPool.poolRewards();
@@ -45,23 +46,25 @@ contract VesperIronBankXYStrategy is IronBankXYStrategy {
             if (_vspAmount > 0) {
                 (, uint256 _vspAsCollateral, ) =
                     swapManager.bestOutputFixedInput(vsp, address(collateralToken), _vspAmount);
-                // Updating totalValue
+                // Update totalValue
                 _totalValue += _vspAsCollateral;
             }
-        }
-    }
-
-    function _approveToken(uint256 _amount) internal override {
-        super._approveToken(_amount);
-        IERC20(borrowToken).safeApprove(address(vPool), _amount);
-        for (uint256 i = 0; i < swapManager.N_DEX(); i++) {
-            IERC20(vsp).safeApprove(address(swapManager.ROUTERS(i)), _amount);
         }
     }
 
     /// @notice After borrowing Y, deposit to Vesper Pool
     function _afterBorrowY(uint256 _amount) internal override {
         vPool.deposit(_amount);
+    }
+
+    function _approveRouter(address _router, uint256 _amount) internal override {
+        super._approveRouter(_router, _amount);
+        IERC20(vsp).safeApprove(_router, _amount);
+    }
+
+    function _approveToken(uint256 _amount) internal override {
+        super._approveToken(_amount);
+        IERC20(borrowToken).safeApprove(address(vPool), _amount);
     }
 
     /// @notice Before repaying Y, withdraw it from Vesper Pool
