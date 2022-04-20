@@ -2,9 +2,8 @@
 'use strict'
 
 const { ethers } = require('hardhat')
-const { isDelegateOrOwner, getMultiSigNonce, submitGnosisTxn } = require('./gnosis-txn')
+const { isDelegateOrOwner, getMultisigNonce, submitGnosisTxn } = require('./gnosis-txn')
 const CollateralManager = 'CollateralManager'
-let multiSigNonce = 0
 
 function sleep(ms) {
   console.log(`waiting for ${ms} ms`)
@@ -16,7 +15,7 @@ async function sendGnosisSafeTxn(encodedData, params) {
     data: encodedData.data,
     to: encodedData.to,
     safe: params.safe,
-    nonce: params.nonce,
+    nonce: params.multisigNonce,
     sender: params.deployer,
     targetChain: params.targetChain,
   }
@@ -31,19 +30,29 @@ async function executeOrProposeTx(contractName, contractAddress, alias, params) 
       : await params.execute(alias, { from: params.deployer, log: true }, params.methodName)
   } else if (params.isDelegateOrOwner) {
     const contract = await ethers.getContractAt(contractName, contractAddress)
-    multiSigNonce =
-      multiSigNonce === 0 ? (await getMultiSigNonce(params.safe, params.targetChain)).nonce : multiSigNonce + 1
-    params.nonce = multiSigNonce
+    params.multisigNonce =
+      params.multisigNonce === 0
+        ? (await getMultisigNonce(params.safe, params.targetChain)).nonce
+        : params.multisigNonce
     const data = params.methodArgs
       ? await contract.populateTransaction[params.methodName](...params.methodArgs)
       : await contract.populateTransaction[params.methodName]()
     await sendGnosisSafeTxn(data, params)
+    // increase nonce number
+    params.multisigNonce = parseInt(params.multisigNonce) + 1
   } else {
     console.log(`Pool governor is not deployer, skipping ${params.methodName} operation`)
   }
 }
 
-const deployFunction = async function ({ getNamedAccounts, deployments, poolConfig, strategyConfig, targetChain }) {
+const deployFunction = async function ({
+  getNamedAccounts,
+  deployments,
+  poolConfig,
+  strategyConfig,
+  targetChain,
+  multisigNonce = 0,
+}) {
   if (!strategyConfig) {
     throw new Error('Strategy configuration object is not created.')
   }
@@ -55,6 +64,7 @@ const deployFunction = async function ({ getNamedAccounts, deployments, poolConf
     safe: Address.MultiSig.safe,
     deployer,
     execute,
+    multisigNonce,
   }
 
   const poolDeploymentName = poolConfig.deploymentName ? poolConfig.deploymentName : poolConfig.contractName

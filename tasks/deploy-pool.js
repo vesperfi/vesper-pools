@@ -137,6 +137,7 @@ task('deploy-pool', 'Deploy vesper pool')
   .addOptionalParam('deployParams', "Run 'npx hardhat deploy --help' to see all supported params")
   .addOptionalParam('strategyName', 'Vesper strategy name to deploy')
   .addOptionalParam('strategyConfig', 'Vesper strategy name to deploy')
+  .addOptionalParam('multisigNonce', 'Starting nonce number to propose Gnosis safe multisig transaction')
   .setAction(async function ({
     pool,
     release,
@@ -144,6 +145,7 @@ task('deploy-pool', 'Deploy vesper pool')
     deployParams = {},
     strategyName,
     strategyConfig,
+    multisigNonce,
   }) {
     const hreNetwork = hre.network.name
     // When deploying on localhost, we can provide targetChain param to support chain other than mainnet
@@ -177,7 +179,7 @@ task('deploy-pool', 'Deploy vesper pool')
       deployParams.tags = pool
     }
 
-    await run('strategy-configuration', { strategyName, targetChain, strategyConfig })
+    await run('strategy-configuration', { strategyName, targetChain, strategyConfig, multisigNonce })
 
     await deployPoolContracts(pool, deployParams, release)
   })
