@@ -25,7 +25,7 @@ const isDeployerADelegate = async function (safe, deployer, targetChain) {
   return delegates.includes(deployer)
 }
 
-const getMultiSigNonce = async function (safe, targetChain) {
+const getMultisigNonce = async function (safe, targetChain) {
   return (await axios.get(`${getBaseUrl(targetChain)}/api/v1/safes/${safe}`)).data
 }
 
@@ -117,5 +117,5 @@ const submitGnosisTxn = async function ({ safe, to, data, nonce, sender, targetC
 module.exports = {
   isDelegateOrOwner,
   submitGnosisTxn,
-  getMultiSigNonce,
+  getMultisigNonce,
 }
