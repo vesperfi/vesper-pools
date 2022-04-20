@@ -140,7 +140,7 @@ function shouldValidateMakerCommonBehavior(strategyIndex) {
         expect(await strategy.collateralType()).to.not.eq(await newStrategy.collateralType())
 
         const accountant = await ethers.getContractAt('PoolAccountant', await pool.poolAccountant())
-        await accountant.addStrategy(strategy.address, 100, ethers.constants.MaxUint256, 0)
+        await accountant.addStrategy(strategy.address, 100, 0)
 
         // when
         const tx = pool.connect(gov.signer).migrateStrategy(strategy.address, newStrategy.address)
