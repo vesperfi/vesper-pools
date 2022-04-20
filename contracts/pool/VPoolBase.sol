@@ -13,7 +13,8 @@ abstract contract VPoolBase is PoolShareToken {
     // For simplicity we are assuming 365 days as 1 year
     uint256 public constant ONE_YEAR = 365 days;
 
-    event UpdateMinimumDepositLimit(uint256 oldDepositLimit, uint256 newDepositLimit);
+    event UpdatedMaximumProfitAsFee(uint256 oldMaxProfitAsFee, uint256 newMaxProfitAsFee);
+    event UpdatedMinimumDepositLimit(uint256 oldDepositLimit, uint256 newDepositLimit);
     event UpdatedUniversalFee(uint256 oldUniversalFee, uint256 newUniversalFee);
     event UpdatedPoolRewards(address indexed previousPoolRewards, address indexed newPoolRewards);
     event UpdatedWithdrawFee(uint256 previousWithdrawFee, uint256 newWithdrawFee);
@@ -68,12 +69,22 @@ abstract contract VPoolBase is PoolShareToken {
     }
 
     /**
+     * Only Governor:: Update maximum profit that can be used as universal fee
+     * @param _newMaxProfitAsFee New max profit as fee
+     */
+    function updateMaximumProfitAsFee(uint256 _newMaxProfitAsFee) external onlyGovernor {
+        require(_newMaxProfitAsFee != maxProfitAsFee, Errors.SAME_AS_PREVIOUS);
+        emit UpdatedMaximumProfitAsFee(maxProfitAsFee, _newMaxProfitAsFee);
+        maxProfitAsFee = _newMaxProfitAsFee;
+    }
+
+    /**
      * Only Governor:: Update minimum deposit limit
      * @param _newLimit New minimum deposit limit
      */
     function updateMinimumDepositLimit(uint256 _newLimit) external onlyGovernor {
         require(_newLimit != minDepositLimit, Errors.SAME_AS_PREVIOUS);
-        emit UpdateMinimumDepositLimit(minDepositLimit, _newLimit);
+        emit UpdatedMinimumDepositLimit(minDepositLimit, _newLimit);
         minDepositLimit = _newLimit;
     }
 
@@ -378,8 +389,9 @@ abstract contract VPoolBase is PoolShareToken {
         uint256 _profit
     ) private view returns (uint256 _fee) {
         _fee = (universalFee * (block.timestamp - _lastRebalance) * _totalDebt) / (MAX_BPS * ONE_YEAR);
-        if (_fee > (_profit / 2)) {
-            _fee = _profit / 2;
+        uint256 _maxFee = (_profit * maxProfitAsFee) / MAX_BPS;
+        if (_fee > _maxFee) {
+            _fee = _maxFee;
         }
     }
 }
