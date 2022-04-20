@@ -67,6 +67,7 @@
         "strategies": {
           "AaveStrategyAvalancheAVAX": "0x93bD05BA341B9f40C232cA9C05e5F28e3aa917D2",
           "BenqiCompoundLeverageStrategyAvalancheAVAX": "0x2727c4de420d94013b5cbcbec4e73b7893c4f818",
+          "TraderJoeCompoundLeverageStrategyAvalancheAVAX": "0x00fB8B4987b867F941985449AfA16F818750d60C",
           "TraderJoeCompoundStrategyAvalancheAVAX": "0x53eb2fA63d587493399C44A2DffC6Ac9E213d50c"
         }
       },
