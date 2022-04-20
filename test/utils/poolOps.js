@@ -226,6 +226,7 @@ async function rebalanceStrategy(strategy) {
     }
     tx = await strategy.instance.rebalance()
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.log(error)
     // ignore under water error and give one more try.
     await bringAboveWater(strategy, 50)

@@ -4,6 +4,8 @@ pragma solidity 0.8.9;
 
 import "./Crv2PoolStrategy.sol";
 
+// solhint-disable no-empty-blocks
+
 contract Crv2PoolStrategyArbitrumUSDCUSDTPool is Crv2PoolStrategy {
     // USDC/UST LP Token
     address internal constant CRV_LP = 0x7f90122BF0700F9E7e1F688fe926940E8839F353;

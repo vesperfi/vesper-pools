@@ -8,6 +8,8 @@ import "../../interfaces/oracle/IUniswapV3Oracle.sol";
 import "./AaveCore.sol";
 import "../../interfaces/vesper/IPoolRewards.sol";
 
+// solhint-disable no-empty-blocks
+
 /// @title Deposit Collateral in Aave and earn interest by depositing borrowed token in a Vesper Pool.
 contract AaveXYStrategy is Strategy, AaveCore {
     using SafeERC20 for IERC20;

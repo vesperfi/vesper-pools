@@ -254,6 +254,7 @@ abstract contract Strategy is IStrategy, Context {
     ) internal returns (uint256, bool) {
         for (uint256 i = 0; i < swapManager.N_DEX(); i++) {
             (bool _success, bytes memory _returnData) =
+                // solhint-disable-next-line avoid-low-level-calls
                 address(swapManager).call(
                     abi.encodePacked(swapManager.consult.selector, abi.encode(_from, _to, _amt, oraclePeriod, i))
                 );

@@ -9,7 +9,7 @@ import "../interfaces/bloq/ISwapManager.sol";
 abstract contract UsingSwapManager is Governed {
     using SafeERC20 for IERC20;
 
-    address weth; // Native token
+    address public weth; // Native token
     ISwapManager public swapManager;
     uint256 public oraclePeriod = 3600; // 1h;
     uint256 public oracleRouterIdx = 0; // Uniswap V2;

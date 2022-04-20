@@ -8,6 +8,8 @@ import "../../../interfaces/vesper/IVesperPool.sol";
 import "../../Strategy.sol";
 import "../CrvPoolStrategyBase.sol";
 
+// solhint-disable no-empty-blocks
+
 /// @title This strategy will deposit collateral token in Curve 3Pool and earn interest.
 contract CrvSBTCPoolStrategy is CrvPoolStrategyBase {
     address private constant THREEPOOL = 0x7fC77b5c7614E1533320Ea6DDc2Eb61fa00A9714;

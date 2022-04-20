@@ -1,6 +1,6 @@
 #!/bin/sh
 . "$(dirname "$0")/_/husky.sh"
 
-npx --no-install lint-staged
+npx --no-install lint-staged -v
 echo "Compiling contracts..."
 npx hardhat compile
