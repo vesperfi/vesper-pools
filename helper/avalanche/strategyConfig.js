@@ -82,7 +82,7 @@ const StrategyConfig = {
       collateralIdx: 0,
       strategyName: 'CrvA3PoolStrategyDAI',
     },
-    config: { ...config, externalDepositFee: 100 },
+    config: { ...config, externalDepositFee: 0 },
     setup: { ...setup },
   },
   CrvA3PoolStrategyUSDC: {
@@ -93,7 +93,7 @@ const StrategyConfig = {
       collateralIdx: 1,
       strategyName: 'CrvA3PoolStrategyUSDC',
     },
-    config: { ...config, externalDepositFee: 100 },
+    config: { ...config, externalDepositFee: 0 },
     setup: { ...setup },
   },
   TraderJoeCompoundStrategyAvalancheUSDC: {
@@ -181,6 +181,21 @@ const StrategyConfig = {
       rewardToken: Address.Benqi.QI,
       receiptToken: Address.Benqi.qiUSDC,
       strategyName: 'BenqiCompoundStrategyAvalancheUSDC',
+    },
+    config: { ...config }, // Shallow copy
+    setup: { ...setup },
+  },
+
+  BenqiCompoundStrategyAvalancheQI: {
+    contract: 'CompoundMultiRewardAvalancheStrategy',
+    type: StrategyTypes.COMPOUND,
+    constructorArgs: {
+      swapManager,
+      comptroller: Address.Benqi.COMPTROLLER,
+      rewardDistributor: Address.Benqi.REWARD_DISTRIBUTOR,
+      rewardToken: Address.Benqi.QI,
+      receiptToken: Address.Benqi.qiQI,
+      strategyName: 'BenqiCompoundStrategyAvalancheQI',
     },
     config: { ...config }, // Shallow copy
     setup: { ...setup },

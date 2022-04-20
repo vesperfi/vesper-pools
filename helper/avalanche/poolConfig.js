@@ -42,6 +42,12 @@ const PoolConfig = {
     setup: { ...setup }, // Shallow copy
     rewards: { ...rewards },
   },
+  VAQI: {
+    contractName: 'VPool',
+    poolParams: ['vaQI Pool', 'vaQI', Address.Benqi.QI],
+    setup: { ...setup }, // Shallow copy
+    rewards: { ...rewards },
+  },
   VUSDC: {
     contractName: 'VPool',
     poolParams: ['vUSDC Pool', 'vUSDC', Address.USDC],
