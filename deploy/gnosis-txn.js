@@ -10,12 +10,6 @@ const getBaseUrl = function (targetChain) {
   return `https://safe-transaction.${targetChain}.gnosis.io`
 }
 
-const gnosisEstimateTransaction = async function (safe, tx, targetChain) {
-  return (
-    await axios.post(`https://safe-relay.${targetChain}.gnosis.io/api/v2/safes/${safe}/transactions/estimate/`, tx)
-  ).data
-}
-
 const isDeployerADelegate = async function (safe, deployer, targetChain) {
   const {
     data: { count, results },
@@ -72,19 +66,11 @@ const submitGnosisTxn = async function ({ safe, to, data, nonce, sender, targetC
     operation: 0,
   }
 
-  let safeTxGas = 1000000 // use hardcoded value for avalanche.
-  // https://safe-relay.${targetChain}.gnosis.io available only for mainnet.
-  // Safe service estimate the tx and retrieve the nonce
-  if (targetChain === 'mainnet') {
-    safeTxGas = (await gnosisEstimateTransaction(safe, baseTxn)).safeTxGas
-  }
-
   const txn = {
     ...baseTxn,
-    safeTxGas,
+    safeTxGas: 0,
     baseGas: 0,
-    gasPrice: 1000000006,
-    // Required gas-price>=1000000006 with gas-token=0x0000000000000000000000000000000000000000"
+    gasPrice: 0,
     gasToken: ethers.constants.AddressZero,
     refundReceiver: ethers.constants.AddressZero,
     nonce,
