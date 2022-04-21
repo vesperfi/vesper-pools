@@ -8,6 +8,8 @@ import "../../../interfaces/vesper/IVesperPool.sol";
 import "../../Strategy.sol";
 import "../CrvPoolStrategyBase.sol";
 
+// solhint-disable no-empty-blocks
+
 /// @title This strategy will deposit collateral token in a Curve 2Pool and earn interest.
 abstract contract Crv2PoolStrategy is CrvPoolStrategyBase {
     // No. of pooled tokens in the Pool
@@ -40,7 +42,6 @@ abstract contract Crv2PoolStrategy is CrvPoolStrategyBase {
             if (_expectedOut > _minLpAmount) {
                 _minLpAmount = _expectedOut;
             }
-            // solhint-disable-next-line no-empty-blocks
             try IStableSwap2x(address(crvPool)).add_liquidity(_depositAmounts, _minLpAmount) {} catch Error(
                 string memory reason
             ) {

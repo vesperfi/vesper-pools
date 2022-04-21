@@ -369,8 +369,10 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
 
           await deposit(20, user1)
           await rebalance(strategies)
-          // Time travel to generate earning
-          await timeTravel(30 * 24 * 60 * 60)
+          // Advance some block will help compound related strategy to earn some profit
+          await advanceBlock(300)
+          // Increase time before doing another rebalance
+          await increase(30 * 24 * 60 * 60)
           await rebalance(strategies)
           await rebalance(strategies)
 
@@ -391,6 +393,9 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
           const feeCollector = await unlock(strategies[0].feeCollector)
           const timeBetweenRebalance = 60 * 60
           await rebalanceStrategy(strategies[0])
+          // Advance some block will help compound related strategy to earn some profit
+          await advanceBlock(300)
+          // Increase time before doing another rebalance
           await increase(timeBetweenRebalance)
           const totalDebt = await accountant.totalDebtOf(strategies[0].instance.address)
           const tx = await rebalanceStrategy(strategies[0])

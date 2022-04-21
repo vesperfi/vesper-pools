@@ -71,9 +71,11 @@ xdescribe('Mainnet new pool sanity test', function () {
     await accountUpgrader.connect(signer).safeUpgrade(accountantProxy.address, accountantImplementationAddressNew)
     const balanceBeforeWithdraw = await pool.balanceOf(users[0].address)
     expect(balanceBeforeWithdraw).to.be.eq(balanceBeforeWithdraw, 'Pool balance of user is wrong')
+    // eslint-disable-next-line no-console
     console.log('balance', balanceBeforeWithdraw.toString())
     await pool.connect(users[0].signer).withdraw(balance)
     const balanceAfterWithdraw = await pool.balanceOf(users[0].address)
+    // eslint-disable-next-line no-console
     console.log('balanceAfterWithdraw', balanceAfterWithdraw.toString())
     expect(balanceAfterWithdraw).to.be.lt(balanceBeforeWithdraw, 'Pool balance of user is wrong')
   })

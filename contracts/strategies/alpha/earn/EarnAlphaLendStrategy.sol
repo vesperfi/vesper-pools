@@ -47,7 +47,7 @@ contract EarnAlphaLendStrategy is AlphaLendStrategy, Earn {
         collateralToken.safeApprove(pool, _amount);
         collateralToken.safeApprove(address(safeBox), _amount);
         for (uint256 i = 0; i < swapManager.N_DEX(); i++) {
-            IERC20(ALPHA).safeApprove(address(swapManager.ROUTERS(i)), _amount);
+            IERC20(alpha).safeApprove(address(swapManager.ROUTERS(i)), _amount);
             collateralToken.safeApprove(address(swapManager.ROUTERS(i)), _amount);
         }
     }

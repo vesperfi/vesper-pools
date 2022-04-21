@@ -12,7 +12,9 @@ abstract contract AaveCoreAvalanche {
     AaveIncentivesController public aaveIncentivesController;
 
     address internal constant AAVE_ADDRESSES_PROVIDER = 0xb6A86025F0FE1862B372cb0ca18CE3EDe02A318f;
-    // WAVAX address
+
+    /// @dev WAVAX address. For consistency with other strategies keeping it camel case
+    // solhint-disable-next-line const-name-snakecase
     address public constant rewardToken = 0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7;
     AToken internal immutable aToken;
 
