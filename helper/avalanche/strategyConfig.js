@@ -74,6 +74,17 @@ const StrategyConfig = {
     config: { ...config }, // Shallow copy
     setup: { ...setup },
   },
+  Crv2PoolAvaStrategyAvWBTCRenBTC: {
+    contract: 'Crv2PoolAvaStrategyAvWBTCRenBTC',
+    type: StrategyTypes.CURVE,
+    constructorArgs: {
+      swapManager,
+      collateralIdx: 0,
+      strategyName: 'Crv2PoolAvaStrategyAvWBTCRenBTC',
+    },
+    config: { ...config, externalDepositFee: 0 },
+    setup: { ...setup },
+  },
   CrvA3PoolStrategyDAI: {
     contract: 'CrvA3PoolAvaxStrategy',
     type: StrategyTypes.CURVE,
