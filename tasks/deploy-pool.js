@@ -136,7 +136,7 @@ task('deploy-pool', 'Deploy vesper pool')
   .addOptionalParam('targetChain', 'Target chain where contracts will be deployed')
   .addOptionalParam('deployParams', "Run 'npx hardhat deploy --help' to see all supported params")
   .addOptionalParam('strategyName', 'Vesper strategy name to deploy')
-  .addOptionalParam('strategyConfig', 'Vesper strategy name to deploy')
+  .addOptionalParam('strategyConfig', 'Vesper strategy configuration')
   .addOptionalParam('multisigNonce', 'Starting nonce number to propose Gnosis safe multisig transaction')
   .setAction(async function ({
     pool,
