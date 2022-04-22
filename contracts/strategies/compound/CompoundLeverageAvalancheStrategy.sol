@@ -4,6 +4,7 @@ pragma solidity 0.8.3;
 
 import "./CompoundLeverageStrategy.sol";
 import "../../interfaces/compound/IComptrollerMultiReward.sol";
+import "../../interfaces/token/IToken.sol";
 
 contract CompoundLeverageAvalancheStrategy is CompoundLeverageStrategy {
     using SafeERC20 for IERC20;
@@ -57,6 +58,20 @@ contract CompoundLeverageAvalancheStrategy is CompoundLeverageStrategy {
     function _claimRewards() internal override {
         ComptrollerMultiReward(address(comptroller)).claimReward(0, address(this)); // Claim protocol rewards
         ComptrollerMultiReward(address(comptroller)).claimReward(1, address(this)); // Claim native AVAX (optional)
+    }
+
+    /// @notice Claim Protocol rewards + AVAX and convert them into collateral token.
+    function _claimRewardsAndConvertTo(address _toToken) internal override {
+        _claimRewards();
+        uint256 _rewardAmount = IERC20(rewardToken).balanceOf(address(this));
+        if (_rewardAmount > 0) {
+            _safeSwap(rewardToken, _toToken, _rewardAmount, 1);
+        }
+        uint256 _avaxRewardAmount = address(this).balance;
+        if (_avaxRewardAmount > 0) {
+            TokenLike(WAVAX).deposit{value: _avaxRewardAmount}();
+            _safeSwap(WAVAX, _toToken, _avaxRewardAmount, 1);
+        }
     }
 
     function _safeSwap(

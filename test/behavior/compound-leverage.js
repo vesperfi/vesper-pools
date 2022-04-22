@@ -278,10 +278,14 @@ function shouldBehaveLikeCompoundLeverageStrategy(strategyIndex) {
           const comptrollerInstance = await ethers.getContractAt('Comptroller', comptroller)
           await comptrollerInstance.connect(user2.signer).claimComp(strategy.address, [token.address])
         }
-      } else {
+      } else if (getChain() === 'avalanche') {
         // avalanche case
         const comptrollerInstance = await ethers.getContractAt('ComptrollerMultiReward', comptroller)
         await comptrollerInstance.connect(user2.signer).claimReward(0, strategy.address)
+        await comptrollerInstance.connect(user2.signer).claimReward(1, strategy.address) // AVAX
+        const avaxBalance = await ethers.provider.getBalance(strategy.address)
+        // Not all platform offers AVAX rewards hence the check with gte
+        expect(avaxBalance, 'Avax balance is wrong').to.gte('0')
       }
       const afterClaim = await rewardToken.balanceOf(strategy.address)
       expect(afterClaim).to.gt('0', 'rewardToken balance should be > 0')
@@ -289,6 +293,10 @@ function shouldBehaveLikeCompoundLeverageStrategy(strategyIndex) {
       await strategy.connect(governor.signer).rebalance()
       const rewardTokenBalance = await rewardToken.balanceOf(strategy.address)
       expect(rewardTokenBalance).to.equal('0', 'rewardToken balance should be 0 on rebalance')
+      if (getChain() === 'avalanche') {
+        const avaxBalance = await ethers.provider.getBalance(strategy.address)
+        expect(avaxBalance, 'Avax balance should be zero').to.eq('0')
+      }
     })
 
     it('Should calculate current totalValue', async function () {
