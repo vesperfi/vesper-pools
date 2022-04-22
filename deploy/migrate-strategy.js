@@ -104,7 +104,7 @@ const deployFunction = async function ({
 
   // Migrate strategy
   params.methodName = 'migrateStrategy'
-  params.methodArgs = [oldStrategy.address, oldStrategy.address]
+  params.methodArgs = [oldStrategy.address, newStrategy.address]
   await executeOrProposeTx(poolConfig.contractName, poolProxy.address, poolConfig.contractName, params)
 
   const strategyVersion = await read(strategyAlias, {}, 'VERSION')
