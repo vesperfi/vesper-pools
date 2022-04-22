@@ -6,7 +6,7 @@ import "./CompoundLeverageStrategy.sol";
 import "../../interfaces/compound/IComptrollerMultiReward.sol";
 import "../../interfaces/token/IToken.sol";
 
-contract CompoundLeverageAvalancheStrategy is CompoundLeverageStrategy {
+abstract contract CompoundLeverageAvalancheCore is CompoundLeverageStrategy {
     using SafeERC20 for IERC20;
 
     address internal constant WAVAX = 0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7;
@@ -49,11 +49,6 @@ contract CompoundLeverageAvalancheStrategy is CompoundLeverageStrategy {
         FlashLoanHelper._approveToken(address(collateralToken), _amount);
     }
 
-    /// @notice Get main Rewards accrued
-    function _getRewardAccrued() internal view override returns (uint256 _rewardAccrued) {
-        _rewardAccrued = IRewardDistributor(rewardDistributor).rewardAccrued(0, address(this));
-    }
-
     /// @notice Claim Protocol rewards + AVAX
     function _claimRewards() internal override {
         ComptrollerMultiReward(address(comptroller)).claimReward(0, address(this)); // Claim protocol rewards
@@ -72,6 +67,11 @@ contract CompoundLeverageAvalancheStrategy is CompoundLeverageStrategy {
             TokenLike(WAVAX).deposit{value: _avaxRewardAmount}();
             _safeSwap(WAVAX, _toToken, _avaxRewardAmount, 1);
         }
+    }
+
+    /// @notice Get main Rewards accrued
+    function _getRewardAccrued() internal view override returns (uint256 _rewardAccrued) {
+        _rewardAccrued = IRewardDistributor(rewardDistributor).rewardAccrued(0, address(this));
     }
 
     function _safeSwap(

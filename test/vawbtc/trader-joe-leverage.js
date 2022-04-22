@@ -5,7 +5,7 @@ const { shouldBehaveLikeStrategy } = require('../behavior/strategy')
 const { strategyConfig } = require('../utils/chains').getChainData()
 
 describe('vaWBTC Pool', function () {
-  const strategy = strategyConfig.TraderJoeCompoundLeverageStrategyAvalancheUSDC
+  const strategy = strategyConfig.TraderJoeLeverageStrategyWBTC
   strategy.config.debtRatio = 9000
 
   const strategies = [strategy]

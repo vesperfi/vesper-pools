@@ -5,7 +5,7 @@ const { shouldBehaveLikeStrategy } = require('../behavior/strategy')
 const { strategyConfig } = require('../utils/chains').getChainData()
 
 describe('vaAVAX Pool', function () {
-  const strategy = strategyConfig.BenqiCompoundLeverageStrategyAvalancheAVAX
+  const strategy = strategyConfig.BenqiLeverageStrategyAVAX
   strategy.config.debtRatio = 9000
 
   const strategies = [strategy]

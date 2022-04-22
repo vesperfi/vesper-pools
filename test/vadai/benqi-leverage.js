@@ -5,7 +5,7 @@ const { shouldBehaveLikeStrategy } = require('../behavior/strategy')
 const { strategyConfig } = require('../utils/chains').getChainData()
 
 describe('vaDAI Pool', function () {
-  const strategy = strategyConfig.BenqiCompoundLeverageStrategyAvalancheDAI
+  const strategy = strategyConfig.BenqiLeverageStrategyDAI
   strategy.config.debtRatio = 9000
 
   const strategies = [strategy]

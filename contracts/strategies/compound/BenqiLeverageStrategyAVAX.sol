@@ -2,11 +2,14 @@
 
 pragma solidity 0.8.3;
 
-import "./CompoundLeverageAvalancheStrategy.sol";
+import "./CompoundLeverageAvalancheCore.sol";
 import "../../interfaces/token/IToken.sol";
 
-contract BenqiCompoundLeverageAvalancheStrategyAVAX is CompoundLeverageAvalancheStrategy {
-    //solhint-disable no-empty-blocks
+// solhint-disable no-empty-blocks
+
+/// @title This strategy will deposit collateral token in Benqi and based on position
+/// it will borrow same collateral token. It will use borrowed asset as supply and borrow again.
+contract BenqiLeverageStrategyAVAX is CompoundLeverageAvalancheCore {
     constructor(
         address _pool,
         address _swapManager,
@@ -17,7 +20,7 @@ contract BenqiCompoundLeverageAvalancheStrategyAVAX is CompoundLeverageAvalanche
         address _receiptToken,
         string memory _name
     )
-        CompoundLeverageAvalancheStrategy(
+        CompoundLeverageAvalancheCore(
             _pool,
             _swapManager,
             _comptroller,
