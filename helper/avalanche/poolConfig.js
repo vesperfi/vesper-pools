@@ -38,7 +38,13 @@ const PoolConfig = {
   },
   VAUSDC: {
     contractName: 'VPool',
-    poolParams: ['vaUSDC Pool', 'vaUSDC', Address.USDC],
+    poolParams: ['vaUSDC Pool', 'vaUSDC', Address.USDC_e],
+    setup: { ...setup }, // Shallow copy
+    rewards: { ...rewards },
+  },
+  VAUSDCN: {
+    contractName: 'VPool',
+    poolParams: ['vaUSDC Native Pool', 'vaUSDC.n', Address.USDC],
     setup: { ...setup }, // Shallow copy
     rewards: { ...rewards },
   },
