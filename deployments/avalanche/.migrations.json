@@ -29,5 +29,8 @@
   "vaQI-v4.0.0_4.0.0": 1650468593,
   "BenqiCompoundStrategyAvalancheQI-v4.0.0": 1650468773,
   "TraderJoeCompoundLeverageStrategyAvalancheAVAX-v4.0.0": 1650448607,
-  "Crv2PoolAvaStrategyAvWBTCRenBTC-v4.0.0": 1650561206
+  "Crv2PoolAvaStrategyAvWBTCRenBTC-v4.0.0": 1650561206,
+  "vaUSDC.n-v4.0.0_4.0.0": 1650903580,
+  "BenqiStrategyUSDCN-v4.0.0": 1650903786,
+  "BenqiLeverageStrategyUSDCN-v4.0.0": 1650905836
 }
