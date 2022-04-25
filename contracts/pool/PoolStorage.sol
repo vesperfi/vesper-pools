@@ -4,8 +4,9 @@ pragma solidity 0.8.9;
 
 import "../dependencies/openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../dependencies/openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import "../interfaces/vesper/IVesperPool.sol";
 
-contract PoolStorageV1 {
+abstract contract PoolStorageV1 is IVesperPool {
     ///@notice Collateral token address
     IERC20 public token;
     /// @notice PoolAccountant address
@@ -17,11 +18,11 @@ contract PoolStorageV1 {
     address private maintainersObsolete; // Obsolete in favor of AddressSet of maintainers
     address private feeCollectorObsolete; // Fee collector address. Obsolete as there is no fee to collect
     uint256 private withdrawFeeObsolete; // Withdraw fee for this pool. Obsolete in favor of universal fee
-    uint256 public decimalConversionFactor; // It can be used in converting value to/from 18 decimals
+    uint256 private decimalConversionFactorObsolete; // It can be used in converting value to/from 18 decimals
     bool internal withdrawInETH; // This flag will be used by VETH pool as switch to withdraw ETH or WETH
 }
 
-contract PoolStorageV2 is PoolStorageV1 {
+abstract contract PoolStorageV2 is PoolStorageV1 {
     EnumerableSet.AddressSet private _feeWhitelistObsolete; // Obsolete in favor of universal fee
     EnumerableSet.AddressSet internal _keepers; // List of keeper addresses
     EnumerableSet.AddressSet internal _maintainers; // List of maintainer addresses

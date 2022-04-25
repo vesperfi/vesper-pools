@@ -27,6 +27,15 @@ abstract contract PoolERC20 is Context, IERC20, IERC20Metadata {
     }
 
     /**
+     * @dev Sets the values for {name} and {symbol} for proxy
+     */
+    // solhint-disable-next-line func-name-mixedcase
+    function __ERC20_init(string memory name_, string memory symbol_) internal {
+        _name = name_;
+        _symbol = symbol_;
+    }
+
+    /**
      * @dev Returns the name of the token.
      */
     function name() public view virtual override returns (string memory) {
@@ -117,45 +126,6 @@ abstract contract PoolERC20 is Context, IERC20, IERC20Metadata {
         uint256 currentAllowance = _allowances[sender][_msgSender()];
         require(currentAllowance >= amount, "ERC20: transfer amount exceeds allowance");
         _approve(sender, _msgSender(), currentAllowance - amount);
-
-        return true;
-    }
-
-    /**
-     * @dev Atomically increases the allowance granted to `spender` by the caller.
-     *
-     * This is an alternative to {approve} that can be used as a mitigation for
-     * problems described in {IERC20-approve}.
-     *
-     * Emits an {Approval} event indicating the updated allowance.
-     *
-     * Requirements:
-     *
-     * - `spender` cannot be the zero address.
-     */
-    function increaseAllowance(address spender, uint256 addedValue) public virtual returns (bool) {
-        _approve(_msgSender(), spender, _allowances[_msgSender()][spender] + addedValue);
-        return true;
-    }
-
-    /**
-     * @dev Atomically decreases the allowance granted to `spender` by the caller.
-     *
-     * This is an alternative to {approve} that can be used as a mitigation for
-     * problems described in {IERC20-approve}.
-     *
-     * Emits an {Approval} event indicating the updated allowance.
-     *
-     * Requirements:
-     *
-     * - `spender` cannot be the zero address.
-     * - `spender` must have allowance for the caller of at least
-     * `subtractedValue`.
-     */
-    function decreaseAllowance(address spender, uint256 subtractedValue) public virtual returns (bool) {
-        uint256 currentAllowance = _allowances[_msgSender()][spender];
-        require(currentAllowance >= subtractedValue, "ERC20: decreased allowance below zero");
-        _approve(_msgSender(), spender, currentAllowance - subtractedValue);
 
         return true;
     }
@@ -280,12 +250,4 @@ abstract contract PoolERC20 is Context, IERC20, IERC20Metadata {
         address to,
         uint256 amount
     ) internal virtual {}
-
-    function _setName(string memory name_) internal {
-        _name = name_;
-    }
-
-    function _setSymbol(string memory symbol_) internal {
-        _symbol = symbol_;
-    }
 }

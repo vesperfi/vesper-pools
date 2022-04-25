@@ -3,10 +3,10 @@
 pragma solidity 0.8.9;
 
 import "../dependencies/openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "../Governed.sol";
+import "../Governable.sol";
 import "../interfaces/bloq/ISwapManager.sol";
 
-abstract contract UsingSwapManager is Governed {
+abstract contract UsingSwapManager is Governable {
     using SafeERC20 for IERC20;
 
     address public weth; // Native token
