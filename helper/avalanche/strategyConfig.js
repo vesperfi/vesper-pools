@@ -212,8 +212,8 @@ const StrategyConfig = {
     setup: { ...setup },
   },
 
-  BenqiCompoundLeverageStrategyAvalancheUSDC: {
-    contract: 'CompoundLeverageAvalancheStrategy',
+  BenqiLeverageStrategyUSDC: {
+    contract: 'BenqiLeverageStrategy',
     type: StrategyTypes.COMPOUND_LEVERAGE,
     constructorArgs: {
       swapManager,
@@ -222,14 +222,14 @@ const StrategyConfig = {
       rewardToken: Address.Benqi.QI,
       aaveAddressProvider: Address.Aave.AddressProvider,
       receiptToken: Address.Benqi.qiUSDC,
-      strategyName: 'BenqiCompoundLeverageStrategyAvalancheUSDC',
+      strategyName: 'BenqiLeverageStrategyUSDC',
     },
     config: { ...config }, // Shallow copy
     setup: { ...setup },
   },
 
-  BenqiCompoundLeverageStrategyAvalancheDAI: {
-    contract: 'CompoundLeverageAvalancheStrategy',
+  BenqiLeverageStrategyDAI: {
+    contract: 'BenqiLeverageStrategy',
     type: StrategyTypes.COMPOUND_LEVERAGE,
     constructorArgs: {
       swapManager,
@@ -238,14 +238,14 @@ const StrategyConfig = {
       rewardToken: Address.Benqi.QI,
       aaveAddressProvider: Address.Aave.AddressProvider,
       receiptToken: Address.Benqi.qiDAI,
-      strategyName: 'BenqiCompoundLeverageStrategyAvalancheDAI',
+      strategyName: 'BenqiLeverageStrategyDAI',
     },
     config: { ...config }, // Shallow copy
     setup: { ...setup },
   },
 
-  BenqiCompoundLeverageStrategyAvalancheAVAX: {
-    contract: 'BenqiCompoundLeverageAvalancheStrategyAVAX',
+  BenqiLeverageStrategyAVAX: {
+    contract: 'BenqiLeverageStrategyAVAX',
     type: StrategyTypes.COMPOUND_LEVERAGE,
     constructorArgs: {
       swapManager,
@@ -254,14 +254,14 @@ const StrategyConfig = {
       rewardToken: Address.Benqi.QI,
       aaveAddressProvider: Address.Aave.AddressProvider,
       receiptToken: Address.Benqi.qiAVAX,
-      strategyName: 'BenqiCompoundLeverageStrategyAvalancheAVAX',
+      strategyName: 'BenqiLeverageStrategyAVAX',
     },
     config: { ...config }, // Shallow copy
     setup: { ...setup },
   },
 
-  BenqiCompoundLeverageStrategyAvalancheWBTC: {
-    contract: 'CompoundLeverageAvalancheStrategy',
+  BenqiLeverageStrategyWBTC: {
+    contract: 'BenqiLeverageStrategy',
     type: StrategyTypes.COMPOUND_LEVERAGE,
     constructorArgs: {
       swapManager,
@@ -270,14 +270,14 @@ const StrategyConfig = {
       rewardToken: Address.Benqi.QI,
       aaveAddressProvider: Address.Aave.AddressProvider,
       receiptToken: Address.Benqi.qiBTC,
-      strategyName: 'BenqiCompoundLeverageStrategyAvalancheWBTC',
+      strategyName: 'BenqiLeverageStrategyWBTC',
     },
     config: { ...config }, // Shallow copy
     setup: { ...setup },
   },
 
-  BenqiCompoundLeverageStrategyAvalancheWETH: {
-    contract: 'CompoundLeverageAvalancheStrategy',
+  BenqiLeverageStrategyWETH: {
+    contract: 'BenqiLeverageStrategy',
     type: StrategyTypes.COMPOUND_LEVERAGE,
     constructorArgs: {
       swapManager,
@@ -286,14 +286,14 @@ const StrategyConfig = {
       rewardToken: Address.Benqi.QI,
       aaveAddressProvider: Address.Aave.AddressProvider,
       receiptToken: Address.Benqi.qiETH,
-      strategyName: 'BenqiCompoundLeverageStrategyAvalancheWETH',
+      strategyName: 'BenqiLeverageStrategyWETH',
     },
     config: { ...config }, // Shallow copy
     setup: { ...setup },
   },
 
-  TraderJoeCompoundLeverageStrategyAvalancheWETH: {
-    contract: 'CompoundLeverageAvalancheStrategy',
+  TraderJoeLeverageStrategyWETH: {
+    contract: 'TraderJoeLeverageStrategy',
     type: StrategyTypes.COMPOUND_LEVERAGE,
     constructorArgs: {
       swapManager,
@@ -302,14 +302,14 @@ const StrategyConfig = {
       rewardToken: Address.TraderJoe.JOE,
       aaveAddressProvider: Address.Aave.AddressProvider,
       receiptToken: Address.TraderJoe.jWETH,
-      strategyName: 'TraderJoeCompoundLeverageStrategyAvalancheWETH',
+      strategyName: 'TraderJoeLeverageStrategyWETH',
     },
     config: { ...config }, // Shallow copy
     setup: { ...setup },
   },
 
-  TraderJoeCompoundLeverageStrategyAvalancheAVAX: {
-    contract: 'CompoundLeverageAvalancheStrategy',
+  TraderJoeLeverageStrategyAVAX: {
+    contract: 'TraderJoeLeverageStrategy',
     type: StrategyTypes.COMPOUND_LEVERAGE,
     constructorArgs: {
       swapManager,
@@ -318,14 +318,14 @@ const StrategyConfig = {
       rewardToken: Address.TraderJoe.JOE,
       aaveAddressProvider: Address.Aave.AddressProvider,
       receiptToken: Address.TraderJoe.jAVAX,
-      strategyName: 'TraderJoeCompoundLeverageStrategyAvalancheAVAX',
+      strategyName: 'TraderJoeLeverageStrategyAVAX',
     },
     config: { ...config }, // Shallow copy
     setup: { ...setup },
   },
 
-  TraderJoeCompoundLeverageStrategyAvalancheDAI: {
-    contract: 'CompoundLeverageAvalancheStrategy',
+  TraderJoeLeverageStrategyDAI: {
+    contract: 'TraderJoeLeverageStrategy',
     type: StrategyTypes.COMPOUND_LEVERAGE,
     constructorArgs: {
       swapManager,
@@ -334,14 +334,14 @@ const StrategyConfig = {
       rewardToken: Address.TraderJoe.JOE,
       aaveAddressProvider: Address.Aave.AddressProvider,
       receiptToken: Address.TraderJoe.jDAI,
-      strategyName: 'TraderJoeCompoundLeverageStrategyAvalancheDAI',
+      strategyName: 'TraderJoeLeverageStrategyDAI',
     },
     config: { ...config }, // Shallow copy
     setup: { ...setup },
   },
 
-  TraderJoeCompoundLeverageStrategyAvalancheUSDC: {
-    contract: 'CompoundLeverageAvalancheStrategy',
+  TraderJoeLeverageStrategyUSDC: {
+    contract: 'TraderJoeLeverageStrategy',
     type: StrategyTypes.COMPOUND_LEVERAGE,
     constructorArgs: {
       swapManager,
@@ -350,14 +350,14 @@ const StrategyConfig = {
       rewardToken: Address.TraderJoe.JOE,
       aaveAddressProvider: Address.Aave.AddressProvider,
       receiptToken: Address.TraderJoe.jUSDC,
-      strategyName: 'TraderJoeCompoundLeverageStrategyAvalancheUSDC',
+      strategyName: 'TraderJoeLeverageStrategyUSDC',
     },
     config: { ...config }, // Shallow copy
     setup: { ...setup },
   },
 
-  TraderJoeCompoundLeverageStrategyAvalancheWBTC: {
-    contract: 'CompoundLeverageAvalancheStrategy',
+  TraderJoeLeverageStrategyWBTC: {
+    contract: 'TraderJoeLeverageStrategy',
     type: StrategyTypes.COMPOUND_LEVERAGE,
     constructorArgs: {
       swapManager,
@@ -366,7 +366,7 @@ const StrategyConfig = {
       rewardToken: Address.TraderJoe.JOE,
       aaveAddressProvider: Address.Aave.AddressProvider,
       receiptToken: Address.TraderJoe.jWBTC,
-      strategyName: 'TraderJoeCompoundLeverageStrategyAvalancheWBTC',
+      strategyName: 'TraderJoeLeverageStrategyWBTC',
     },
     config: { ...config }, // Shallow copy
     setup: { ...setup },

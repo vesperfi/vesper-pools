@@ -7,7 +7,9 @@ interface ComptrollerMultiReward {
     function claimReward(uint8 rewardType, address holder) external;
 
     function rewardDistributor() external view returns (address);
+}
 
+interface TraderJorComptroller {
     function markets(address market)
         external
         view
