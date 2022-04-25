@@ -34,4 +34,5 @@ library Errors {
     string public constant INCORRECT_WITHDRAW_AMOUNT = "29"; // withdrawn amount is not correct
     string public constant NO_MARKET_ID_FOUND = "30"; // dydx flash loan no marketId found for token
     string public constant SAME_AS_PREVIOUS = "31"; // Input should not be same as previous value.
+    string public constant INVALID_INPUT = "32"; // Generic invalid input error code
 }
