@@ -138,6 +138,7 @@ task('deploy-pool', 'Deploy vesper pool')
   .addOptionalParam('strategyName', 'Vesper strategy name to deploy')
   .addOptionalParam('strategyConfig', 'Vesper strategy configuration')
   .addOptionalParam('multisigNonce', 'Starting nonce number to propose Gnosis safe multisig transaction')
+  .addOptionalParam('oldStrategyName', 'Old Strategy name (needed in case contract name is changed during migration)')
   .setAction(async function ({
     pool,
     release,
@@ -146,6 +147,7 @@ task('deploy-pool', 'Deploy vesper pool')
     strategyName,
     strategyConfig,
     multisigNonce,
+    oldStrategyName,
   }) {
     const hreNetwork = hre.network.name
     // When deploying on localhost, we can provide targetChain param to support chain other than mainnet
@@ -179,7 +181,7 @@ task('deploy-pool', 'Deploy vesper pool')
       deployParams.tags = pool
     }
 
-    await run('strategy-configuration', { strategyName, targetChain, strategyConfig, multisigNonce })
+    await run('strategy-configuration', { strategyName, targetChain, strategyConfig, multisigNonce, oldStrategyName })
 
     await deployPoolContracts(pool, deployParams, release)
   })

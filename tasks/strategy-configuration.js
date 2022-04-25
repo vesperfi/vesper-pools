@@ -77,7 +77,14 @@ task('strategy-configuration', 'Prepare strategy configuration for deployment')
   .addOptionalParam('targetChain', 'Target chain where contracts will be deployed')
   .addOptionalParam('strategyConfig', 'strategy config object')
   .addOptionalParam('multisigNonce', 'Starting nonce number to propose Gnosis safe multisig transaction')
-  .setAction(async function ({ strategyName, targetChain = hre.targetChain, strategyConfig, multisigNonce }) {
+  .addOptionalParam('oldStrategyName', 'Old Strategy name (needed in case contract name is changed during migration)')
+  .setAction(async function ({
+    strategyName,
+    targetChain = hre.targetChain,
+    strategyConfig,
+    multisigNonce,
+    oldStrategyName,
+  }) {
     if (!strategyName) {
       // not deploying strategy
       return
@@ -109,6 +116,7 @@ task('strategy-configuration', 'Prepare strategy configuration for deployment')
     // Set configuration in hre
     hre.strategyConfig = config
     hre.multisigNonce = multisigNonce
+    hre.oldStrategyName = oldStrategyName
 
     // For localhost deployment, if pool dir do not exits, then copy from targetChain.
     const networkDir = `./deployments/${hre.network.name}`

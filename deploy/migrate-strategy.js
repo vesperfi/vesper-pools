@@ -1,3 +1,4 @@
+/* eslint-disable complexity */
 'use strict'
 const { executeOrProposeTx } = require('./deploy-strategy')
 const { isDelegateOrOwner } = require('./gnosis-txn')
@@ -9,6 +10,7 @@ const deployFunction = async function ({
   strategyConfig,
   targetChain,
   multisigNonce = 0,
+  oldStrategyName,
 }) {
   if (!strategyConfig) {
     throw new Error('Strategy configuration object is not created.')
@@ -20,7 +22,7 @@ const deployFunction = async function ({
 
   const poolProxy = await deployments.get(poolConfig.contractName)
 
-  const strategyAlias = strategyConfig.alias
+  let strategyAlias = oldStrategyName || strategyConfig.alias
 
   const constructorArgs = [poolProxy.address, ...Object.values(strategyConfig.constructorArgs)]
 
@@ -30,6 +32,7 @@ const deployFunction = async function ({
     execute,
     targetChain,
     multisigNonce,
+    oldStrategyName,
   }
 
   if (strategyAlias.includes('Maker')) {
@@ -54,6 +57,7 @@ const deployFunction = async function ({
   // Get old strategy. It is very important to get it first as new deploy will overwrite it
   const oldStrategy = await deployments.get(strategyAlias)
 
+  strategyAlias = strategyConfig.alias
   // Deploy new version strategy
   const newStrategy = await deploy(strategyAlias, {
     contract: strategyConfig.contract,
