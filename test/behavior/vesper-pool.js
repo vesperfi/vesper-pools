@@ -532,7 +532,7 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
       it('Pool record correct value of profit and loss', async function () {
         await deposit(70, user2)
         await rebalance(strategies)
-        await timeTravel(500)
+        await timeTravel(60 * 60)
         await rebalance(strategies)
         const strategyParams = await pool.strategy(strategies[0].instance.address)
         const totalProfit = strategyParams._totalProfit

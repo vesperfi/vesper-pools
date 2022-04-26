@@ -5,24 +5,22 @@ const Wallet = ethers.Wallet
 const axios = require('axios')
 const { utils } = ethers
 const gnosisAbi = require('./abis/gnosisAbi.json')
-const safeTxnURL = 'https://safe-transaction.mainnet.gnosis.io'
-const safeRelayURL = 'https://safe-relay.mainnet.gnosis.io'
 
-const gnosisEstimateTransaction = async function (safe, tx) {
-  return (await axios.post(`${safeRelayURL}/api/v2/safes/${safe}/transactions/estimate/`, tx)).data
+const getBaseUrl = function (targetChain) {
+  return `https://safe-transaction.${targetChain}.gnosis.io`
 }
 
-const isDeployerADelegate = async function (safe, deployer) {
+const isDeployerADelegate = async function (safe, deployer, targetChain) {
   const {
     data: { count, results },
-  } = await axios.get(`${safeTxnURL}/api/v1/safes/${safe}/delegates`)
+  } = await axios.get(`${getBaseUrl(targetChain)}/api/v1/safes/${safe}/delegates`)
   if (count === 0) return false
   const delegates = results.map(r => r.delegate)
   return delegates.includes(deployer)
 }
 
-const getMultiSigNonce = async function (safe) {
-  return (await axios.get(`${safeRelayURL}/api/v1/safes/${safe}`)).data
+const getMultisigNonce = async function (safe, targetChain) {
+  return (await axios.get(`${getBaseUrl(targetChain)}/api/v1/safes/${safe}`)).data
 }
 
 function getProvider() {
@@ -33,15 +31,15 @@ function getGnosisContract(safe) {
   return new ethers.Contract(safe, gnosisAbi, getProvider())
 }
 
-async function isDelegateOrOwner(safe, deployer) {
+async function isDelegateOrOwner(safe, deployer, targetChain) {
   const multiSigContract = getGnosisContract(safe)
   const signers = await multiSigContract.getOwners()
-  const isDelegate = await isDeployerADelegate(safe, deployer)
+  const isDelegate = await isDeployerADelegate(safe, deployer, targetChain)
   return signers.includes(deployer) || isDelegate
 }
 
-const gnosisProposeTx = async function (safe, tx) {
-  return axios.post(`${safeTxnURL}/api/v1/safes/${safe}/multisig-transactions/`, tx)
+const gnosisProposeTx = async function (safe, tx, targetChain) {
+  return axios.post(`${getBaseUrl(targetChain)}/api/v1/safes/${safe}/multisig-transactions/`, tx)
 }
 
 const getSafeCompatibleSignature = async function (transactionHash) {
@@ -60,7 +58,7 @@ const getSafeCompatibleSignature = async function (transactionHash) {
  * @param {string} data           target contract method encoded data (prepared using populateTransaction)
  * @param {string} nonce          gnosis nonce
  */
-const submitGnosisTxn = async function ({ safe, to, data, nonce, sender }) {
+const submitGnosisTxn = async function ({ safe, to, data, nonce, sender, targetChain }) {
   const baseTxn = {
     to: utils.getAddress(to),
     value: 0,
@@ -68,15 +66,11 @@ const submitGnosisTxn = async function ({ safe, to, data, nonce, sender }) {
     operation: 0,
   }
 
-  // Safe service estimate the tx and retrieve the nonce
-  const { safeTxGas } = await gnosisEstimateTransaction(safe, baseTxn)
-
   const txn = {
     ...baseTxn,
-    safeTxGas,
+    safeTxGas: 0,
     baseGas: 0,
-    gasPrice: 1000000006,
-    // Required gas-price>=1000000006 with gas-token=0x0000000000000000000000000000000000000000"
+    gasPrice: 0,
     gasToken: ethers.constants.AddressZero,
     refundReceiver: ethers.constants.AddressZero,
     nonce,
@@ -103,11 +97,11 @@ const submitGnosisTxn = async function ({ safe, to, data, nonce, sender }) {
     sender,
   }
   console.log({ toSend })
-  await gnosisProposeTx(safe, toSend)
+  await gnosisProposeTx(safe, toSend, targetChain)
 }
 
 module.exports = {
   isDelegateOrOwner,
   submitGnosisTxn,
-  getMultiSigNonce,
+  getMultisigNonce,
 }

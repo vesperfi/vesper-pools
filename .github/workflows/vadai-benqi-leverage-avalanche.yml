@@ -5,8 +5,8 @@ on:
       - "test/vadai/benqi-leverage.js"
       - "contracts/strategies/Strategy.sol"
       - "contracts/strategies/compound/CompoundLeverageStrategy.sol"
-      - "contracts/strategies/compound/CompoundLeverageAvalancheStrategy.sol"
-      - "contracts/strategies/compound/BenqiCompoundLeverageAvalancheStrategyAVAX.sol" 
+      - "contracts/strategies/compound/CompoundLeverageAvalancheCore.sol"
+      - "contracts/strategies/compound/BenqiLeverageStrategy.sol"
 
 jobs:
   vadai-benqi-leverage-strategy-test:
@@ -20,9 +20,9 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v2
         with:
-          node-version-file: '.nvmrc'
+          node-version-file: ".nvmrc"
 
-      - name: Run npm install with node v${{ matrix.node }}
+      - name: Run npm install
         run: npm install
 
       - name: Running tests for vaDAI Benqi Compound Leverage

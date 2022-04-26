@@ -3,7 +3,7 @@
 const Address = require('./address')
 
 const setup = { universalFee: 200 }
-const rewards = { contract: 'PoolRewards', tokens: [Address.NATIVE_TOKEN] }
+const rewards = { contract: 'PoolRewards', tokens: [Address.Vesper.VSP] }
 
 const PoolConfig = {
   VADAI: {
@@ -22,31 +22,43 @@ const PoolConfig = {
     contractName: 'VPool',
     poolParams: ['vaWETH Pool', 'vaWETH', Address.WETH],
     setup: { ...setup }, // Shallow copy
-    rewards: { contract: 'PoolRewards', tokens: [] }, // no rewards
+    rewards: { ...rewards },
   },
   VAWBTC: {
     contractName: 'VPool',
     poolParams: ['vaWBTC Pool', 'vaWBTC', Address.WBTC],
     setup: { ...setup }, // Shallow copy
-    rewards: { contract: 'PoolRewards', tokens: [] }, // no rewards
+    rewards: { ...rewards },
   },
   VAAVAX: {
-    contractName: 'VPool',
+    contractName: 'VETH',
     poolParams: ['vaAVAX Pool', 'vaAVAX', Address.NATIVE_TOKEN],
     setup: { ...setup }, // Shallow copy
-    rewards: { contract: 'PoolRewards', tokens: [] }, // no rewards
+    rewards: { ...rewards },
   },
   VAUSDC: {
     contractName: 'VPool',
-    poolParams: ['vaUSDC Pool', 'vaUSDC', Address.USDC],
+    poolParams: ['vaUSDC Pool', 'vaUSDC', Address.USDC_e],
     setup: { ...setup }, // Shallow copy
-    rewards: { contract: 'PoolRewards', tokens: [] }, // no rewards
+    rewards: { ...rewards },
+  },
+  VAUSDCN: {
+    contractName: 'VPool',
+    poolParams: ['vaUSDC Native Pool', 'vaUSDC.n', Address.USDC],
+    setup: { ...setup }, // Shallow copy
+    rewards: { ...rewards },
+  },
+  VAQI: {
+    contractName: 'VPool',
+    poolParams: ['vaQI Pool', 'vaQI', Address.Benqi.QI],
+    setup: { ...setup }, // Shallow copy
+    rewards: { ...rewards },
   },
   VUSDC: {
     contractName: 'VPool',
-    poolParams: ['vUSDC Pool', 'vUSDC', Address.USDC],
+    poolParams: ['vUSDC Pool', 'vUSDC', Address.USDC_e],
     setup: { ...setup }, // Shallow copy
-    rewards: { contract: 'PoolRewards', tokens: [] }, // no rewards
+    rewards: { ...rewards },
   },
 }
 

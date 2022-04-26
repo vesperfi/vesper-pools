@@ -1,0 +1,29 @@
+name: vaQI with Benqi
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/vaqi-benqi-avalanche.yml"
+      - "test/vaqi/benqi.js"
+      - "contracts/strategies/Strategy.sol"
+      - "contracts/strategies/compound/CompoundMultiRewardAvalancheStrategy.sol"
+      - "contracts/strategies/compound/CompoundStrategy.sol"
+
+jobs:
+  vaqi-benqi-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2.3.1
+        with:
+          submodules: true
+      - run: cat "${GITHUB_WORKSPACE}/.github/avalanche.env.properties" >> $GITHUB_ENV
+
+      - name: Use Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version-file: '.nvmrc'
+
+      - name: Run npm install
+        run: npm install
+
+      - name: Running tests for vaQI Benqi
+        run: npm test "test/vaqi/benqi.js"

@@ -102,16 +102,17 @@ Deployment will be done via custom `hardhat task deploy-pool` which behind the s
       setup: { ...setup },
     },
    ```
-  2. Run below command to deploy `AaveStrategyDAI` for `VDAI` pool
+  2. Run below command to deploy `AaveStrategyDAI` for `VDAI` pool. `multisig-nonce` parameter is optional parameters to propose multisig transaction
   ```bash
-  npm run deploy -- --pool VDAI --network localhost --release 3.0.15 --deploy-params '{"tags": "deploy-strategy"}' --strategy-name AaveStrategyDAI
+  npm run deploy -- --pool VDAI --network localhost --release 3.0.15 --deploy-params '{"tags": "deploy-strategy"}' --strategy-name AaveStrategyDAI --multisig-nonce 0
   ```
 
 * Migrate strategy
   ```bash
   npm run deploy -- --pool VDAI --network localhost --release 3.0.15 --deploy-params '{"tags": "migrate-strategy"}' --strategy-name AaveStrategyDAI
   ```
-
+  Use `old-strategy-name` optional parameter if strategy name is changed.
+  
 * Pass any `hardhat-deploy` supported param within `deploy-params` object
   ```bash
    npm run deploy -- --pool VDAI --network localhost --release 3.0.15 --deploy-params '{"tags": "deploy-vPool", "gasprice": "25000000000"}'

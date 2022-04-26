@@ -234,7 +234,7 @@ contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
     }
 
     /// @notice Claim rewardToken and convert rewardToken into collateral token.
-    function _claimRewardsAndConvertTo(address _toToken) internal override {
+    function _claimRewardsAndConvertTo(address _toToken) internal virtual override {
         _claimRewards();
         uint256 _rewardAmount = IERC20(rewardToken).balanceOf(address(this));
         if (_rewardAmount > 0) {

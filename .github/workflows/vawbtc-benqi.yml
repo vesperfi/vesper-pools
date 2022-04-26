@@ -1,0 +1,28 @@
+name: vaWBTC with Benqi 
+on:
+  pull_request:
+    paths:
+      - "test/vawbtc/benqi.js"
+      - "contracts/strategies/Strategy.sol"
+      - "contracts/strategies/compound/CompoundStrategy.sol"
+      - "contracts/strategies/compound/CompoundMultiRewardAvalancheStrategy.sol"
+
+jobs:
+  vawbtc-benqi-strategy-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2.3.1
+        with:
+          submodules: true
+      - run: cat "${GITHUB_WORKSPACE}/.github/avalanche.env.properties" >> $GITHUB_ENV
+
+      - name: Use Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version-file: '.nvmrc'
+
+      - name: Run npm install
+        run: npm install
+
+      - name: Running tests for vaWBTC Benqi 
+        run: npm test "test/vawbtc/benqi.js"
