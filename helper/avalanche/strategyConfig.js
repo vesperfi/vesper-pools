@@ -212,6 +212,21 @@ const StrategyConfig = {
     setup: { ...setup },
   },
 
+  BenqiStrategyWBTC: {
+    contract: 'CompoundMultiRewardAvalancheStrategy',
+    type: StrategyTypes.COMPOUND,
+    constructorArgs: {
+      swapManager,
+      comptroller: Address.Benqi.COMPTROLLER,
+      rewardDistributor: Address.Benqi.REWARD_DISTRIBUTOR,
+      rewardToken: Address.Benqi.QI,
+      receiptToken: Address.Benqi.qiBTC,
+      strategyName: 'BenqiStrategyWBTC',
+    },
+    config: { ...config }, // Shallow copy
+    setup: { ...setup },
+  },
+
   BenqiStrategyUSDCN: {
     contract: 'CompoundMultiRewardAvalancheStrategy',
     type: StrategyTypes.COMPOUND,
