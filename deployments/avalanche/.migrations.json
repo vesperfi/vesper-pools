@@ -35,5 +35,8 @@
   "AlphaLendAvalancheStrategyWETH-v4.0.0": 1650974627,
   "AlphaLendAvalancheStrategyAVAX-v4.0.0": 1650975059,
   "TraderJoeStrategyUSDC-v4.0.0": 1650977512,
-  "BenqiStrategyWBTC-v4.0.0": 1650986610
+  "BenqiStrategyWBTC-v4.0.0": 1650986610,
+  "AlphaLendAvalancheStrategyDAI-v4.0.0": 1650996424,
+  "AlphaLendAvalancheStrategyUSDC-v4.0.0": 1650996517,
+  "AlphaLendAvalancheStrategyWBTC-v4.0.0": 1650996604
 }
