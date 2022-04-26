@@ -11,7 +11,6 @@
   "AaveStrategyAvalancheUSDC-v4.0.0": 1643385965,
   "AaveStrategyAvalancheAVAX-v4.0.1": 1649952390,
   "TraderJoeCompoundStrategyAvalancheDAI-v4.0.0": 1644522199,
-  "TraderJoeCompoundStrategyAvalancheUSDC-v4.0.0": 1644524429,
   "TraderJoeCompoundStrategyAvalancheWBTC-v4.0.0": 1650633728,
   "TraderJoeCompoundStrategyAvalancheWETH-v4.0.0": 1650548914,
   "TraderJoeCompoundStrategyAvalancheAVAX-v4.0.0": 1650865964,
@@ -34,5 +33,6 @@
   "TraderJoeLeverageStrategyUSDC-v4.0.0": 1650914856,
   "TraderJoeLeverageStrategyWETH-v4.0.0": 1650915306,
   "AlphaLendAvalancheStrategyWETH-v4.0.0": 1650974627,
-  "AlphaLendAvalancheStrategyAVAX-v4.0.0": 1650975059
+  "AlphaLendAvalancheStrategyAVAX-v4.0.0": 1650975059,
+  "TraderJoeStrategyUSDC-v4.0.0": 1650977512
 }

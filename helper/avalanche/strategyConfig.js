@@ -107,7 +107,7 @@ const StrategyConfig = {
     config: { ...config, externalDepositFee: 0 },
     setup: { ...setup },
   },
-  TraderJoeCompoundStrategyAvalancheUSDC: {
+  TraderJoeStrategyUSDC: {
     contract: 'CompoundMultiRewardAvalancheStrategy',
     type: StrategyTypes.TRADER_JOE,
     constructorArgs: {
@@ -116,7 +116,7 @@ const StrategyConfig = {
       rewardDistributor: Address.TraderJoe.REWARD_DISTRIBUTOR,
       rewardToken: Address.TraderJoe.JOE,
       receiptToken: Address.TraderJoe.jUSDC,
-      strategyName: 'TraderJoeCompoundStrategyAvalancheUSDC',
+      strategyName: 'TraderJoeStrategyUSDC',
     },
     config: { ...config }, // Shallow copy
     setup: { ...setup },
