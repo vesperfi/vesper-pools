@@ -13,7 +13,7 @@ contract AlphaLendStrategy is Strategy {
     string public NAME;
     string public constant VERSION = "4.0.0";
 
-    address internal constant ALPHA = 0xa1faa113cbE53436Df28FF0aEe54275c13B40975;
+    address internal ALPHA = 0xa1faa113cbE53436Df28FF0aEe54275c13B40975;
     ISafeBox internal safeBox;
     uint256 internal immutable ibDecimals;
 
