@@ -1,3 +1,4 @@
+/* eslint-disable complexity */
 'use strict'
 const swapper = require('./tokenSwapper')
 const hre = require('hardhat')
@@ -221,7 +222,11 @@ async function rebalanceStrategy(strategy) {
       // Alpha SafeBox has a cToken - this method calls exchangeRateCurrent on the cToken
       await strategy.instance.updateTokenRate()
     }
-    if (strategy.type.includes('rariFuse') || strategy.type.includes('earnRariFuse')) {
+    if (
+      strategy.type.includes('rariFuse') ||
+      strategy.type.includes('earnRariFuse') ||
+      strategy.type.includes('trader')
+    ) {
       const cToken = await ethers.getContractAt('CToken', strategy.token.address)
       await cToken.accrueInterest()
     }

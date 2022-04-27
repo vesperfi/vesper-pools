@@ -167,7 +167,7 @@ const StrategyConfig = {
     setup: { ...setup },
   },
 
-  TraderJoeCompoundStrategyAvalancheDAI: {
+  TraderJoeStrategyDAI: {
     contract: 'CompoundMultiRewardAvalancheStrategy',
     type: StrategyTypes.TRADER_JOE,
     constructorArgs: {
@@ -176,7 +176,7 @@ const StrategyConfig = {
       rewardDistributor: Address.TraderJoe.REWARD_DISTRIBUTOR,
       rewardToken: Address.TraderJoe.JOE,
       receiptToken: Address.TraderJoe.jDAI,
-      strategyName: 'TraderJoeCompoundStrategyAvalancheDAI',
+      strategyName: 'TraderJoeStrategyDAI',
     },
     config: { ...config }, // Shallow copy
     setup: { ...setup },
