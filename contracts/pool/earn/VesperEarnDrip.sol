@@ -6,6 +6,10 @@ import "../PoolRewards.sol";
 import "../../interfaces/vesper/IVesperPool.sol";
 import "../../interfaces/token/IToken.sol";
 
+interface IVesperPoolV2 {
+    function getPricePerShare() external view returns (uint256);
+}
+
 contract VesperEarnDrip is PoolRewards {
     TokenLike internal constant WETH = TokenLike(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);
 
@@ -121,7 +125,7 @@ contract VesperEarnDrip is PoolRewards {
             _pricePerShare = _pricePerShareV3;
         } catch {
             // If try fails, read price per share using V2 pool signature
-            _pricePerShare = IVesperPool(_rewardToken).getPricePerShare();
+            _pricePerShare = IVesperPoolV2(_rewardToken).getPricePerShare();
         }
         // Calculate reward in dripToken, as _reward is share of Grow Pool AKA growToken AKA _rewardToken
         return (_pricePerShare * _reward) / 1e18;

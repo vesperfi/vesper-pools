@@ -3,13 +3,14 @@
 pragma solidity 0.8.9;
 
 import "./dependencies/openzeppelin/contracts/utils/Context.sol";
+import "./interfaces/vesper/IPausable.sol";
 
 /**
  * @dev Contract module which allows children to implement an emergency stop
  * mechanism that can be triggered by an authorized account.
  *
  */
-contract Pausable is Context {
+abstract contract Pausable is IPausable, Context {
     event Paused(address account);
     event Shutdown(address account);
     event Unpaused(address account);

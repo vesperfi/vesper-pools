@@ -36,6 +36,11 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
     return _deposit(pool, collateralToken, amount, depositor)
   }
 
+  function convertFrom18(amount) {
+    const decimalConversationFactor = ethers.utils.parseUnits('1', 18 - collateralDecimal)
+    return amount.div(decimalConversationFactor)
+  }
+
   describe(`${poolName} basic operation tests`, function () {
     beforeEach(async function () {
       ;[, user1, user2, user3, user4] = this.users
@@ -97,8 +102,8 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
         }
         const totalDebtOfStrategies = await totalDebtOfAllStrategy(strategies, pool)
         const totalDebt = await pool.totalDebt()
-        const totalSupply = await pool.convertFrom18(await pool.totalSupply())
-        const vPoolBalance = await pool.convertFrom18(await pool.balanceOf(user4.address))
+        const totalSupply = convertFrom18(await pool.totalSupply())
+        const vPoolBalance = convertFrom18(await pool.balanceOf(user4.address))
         // Due to deposit fee, issued shares will be less than deposit amount, even if PPS is 1
         expect(vPoolBalance).to.be.lte(depositAmount, `${poolName} balance of user is wrong`)
         expect(totalDebtOfStrategies).to.be.equal(totalDebt, `${collateralName} totalDebt of strategies is wrong`)
@@ -270,8 +275,8 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
           unusedCredit = unusedCredit.add(credit)
         }
         const totalDebt = await pool.totalDebt()
-        const totalSupply = await pool.convertFrom18(await pool.totalSupply())
-        const vPoolBalance = await pool.convertFrom18(await pool.balanceOf(user3.address))
+        const totalSupply = convertFrom18(await pool.totalSupply())
+        const vPoolBalance = convertFrom18(await pool.balanceOf(user3.address))
 
         expect(maxDebt.sub(unusedCredit).sub(totalDebt).toNumber()).to.almost.eq(
           0,
