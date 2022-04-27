@@ -63,9 +63,9 @@ abstract contract CompoundXYCore is Strategy {
         _cTokens[0] = _receiptToken;
         _cTokens[1] = _borrowCToken;
         comptroller.enterMarkets(_cTokens);
-        (, uint256 _collateralFactorMantissa, ) = comptroller.markets(_receiptToken);
-        minBorrowLimit = (minBorrowRatio * 1e18) / _collateralFactorMantissa;
-        maxBorrowLimit = (maxBorrowRatio * 1e18) / _collateralFactorMantissa;
+        uint256 _collateralFactor = _getCollateralFactor(_receiptToken);
+        minBorrowLimit = (minBorrowRatio * 1e18) / _collateralFactor;
+        maxBorrowLimit = (maxBorrowRatio * 1e18) / _collateralFactor;
     }
 
     /**
@@ -134,7 +134,7 @@ abstract contract CompoundXYCore is Strategy {
      * @notice Claim rewardToken and transfer to new strategy
      * @param _newStrategy Address of new strategy.
      */
-    function _beforeMigration(address _newStrategy) internal virtual override {
+    function _beforeMigration(address _newStrategy) internal override {
         require(IStrategy(_newStrategy).token() == address(supplyCToken), "wrong-receipt-token");
         _repay(borrowCToken.borrowBalanceCurrent(address(this)), true);
     }
@@ -143,6 +143,7 @@ abstract contract CompoundXYCore is Strategy {
     function _beforeRepayY(uint256 _amount) internal virtual {}
 
     /// @dev Borrow Y from Compound. _afterBorrowY hook can be used to do anything with borrowed amount.
+    /// @dev Override to handle ETH
     function _borrowY(uint256 _amount) internal virtual {
         if (_amount > 0) {
             require(borrowCToken.borrow(_amount) == 0, "borrow-failed");
@@ -169,13 +170,12 @@ abstract contract CompoundXYCore is Strategy {
         }
 
         uint256 _supply = supplyCToken.balanceOfUnderlying(address(this));
-        (, uint256 _collateralFactorMantissa, ) = comptroller.markets(address(supplyCToken));
-
+        uint256 _collateralFactor = _getCollateralFactor(address(supplyCToken));
         // In case of withdraw, _amount can be greater than _supply
         uint256 _newSupply = _isDeposit ? _supply + _amount : _supply > _amount ? _supply - _amount : 0;
 
         // Calculate max borrow based on supply and market rate
-        uint256 _maxBorrowAsCollateral = (_newSupply * _collateralFactorMantissa) / 1e18;
+        uint256 _maxBorrowAsCollateral = (_newSupply * _collateralFactor) / 1e18;
         (, uint256 _maxBorrow, ) =
             swapManager.bestOutputFixedInput(address(collateralToken), borrowToken, _maxBorrowAsCollateral);
         // If maxBorrow is zero, we should repay total amount of borrow
@@ -255,17 +255,22 @@ abstract contract CompoundXYCore is Strategy {
         }
     }
 
-    /// @dev Get the borrow balance strategy is holding
+    /// @dev Get the borrow balance strategy is holding. Override to handle vToken balance.
     function _getBorrowBalance() internal view virtual returns (uint256) {
         return IERC20(borrowToken).balanceOf(address(this));
     }
 
-    /// @dev Get underlying token
+    /// @dev TraderJoe Compound fork has different markets API so allow this method to override.
+    function _getCollateralFactor(address _cToken) internal view virtual returns (uint256 _collateralFactor) {
+        (, _collateralFactor, ) = comptroller.markets(_cToken);
+    }
+
+    /// @dev Get underlying token. Compound handle ETH differently hence allow this method to override
     function _getUnderlyingToken(address _cToken) internal view virtual returns (address) {
         return CToken(_cToken).underlying();
     }
 
-    /// @dev Deposit collateral aka X in Compound
+    /// @dev Deposit collateral aka X in Compound. Override to handle ETH
     function _mintX(uint256 _amount) internal virtual {
         if (_amount > 0) {
             require(supplyCToken.mint(_amount) == 0, "supply-failed");
@@ -275,13 +280,13 @@ abstract contract CompoundXYCore is Strategy {
     /// @dev Hook to handle profit scenario i.e. actual borrowed balance > Compound borrow account.
     function _rebalanceBorrow(uint256 _excessBorrow) internal virtual {}
 
-    /// @dev Withdraw collateral aka X from Compound
+    /// @dev Withdraw collateral aka X from Compound. Override to handle ETH
     function _redeemX(uint256 _amount) internal virtual {
         require(supplyCToken.redeemUnderlying(_amount) == 0, "withdraw-failed");
     }
 
     /// @dev Deposit collateral in Compound and adjust borrow position
-    function _reinvest() internal virtual override {
+    function _reinvest() internal override {
         uint256 _collateralBalance = collateralToken.balanceOf(address(this));
 
         (uint256 _borrowAmount, bool _shouldRepay) = _calculateBorrowPosition(_collateralBalance, true);
@@ -328,7 +333,8 @@ abstract contract CompoundXYCore is Strategy {
         }
     }
 
-    /// @dev Repay Y to Compound. _beforeRepayY hook can be used to pre-repay actions.
+    /// @dev Repay Y to Compound. _beforeRepayY hook can be used for pre-repay actions.
+    /// @dev Override this to handle ETH
     function _repayY(uint256 _amount) internal virtual {
         _beforeRepayY(_amount);
         require(borrowCToken.repayBorrow(_amount) == 0, "repay-failed");
@@ -439,15 +445,15 @@ abstract contract CompoundXYCore is Strategy {
      * @param _maxBorrowRatio Maximum % we want to borrow
      */
     function updateBorrowRatio(uint256 _minBorrowRatio, uint256 _maxBorrowRatio) external onlyGovernor {
-        (, uint256 _collateralFactorMantissa, ) = comptroller.markets(address(supplyCToken));
-        require(_maxBorrowRatio < (_collateralFactorMantissa / 1e14), "invalid-max-borrow-ratio");
+        uint256 _collateralFactor = _getCollateralFactor(address(supplyCToken));
+        require(_maxBorrowRatio < (_collateralFactor / 1e14), "invalid-max-borrow-ratio");
         require(_maxBorrowRatio > _minBorrowRatio, "max-should-be-higher-than-min");
         emit UpdatedBorrowRatio(minBorrowRatio, _minBorrowRatio, maxBorrowRatio, _maxBorrowRatio);
         minBorrowRatio = _minBorrowRatio;
         maxBorrowRatio = _maxBorrowRatio;
 
-        minBorrowLimit = (_minBorrowRatio * 1e18) / _collateralFactorMantissa;
-        maxBorrowLimit = (_maxBorrowRatio * 1e18) / _collateralFactorMantissa;
+        minBorrowLimit = (_minBorrowRatio * 1e18) / _collateralFactor;
+        maxBorrowLimit = (_maxBorrowRatio * 1e18) / _collateralFactor;
     }
 
     // We overridden _generateReport which eliminates need of below function.

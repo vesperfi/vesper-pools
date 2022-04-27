@@ -565,11 +565,31 @@ const StrategyConfig = {
       rewardDistributor: Address.Benqi.REWARD_DISTRIBUTOR,
       rewardToken: Address.Benqi.QI,
       receiptToken: Address.Benqi.qiBTC,
-      borrowCToken: Address.Benqi.qiLINK,
-      vPool: Address.Vesper.vaWBTC,
+      borrowCToken: Address.Benqi.qiETH,
+      vPool: Address.Vesper.vaWETH,
       vspAddress: Address.Vesper.VSP,
       strategyName: 'VesperBenqiXYStrategyWBTC',
     },
+    config: { ...config },
+    setup: { ...setup },
+  },
+
+  VesperTraderJoeXYStrategyAVAX: {
+    contract: 'VesperTraderJoeXYStrategy',
+    type: StrategyTypes.VESPER_COMPOUND_XY,
+    constructorArgs: {
+      swapManager,
+      comptroller: Address.TraderJoe.COMPTROLLER,
+      rewardDistributor: Address.TraderJoe.REWARD_DISTRIBUTOR,
+      rewardToken: Address.TraderJoe.JOE,
+      receiptToken: Address.TraderJoe.jAVAX,
+      borrowCToken: Address.TraderJoe.jWETH,
+      vPool: Address.Vesper.vaWETH,
+      vspAddress: Address.Vesper.VSP,
+      strategyName: 'VesperTraderJoeXYStrategyAVAX',
+    },
+    config: { ...config },
+    setup: { ...setup },
   },
 }
 

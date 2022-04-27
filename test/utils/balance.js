@@ -36,6 +36,7 @@ const slots = {
   [AvalancheAddress.WBTC]: 0,
   [AvalancheAddress.WETH]: 0,
   [AvalancheAddress.Benqi.QI]: 1,
+  [AvalancheAddress.Vesper.VSP]: 2,
 }
 
 /**
