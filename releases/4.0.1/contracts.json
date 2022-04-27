@@ -20,6 +20,7 @@
         },
         "strategies": {
           "AaveStrategyAvalancheDAI": "0x867E89E47b7c252F4D991DF75eBd2CFD9188B929",
+          "AlphaLendAvalancheStrategyDAI": "0x8D460b5FDaBE2ef4CB2DA6dd78d574E580DFF2ed",
           "BenqiCompoundLeverageStrategyAvalancheDAI": "0xBb4fCEf90D4259F476Ccb3BB7bc4842355B46c76",
           "CrvA3PoolStrategyDAI": "0xAf147FD4C72807AFdd3CCFDcf3CF6a2587E88127",
           "TraderJoeCompoundStrategyAvalancheDAI": "0x6871c4e1582D36980Fa6ED0b482294325a83570e"
@@ -91,6 +92,7 @@
         },
         "strategies": {
           "AaveStrategyAvalancheWBTC": "0x604af53401f7e84C3c332CB3C64a3FfE48A68cBf",
+          "AlphaLendAvalancheStrategyWBTC": "0xE72591e01123ebb866a24727bdfFfcE19BD4Fb36",
           "BenqiLeverageStrategyWBTC": "0x109749106926E097C3a7809392FFE6350cF6fc05",
           "BenqiStrategyWBTC": "0x8C7244b9321cBAEe8C1a3E28dEBd8a8BB3f1DBcd",
           "Crv2PoolAvaStrategyAvWBTCRenBTC": "0x5459F2c90977d3bd133e85dB45CF90bF6e3d3AD2",
@@ -115,6 +117,7 @@
         },
         "strategies": {
           "AaveStrategyAvalancheUSDC": "0x718E58C448116FE7315caEE135b12793AFc4FDf4",
+          "AlphaLendAvalancheStrategyUSDC": "0x76C78059581891Eb96eEf286d223015936bC6972",
           "BenqiCompoundLeverageStrategyAvalancheUSDC": "0x570d1Baa39809aca59b51202179e1E5d8A08D993",
           "CrvA3PoolStrategyUSDC": "0x45D5Ff2793f516287A953A18EA88C360Fff94678",
           "TraderJoeLeverageStrategyUSDC": "0xF2d1eF29da4eebD2EF7903DAA39eC1EBc3967e90",
