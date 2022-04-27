@@ -22,4 +22,10 @@ contract VPool is VPoolBase {
     ) public initializer {
         _initializeBase(_name, _symbol, _token, _poolAccountant);
     }
+
+    /// @dev This is one time activity to fix name and symbol of Avalanche pools
+    function updateNameAndSymbol(string memory _name, string memory _symbol) external onlyGovernor {
+        _setName(_name);
+        _setSymbol(_symbol);
+    }
 }
