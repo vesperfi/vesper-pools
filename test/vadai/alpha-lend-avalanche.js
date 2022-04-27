@@ -1,9 +1,9 @@
 'use strict'
 
 const { prepareConfig } = require('./config')
+const network = require('./../utils/network')
 const { shouldBehaveLikePool } = require('../behavior/vesper-pool')
 const { shouldBehaveLikeStrategy } = require('../behavior/strategy')
-const network = require('./../utils/network')
 const { strategyConfig } = require('../utils/chains').getChainData()
 
 describe('vaDAI Pool', function () {

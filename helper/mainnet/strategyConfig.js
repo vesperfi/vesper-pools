@@ -950,7 +950,7 @@ const StrategyConfig = {
       collateralIdx: 0,
       strategyName: 'CrvA3PoolStrategyDAI',
     },
-    config: { ...config, externalDepositFee: 100 },
+    config: { ...config },
     setup: { ...setup },
   },
   CrvA3PoolStrategyUSDC: {
@@ -961,7 +961,7 @@ const StrategyConfig = {
       collateralIdx: 1,
       strategyName: 'CrvA3PoolStrategyUSDC',
     },
-    config: { ...config, externalDepositFee: 100 },
+    config: { ...config },
     setup: { ...setup },
   },
   AaveMakerStrategyETH: {

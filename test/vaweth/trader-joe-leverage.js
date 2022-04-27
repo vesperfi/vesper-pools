@@ -7,7 +7,7 @@ const { strategyConfig } = require('../utils/chains').getChainData()
 
 describe('vaWETH Pool', function () {
   if (network.AVALANCHE === process.env.TEST_CHAIN) {
-    const strategy = strategyConfig.TraderJoeCompoundLeverageStrategyAvalancheWETH
+    const strategy = strategyConfig.TraderJoeLeverageStrategyWETH
     strategy.config.debtRatio = 9000
 
     const strategies = [strategy]

@@ -293,6 +293,9 @@ abstract contract Strategy is IStrategy, Context {
         uint256 _amountIn,
         uint256 _minAmountOut
     ) internal {
+        if (_from == _to) {
+            return;
+        }
         (address[] memory path, uint256 amountOut, uint256 rIdx) =
             swapManager.bestOutputFixedInput(_from, _to, _amountIn);
         if (_minAmountOut == 0) _minAmountOut = 1;

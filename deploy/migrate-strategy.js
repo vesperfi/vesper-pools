@@ -1,6 +1,17 @@
+/* eslint-disable complexity */
 'use strict'
+const { executeOrProposeTx } = require('./deploy-strategy')
+const { isDelegateOrOwner } = require('./gnosis-txn')
 
-const deployFunction = async function ({ getNamedAccounts, deployments, poolConfig, strategyConfig, targetChain }) {
+const deployFunction = async function ({
+  getNamedAccounts,
+  deployments,
+  poolConfig,
+  strategyConfig,
+  targetChain,
+  multisigNonce = 0,
+  oldStrategyName,
+}) {
   if (!strategyConfig) {
     throw new Error('Strategy configuration object is not created.')
   }
@@ -11,9 +22,18 @@ const deployFunction = async function ({ getNamedAccounts, deployments, poolConf
 
   const poolProxy = await deployments.get(poolConfig.contractName)
 
-  const strategyAlias = strategyConfig.alias
+  let strategyAlias = oldStrategyName || strategyConfig.alias
 
   const constructorArgs = [poolProxy.address, ...Object.values(strategyConfig.constructorArgs)]
+
+  const params = {
+    safe: Address.MultiSig.safe,
+    deployer,
+    execute,
+    targetChain,
+    multisigNonce,
+    oldStrategyName,
+  }
 
   if (strategyAlias.includes('Maker')) {
     // Maker strategy of any type, EarnXXXMaker, XXXMaker
@@ -37,6 +57,7 @@ const deployFunction = async function ({ getNamedAccounts, deployments, poolConf
   // Get old strategy. It is very important to get it first as new deploy will overwrite it
   const oldStrategy = await deployments.get(strategyAlias)
 
+  strategyAlias = strategyConfig.alias
   // Deploy new version strategy
   const newStrategy = await deploy(strategyAlias, {
     contract: strategyConfig.contract,
@@ -46,11 +67,30 @@ const deployFunction = async function ({ getNamedAccounts, deployments, poolConf
   })
 
   const setup = strategyConfig.setup
+
+  params.governor = await read(poolConfig.contractName, {}, 'governor')
+  params.isDelegateOrOwner =
+    Address.MultiSig.safe === params.governor &&
+    (await isDelegateOrOwner(Address.MultiSig.safe, deployer, params.targetChain))
+
   // Execute configuration transactions
   await execute(strategyAlias, { from: deployer, log: true }, 'approveToken')
-  await execute(strategyAlias, { from: deployer, log: true }, 'updateFeeCollector', setup.feeCollector)
+
+  // update fee collector
+  params.methodName = 'updateFeeCollector'
+  params.methodArgs = [setup.feeCollector]
+  await executeOrProposeTx(strategyConfig.contract, newStrategy.address, strategyAlias, params)
+
+  // addKeeper
   for (const keeper of setup.keepers) {
-    await execute(strategyAlias, { from: deployer, log: true }, 'addKeeper', keeper)
+    const _keepers = await read(strategyAlias, {}, 'keepers')
+    if (_keepers.includes(keeper)) {
+      console.log('Keeper %s already added, skipping addKeeper', keeper)
+    } else {
+      params.methodName = 'addKeeper'
+      params.methodArgs = [keeper]
+      await executeOrProposeTx(strategyConfig.contract, newStrategy.address, strategyAlias, params)
+    }
   }
 
   // For earn strategies approve grow token
@@ -67,13 +107,9 @@ const deployFunction = async function ({ getNamedAccounts, deployments, poolConf
   console.log(`Migrating ${strategyAlias} from ${oldStrategy.address} to ${newStrategy.address}`)
 
   // Migrate strategy
-  await execute(
-    poolConfig.contractName,
-    { from: deployer, log: true },
-    'migrateStrategy',
-    oldStrategy.address,
-    newStrategy.address,
-  )
+  params.methodName = 'migrateStrategy'
+  params.methodArgs = [oldStrategy.address, newStrategy.address]
+  await executeOrProposeTx(poolConfig.contractName, poolProxy.address, poolConfig.contractName, params)
 
   const strategyVersion = await read(strategyAlias, {}, 'VERSION')
   deployFunction.id = `${strategyAlias}-v${strategyVersion}`

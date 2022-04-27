@@ -12,7 +12,7 @@ const COLLATERAL_NAME = 'WBTC'
 
 describe(`${POOL_NAME} Pool`, function () {
   if (network.AVALANCHE === process.env.TEST_CHAIN) {
-    const strategy = strategyConfig.BenqiCompoundStrategyAvalancheWBTC
+    const strategy = strategyConfig.BenqiStrategyWBTC
     strategy.config.debtRatio = 9000
 
     const strategies = [strategy]

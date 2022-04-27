@@ -5,7 +5,8 @@ on:
       - "test/vausdc/trader-joe-leverage.js"
       - "contracts/strategies/Strategy.sol"
       - "contracts/strategies/compound/CompoundLeverageStrategy.sol"
-      - "contracts/strategies/compound/CompoundLeverageAvalancheStrategy.sol"
+      - "contracts/strategies/compound/CompoundLeverageAvalancheCore.sol"
+      - "contracts/strategies/compound/TraderJoeLeverageStrategy.sol"
 
 jobs:
   vausdc-traderjoe-leverage-strategy-test:
@@ -21,7 +22,7 @@ jobs:
         with:
           node-version-file: ".nvmrc"
 
-      - name: Run npm install with node v${{ matrix.node }}
+      - name: Run npm install
         run: npm install
 
       - name: Running tests for vaUSDC TraderJoe Compound Leverage
