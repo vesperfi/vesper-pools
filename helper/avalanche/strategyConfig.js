@@ -470,6 +470,22 @@ const StrategyConfig = {
     config: { ...config },
     setup: { ...setup },
   },
+
+  VesperBenqiXYStrategyWBTC: {
+    contract: 'VesperBenqiXYStrategy',
+    type: StrategyTypes.VESPER_COMPOUND_XY,
+    constructorArgs: {
+      swapManager,
+      comptroller: Address.Benqi.COMPTROLLER,
+      rewardDistributor: Address.Benqi.REWARD_DISTRIBUTOR,
+      rewardToken: Address.Benqi.QI,
+      receiptToken: Address.Benqi.qiBTC,
+      borrowCToken: Address.Benqi.qiLINK,
+      vPool: Address.Vesper.vaWBTC,
+      vspAddress: Address.Vesper.VSP,
+      strategyName: 'VesperBenqiXYStrategyWBTC',
+    },
+  },
 }
 
 module.exports = Object.freeze(StrategyConfig)
