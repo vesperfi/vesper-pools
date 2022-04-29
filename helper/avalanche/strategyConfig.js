@@ -473,7 +473,19 @@ const StrategyConfig = {
     setup: { ...setup },
   },
 
-  AlphaLendAvalancheStrategyUSDC: {
+  AlphaLendAvalancheStrategyUSDC_E: {
+    contract: 'AlphaLendAvalancheStrategy',
+    type: StrategyTypes.ALPHA_LEND,
+    constructorArgs: {
+      swapManager,
+      receiptToken: Address.Alpha.ibUSDCev2,
+      strategyName: 'AlphaLendAvalancheStrategyUSDC',
+    },
+    config: { ...config },
+    setup: { ...setup },
+  },
+
+  AlphaLendAvalancheStrategyUSDC_N: {
     contract: 'AlphaLendAvalancheStrategy',
     type: StrategyTypes.ALPHA_LEND,
     constructorArgs: {

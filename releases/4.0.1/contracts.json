@@ -161,6 +161,7 @@
           "implementation": "0xCF15Af3677171DBBD7844B721c010a59e1e60201"
         },
         "strategies": {
+          "AlphaLendAvalancheStrategyUSDC_N": "0x468E9DA5e22baf34a2E89dd8438AFC5558eEdBEA",
           "BenqiLeverageStrategyUSDCN": "0x0844913292bB5953Eda9904aa5Dde7ba43659274",
           "BenqiStrategyUSDCN": "0x0b9b5723861b491B75c5Ba6b7722b5479c47Ec0e"
         }
