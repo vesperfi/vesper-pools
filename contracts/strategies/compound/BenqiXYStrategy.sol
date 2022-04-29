@@ -9,12 +9,14 @@ import "../../interfaces/vesper/IPoolRewards.sol";
 
 /// @title This strategy will deposit collateral token in Benqi and based on position it will borrow
 /// another token. Supply X borrow Y and keep borrowed amount here. It does handle rewards and handle
-/// wrap/unwrap of WETH as ETH is required to interact with Benqi.
+/// wrap/unwrap of WAVAX as AVAX is required to interact with Benqi.
 contract BenqiXYStrategy is CompoundXYStrategy {
     using SafeERC20 for IERC20;
 
     address public rewardDistributor;
     address internal constant WAVAX = 0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7;
+    // solhint-disable-next-line const-name-snakecase
+    address internal constant qiAVAX = 0x5C0401e81Bc07Ca70fAD469b451682c0d747Ef1c;
 
     constructor(
         address _pool,
@@ -59,10 +61,7 @@ contract BenqiXYStrategy is CompoundXYStrategy {
         uint256 _avaxRewardAmount = address(this).balance;
         if (_avaxRewardAmount > 0) {
             TokenLike(WAVAX).deposit{value: _avaxRewardAmount}();
-            // High chance WAVAX can be _toToken
-            if (_toToken != WAVAX) {
-                _safeSwap(WAVAX, _toToken, _avaxRewardAmount, 1);
-            }
+            _safeSwap(WAVAX, _toToken, _avaxRewardAmount, 1);
         }
     }
 
@@ -72,13 +71,24 @@ contract BenqiXYStrategy is CompoundXYStrategy {
         returns (uint256 _rewardsAsCollateral)
     {
         uint256 _rewardsAccrued = IRewardDistributor(rewardDistributor).rewardAccrued(rewardType_, address(this));
+        if (address(collateralToken) == rewardToken_) {
+            return _rewardsAccrued;
+        }
 
-        if (address(collateralToken) != rewardToken_ && _rewardsAccrued > 0) {
+        if (_rewardsAccrued > 0) {
             (, _rewardsAsCollateral, ) = swapManager.bestOutputFixedInput(
                 rewardToken_,
                 address(collateralToken),
                 _rewardsAccrued
             );
         }
+    }
+
+    /// @dev Benqi qiAVAX doesn't has underlying method
+    function _getUnderlyingToken(address _cToken) internal view override returns (address) {
+        if (_cToken == qiAVAX) {
+            return WAVAX;
+        }
+        return CToken(_cToken).underlying();
     }
 }
