@@ -169,14 +169,17 @@
     "mainnet": {
       "vafrax": {
         "pool": {
+          "proxyAdmin": "0x19A02f3512BdF78114B3c50f7d22a34b1B2798cA",
           "proxy": "0xc14900dFB1Aa54e7674e1eCf9ce02b3b35157ba5",
           "implementation": "0xB0582CcAD2E265924E3E75539a84717449396d66",
           "poolAccountant": {
+            "proxyAdmin": "0x19A02f3512BdF78114B3c50f7d22a34b1B2798cA",
             "proxy": "0xC0A7EB8B23512ecD0e9F8f51e3FAe7Cf9530b212",
             "implementation": "0xCD6bF2b8DA112AB77C42Fc96AbF4218dCB71fD35"
           }
         },
         "poolRewards": {
+          "proxyAdmin": "0x19A02f3512BdF78114B3c50f7d22a34b1B2798cA",
           "proxy": "0xf1D4EB7183bA624a4a198376560DF0De20d99941",
           "implementation": "0x92574eD22C0b3961e240dBa1EbA02F6f30fd066C"
         },
@@ -215,17 +218,17 @@
       },
       "vafei": {
         "pool": {
-          "proxyAdmin": "0xd9A5df2877a42460E9055C4134946668dfcf51f8",
+          "proxyAdmin": "0x19A02f3512BdF78114B3c50f7d22a34b1B2798cA",
           "proxy": "0x2B6c40Ef15Db0D78D08A7D1b4E12d57E88a3e324",
           "implementation": "0xfE711bE66DEF585c90671b6eB767a3979cdfe007",
           "poolAccountant": {
-            "proxyAdmin": "0xd9A5df2877a42460E9055C4134946668dfcf51f8",
+            "proxyAdmin": "0x19A02f3512BdF78114B3c50f7d22a34b1B2798cA",
             "proxy": "0x7F896DDe137fBFc0347854fAa02E243aD6F2bE93",
             "implementation": "0xEeD0E5AACe8Cee7c5fEDfCB858bcb2082e1B94EE"
           }
         },
         "poolRewards": {
-          "proxyAdmin": "0xd9A5df2877a42460E9055C4134946668dfcf51f8",
+          "proxyAdmin": "0x19A02f3512BdF78114B3c50f7d22a34b1B2798cA",
           "proxy": "0x40971A53fa57b3D26bF0c98075f81955dE78b61F",
           "implementation": "0xbE33791F85f3CCFd6C5aA6f8Fd5540F14D3574ad"
         },
@@ -273,17 +276,17 @@
       },
       "vaalusd": {
         "pool": {
-          "proxyAdmin": "0xd9A5df2877a42460E9055C4134946668dfcf51f8",
+          "proxyAdmin": "0x19A02f3512BdF78114B3c50f7d22a34b1B2798cA",
           "proxy": "0x8BCdd6a8168d658dFA19721eaB7470e43398Db25",
           "implementation": "0x842547883B2CaAD101F897e6789F63d33b06030e",
           "poolAccountant": {
-            "proxyAdmin": "0xd9A5df2877a42460E9055C4134946668dfcf51f8",
+            "proxyAdmin": "0x19A02f3512BdF78114B3c50f7d22a34b1B2798cA",
             "proxy": "0xe25d8F3F659E2a44602eC91538F9818793fd844F",
             "implementation": "0x82Bb186E32F5a06Bf3343B6E7CA800F180f670F9"
           }
         },
         "poolRewards": {
-          "proxyAdmin": "0xd9A5df2877a42460E9055C4134946668dfcf51f8",
+          "proxyAdmin": "0x19A02f3512BdF78114B3c50f7d22a34b1B2798cA",
           "proxy": "0xeF8737Ec1180ddaD26438e4675bCFE9773A0E8c8",
           "implementation": "0x72DCF9bA5F5E124b393A659F1629DEf439fF1b56"
         },
@@ -296,14 +299,17 @@
       },
       "vausdc": {
         "pool": {
+          "proxyAdmin": "0x19A02f3512BdF78114B3c50f7d22a34b1B2798cA"
           "proxy": "0xa8b607Aa09B6A2E306F93e74c282Fb13f6A80452",
           "implementation": "0xff97999A82bBee3F2A2FabF0b1F96CE472Bb0532",
           "poolAccountant": {
+            "proxyAdmin": "0x19A02f3512BdF78114B3c50f7d22a34b1B2798cA"
             "proxy": "0xa9aF8f4202996528D23d913378F92EF932eeE400",
             "implementation": "0xce0Ae51DEA9fCBF44dC076638D2DEcD028E19659"
           }
         },
         "poolRewards": {
+          "proxyAdmin": "0x19A02f3512BdF78114B3c50f7d22a34b1B2798cA"
           "proxy": "0x2F59B0F98A08E733C66dFB42Bd8E366dC2cfedA6",
           "implementation": "0x7a75d934ecd0Dffae11592E7E6955C8186273b1c"
         },
