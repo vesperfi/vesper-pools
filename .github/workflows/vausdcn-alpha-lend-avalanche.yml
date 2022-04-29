@@ -2,7 +2,7 @@ name: vaUSDC with Alpha Lend Avalanche Strategy
 on:
   pull_request:
     paths:
-      - "test/vausdc/alpha-lend-avalanche.js"
+      - "test/vausdcn/alpha-lend-avalanche.js"
       - "contracts/strategies/Strategy.sol"
       - "contracts/strategies/alpha/AlphaLendStrategy.sol"
       - "contracts/strategies/alpha/AlphaLendAvalancheStrategy.sol"
@@ -25,4 +25,4 @@ jobs:
         run: npm install
 
       - name: Running tests for vaUSDC Alpha Lend Avalanche
-        run: npm test "test/vausdc/alpha-lend-avalanche.js"
+        run: npm test "test/vausdcn/alpha-lend-avalanche.js"
