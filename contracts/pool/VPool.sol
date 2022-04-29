@@ -62,6 +62,9 @@ contract VPool is Initializable, PoolERC20Permit, Governable, Pausable, Reentran
         require(_keepers.add(_msgSender()), Errors.ADD_IN_LIST_FAILED);
         require(_maintainers.add(_msgSender()), Errors.ADD_IN_LIST_FAILED);
         poolAccountant = _poolAccountant;
+        universalFee = 200; // 2%
+        maxProfitAsFee = 5_000; // 50%
+        minDepositLimit = 1;
     }
 
     modifier onlyKeeper() {
@@ -493,6 +496,16 @@ contract VPool is Initializable, PoolERC20Permit, Governable, Pausable, Reentran
     }
 
     /**
+     * @notice OnlyGovernor:: Helper function for V5 upgrade
+     */
+    function setup() external onlyGovernor {
+        require(universalFee == 0, Errors.ALREADY_INITIALIZED);
+        universalFee = 200; // 2%
+        maxProfitAsFee = 5_000; // 50%
+        minDepositLimit = 1;
+    }
+
+    /**
      * Only Governor:: Update maximum profit that can be used as universal fee
      * @param _newMaxProfitAsFee New max profit as fee
      */
@@ -507,6 +520,7 @@ contract VPool is Initializable, PoolERC20Permit, Governable, Pausable, Reentran
      * @param _newLimit New minimum deposit limit
      */
     function updateMinimumDepositLimit(uint256 _newLimit) external onlyGovernor {
+        require(_newLimit > 0, Errors.INVALID_INPUT);
         require(_newLimit != minDepositLimit, Errors.SAME_AS_PREVIOUS);
         emit UpdatedMinimumDepositLimit(minDepositLimit, _newLimit);
         minDepositLimit = _newLimit;
