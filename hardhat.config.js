@@ -81,6 +81,11 @@ module.exports = {
         enabled: true,
         runs: 100,
       },
+      outputSelection: {
+        '*': {
+          '*': ['storageLayout'],
+        },
+      },
     },
   },
   mocha: {
