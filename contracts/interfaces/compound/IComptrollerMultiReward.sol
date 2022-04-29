@@ -9,7 +9,7 @@ interface ComptrollerMultiReward {
     function rewardDistributor() external view returns (address);
 }
 
-interface TraderJorComptroller {
+interface TraderJoeComptroller {
     function markets(address market)
         external
         view

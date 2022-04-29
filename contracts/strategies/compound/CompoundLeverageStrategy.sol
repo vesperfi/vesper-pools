@@ -20,6 +20,7 @@ contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
     uint256 internal constant MAX_BPS = 10_000; //100%
     uint256 public minBorrowRatio = 5_000; // 50%
     uint256 public maxBorrowRatio = 6_000; // 60%
+    uint256 internal constant COLLATERAL_FACTOR_LIMIT = 9_500; // 95%
     CToken internal cToken;
     IUniswapV3Oracle internal constant ORACLE = IUniswapV3Oracle(0x0F1f5A87f99f0918e6C81F16E59F3518698221Ff);
     uint32 internal constant TWAP_PERIOD = 3600;
@@ -86,7 +87,7 @@ contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
     function _getCollateralFactor() internal view virtual returns (uint256 _collateralFactor) {
         (, _collateralFactor, ) = comptroller.markets(address(cToken));
         // Take 95% of collateralFactor to avoid any rounding issue.
-        _collateralFactor = (_collateralFactor * 95) / 100;
+        _collateralFactor = (_collateralFactor * COLLATERAL_FACTOR_LIMIT) / MAX_BPS;
     }
 
     /**
