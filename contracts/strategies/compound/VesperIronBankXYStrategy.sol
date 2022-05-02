@@ -73,7 +73,6 @@ contract VesperIronBankXYStrategy is CompoundXYCore {
     }
 
     function _claimRewardsAndConvertTo(address _toToken) internal override {
-        super._claimRewardsAndConvertTo(_toToken);
         address _poolRewards = vPool.poolRewards();
         if (_poolRewards != address(0)) {
             IPoolRewards(_poolRewards).claimReward(address(this));

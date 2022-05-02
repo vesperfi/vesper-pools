@@ -14,7 +14,7 @@ contract CompoundXYStrategy is CompoundXYCore {
     using SafeERC20 for IERC20;
 
     address public immutable rewardToken;
-    address internal constant CETH = 0x4Ddc2D193948926D02f9B1fE9e1daa0718270ED5;
+    address private constant CETH = 0x4Ddc2D193948926D02f9B1fE9e1daa0718270ED5;
 
     constructor(
         address _pool,
@@ -86,7 +86,7 @@ contract CompoundXYStrategy is CompoundXYCore {
     }
 
     /// @dev Native Compound cETH doesn't has underlying method
-    function _getUnderlyingToken(address _cToken) internal view override returns (address) {
+    function _getUnderlyingToken(address _cToken) internal view virtual override returns (address) {
         if (_cToken == CETH) {
             return WETH;
         }
