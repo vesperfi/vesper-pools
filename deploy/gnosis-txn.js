@@ -100,8 +100,21 @@ const submitGnosisTxn = async function ({ safe, to, data, nonce, sender, targetC
   await gnosisProposeTx(safe, toSend, targetChain)
 }
 
+// eslint-disable-next-line max-params
+async function proposeTxn(targetChain, deployer, multisigNonce, contractData) {
+  const Address = require(`../helper/${targetChain}/address`)
+  const safe = Address.MultiSig.safe
+
+  const contract = await ethers.getContractAt(contractData.contract, contractData.address)
+  const encodedData = await contract.populateTransaction[contractData.method.name](...contractData.method.args)
+  const nonce = multisigNonce === 0 ? (await getMultisigNonce(safe, targetChain)).nonce : multisigNonce
+  const txnParams = { data: encodedData.data, to: encodedData.to, safe, nonce, sender: deployer, targetChain }
+  await submitGnosisTxn(txnParams)
+}
+
 module.exports = {
   isDelegateOrOwner,
   submitGnosisTxn,
   getMultisigNonce,
+  proposeTxn,
 }

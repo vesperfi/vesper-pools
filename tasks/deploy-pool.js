@@ -98,7 +98,7 @@ async function getContractsToReuse() {
   for (const proxy of proxyContracts) {
     const shouldReuse = await shouldReuseImplementation(networkName, versionInfo, proxy)
     if (shouldReuse) {
-      contractsToReuse.push(proxy.contract)
+      contractsToReuse[proxy.contract] = versionInfo[proxy.contract]
     }
   }
 
@@ -167,11 +167,10 @@ async function deployPoolContracts(pool, deployParams, release) {
       await copy(deployerDir, networkDir, { overwrite: true, filter: ['*.json'] })
     }
 
-    const contractsToReuse = await getContractsToReuse()
+    // Set in hre to later use in upgrade-pool script
+    hre.contractsToReuse = await getContractsToReuse()
     const reuseFilter = []
-    for (const contract of contractsToReuse) {
-      reuseFilter.push(`${contract}_Implementation.json`)
-    }
+    Object.keys(hre.contractsToReuse).forEach(contract => reuseFilter.push(`${contract}_Implementation.json`))
 
     // Copy files from global directory to network directory for deployment
     if (fs.existsSync(globalDir)) {
@@ -181,7 +180,7 @@ async function deployPoolContracts(pool, deployParams, release) {
     // Call deploy script, this is where actual deployment will happen
     await run('deploy', { ...deployParams })
     // Update implementation version info
-    await updateVersionInfo(contractsToReuse, hre.implementations)
+    await updateVersionInfo(hre.contractsToReuse, hre.implementations)
 
     let copyFilter = ['*.json', 'solcInputs/*', '!*Implementation.json']
 

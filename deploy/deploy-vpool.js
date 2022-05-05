@@ -2,6 +2,9 @@
 
 const { ethers } = require('hardhat')
 const PoolAccountant = 'PoolAccountant'
+const PoolAccountantUpgrader = 'PoolAccountantUpgrader'
+const VPoolUpgrader = 'VPoolUpgrader'
+const PoolRewardsUpgrader = 'PoolRewardsUpgrader'
 
 // eslint-disable-next-line consistent-return
 function sleep(network, ms) {
@@ -12,20 +15,26 @@ function sleep(network, ms) {
 }
 
 const deployFunction = async function (hre) {
-  const { getNamedAccounts, deployments, poolConfig } = hre
+  const { getNamedAccounts, deployments, poolConfig, targetChain } = hre
   const { deploy, execute, read } = deployments
   const { deployer } = await getNamedAccounts()
   const networkName = hre.network.name
+  const Address = require(`../helper/${targetChain}/address`)
   // Wait for 2 blocks in network is not localhost
   const waitConfirmations = networkName === 'localhost' ? 0 : 2
   // This info will be used later in deploy-pool task
   hre.implementations = {}
+
+  // Deploy upgrader
+  await deploy(PoolAccountantUpgrader, { from: deployer, log: true, args: [Address.MULTICALL], waitConfirmations })
+
   // Deploy PoolAccountant. This call will deploy ProxyAdmin, proxy and PoolAccountant
   const accountantProxy = await deploy(PoolAccountant, {
     from: deployer,
     log: true,
     proxy: {
       proxyContract: 'OpenZeppelinTransparentProxy',
+      viaAdminContract: PoolAccountantUpgrader,
     },
     waitConfirmations,
   })
@@ -34,6 +43,10 @@ const deployFunction = async function (hre) {
   hre.implementations[PoolAccountant] = accountantProxy.implementation
 
   await sleep(networkName, 5000)
+
+  // Deploy upgrader
+  await deploy(VPoolUpgrader, { from: deployer, log: true, args: [Address.MULTICALL], waitConfirmations })
+
   // Deploy Pool. This call will use ProxyAdmin. It will deploy proxy and Pool and also initialize pool
   const poolProxy = await deploy(poolConfig.contractName, {
     from: deployer,
@@ -43,7 +56,7 @@ const deployFunction = async function (hre) {
     // proxy deployment
     proxy: {
       proxyContract: 'OpenZeppelinTransparentProxy',
-      viaAdminContract: 'DefaultProxyAdmin',
+      viaAdminContract: VPoolUpgrader,
       execute: {
         init: {
           methodName: 'initialize',
@@ -81,13 +94,16 @@ const deployFunction = async function (hre) {
   const rewards = poolConfig.rewards
   // Deploy pool rewards (Vesper Earn drip for Earn pools)
   await sleep(networkName, 5000)
+
+  // Deploy upgrader
+  await deploy(PoolRewardsUpgrader, { from: deployer, log: true, args: [Address.MULTICALL], waitConfirmations })
   const rewardsProxy = await deploy(rewards.contract, {
     from: deployer,
     log: true,
     // proxy deployment
     proxy: {
       proxyContract: 'OpenZeppelinTransparentProxy',
-      viaAdminContract: 'DefaultProxyAdmin',
+      viaAdminContract: PoolRewardsUpgrader,
       execute: {
         init: {
           methodName: 'initialize',
