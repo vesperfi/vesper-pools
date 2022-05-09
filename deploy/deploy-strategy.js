@@ -1,6 +1,7 @@
 /* eslint-disable complexity */
 'use strict'
 
+const { OperationType } = require('ethers-multisend')
 const { ethers } = require('hardhat')
 const { isDelegateOrOwner, getMultisigNonce, submitGnosisTxn } = require('./gnosis-txn')
 const CollateralManager = 'CollateralManager'
@@ -12,9 +13,14 @@ function sleep(ms) {
 }
 
 async function sendGnosisSafeTxn(encodedData, params) {
+  const baseTxn = {
+    operation: OperationType.Call,
+    to: ethers.utils.getAddress(encodedData.to),
+    value: 0,
+    data: encodedData.data || '0x',
+  }
   const txnParams = {
-    data: encodedData.data,
-    to: encodedData.to,
+    baseTxn,
     safe: params.safe,
     nonce: params.multisigNonce,
     sender: params.deployer,

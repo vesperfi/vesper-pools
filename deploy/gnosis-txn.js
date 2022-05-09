@@ -5,6 +5,7 @@ const Wallet = ethers.Wallet
 const axios = require('axios')
 const { utils } = ethers
 const gnosisAbi = require('./abis/gnosisAbi.json')
+const { encodeMulti } = require('ethers-multisend')
 
 const getBaseUrl = function (targetChain) {
   return `https://safe-transaction.${targetChain}.gnosis.io`
@@ -51,21 +52,34 @@ const getSafeCompatibleSignature = async function (transactionHash) {
 }
 
 /**
- * Submit transaction using gnosis.
+ * Base transaction
  *
- * @param {string} safe           gnosis safe address
- * @param {string} to             receiver / target contract address
- * @param {string} data           target contract method encoded data (prepared using populateTransaction)
- * @param {string} nonce          gnosis nonce
+ * @typedef BaseTxn
+ * @property {number} operation type of operation call or delegateCall
+ * @property {string} to        target address
+ * @property {number} value      eth value
+ * @property {string} data      transaction data, usually generation using populateTransaction
  */
-const submitGnosisTxn = async function ({ safe, to, data, nonce, sender, targetChain }) {
-  const baseTxn = {
-    to: utils.getAddress(to),
-    value: 0,
-    data: data || '0x',
-    operation: 0,
-  }
 
+/**
+ * Gnosis transaction definition
+ *
+ * @typedef GnosisTxn
+ *
+ * @property {BaseTxn} baseTxn        basic transaction data
+ * @property {string} safe           gnosis safe address
+ * @property {string} nonce          gnosis nonce
+ * @property {string} sender         caller, usually deployer
+ * @property {string} targetChain    target chain
+ */
+
+/**
+ * Submit transaction using gnosis
+ *
+ * @param {GnosisTxn} txnData data for gnosis transaction
+ */
+const submitGnosisTxn = async function (txnData) {
+  const { baseTxn, safe, nonce, sender, targetChain } = txnData
   const txn = {
     ...baseTxn,
     safeTxGas: 0,
@@ -96,19 +110,32 @@ const submitGnosisTxn = async function ({ safe, to, data, nonce, sender, targetC
     signature,
     sender,
   }
-  console.log({ toSend })
+  console.log('Transaction data', toSend)
   await gnosisProposeTx(safe, toSend, targetChain)
 }
 
-// eslint-disable-next-line max-params
-async function proposeTxn(targetChain, deployer, multisigNonce, contractData) {
+async function proposeTxn(targetChain, deployer, multisigNonce = 0, transaction) {
   const Address = require(`../helper/${targetChain}/address`)
   const safe = Address.MultiSig.safe
 
-  const contract = await ethers.getContractAt(contractData.contract, contractData.address)
-  const encodedData = await contract.populateTransaction[contractData.method.name](...contractData.method.args)
   const nonce = multisigNonce === 0 ? (await getMultisigNonce(safe, targetChain)).nonce : multisigNonce
-  const txnParams = { data: encodedData.data, to: encodedData.to, safe, nonce, sender: deployer, targetChain }
+  const txnParams = { baseTxn: transaction, safe, nonce, sender: deployer, targetChain }
+  await submitGnosisTxn(txnParams)
+}
+
+async function proposeMultiTxn(targetChain, deployer, multisigNonce = 0, transactions) {
+  const Address = require(`../helper/${targetChain}/address`)
+  const safe = Address.MultiSig.safe
+
+  const txn = encodeMulti(transactions)
+  const baseTxn = {
+    operation: txn.operation,
+    to: txn.to,
+    value: 0,
+    data: txn.data || '0x',
+  }
+  const nonce = multisigNonce === 0 ? (await getMultisigNonce(safe, targetChain)).nonce : multisigNonce
+  const txnParams = { baseTxn, safe, nonce, sender: deployer, targetChain }
   await submitGnosisTxn(txnParams)
 }
 
@@ -117,4 +144,5 @@ module.exports = {
   submitGnosisTxn,
   getMultisigNonce,
   proposeTxn,
+  proposeMultiTxn,
 }
