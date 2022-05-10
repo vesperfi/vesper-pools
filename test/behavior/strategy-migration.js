@@ -1,14 +1,19 @@
 'use strict'
 
 const { makeNewStrategy } = require('../utils/setupHelper')
-const { deposit: _deposit, timeTravel, rebalanceStrategy } = require('../utils/poolOps')
+const { deposit: _deposit, rebalanceStrategy } = require('../utils/poolOps')
 const StrategyType = require('../utils/strategyTypes')
 const { expect } = require('chai')
+const hre = require('hardhat')
+const { ethers } = hre
+const { BigNumber: BN } = require('ethers')
+const DECIMAL18 = BN.from('1000000000000000000')
+const dust = DECIMAL18.div(BN.from(1000000)) // Dust is less than 1e12
 
-async function shouldMigrateStrategies(poolName) {
+async function shouldMigrateStrategies(poolName, options) {
   let pool, strategies, collateralToken
   let user1, user2, user3, gov
-  const options = { skipVault: true }
+  const _options = { skipVault: true, ...options }
 
   async function deposit(amount, depositor) {
     return _deposit(pool, collateralToken, amount, depositor)
@@ -75,11 +80,14 @@ async function shouldMigrateStrategies(poolName) {
     await rebalanceStrategy(newStrategy)
     await pool.connect(user2.signer).withdraw(amountBefore)
     const amountAfter = await pool.balanceOf(user2.address)
-    expect(amountAfter).to.be.equal(0, 'amount should be 0 after withdraw')
+    expect(amountAfter).to.be.lt(amountBefore, "User's pool amount should decrease after withdraw")
+    expect(amountAfter).to.be.lte(dust, 'amount should be < dust after withdraw')
   }
 
   async function assertTotalDebt(newStrategy) {
     await deposit(40, user3)
+    const accountant = await ethers.getContractAt('PoolAccountant', await pool.poolAccountant())
+    await accountant.updateDebtRatio(newStrategy.instance.address, newStrategy.config.debtRatio)
     await rebalanceStrategy(newStrategy)
     const totalDebtBefore = await pool.totalDebtOf(newStrategy.instance.address)
     await deposit(50, user3)
@@ -88,20 +96,11 @@ async function shouldMigrateStrategies(poolName) {
     expect(totalDebtAfter).to.be.gt(totalDebtBefore, `Total debt of strategy in ${poolName} is wrong`)
   }
 
-  async function assertProfit(newStrategy) {
-    await timeTravel()
-    await rebalanceStrategy(newStrategy)
-    const strategyParams = await pool.strategy(newStrategy.instance.address)
-    const totalProfit = strategyParams._totalProfit
-    expect(totalProfit).to.be.gt(0, `Total debt of strategy in ${poolName} is wrong`)
-  }
-
   async function strategyMigration(strategy) {
-    const newStrategy = await makeNewStrategy(strategy, pool.address, options)
+    const newStrategy = await makeNewStrategy(strategy, pool.address, _options)
     await migrateAndAssert(strategy, newStrategy, strategy.token)
     await assertDepositAndWithdraw(newStrategy)
     await assertTotalDebt(newStrategy)
-    await assertProfit(newStrategy)
   }
 
   describe(`${poolName} Strategy Migration`, function () {
