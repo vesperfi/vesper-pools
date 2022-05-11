@@ -4,16 +4,11 @@ const { makeNewStrategy } = require('../utils/setupHelper')
 const { deposit: _deposit, rebalanceStrategy } = require('../utils/poolOps')
 const StrategyType = require('../utils/strategyTypes')
 const { expect } = require('chai')
-const hre = require('hardhat')
-const { ethers } = hre
-const { BigNumber: BN } = require('ethers')
-const DECIMAL18 = BN.from('1000000000000000000')
-const dust = DECIMAL18.div(BN.from(1000000)) // Dust is less than 1e12
 
-async function shouldMigrateStrategies(poolName, options) {
+async function shouldMigrateStrategies(poolName) {
   let pool, strategies, collateralToken
   let user1, user2, user3, gov
-  const _options = { skipVault: true, ...options }
+  const options = { skipVault: true }
 
   async function deposit(amount, depositor) {
     return _deposit(pool, collateralToken, amount, depositor)
@@ -81,13 +76,10 @@ async function shouldMigrateStrategies(poolName, options) {
     await pool.connect(user2.signer).withdraw(amountBefore)
     const amountAfter = await pool.balanceOf(user2.address)
     expect(amountAfter).to.be.lt(amountBefore, "User's pool amount should decrease after withdraw")
-    expect(amountAfter).to.be.lte(dust, 'amount should be < dust after withdraw')
   }
 
   async function assertTotalDebt(newStrategy) {
     await deposit(40, user3)
-    const accountant = await ethers.getContractAt('PoolAccountant', await pool.poolAccountant())
-    await accountant.updateDebtRatio(newStrategy.instance.address, newStrategy.config.debtRatio)
     await rebalanceStrategy(newStrategy)
     const totalDebtBefore = await pool.totalDebtOf(newStrategy.instance.address)
     await deposit(50, user3)
@@ -97,7 +89,7 @@ async function shouldMigrateStrategies(poolName, options) {
   }
 
   async function strategyMigration(strategy) {
-    const newStrategy = await makeNewStrategy(strategy, pool.address, _options)
+    const newStrategy = await makeNewStrategy(strategy, pool.address, options)
     await migrateAndAssert(strategy, newStrategy, strategy.token)
     await assertDepositAndWithdraw(newStrategy)
     await assertTotalDebt(newStrategy)

@@ -20,7 +20,7 @@ function prepareConfig(_strategies, options) {
     await setupVPool(
       this,
       {
-        poolConfig: poolConfig.VUSDC,
+        poolConfig: poolConfig.VAUSDC,
         feeCollector: users[7].address,
         strategies: strategies.map((item, i) => ({
           ...item,

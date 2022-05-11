@@ -24,5 +24,5 @@ describe('veUSDC Pool with EarnVesperStrategyUSDCLMR', function () {
     shouldBehaveLikeStrategy(i, strategies[i].type, strategies[i].contract)
   }
 
-  shouldMigrateStrategies('veUSDC', option)
+  shouldMigrateStrategies('veUSDC')
 })
