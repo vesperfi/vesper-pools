@@ -23,6 +23,7 @@
           "AlphaLendAvalancheStrategyDAI": "0x8D460b5FDaBE2ef4CB2DA6dd78d574E580DFF2ed",
           "BenqiCompoundLeverageStrategyAvalancheDAI": "0xBb4fCEf90D4259F476Ccb3BB7bc4842355B46c76",
           "CrvA3PoolStrategyDAI": "0xAf147FD4C72807AFdd3CCFDcf3CF6a2587E88127",
+          "TraderJoeLeverageStrategyDAI": "0xfec82b66Bc1DBAacCa637ce151b89F5b872f6d7E",
           "TraderJoeStrategyDAI": "0x0E95a8a4566b0324ad511108a83C47d78b554fAf"
         }
       },
@@ -96,7 +97,8 @@
           "BenqiLeverageStrategyWBTC": "0x109749106926E097C3a7809392FFE6350cF6fc05",
           "BenqiStrategyWBTC": "0x8C7244b9321cBAEe8C1a3E28dEBd8a8BB3f1DBcd",
           "Crv2PoolAvaStrategyAvWBTCRenBTC": "0x5459F2c90977d3bd133e85dB45CF90bF6e3d3AD2",
-          "TraderJoeCompoundStrategyAvalancheWBTC": "0xBDdb3D0CD69Ff81E46ccb283C128D9C5C50C8840"
+          "TraderJoeCompoundStrategyAvalancheWBTC": "0xBDdb3D0CD69Ff81E46ccb283C128D9C5C50C8840",
+          "TraderJoeLeverageStrategyWBTC": "0xf9E141376579866b4d7040A114dfdFb61bB4764a"
         }
       },
       "vausdc": {
@@ -300,17 +302,17 @@
       },
       "vausdc": {
         "pool": {
-          "proxyAdmin": "0x19A02f3512BdF78114B3c50f7d22a34b1B2798cA"
+          "proxyAdmin": "0x19A02f3512BdF78114B3c50f7d22a34b1B2798cA",
           "proxy": "0xa8b607Aa09B6A2E306F93e74c282Fb13f6A80452",
           "implementation": "0xff97999A82bBee3F2A2FabF0b1F96CE472Bb0532",
           "poolAccountant": {
-            "proxyAdmin": "0x19A02f3512BdF78114B3c50f7d22a34b1B2798cA"
+            "proxyAdmin": "0x19A02f3512BdF78114B3c50f7d22a34b1B2798cA",
             "proxy": "0xa9aF8f4202996528D23d913378F92EF932eeE400",
             "implementation": "0xce0Ae51DEA9fCBF44dC076638D2DEcD028E19659"
           }
         },
         "poolRewards": {
-          "proxyAdmin": "0x19A02f3512BdF78114B3c50f7d22a34b1B2798cA"
+          "proxyAdmin": "0x19A02f3512BdF78114B3c50f7d22a34b1B2798cA",
           "proxy": "0x2F59B0F98A08E733C66dFB42Bd8E366dC2cfedA6",
           "implementation": "0x7a75d934ecd0Dffae11592E7E6955C8186273b1c"
         },

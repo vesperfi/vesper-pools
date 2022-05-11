@@ -14,7 +14,7 @@ const config = {
 }
 const setup = {
   feeCollector: Address.FEE_COLLECTOR,
-  keepers: [Address.KEEPER],
+  keepers: [Address.KEEPER, Address.MP, Address.JCV],
 }
 
 // TODO update setup to remove strategy type, once done remove type from heres too
