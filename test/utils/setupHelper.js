@@ -91,12 +91,11 @@ async function addStrategies(obj) {
   }
 }
 
-async function setupVDAIPool() {
-  const vDAI = chainData.poolConfig.VDAI
-  const vPool = await deployContract(vDAI.contractName, vDAI.poolParams)
+async function setupVesperPool(poolObj = chainData.poolConfig.VDAI) {
+  const vPool = await deployContract(poolObj.contractName, poolObj.poolParams)
   const accountant = await deployContract('PoolAccountant')
   await accountant.init(vPool.address)
-  await vPool.initialize(...vDAI.poolParams, accountant.address)
+  await vPool.initialize(...poolObj.poolParams, accountant.address)
   return vPool
 }
 
@@ -114,7 +113,7 @@ async function setupEarnDrip(obj, options) {
     if (strategy.type.toUpperCase().includes('EARN')) {
       let growPool
       if (strategy.type === 'earnVesperMaker') {
-        growPool = await setupVDAIPool()
+        growPool = await setupVesperPool()
       } else {
         growPool = options.growPool ? options.growPool : { address: ethers.constants.AddressZero }
       }
@@ -159,15 +158,14 @@ async function createMakerStrategy(strategy, poolAddress, options) {
 }
 
 /**
- * Create and configure Vesper Maker Strategy. Also update test class object with required data.
+ * Check and Set earn pool
  *
  * @param {object} strategy  Strategy config object
  * @param {object} poolAddress pool address
  * @param {object} options extra params
- * @returns {object} Strategy instance
  */
-async function createVesperMakerStrategy(strategy, poolAddress, options) {
-  // For Earn VesperMaker, make sure growToken and receiptToken aka vPool is same
+async function checkAndSetEarnPool(strategy, poolAddress, options) {
+  // For Earn Vesper, make sure growToken and receiptToken aka vPool is same
   if (strategy.type.toUpperCase().includes('EARN')) {
     const pool = await ethers.getContractAt('VPool', poolAddress)
     const earnDrip = await ethers.getContractAt('VesperEarnDrip', await pool.poolRewards())
@@ -176,13 +174,23 @@ async function createVesperMakerStrategy(strategy, poolAddress, options) {
       options.vPool = await ethers.getContractAt('VPool', growToken)
     }
   }
+}
+/**
+ * Create and configure Vesper Maker Strategy. Also update test class object with required data.
+ *
+ * @param {object} strategy  Strategy config object
+ * @param {object} poolAddress pool address
+ * @param {object} options extra params
+ * @returns {object} Strategy instance
+ */
+async function createVesperMakerStrategy(strategy, poolAddress, options) {
+  await checkAndSetEarnPool(strategy, poolAddress, options)
   // For VesperMaker if no vPool and then deploy one vDAI pool
   if (!options.vPool) {
-    options.vPool = await setupVDAIPool()
+    options.vPool = await setupVesperPool()
   }
   // For test purpose we will not use receiptToken defined in config. Update vPool in config
   strategy.constructorArgs.receiptToken = options.vPool.address
-
   const collateralManager = options.collateralManager
     ? options.collateralManager
     : await deployContract(CollateralManager)
@@ -204,6 +212,28 @@ async function createVesperMakerStrategy(strategy, poolAddress, options) {
 }
 
 /**
+ * Create and configure VesperEarn Strategy.
+ *
+ * @param {object} strategy  Strategy config object
+ * @param {object} poolAddress pool address
+ * @param {object} options extra params
+ * @returns {object} Strategy instance
+ */
+async function createVesperEarnStrategy(strategy, poolAddress, options) {
+  await checkAndSetEarnPool(strategy, poolAddress, options)
+  if (!options.vPool && options.vesperPoolConfig) {
+    options.vPool = await setupVesperPool(options.vesperPoolConfig)
+    strategy.constructorArgs.receiptToken = options.vPool.address
+  }
+
+  const strategyInstance = await deployContract(strategy.contract, [
+    poolAddress,
+    ...Object.values(strategy.constructorArgs),
+  ])
+  return strategyInstance
+}
+
+/**
  * Create and configure VesperCompoundXY Strategy.
  *
  * @param {object} strategy  Strategy config object
@@ -212,7 +242,7 @@ async function createVesperMakerStrategy(strategy, poolAddress, options) {
  * @returns {object} Strategy instance
  */
 async function createVesperCompoundXYStrategy(strategy, poolAddress, options) {
-  options.vPool = await setupVDAIPool()
+  options.vPool = await setupVesperPool()
 
   strategy.constructorArgs.vPool = options.vPool.address
 
@@ -240,6 +270,8 @@ async function createStrategy(strategy, poolAddress, options = {}) {
     instance = await createVesperMakerStrategy(strategy, poolAddress, options)
   } else if (strategyType === StrategyType.VESPER_COMPOUND_XY) {
     instance = await createVesperCompoundXYStrategy(strategy, poolAddress, options)
+  } else if (strategyType === StrategyType.EARN_VESPER) {
+    instance = await createVesperEarnStrategy(strategy, poolAddress, options)
   } else {
     instance = await deployContract(strategy.contract, [poolAddress, ...Object.values(strategy.constructorArgs)])
   }
@@ -312,11 +344,9 @@ async function makeNewStrategy(oldStrategy, poolAddress, _options) {
     ..._options,
   }
   const instance = await createStrategy(oldStrategy, poolAddress, options)
-  const newStrategy = {
-    instance,
-    token: oldStrategy.token,
-    type: oldStrategy.type,
-  }
+  // New is copy of old except that it has new instance
+  const newStrategy = { ...oldStrategy }
+  newStrategy.instance = instance
 
   return newStrategy
 }

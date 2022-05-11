@@ -1150,6 +1150,20 @@ const StrategyConfig = {
     setup: { ...setup },
   },
 
+  EarnVesperStrategyUSDCLMR: {
+    contract: 'EarnVesperStrategy',
+    type: StrategyTypes.EARN_VESPER,
+    constructorArgs: {
+      swapManager,
+      receiptToken: Address.vaUSDC,
+      dripToken: Address.LMR,
+      vsp: Address.VSP,
+      strategyName: 'EarnVesperStrategyUSDCLMR',
+    },
+    config: { ...config, interestFee: 2500 },
+    setup: { ...setup },
+  },
+
   EarnVesperStrategyDAIVSP: {
     contract: 'EarnVesperStrategyVSPDrip',
     type: StrategyTypes.EARN_VESPER,

@@ -28,8 +28,8 @@ jobs:
         with:
           node-version-file: '.nvmrc'
 
-      - name: Run npm install with node v${{ matrix.node }}
+      - name: Run npm install
         run: npm install
 
-      - name: Running tests for vDAI with Curve 3Pool
+      - name: Running tests for vusdc with Curve 3Pool
         run: npm test "test/vusdc/crv-a3pool.js"
