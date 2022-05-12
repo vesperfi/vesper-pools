@@ -22,7 +22,7 @@ describe('veWBTC-DAI Pool', function () {
   let vaDai, pool, vaDaiKeeper, veWbtcKeeper, collateralToken, user1, DAI
   const veWTBCDai = '0x7a74B6D3A07D3249Ea2FBb58e47F0DaF6d6a2ebf'
   beforeEach(async function () {
-    vaDai = await ethers.getContractAt('VPool', Address.vaDAI)
+    vaDai = await ethers.getContractAt('VPool', Address.Vesper.vaDAI)
     pool = await ethers.getContractAt('VPool', veWTBCDai)
     const token = await pool.token()
     collateralToken = await ethers.getContractAt('ERC20', token)

@@ -75,11 +75,16 @@ module.exports = {
     enabled: process.env.REPORT_GAS === 'true',
   },
   solidity: {
-    version: '0.8.3',
+    version: '0.8.9',
     settings: {
       optimizer: {
         enabled: true,
         runs: 100,
+      },
+      outputSelection: {
+        '*': {
+          '*': ['storageLayout'],
+        },
       },
     },
   },

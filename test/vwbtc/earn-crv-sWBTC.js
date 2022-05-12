@@ -6,12 +6,11 @@ const { shouldBehaveLikeStrategy } = require('../behavior/strategy')
 const { address: Address, strategyConfig } = require('../utils/chains').getChainData()
 
 describe('veWBTC pool strategies', function () {
-  const strategy1 = strategyConfig.EarnCrvSBTCPoolStrategyWBTC
-  strategy1.config.interestFee = 2500
-  strategy1.config.debtRatio = 9000
-  const strategies = [strategy1]
+  const strategy = strategyConfig.EarnCrvSBTCPoolStrategyWBTC
+  strategy.config.debtRatio = 9000
+  const strategies = [strategy]
 
-  prepareConfig(strategies, { growPool: { address: Address.vaDAI } })
+  prepareConfig(strategies, { growPool: { address: Address.Vesper.vaDAI } })
 
   describe('Pool Tests', function () {
     shouldBehaveLikePool('veWBTC', 'WBTC', true)

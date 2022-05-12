@@ -28,7 +28,6 @@ describe('Rewards for VDAI Pool', function () {
     ;[governor, user1, user2, user3] = users
     await setupVPool(this, {
       poolConfig: poolConfig.VDAI,
-      feeCollector: users[7].address,
       strategies: strategies.map((item, i) => ({
         ...item,
         feeCollector: users[i + 8].address, // leave first 8 users for other testing

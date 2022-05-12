@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.3;
+pragma solidity 0.8.9;
 
 import "./RariCore.sol";
 import "../compound/CompoundStrategy.sol";
@@ -69,6 +69,13 @@ contract RariFuseStrategy is CompoundStrategy {
         cToken = CToken(_newCToken);
         receiptToken = _newCToken;
         fusePoolId = _newPoolId;
+        (rewardDistributor, rewardToken) = fusePoolDirectory.getRewardToken(fusePoolId);
+    }
+
+    /// @dev Manually claim rewards from rewardDistributor by keeper
+    /// @notice Properly tests if reward claim works
+    function claimRewards() external onlyKeeper {
+        _claimRewards();
     }
 
     /// @notice Claim rewards from Fuse Pool' rewardDistributor

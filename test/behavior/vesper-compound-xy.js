@@ -6,20 +6,26 @@ const { getUsers } = require('../utils/setupHelper')
 const { deposit, rebalanceStrategy } = require('../utils/poolOps')
 const { advanceBlock } = require('../utils/time')
 const { adjustBalance } = require('../utils/balance')
+const { calculateAPY } = require('../utils/apy')
 
 async function simulateVesperPoolProfit(strategy) {
   const vPool = await ethers.getContractAt('IVesperPool', await strategy.instance.vPool())
   const collateralTokenAddress = await vPool.token()
 
-  const collateralToken = await ethers.getContractAt('IERC20', collateralTokenAddress)
+  const collateralToken = await ethers.getContractAt('IERC20Metadata', collateralTokenAddress)
+  const collateralDecimal = await collateralToken.decimals()
   const poolBalance = await collateralToken.balanceOf(vPool.address)
-  await adjustBalance(collateralTokenAddress, vPool.address, poolBalance.add(ethers.utils.parseEther('5')))
+  await adjustBalance(
+    collateralTokenAddress,
+    vPool.address,
+    poolBalance.add(ethers.utils.parseUnits('5', collateralDecimal)),
+  )
 }
 
 // Vesper Compound XY strategy specific tests
 function shouldBehaveLikeVesperCompoundXYStrategy(strategyIndex) {
   let strategy, pool, collateralToken, token
-  let borrowCToken
+  let borrowCToken, borrowToken
   let governor, user1, user2
 
   describe('VesperCompoundXYStrategy specific tests', function () {
@@ -31,6 +37,7 @@ function shouldBehaveLikeVesperCompoundXYStrategy(strategyIndex) {
       collateralToken = this.collateralToken
       token = await ethers.getContractAt('CToken', this.strategies[strategyIndex].token.address)
       borrowCToken = await ethers.getContractAt('CToken', await strategy.borrowCToken())
+      borrowToken = await ethers.getContractAt('IERC20Metadata', await strategy.borrowToken())
     })
 
     it('Should borrow tokens at rebalance', async function () {
@@ -110,10 +117,11 @@ function shouldBehaveLikeVesperCompoundXYStrategy(strategyIndex) {
       await token.exchangeRateCurrent()
       await borrowCToken.exchangeRateCurrent()
       const borrowRatio = await strategy.currentBorrowRatio()
-      expect(borrowRatio).to.be.gte(minBorrowRatio, 'Borrow should be >= min borrow ratio')
+      // Due to rounding there can be less than 1% deviation from actual minBorrowRatio
+      expect(borrowRatio).to.be.gte(minBorrowRatio.mul(99).div(100), 'Borrow should be >= min borrow ratio')
       expect(newMinBorrowRatio).to.be.eq(5000, 'Min borrow ratio is wrong')
 
-      let tx = strategy.connect(governor.signer).updateBorrowRatio(5000, 8000)
+      let tx = strategy.connect(governor.signer).updateBorrowRatio(5000, ethers.constants.MaxUint256)
       await expect(tx).to.be.revertedWith('invalid-max-borrow-ratio')
 
       tx = strategy.connect(governor.signer).updateBorrowRatio(5500, 5000)
@@ -122,22 +130,15 @@ function shouldBehaveLikeVesperCompoundXYStrategy(strategyIndex) {
 
     it('Should repay borrow if borrow ratio set to 0', async function () {
       await deposit(pool, collateralToken, 100, user1)
-      await rebalanceStrategy(this.strategies[strategyIndex])
+      await strategy.connect(governor.signer).rebalance()
       const borrowBefore = await strategy.borrowBalance()
       expect(borrowBefore).to.be.gt(0, 'Borrow amount should be > 0')
       await strategy.connect(governor.signer).updateBorrowRatio(0, 5000)
-      await rebalanceStrategy(this.strategies[strategyIndex])
+      await strategy.connect(governor.signer).rebalance()
+      const borrowRatio = await strategy.currentBorrowRatio()
+      expect(borrowRatio, 'Borrow ratio should be zero').to.eq(0)
       const borrowAfter = await strategy.borrowBalance()
       expect(borrowAfter).to.be.eq(0, 'Borrow amount should be = 0')
-    })
-
-    it('Should calculate current totalValue', async function () {
-      await deposit(pool, collateralToken, 10, user1)
-      await rebalanceStrategy(this.strategies[strategyIndex])
-      await advanceBlock(100)
-      const totalValue = await strategy.callStatic.totalValueCurrent()
-      const totalDebt = await pool.totalDebt()
-      expect(totalValue).to.be.gt(totalDebt, 'loss making strategy')
     })
 
     it('Should calculate totalValue', async function () {
@@ -158,6 +159,30 @@ function shouldBehaveLikeVesperCompoundXYStrategy(strategyIndex) {
       await strategy.connect(governor.signer).rebalance()
       await strategy.connect(governor.signer).rebalance()
       expect(await strategy.totalValue()).to.be.gt(totalValue)
+    })
+
+    context('Calculate APY', function () {
+      it('Should calculate APY', async function () {
+        /* eslint-disable no-console */
+        const XY = `${await collateralToken.symbol()}-${await borrowToken.symbol()}`
+        await deposit(pool, collateralToken, 10, user1)
+        const blockNumberStart = (await ethers.provider.getBlock()).number
+        await strategy.connect(governor.signer).rebalance()
+        await advanceBlock(100)
+        await strategy.connect(governor.signer).rebalance()
+        let blockNumberEnd = (await ethers.provider.getBlock()).number
+        let pricePerShare = await pool.pricePerShare()
+        let blockElapsed = blockNumberEnd - blockNumberStart
+        console.log(`\nAPY for ${XY}::`, calculateAPY(pricePerShare, blockElapsed))
+        console.log('Calculating APY again over 100  more blocks')
+        await advanceBlock(100)
+        await strategy.connect(governor.signer).rebalance()
+        pricePerShare = await pool.pricePerShare()
+        blockNumberEnd = (await ethers.provider.getBlock()).number
+        blockElapsed = blockNumberEnd - blockNumberStart
+        console.log(`APY for ${XY}::`, calculateAPY(pricePerShare, blockElapsed))
+        /* eslint-enable no-console */
+      })
     })
   })
 }

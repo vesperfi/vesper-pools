@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.3;
+pragma solidity 0.8.9;
 
 import "../../interfaces/aave/IAave.sol";
-import "@openzeppelin/contracts/utils/math/Math.sol";
-import "../../pool/Errors.sol";
+import "../../dependencies/openzeppelin/contracts/utils/math/Math.sol";
+import "../../Errors.sol";
 
 /// @title This contract provide core operations for Aave
 abstract contract AaveCore {

@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.3;
+pragma solidity 0.8.9;
 
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "./dependencies/openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./interfaces/vesper/IVesperPool.sol";
 import "./interfaces/aave/IAave.sol";
 import "./interfaces/dydx/ISoloMargin.sol";
-import "./pool/Errors.sol";
+import "./Errors.sol";
 
 /**
  * @title FlashLoanHelper:: This contract does all heavy lifting to get flash loan via Aave and DyDx.

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.3;
+pragma solidity 0.8.9;
 
 import "./CompoundLeverageAvalancheCore.sol";
 import "../../interfaces/compound/IComptrollerMultiReward.sol";
@@ -37,8 +37,8 @@ contract TraderJoeLeverageStrategy is CompoundLeverageAvalancheCore {
      * @dev Get Collateral Factor. TraderJoe has different return type for markets() call.
      */
     function _getCollateralFactor() internal view virtual override returns (uint256 _collateralFactor) {
-        (, _collateralFactor, ) = TraderJorComptroller(address(comptroller)).markets(address(cToken));
+        (, _collateralFactor, ) = TraderJoeComptroller(address(comptroller)).markets(address(cToken));
         // Take 95% of collateralFactor to avoid any rounding issue.
-        _collateralFactor = (_collateralFactor * 95) / 100;
+        _collateralFactor = (_collateralFactor * COLLATERAL_FACTOR_LIMIT) / MAX_BPS;
     }
 }

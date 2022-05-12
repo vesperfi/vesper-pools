@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.3;
+pragma solidity 0.8.9;
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "../dependencies/openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 // This is test contract
 // solhint-disable no-empty-blocks

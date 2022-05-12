@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.3;
+pragma solidity 0.8.9;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "../../../dependencies/openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "../../../dependencies/openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../../../interfaces/vesper/IVesperPool.sol";
 import "../../Strategy.sol";
 import "../CrvPoolStrategyBase.sol";
@@ -17,7 +17,7 @@ abstract contract Crv4MetaPoolStrategy is CrvPoolStrategyBase {
     // Curve Metapool Factory
     address private constant FACTORY = 0xB9fC157394Af804a3578134A6585C0dc9cc990d4;
     // Curve BASE-3CRV DepositZap Contract
-    address internal DEPOSIT_ZAP = 0xA79828DF1850E8a3A3064576f380D90aECDD3359;
+    address internal depositZap = 0xA79828DF1850E8a3A3064576f380D90aECDD3359;
 
     constructor(
         address _pool,
@@ -40,8 +40,8 @@ abstract contract Crv4MetaPoolStrategy is CrvPoolStrategyBase {
 
     function _approveToken(uint256 _amount) internal virtual override {
         super._approveToken(_amount);
-        collateralToken.safeApprove(DEPOSIT_ZAP, _amount);
-        IERC20(crvLp).safeApprove(DEPOSIT_ZAP, _amount);
+        collateralToken.safeApprove(depositZap, _amount);
+        IERC20(crvLp).safeApprove(depositZap, _amount);
     }
 
     function _depositToCurve(uint256 _amt) internal virtual override returns (bool) {
@@ -50,7 +50,7 @@ abstract contract Crv4MetaPoolStrategy is CrvPoolStrategyBase {
             _depositAmounts[collIdx] = _amt;
             uint256 expectedOut =
                 _calcAmtOutAfterSlippage(
-                    IDepositZap4x(DEPOSIT_ZAP).calc_token_amount(crvLp, _depositAmounts, true),
+                    IDepositZap4x(depositZap).calc_token_amount(crvLp, _depositAmounts, true),
                     crvSlippage
                 );
             uint256 _minLpAmount =
@@ -59,7 +59,7 @@ abstract contract Crv4MetaPoolStrategy is CrvPoolStrategyBase {
             if (expectedOut > _minLpAmount) _minLpAmount = expectedOut;
 
             // solhint-disable-next-line no-empty-blocks
-            try IDepositZap4x(DEPOSIT_ZAP).add_liquidity(crvLp, _depositAmounts, _minLpAmount) {} catch Error(
+            try IDepositZap4x(depositZap).add_liquidity(crvLp, _depositAmounts, _minLpAmount) {} catch Error(
                 string memory _reason
             ) {
                 emit DepositFailed(_reason);
@@ -74,13 +74,13 @@ abstract contract Crv4MetaPoolStrategy is CrvPoolStrategyBase {
         uint256 _minAmt,
         uint256 _i
     ) internal virtual override {
-        IDepositZap4x(DEPOSIT_ZAP).remove_liquidity_one_coin(crvLp, _lpAmount, SafeCast.toInt128(int256(_i)), _minAmt);
+        IDepositZap4x(depositZap).remove_liquidity_one_coin(crvLp, _lpAmount, SafeCast.toInt128(int256(_i)), _minAmt);
     }
 
     function getLpValueAs(uint256 _lpAmount, uint256 _i) public view virtual override returns (uint256) {
         return
             (_lpAmount != 0)
-                ? IDepositZap4x(DEPOSIT_ZAP).calc_withdraw_one_coin(crvLp, _lpAmount, SafeCast.toInt128(int256(_i)))
+                ? IDepositZap4x(depositZap).calc_withdraw_one_coin(crvLp, _lpAmount, SafeCast.toInt128(int256(_i)))
                 : 0;
     }
 

@@ -1,0 +1,5 @@
+# lintstaged and solhint integration has some bug.
+# lintstaged pass 1 sol file at a time to solhint and that too with full qualified
+# path. Hence updated ignore pattern to have a wild card before 'contracts'
+# After this change `npm run solhint` and lintstaged solhint will produce same result.
+**/contracts/dependencies/**/*.sol

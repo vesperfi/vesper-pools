@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.3;
+pragma solidity 0.8.9;
 
 import "./Convex4PoolStrategy.sol";
 
@@ -51,20 +51,18 @@ contract Convex4PoolStrategyMUSDPool is Convex4PoolStrategy {
         coinDecimals.push(IERC20Metadata(coins[0]).decimals());
         for (uint256 i = 0; i < 3; i++) {
             coins.push(IStableSwap(THREEPOOL).coins(i));
-            coinDecimals.push(IERC20Metadata(coins[i]).decimals());
+            coinDecimals.push(IERC20Metadata(coins[i + 1]).decimals());
         }
     }
 
     function _depositToCurve(uint256 _amt) internal virtual override returns (bool) {
         if (_amt != 0) {
-            uint256[2] memory _depositAmounts;
-            _depositAmounts[collIdx] = _amt;
             uint256[4] memory _depositAmountsZap;
             _depositAmountsZap[collIdx] = _amt;
 
             uint256 _expectedOut =
                 _calcAmtOutAfterSlippage(
-                    IStableSwap2x(address(crvPool)).calc_token_amount(_depositAmounts, true),
+                    IDeposit4x(address(crvDeposit)).calc_token_amount(_depositAmountsZap, true),
                     crvSlippage
                 );
 

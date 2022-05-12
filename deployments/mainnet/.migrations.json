@@ -99,5 +99,7 @@
   "VesperMakerStrategyWBTC-v4.0.0": 1644277328,
   "CompoundLeverageStrategyWBTC-v4.0.1": 1644616094,
   "CompoundLeverageStrategyETH-v4.0.0": 1645712249,
-  "InverseCompoundLeverageStrategyETH-v4.0.0": 1645712542
+  "InverseCompoundLeverageStrategyETH-v4.0.0": 1645712542,
+  "vaAPE-v5.0.0_5.0.0": 1648500592,
+  "RariFuseStrategyAPE#127-v4.0.0": 1648501558
 }

@@ -37,7 +37,7 @@ const deployFunction = async function ({
 
   if (strategyAlias.includes('Maker')) {
     // Maker strategy of any type, EarnXXXMaker, XXXMaker
-    const cm = Address.COLLATERAL_MANAGER
+    const cm = Address.Vesper.COLLATERAL_MANAGER
     if (!cm) {
       // For migrate we expect Collateral Manager to be deployed
       throw new Error('Collateral Manager address is missing in address.json')

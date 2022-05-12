@@ -1,0 +1,22 @@
+{
+  "PoolAccountant": {
+    "address": "0xD40ECcfd2fdb8060d82f709b10d80b3D302845Bb",
+    "version": "4.0.0"
+  },
+  "PoolRewards": {
+    "address": "0x3e6Ce80B248Ab484f36ED8e3Bb479b2A43F0790F",
+    "version": "3.0.15"
+  },
+  "VETH": {
+    "address": "0x0C191E83B8149Bee30aC28eE84bA1342A2394d1D",
+    "version": "4.0.0"
+  },
+  "VPool": {
+    "address": "0x604af53401f7e84C3c332CB3C64a3FfE48A68cBf",
+    "version": "4.0.0"
+  },
+  "VesperEarnDrip": {
+    "address": "0xABf9B38a967595eDC38D0E97CE2Eb213e445BF45",
+    "version": "3.0.23"
+  }
+}

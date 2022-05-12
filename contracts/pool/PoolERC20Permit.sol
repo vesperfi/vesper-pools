@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.3;
+pragma solidity 0.8.9;
 
-import "@openzeppelin/contracts/token/ERC20/extensions/draft-IERC20Permit.sol";
-import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "../dependencies/openzeppelin/contracts/token/ERC20/extensions/draft-IERC20Permit.sol";
+import "../dependencies/openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "./PoolERC20.sol";
 
 ///@title Pool ERC20 Permit to use with proxy. Inspired by OpenZeppelin ERC20Permit
@@ -28,7 +28,8 @@ abstract contract PoolERC20Permit is PoolERC20, IERC20Permit {
      * @dev Initializes the domain separator using the `name` parameter, and setting `version` to `"1"`.
      * It's a good idea to use the same `name` that is defined as the ERC20 token name.
      */
-    function _initializePermit(string memory name_) internal {
+    // solhint-disable-next-line func-name-mixedcase
+    function __ERC20Permit_init(string memory name_) internal {
         _HASHED_NAME = keccak256(bytes(name_));
         _CACHED_CHAIN_ID = block.chainid;
         _CACHED_DOMAIN_SEPARATOR = _buildDomainSeparator(_EIP712_DOMAIN_TYPEHASH, _HASHED_NAME, _EIP712_VERSION);

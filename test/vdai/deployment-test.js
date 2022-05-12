@@ -8,7 +8,7 @@ const ONE_MILLION = DECIMAL18.mul('1000000')
 const { timeTravel } = require('../utils/poolOps')
 const { ethers } = require('hardhat')
 const poolConfig = require('../../helper/mainnet/poolConfig').VADAI
-describe('VADAI Pool', function () {
+xdescribe('VADAI Pool', function () {
   const interestFee = '1500' // 15%
   const feeCollector = '0xadb5ef0ca9029b340bccdef005aef442c7f91c96'
 

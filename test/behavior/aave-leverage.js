@@ -5,6 +5,7 @@ const { ethers } = require('hardhat')
 const { getUsers } = require('../utils/setupHelper')
 const { deposit } = require('../utils/poolOps')
 const { advanceBlock } = require('../utils/time')
+const network = require('../utils/network')
 
 // Aave Leverage strategy specific tests
 function shouldBehaveLikeAaveLeverageStrategy(strategyIndex) {
@@ -113,10 +114,10 @@ function shouldBehaveLikeAaveLeverageStrategy(strategyIndex) {
 
       expect(collateralAfter).to.lt(collateralBefore, 'Borrow amount after withdraw should be less')
 
-      // Rebalance will bring back borrow ratio to min borrow ratio
+      // Rebalance may adjust borrow ratio to equal to min. If ratio is between min and max then do nothing.
       await strategy.connect(governor.signer).rebalance()
       borrowRatio = await strategy.currentBorrowRatio()
-      expect(borrowRatio).to.eq(minBorrowRatio, 'Borrow should be == min borrow ratio')
+      expect(borrowRatio).to.gte(minBorrowRatio, 'Borrow should be >= min borrow ratio')
       expect(borrowRatio).to.lt(maxBorrowRatio, 'Borrow should be < max borrow ratio')
     })
 
@@ -136,7 +137,7 @@ function shouldBehaveLikeAaveLeverageStrategy(strategyIndex) {
       expect(borrowRatio).to.gte(minBorrowRatio, 'Borrow should be >= min borrow ratio')
       expect(borrowRatio).to.lte(maxBorrowRatio, 'Borrow should be <= max borrow ratio')
 
-      // Rebalance will bring back borrow ratio to min borrow ratio
+      // Rebalance may adjust borrow ratio to equal to min. If ratio is between min and max then do nothing.
       await strategy.connect(governor.signer).rebalance()
       borrowRatio = await strategy.currentBorrowRatio()
       // Due to Aave flash loan fee borrow ration will be higher than min
@@ -145,57 +146,56 @@ function shouldBehaveLikeAaveLeverageStrategy(strategyIndex) {
     })
 
     it('Should verify that DyDx flash loan works', async function () {
-      await strategy.connect(governor.signer).updateFlashLoanStatus(true, false)
-      await deposit(pool, collateralToken, 100, user1)
-      await strategy.connect(governor.signer).rebalance()
-      await advanceBlock(100)
+      if (!process.env.TEST_CHAIN || network.MAINNET === process.env.TEST_CHAIN) {
+        await strategy.connect(governor.signer).updateFlashLoanStatus(true, false)
+        await deposit(pool, collateralToken, 100, user1)
+        await strategy.connect(governor.signer).rebalance()
+        await advanceBlock(100)
 
-      // Withdraw will increase borrow ratio
-      const withdrawAmount = (await pool.balanceOf(user1.address)).div('3')
-      await pool.connect(user1.signer).withdraw(withdrawAmount)
+        // Withdraw will increase borrow ratio
+        const withdrawAmount = (await pool.balanceOf(user1.address)).div('3')
+        await pool.connect(user1.signer).withdraw(withdrawAmount)
 
-      const minBorrowRatio = await strategy.minBorrowRatio()
-      const maxBorrowRatio = await strategy.maxBorrowRatio()
-      let borrowRatio = await strategy.currentBorrowRatio()
-      expect(borrowRatio).to.gte(minBorrowRatio, 'Borrow should be >= min borrow ratio')
-      expect(borrowRatio).to.lte(maxBorrowRatio, 'Borrow should be <= max borrow ratio')
+        const minBorrowRatio = await strategy.minBorrowRatio()
+        const maxBorrowRatio = await strategy.maxBorrowRatio()
+        let borrowRatio = await strategy.currentBorrowRatio()
+        expect(borrowRatio).to.gte(minBorrowRatio, 'Borrow should be >= min borrow ratio')
+        expect(borrowRatio).to.lte(maxBorrowRatio, 'Borrow should be <= max borrow ratio')
 
-      // Rebalance will bring back borrow ratio to min borrow ratio
-      await strategy.connect(governor.signer).rebalance()
-      borrowRatio = await strategy.currentBorrowRatio()
-      expect(borrowRatio).to.equal(minBorrowRatio, 'Borrow should be equal to min borrow ratio')
-      expect(borrowRatio).to.lt(maxBorrowRatio, 'Borrow should be < max borrow ratio')
+        // Rebalance may adjust borrow ratio to equal to min. If ratio is between min and max then do nothing.
+        await strategy.connect(governor.signer).rebalance()
+        borrowRatio = await strategy.currentBorrowRatio()
+        expect(borrowRatio).to.gte(minBorrowRatio, 'Borrow should be equal to min borrow ratio')
+        expect(borrowRatio).to.lt(maxBorrowRatio, 'Borrow should be < max borrow ratio')
+      } else {
+        // eslint-disable-next-line no-console
+        console.log('Skipping test:: No DYDX support on %s ', process.env.TEST_CHAIN.toUpperCase())
+      }
     })
 
-    it('Should update leverage config', async function () {
+    it('Should update borrow ratio', async function () {
+      const minRatio = (await strategy.minBorrowRatio()).add(200)
+      let maxRatio = minRatio.add(300)
       await deposit(pool, collateralToken, 100, user2)
       await strategy.connect(governor.signer).rebalance()
       await advanceBlock(100)
       const borrowRatioBefore = await strategy.currentBorrowRatio()
-      await strategy.connect(governor.signer).updateLeverageConfig(5100, 5500, 1100)
+      await strategy.connect(governor.signer).updateBorrowRatio(minRatio, maxRatio)
       const newMinBorrowRatio = await strategy.minBorrowRatio()
-      expect(newMinBorrowRatio).to.eq(5100, 'Min borrow limit is wrong')
+      expect(newMinBorrowRatio).to.eq(minRatio, 'Min borrow limit is wrong')
       const newMaxBorrowRatio = await strategy.maxBorrowRatio()
-      expect(newMaxBorrowRatio).to.eq(5500, 'Max borrow limit is wrong')
-      const newSlippage = await strategy.slippage()
-      expect(newSlippage).to.eq(1100, 'Slippage is wrong')
+      expect(newMaxBorrowRatio).to.eq(maxRatio, 'Max borrow limit is wrong')
 
       await strategy.connect(governor.signer).rebalance()
       const borrowRatioAfter = await strategy.currentBorrowRatio()
       expect(borrowRatioAfter).to.gt(borrowRatioBefore, 'Borrow ratio after should be greater')
       expect(parseInt(borrowRatioAfter) - parseInt(newMinBorrowRatio)).to.lt(1, 'Borrow should be ~= min borrow ratio')
-
-      let tx = strategy.connect(governor.signer).updateLeverageConfig(5500, 9500, 1100)
+      maxRatio = 9500
+      let tx = strategy.connect(governor.signer).updateBorrowRatio(minRatio, maxRatio)
       await expect(tx).to.revertedWith('21')
-
-      tx = strategy.connect(governor.signer).updateLeverageConfig(5500, 5000, 1200)
+      maxRatio = minRatio.sub(100)
+      tx = strategy.connect(governor.signer).updateBorrowRatio(minRatio, maxRatio)
       await expect(tx).to.revertedWith('22')
-
-      tx = strategy.connect(governor.signer).updateLeverageConfig(5500, 5000, 1200)
-      await expect(tx).to.revertedWith('22')
-
-      tx = strategy.connect(governor.signer).updateLeverageConfig(5500, 6500, 10100)
-      await expect(tx).to.revertedWith('23')
     })
 
     it('Should repay borrow if borrow limit set to 0', async function () {
@@ -203,7 +203,7 @@ function shouldBehaveLikeAaveLeverageStrategy(strategyIndex) {
       await strategy.connect(governor.signer).rebalance()
       const borrowBefore = await vdToken.balanceOf(strategy.address)
       expect(borrowBefore).to.gt(0, 'Borrow amount should be > 0')
-      await strategy.connect(governor.signer).updateLeverageConfig(0, 5500, 1300)
+      await strategy.connect(governor.signer).updateBorrowRatio(0, 4000)
       await strategy.connect(governor.signer).rebalance()
       const borrowAfter = await vdToken.balanceOf(strategy.address)
       expect(borrowAfter).to.eq(0, 'Borrow amount should be = 0')
@@ -240,7 +240,7 @@ function shouldBehaveLikeAaveLeverageStrategy(strategyIndex) {
       console.log('APY::', calculateAPY(pricePerShare, blockElapsed, collateralDecimal))
 
       console.log('\nUpdating borrow limit and calculating APY again')
-      await strategy.connect(governor.signer).updateLeverageConfig(5000, 5500, 1500)
+      await strategy.connect(governor.signer).updateBorrowRatio(4000, 4500)
       blockNumberStart = (await ethers.provider.getBlock()).number
       minBorrowRatio = await strategy.minBorrowRatio()
       console.log('Borrowing upto', minBorrowRatio.toNumber() / 100, '% of collateral')

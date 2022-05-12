@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.3;
+pragma solidity 0.8.9;
 
 import "./RariFuseStrategy.sol";
 import "../../interfaces/token/IToken.sol";
@@ -32,6 +32,7 @@ contract RariFuseStrategyETH is RariFuseStrategy {
         cToken = CToken(_newCToken);
         receiptToken = _newCToken;
         fusePoolId = _newPoolId;
+        (rewardDistributor, rewardToken) = fusePoolDirectory.getRewardToken(fusePoolId);
     }
 
     /**

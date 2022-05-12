@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.3;
+pragma solidity 0.8.9;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "../../../dependencies/openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "../../../dependencies/openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../../../interfaces/vesper/IVesperPool.sol";
 import "../../../interfaces/aave/IAave.sol";
 import "../../Strategy.sol";
@@ -31,7 +31,7 @@ contract CrvA3PoolAvaxStrategy is CrvA3PoolStrategyBase {
     }
 
     /// @dev Claimable rewards estimated into pool's collateral value
-    function claimableRewardsInCollateral() public view virtual override returns (uint256 rewardAsCollateral) {
+    function estimateClaimableRewardsInCollateral() public view virtual override returns (uint256 rewardAsCollateral) {
         uint256 _claimable;
         for (uint256 i = 0; i < rewardTokens.length; i++) {
             _claimable = ILiquidityGaugeV3(crvGauge).claimable_reward(address(this), rewardTokens[i]);

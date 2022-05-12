@@ -9,7 +9,7 @@ describe('veWBTC pool EarnVesperWBTCDAI strategy', function () {
   const strategy = strategyConfig.EarnVesperStrategyWBTCDAI
   strategy.config.debtRatio = 9000
   const strategies = [strategy]
-  prepareConfig(strategies, { growPool: { address: Address.vaDAI } })
+  prepareConfig(strategies, { growPool: { address: Address.Vesper.vaDAI } })
 
   describe('Pool Tests', function () {
     shouldBehaveLikePool('veWBTC', 'WBTC', true)

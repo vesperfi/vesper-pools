@@ -1,9 +1,11 @@
 /* eslint-disable complexity */
 'use strict'
 
+const { OperationType } = require('ethers-multisend')
 const { ethers } = require('hardhat')
 const { isDelegateOrOwner, getMultisigNonce, submitGnosisTxn } = require('./gnosis-txn')
 const CollateralManager = 'CollateralManager'
+const PoolAccountant = 'PoolAccountant'
 
 function sleep(ms) {
   console.log(`waiting for ${ms} ms`)
@@ -11,9 +13,14 @@ function sleep(ms) {
 }
 
 async function sendGnosisSafeTxn(encodedData, params) {
+  const baseTxn = {
+    operation: OperationType.Call,
+    to: ethers.utils.getAddress(encodedData.to),
+    value: 0,
+    data: encodedData.data || '0x',
+  }
   const txnParams = {
-    data: encodedData.data,
-    to: encodedData.to,
+    baseTxn,
     safe: params.safe,
     nonce: params.multisigNonce,
     sender: params.deployer,
@@ -22,21 +29,17 @@ async function sendGnosisSafeTxn(encodedData, params) {
   await submitGnosisTxn(txnParams)
 }
 
-async function executeOrProposeTx(contractName, contractAddress, alias, params) {
+async function executeOrProposeTx(contractName, contractAddress, alias, params = []) {
   await sleep(5000)
   if (params.governor === params.deployer) {
-    params.methodArgs
-      ? await params.execute(alias, { from: params.deployer, log: true }, params.methodName, ...params.methodArgs)
-      : await params.execute(alias, { from: params.deployer, log: true }, params.methodName)
+    await params.execute(alias, { from: params.deployer, log: true }, params.methodName, ...params.methodArgs)
   } else if (params.isDelegateOrOwner) {
     const contract = await ethers.getContractAt(contractName, contractAddress)
     params.multisigNonce =
       params.multisigNonce === 0
         ? (await getMultisigNonce(params.safe, params.targetChain)).nonce
         : params.multisigNonce
-    const data = params.methodArgs
-      ? await contract.populateTransaction[params.methodName](...params.methodArgs)
-      : await contract.populateTransaction[params.methodName]()
+    const data = await contract.populateTransaction[params.methodName](...params.methodArgs)
     await sendGnosisSafeTxn(data, params)
     // increase nonce number
     params.multisigNonce = parseInt(params.multisigNonce) + 1
@@ -45,14 +48,8 @@ async function executeOrProposeTx(contractName, contractAddress, alias, params) 
   }
 }
 
-const deployFunction = async function ({
-  getNamedAccounts,
-  deployments,
-  poolConfig,
-  strategyConfig,
-  targetChain,
-  multisigNonce = 0,
-}) {
+const deployFunction = async function (hre) {
+  const { getNamedAccounts, deployments, poolConfig, strategyConfig, targetChain, multisigNonce = 0 } = hre
   if (!strategyConfig) {
     throw new Error('Strategy configuration object is not created.')
   }
@@ -60,38 +57,24 @@ const deployFunction = async function ({
 
   const { deploy, execute, read } = deployments
   const { deployer } = await getNamedAccounts()
-  const params = {
-    safe: Address.MultiSig.safe,
-    deployer,
-    execute,
-    multisigNonce,
-  }
+  const networkName = hre.network.name
+  // Wait for 2 blocks in network is not localhost
+  const waitConfirmations = networkName === 'localhost' ? 0 : 2
 
-  const poolDeploymentName = poolConfig.deploymentName ? poolConfig.deploymentName : poolConfig.contractName
-  const poolProxy = await deployments.get(poolDeploymentName)
+  const poolProxy = await deployments.get(poolConfig.contractName)
   const strategyAlias = strategyConfig.alias
 
   const constructorArgs = [poolProxy.address, ...Object.values(strategyConfig.constructorArgs)]
 
-  // TODO move it to strategy-configuration?, so far read() is blocker in moving it
   if (strategyAlias.includes('Maker')) {
     // Maker strategy of any type, EarnXXXMaker, XXXMaker
     // TODO move this to constructorArgs?
-    let cm = Address.COLLATERAL_MANAGER
+    let cm = Address.Vesper.COLLATERAL_MANAGER
     if (!cm) {
       // Deploy collateral manager
       await sleep(5000)
-      cm = (await deploy(CollateralManager, { from: deployer, log: true, waitConfirmations: 2 })).address
+      cm = (await deploy(CollateralManager, { from: deployer, log: true, waitConfirmations })).address
     }
-    // Fail fast: By reading any property we make sure deployment object exist for CollateralManager
-    try {
-      await read(CollateralManager, {}, 'treasury')
-    } catch (e) {
-      throw new Error(`Missing Collateral Manager deployment object. 
-      If you are deploying in localhost, please copy CollateralManager.json 
-      from /deployments/${targetChain}/global to /deployments/localhost/global`)
-    }
-
     // Insert cm at index 1 in constructorArgs
     constructorArgs.splice(1, 0, cm)
   }
@@ -103,7 +86,7 @@ const deployFunction = async function ({
     from: deployer,
     log: true,
     args: constructorArgs,
-    waitConfirmations: 2,
+    waitConfirmations,
   })
   const setup = strategyConfig.setup
 
@@ -124,7 +107,15 @@ const deployFunction = async function ({
 
   const strategyVersion = await read(strategyAlias, {}, 'VERSION')
   deployFunction.id = `${strategyAlias}-v${strategyVersion}`
-  params.governor = await read(poolDeploymentName, {}, 'governor')
+
+  // Below transactions will either be executed by deployer or proposed in multiSig
+  const params = {
+    safe: Address.MultiSig.safe,
+    deployer,
+    execute,
+    multisigNonce,
+  }
+  params.governor = await read(poolConfig.contractName, {}, 'governor')
   params.targetChain = targetChain
   params.isDelegateOrOwner =
     Address.MultiSig.safe === params.governor &&
@@ -133,7 +124,7 @@ const deployFunction = async function ({
   // update fee collector
   params.methodName = 'updateFeeCollector'
   params.methodArgs = [setup.feeCollector]
-  await executeOrProposeTx(strategyConfig.contract, deployed.address, strategyConfig.alias, params)
+  await executeOrProposeTx(strategyConfig.contract, deployed.address, strategyAlias, params)
 
   // addKeeper
   for (const keeper of setup.keepers) {
@@ -143,7 +134,7 @@ const deployFunction = async function ({
     } else {
       params.methodName = 'addKeeper'
       params.methodArgs = [keeper]
-      await executeOrProposeTx(strategyConfig.contract, deployed.address, strategyConfig.alias, params)
+      await executeOrProposeTx(strategyConfig.contract, deployed.address, strategyAlias, params)
     }
   }
 
@@ -155,34 +146,22 @@ const deployFunction = async function ({
     if (gemJoinInCM !== setup.maker.gemJoin) {
       params.methodName = 'addGemJoin'
       params.methodArgs = [setup.maker.gemJoin]
-      await executeOrProposeTx(CollateralManager, Address.COLLATERAL_MANAGER, CollateralManager, params)
+      await executeOrProposeTx(CollateralManager, Address.Vesper.COLLATERAL_MANAGER, CollateralManager, params)
     }
 
     params.methodName = 'createVault'
-    params.methodArgs = ''
-    await executeOrProposeTx(strategyConfig.contract, deployed.address, strategyConfig.alias, params)
+    params.methodArgs = []
+    await executeOrProposeTx(strategyConfig.contract, deployed.address, strategyAlias, params)
 
     params.methodName = 'updateBalancingFactor'
     params.methodArgs = [setup.maker.highWater, setup.maker.lowWater]
-    await executeOrProposeTx(strategyConfig.contract, deployed.address, strategyConfig.alias, params)
+    await executeOrProposeTx(strategyConfig.contract, deployed.address, strategyAlias, params)
   }
 
-  let PoolAccountant = 'PoolAccountant'
-  if (strategyAlias.includes('Coverage')) {
-    PoolAccountant = 'PoolAccountantCoverage'
-  } else if (strategyAlias.includes('Stable')) {
-    PoolAccountant = 'PoolAccountantStable'
-  }
   const config = strategyConfig.config
   const poolAccountantAddress = (await deployments.get(PoolAccountant)).address
   params.methodName = 'addStrategy'
-  params.methodArgs = [
-    deployed.address,
-    config.interestFee,
-    config.debtRatio,
-    config.debtRate,
-    config.externalDepositFee,
-  ]
+  params.methodArgs = [deployed.address, config.debtRatio, config.externalDepositFee]
   await executeOrProposeTx(PoolAccountant, poolAccountantAddress, PoolAccountant, params)
 
   return true

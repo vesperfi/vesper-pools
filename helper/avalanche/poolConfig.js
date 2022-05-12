@@ -2,8 +2,8 @@
 
 const Address = require('./address')
 
-const setup = { feeCollector: Address.FEE_COLLECTOR, withdrawFee: 60 }
-const rewards = { contract: 'PoolRewards', tokens: [Address.VSP] }
+const setup = { universalFee: 200 }
+const rewards = { contract: 'PoolRewards', tokens: [Address.Vesper.VSP] }
 
 const PoolConfig = {
   VADAI: {
@@ -56,7 +56,7 @@ const PoolConfig = {
   },
   VUSDC: {
     contractName: 'VPool',
-    poolParams: ['vUSDC Pool', 'vUSDC', Address.USDC],
+    poolParams: ['vUSDC Pool', 'vUSDC', Address.USDC_e],
     setup: { ...setup }, // Shallow copy
     rewards: { ...rewards },
   },

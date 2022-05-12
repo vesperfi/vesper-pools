@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.3;
+pragma solidity 0.8.9;
 
 /// @dev Based on https://github.com/boringcrypto/BoringSolidity/blob/master/contracts/BoringBatchable.sol
 /// @dev WARNING!!! Combining Batchable with `msg.value` can cause double spending issues
@@ -27,6 +27,7 @@ contract Batchable {
     // C7: Delegatecall is only used on the same contract, so it's safe
     function batch(bytes[] calldata calls, bool revertOnFail) external payable {
         for (uint256 i = 0; i < calls.length; i++) {
+            // solhint-disable-next-line avoid-low-level-calls
             (bool success, bytes memory result) = address(this).delegatecall(calls[i]);
             if (!success && revertOnFail) {
                 revert(_getRevertMsg(result));

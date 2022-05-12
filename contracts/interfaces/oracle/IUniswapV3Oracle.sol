@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.3;
+pragma solidity 0.8.9;
 
 // Interface to use 3rd party Uniswap V3 oracle utility contract deployed at https://etherscan.io/address/0x0f1f5a87f99f0918e6c81f16e59f3518698221ff#code
 

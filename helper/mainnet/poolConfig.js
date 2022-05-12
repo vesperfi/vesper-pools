@@ -1,12 +1,15 @@
 'use strict'
 
 const Address = require('./address')
-const setup = { feeCollector: Address.FEE_COLLECTOR, withdrawFee: 60 }
+const setup = { universalFee: 200 }
 
-// VFR pools do not need have PoolRewards contract hence no rewards object should not set for VFR pools
-const rewards = { contract: 'PoolRewards', tokens: [Address.VSP] }
+const rewards = { contract: 'PoolRewards', tokens: [Address.Vesper.VSP] }
 // Earn pool will have extra data in 'rewards' object. Below is default value for 'rewards' object for Earn pools
-const earnRewards = { contract: 'VesperEarnDrip', tokens: [Address.vaDAI, Address.VSP], growToken: Address.vaDAI }
+const earnRewards = {
+  contract: 'VesperEarnDrip',
+  tokens: [Address.Vesper.vaDAI, Address.Vesper.VSP],
+  growToken: Address.Vesper.vaDAI,
+}
 
 const PoolConfig = {
   VDAI: {
@@ -55,49 +58,49 @@ const PoolConfig = {
     contractName: 'VPool',
     poolParams: ['veDAI-WBTC Earn Pool', 'veDAI-WBTC', Address.DAI],
     setup: { ...setup },
-    rewards: { ...earnRewards, tokens: [Address.vaWBTC, Address.VSP], growToken: Address.vaWBTC },
+    rewards: { ...earnRewards, tokens: [Address.Vesper.vaWBTC, Address.Vesper.VSP], growToken: Address.Vesper.vaWBTC },
   },
   VEDAI_ETH: {
     contractName: 'VPool',
     poolParams: ['veDAI-ETH Earn Pool', 'veDAI-ETH', Address.DAI],
     setup: { ...setup },
-    rewards: { ...earnRewards, tokens: [Address.vaETH, Address.VSP], growToken: Address.vaETH },
+    rewards: { ...earnRewards, tokens: [Address.Vesper.vaETH, Address.Vesper.VSP], growToken: Address.Vesper.vaETH },
   },
   VEDAI_DPI: {
     contractName: 'VPool',
     poolParams: ['veDAI-DPI Earn Pool', 'veDAI-DPI', Address.DAI],
     setup: { ...setup },
-    rewards: { ...earnRewards, tokens: [Address.vaDPI, Address.VSP], growToken: Address.vaDPI },
+    rewards: { ...earnRewards, tokens: [Address.Vesper.vaDPI, Address.Vesper.VSP], growToken: Address.Vesper.vaDPI },
   },
   VEDAI_LINK: {
     contractName: 'VPool',
     poolParams: ['veDAI-LINK Earn Pool', 'veDAI-LINK', Address.DAI],
     setup: { ...setup },
-    rewards: { ...earnRewards, tokens: [Address.vaLINK, Address.VSP], growToken: Address.vaLINK },
+    rewards: { ...earnRewards, tokens: [Address.Vesper.vaLINK, Address.Vesper.VSP], growToken: Address.Vesper.vaLINK },
   },
   VEDAI_VSP: {
     contractName: 'VPool',
     poolParams: ['veDAI-VSP Earn Pool', 'veDAI-VSP', Address.DAI],
     setup: { ...setup },
-    rewards: { ...earnRewards, tokens: [Address.vVSP], growToken: Address.vVSP },
+    rewards: { ...earnRewards, tokens: [Address.Vesper.vVSP], growToken: Address.Vesper.vVSP },
   },
   VEDAI_SHIB: {
     contractName: 'VPool',
     poolParams: ['veDAI-SHIB Earn Pool', 'veDAI-SHIB', Address.DAI],
-    setup: { ...setup, withdrawFee: 0 },
-    rewards: { contract: 'VesperEarnDrip', tokens: [Address.SHIB, Address.VSP] },
+    setup: { ...setup },
+    rewards: { contract: 'VesperEarnDrip', tokens: [Address.SHIB, Address.Vesper.VSP] },
   },
   VEDAI_PUNK: {
     contractName: 'VPool',
     poolParams: ['veDAI-PUNK Earn Pool', 'veDAI-PUNK', Address.DAI],
-    setup: { ...setup, withdrawFee: 0 },
-    rewards: { contract: 'VesperEarnDrip', tokens: [Address.PUNK, Address.VSP] },
+    setup: { ...setup },
+    rewards: { contract: 'VesperEarnDrip', tokens: [Address.PUNK, Address.Vesper.VSP] },
   },
   VEUSDC_LMR: {
     contractName: 'VPool',
     poolParams: ['veUSDC-LMR Earn Pool', 'veUSDC-LMR', Address.USDC],
     setup: { ...setup },
-    rewards: { contract: 'VesperEarnDrip', tokens: [Address.LMR, Address.VSP] },
+    rewards: { contract: 'VesperEarnDrip', tokens: [Address.LMR, Address.Vesper.VSP] },
   },
   VLINK: {
     contractName: 'VPool',
@@ -153,20 +156,6 @@ const PoolConfig = {
     setup: { ...setup },
     rewards: { ...rewards },
   },
-  VFRDAI: {
-    Coverage: {
-      contractName: 'VFRPool',
-      deploymentName: 'VFRCoverageDAI',
-      poolParams: ['vfrcDAI Pool', 'vfrcDAI', Address.DAI],
-      setup: { ...setup },
-    },
-    Stable: {
-      contractName: 'VFRStablePool',
-      deploymentName: 'VFRStableDAI',
-      poolParams: ['vfrsDAI Pool', 'vfrsDAI', Address.DAI],
-      setup: { ...setup },
-    },
-  },
   VADPI: {
     contractName: 'VPool',
     poolParams: ['vaDPI Pool', 'vaDPI', Address.DPI],
@@ -182,6 +171,12 @@ const PoolConfig = {
   VAMUSD: {
     contractName: 'VPool',
     poolParams: ['vaMUSD Pool', 'vaMUSD', Address.MUSD],
+    setup: { ...setup },
+    rewards: { ...rewards },
+  },
+  VAAPE: {
+    contractName: 'VPool',
+    poolParams: ['vaAPE Pool', 'vaAPE', Address.APE],
     setup: { ...setup },
     rewards: { ...rewards },
   },

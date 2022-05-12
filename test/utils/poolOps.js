@@ -7,12 +7,11 @@ const provider = hre.waffle.provider
 const { BigNumber } = require('ethers')
 const { depositTokenToAave, depositTokenToCompound } = require('./market')
 const DECIMAL = BigNumber.from('1000000000000000000')
-const StrategyType = require('../utils/strategyTypes')
 const { parseEther } = require('@ethersproject/units')
 const { adjustBalance } = require('./balance')
 const { getChain } = require('../utils/chains')
-const address = require('../../helper/mainnet/address')
-const { NATIVE_TOKEN, DAI, MIM, ALUSD } = require(`../../helper/${getChain()}/address`)
+const { unlock } = require('./setupHelper')
+const { NATIVE_TOKEN, DAI, MIM, ALUSD, Vesper } = require(`../../helper/${getChain()}/address`)
 
 async function executeIfExist(fn) {
   if (typeof fn === 'function') {
@@ -90,9 +89,9 @@ async function timeTravel(
 async function bringAboveWater(strategy, amount) {
   if (strategy.instance.isUnderwater !== undefined && (await strategy.instance.isUnderwater())) {
     // deposit some amount in aave/compound to bring it above water.
-    if (strategy.type === StrategyType.AAVE_MAKER) {
+    if (strategy.contract.includes('AaveMaker')) {
       await depositTokenToAave(amount, DAI, strategy.instance.address)
-    } else if (strategy.type === StrategyType.COMPOUND_MAKER) {
+    } else if (strategy.contract.includes('CompoundMaker')) {
       await depositTokenToCompound(amount, DAI, strategy.instance.address)
     }
     const lowWater = await strategy.instance.isUnderwater()
@@ -155,13 +154,13 @@ async function harvestVesperMaker(strategy) {
 }
 
 /**
- * Simulates harvesting in a VesperCompoundXY strategy
+ * Simulates harvesting in a VesperCompoundXY/VesperAaveXY strategy
  * 1. Swaps some ethers for collateral into the underlying vPool
  * 2. This causes vPool' pricePerShare to increase
  *
  * @param {object} strategy - strategy object
  */
-async function harvestVesperCompoundXY(strategy) {
+async function harvestVesperXY(strategy) {
   const vPool = await ethers.getContractAt('IVesperPool', await strategy.instance.vPool())
   const collateralTokenAddress = await vPool.token()
 
@@ -188,7 +187,7 @@ async function harvestVesper(strategy) {
   }
   if (strategy.type.includes('earnVesper')) {
     const dripToken = await strategy.instance.dripToken()
-    if (dripToken === ethers.utils.getAddress(address.VSP)) {
+    if (dripToken === ethers.utils.getAddress(Vesper.VSP)) {
       // wait 24hrs between rebalance due to vVSP's lock period
       await timeTravel(3600 * 24)
     }
@@ -224,8 +223,8 @@ async function rebalanceStrategy(strategy) {
       await harvestYearn(strategy)
     }
     if (strategy.type.includes('earnVesper') || strategy.type.includes('vesper')) {
-      if (strategy.type.includes('vesperCompoundXY')) {
-        await harvestVesperCompoundXY(strategy)
+      if (strategy.type.includes('XY')) {
+        await harvestVesperXY(strategy)
       } else {
         await harvestVesper(strategy)
       }
@@ -244,6 +243,8 @@ async function rebalanceStrategy(strategy) {
     }
     tx = await strategy.instance.rebalance()
   } catch (error) {
+    // eslint-disable-next-line no-console
+    console.log(error)
     // ignore under water error and give one more try.
     await bringAboveWater(strategy, 50)
     tx = await strategy.instance.rebalance()
@@ -266,6 +267,23 @@ async function rebalance(strategies) {
   return txs
 }
 
+// It will be useful for Vesper strategy if we use real Vesper pool
+async function rebalanceUnderlying(strategy) {
+  const vPool = await ethers.getContractAt('VPool', await strategy.vPool())
+  const accountant = await ethers.getContractAt('PoolAccountant', await vPool.poolAccountant())
+  const strategies = await accountant.getStrategies()
+
+  const keeper = await unlock(Vesper.KEEPER)
+  const promises = []
+  for (const underlyingStrategy of strategies) {
+    if ((await accountant.totalDebtOf(underlyingStrategy)).gt(0)) {
+      const strategyObj = await ethers.getContractAt('IStrategy', underlyingStrategy)
+      promises.push(strategyObj.connect(keeper).rebalance())
+    }
+  }
+  return Promise.all(promises)
+}
+
 /**
  *
  * @param {*} strategies .
@@ -285,6 +303,7 @@ module.exports = {
   deposit,
   rebalance,
   rebalanceStrategy,
+  rebalanceUnderlying,
   totalDebtOfAllStrategy,
   executeIfExist,
   timeTravel,

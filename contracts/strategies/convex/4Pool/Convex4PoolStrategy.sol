@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.3;
+pragma solidity 0.8.9;
 
 import "../../curve/4Pool/Crv4PoolStrategy.sol";
 import "../ConvexStrategyBase.sol";
@@ -30,6 +30,8 @@ abstract contract Convex4PoolStrategy is Crv4PoolStrategy, ConvexStrategyBase {
     function setRewardTokens(
         address[] memory /*_rewardTokens*/
     ) external override onlyKeeper {
+        // Claims all rewards, if any, before updating the reward list
+        _claimRewardsAndConvertTo(address(collateralToken));
         rewardTokens = _getRewardTokens();
         _approveToken(0);
         _approveToken(MAX_UINT_VALUE);
@@ -75,7 +77,7 @@ abstract contract Convex4PoolStrategy is Crv4PoolStrategy, ConvexStrategyBase {
     }
 
     /// @dev Claimable rewards estimated into pool's collateral value
-    function claimableRewardsInCollateral() public view virtual override returns (uint256 rewardAsCollateral) {
+    function estimateClaimableRewardsInCollateral() public view virtual override returns (uint256 rewardAsCollateral) {
         ClaimableRewardInfo[] memory _claimableRewardsInfo = _claimableRewards();
         for (uint256 i = 0; i < _claimableRewardsInfo.length; i++) {
             if (_claimableRewardsInfo[i].amount != 0) {

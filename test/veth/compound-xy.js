@@ -13,7 +13,7 @@ describe('vETH Pool with Compound XY Strategy', function () {
   prepareConfig(strategies)
   shouldBehaveLikePool('vETH', 'WETH')
   for (let i = 0; i < strategies.length; i++) {
-    shouldBehaveLikeStrategy(i, strategies[i].type, strategies[i].name)
+    shouldBehaveLikeStrategy(i, strategies[i].type, strategies[i].contract)
   }
   shouldMigrateStrategies('vETH')
 })

@@ -4,11 +4,11 @@
     "avalanche": {
       "vadai": {
         "pool": {
-          "proxyAdmin": "0xB6D75A53442844e8F1eed35d7A65225c57B282EB",
+          "proxyAdmin": "0xd9A5df2877a42460E9055C4134946668dfcf51f8",
           "proxy": "0x5323F445A8665239222b117aE095423a238F5706",
           "implementation": "0x30a35969AdBb8B437c44C8BdC162501Efa8eE018",
           "poolAccountant": {
-            "proxyAdmin": "0xB6D75A53442844e8F1eed35d7A65225c57B282EB",
+            "proxyAdmin": "0xd9A5df2877a42460E9055C4134946668dfcf51f8",
             "proxy": "0x1450E77CA4a646676A051118320efe3ed1c4831b",
             "implementation": "0x59246B1E23240fAb9a51cE97FB3F907Eb9758489"
           }
@@ -20,6 +20,7 @@
         },
         "strategies": {
           "AaveStrategyAvalancheDAI": "0x867E89E47b7c252F4D991DF75eBd2CFD9188B929",
+          "BenqiCompoundStrategyAvalancheDAI": "0x847930F3DffC03043a6f59064B049c1Ff128f56A",
           "AlphaLendAvalancheStrategyDAI": "0x8D460b5FDaBE2ef4CB2DA6dd78d574E580DFF2ed",
           "BenqiCompoundLeverageStrategyAvalancheDAI": "0xBb4fCEf90D4259F476Ccb3BB7bc4842355B46c76",
           "CrvA3PoolStrategyDAI": "0xAf147FD4C72807AFdd3CCFDcf3CF6a2587E88127",
@@ -46,6 +47,7 @@
         "strategies": {
           "AaveStrategyAvalancheWETH": "0x0a46A9716b4632A57863d52123c5c10FDF9e10F8",
           "AlphaLendAvalancheStrategyWETH": "0x3038a73c79963f25d4b9ba4bEF0c349cD2679154",
+          "BenqiCompoundStrategyAvalancheWETH": "0x85E646909D6a1E251a0b7f24909a03931A708463",
           "BenqiCompoundLeverageStrategyAvalancheWETH": "0x589E116B1B9Ec445145e2FB20468222cd2DAEe00",
           "TraderJoeCompoundStrategyAvalancheWETH": "0xC00fAe34553dbF360Dc8E2a90fd25b4BbBD3977f",
           "TraderJoeLeverageStrategyWETH": "0xa2276B9799F35f216e4354B81Ba02957A575Eae8"
@@ -120,6 +122,7 @@
         "strategies": {
           "AaveStrategyAvalancheUSDC": "0x718E58C448116FE7315caEE135b12793AFc4FDf4",
           "AlphaLendAvalancheStrategyUSDC": "0x76C78059581891Eb96eEf286d223015936bC6972",
+          "BenqiCompoundStrategyAvalancheUSDC": "0x182F72FfDB674250746A103272bbFBCA56d4510C",
           "BenqiCompoundLeverageStrategyAvalancheUSDC": "0x570d1Baa39809aca59b51202179e1E5d8A08D993",
           "CrvA3PoolStrategyUSDC": "0x45D5Ff2793f516287A953A18EA88C360Fff94678",
           "TraderJoeLeverageStrategyUSDC": "0xF2d1eF29da4eebD2EF7903DAA39eC1EBc3967e90",
@@ -348,17 +351,17 @@
       },
       "vewbtc_dai": {
         "pool": {
-          "proxyAdmin": "0xe1444fEA423Bf8614c6E731C5BD5e45602AE6afC",
+          "proxyAdmin": "0x19A02f3512BdF78114B3c50f7d22a34b1B2798cA",
           "proxy": "0x7a74B6D3A07D3249Ea2FBb58e47F0DaF6d6a2ebf",
-          "implementation": "0x84323D50425eA63E5D9cC493b47C58dfCFB64D68",
+          "implementation": "0x8d48fD51FfEB99b1Ad1224038E46166Cfc7d9dE3",
           "poolAccountant": {
-            "proxyAdmin": "0xe1444fEA423Bf8614c6E731C5BD5e45602AE6afC",
+            "proxyAdmin": "0x19A02f3512BdF78114B3c50f7d22a34b1B2798cA",
             "proxy": "0x11aAb1b00c62EA9528c3286C53c2308Aad6f64ea",
-            "implementation": "0xADb6a931af81FE7E2430e12e125d8f8a72769274"
+            "implementation": "0x2Ad6DefC823D6DF64117C6dB0A17596faD90C767"
           }
         },
         "poolRewards": {
-          "proxyAdmin": "0xe1444fEA423Bf8614c6E731C5BD5e45602AE6afC",
+          "proxyAdmin": "0x19A02f3512BdF78114B3c50f7d22a34b1B2798cA",
           "proxy": "0x92659c1293f74d76249a72601C9Bf36bf6d738cA",
           "implementation": "0xacff2dc81fc8a99ec310E35DB006e36FC947F351"
         },
@@ -430,6 +433,23 @@
           "RariFuseStrategy": "0x78041341e79693953ab49f5040d3ac8ca8cd2397",
           "RariFuseStrategyETH": "0x67893865686C22f0a243114B0893De65117d2f3b",
           "VesperMakerStrategyETH": "0xc5cdf8cbe886fc5c1ef5cd4fdd599c975ec6bb54"
+        }
+      },
+      "vaape": {
+        "pool": {
+          "proxy": "0xA5Bc6eB0A7E6738e2F2Ac6c92280b32771aC52Ad",
+          "implementation": "0x1fE9E028329080B22073713a985768a7c90039c7",
+          "poolAccountant": {
+            "proxy": "0x88dF6adBecDFB7A58cB4C27f59eee1bDF7d113Dd",
+            "implementation": "0x4F193Be75CDCE0a28Aae09B9761B3bd46F67A7a1"
+          }
+        },
+        "poolRewards": {
+          "proxy": "0x41f4e1Fdafecc84c13488d6DBC1C623fffF73EAc",
+          "implementation": "0xa163dc188e14c3B3c8f3FBa6F4351Ea5147ad9aC"
+        },
+        "strategies": {
+          "RariFuseStrategyAPE#127": "0xb436d8a2e3e23aF57040B2dA8E01463c818e0999"
         }
       }
     },

@@ -8,7 +8,6 @@ on:
       - "contracts/strategies/alpha/AlphaLendAvalancheStrategy.sol"
       - "contracts/strategies/alpha/AlphaLendAvalancheStrategyAVAX.sol"
       - "contracts/strategies/alpha/AlphaLendStrategyETH.sol"
-      
 jobs:
   vaavax-alpha-lend-avalanche-strategy-test:
     runs-on: ubuntu-latest
@@ -21,10 +20,10 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v2
         with:
-          node-version-file: '.nvmrc'
+          node-version-file: ".nvmrc"
 
-      - name: Run npm install with node v${{ matrix.node }}
+      - name: Run npm install
         run: npm install
 
-      - name: Running tests for vaAVAX Alpha Lend Avalanche
-        run: npm test "test/vaavax/alpha-lend-avalanche.js"
+      - name: Running tests for vaAVAX Alpha Lend
+        run: npm test "test/vaavax/alpha-lend.js"

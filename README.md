@@ -129,8 +129,3 @@ Deployment will be done via custom `hardhat task deploy-pool` which behind the s
   npm run deploy-upgrader -- --name PoolRewardsUpgrader --network localhost --target-chain polygon
  ```
 
- * Deploy `vfr` pool
- VFR Pool pair require Coverage, Stable pool and VFRBuffer contract. Refer `VFRDAI` config section in `poolConfig.js` file.
- ```bash
-  npm run deploy -- --pool VFRDAI --network localhost --target-chain mainnet --release 3.0.15 --deploy-params '{"tags": "deploy-vfr", "gasprice": "25000000000"}'
- ```

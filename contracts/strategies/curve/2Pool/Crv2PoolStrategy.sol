@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.3;
+pragma solidity 0.8.9;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "../../../dependencies/openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "../../../dependencies/openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../../../interfaces/vesper/IVesperPool.sol";
 import "../../Strategy.sol";
 import "../CrvPoolStrategyBase.sol";
+
+// solhint-disable no-empty-blocks
 
 /// @title This strategy will deposit collateral token in a Curve 2Pool and earn interest.
 abstract contract Crv2PoolStrategy is CrvPoolStrategyBase {
@@ -40,7 +42,6 @@ abstract contract Crv2PoolStrategy is CrvPoolStrategyBase {
             if (_expectedOut > _minLpAmount) {
                 _minLpAmount = _expectedOut;
             }
-            // solhint-disable-next-line no-empty-blocks
             try IStableSwap2x(address(crvPool)).add_liquidity(_depositAmounts, _minLpAmount) {} catch Error(
                 string memory reason
             ) {

@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.3;
+pragma solidity 0.8.9;
 
-import "../pool/Errors.sol";
+import "../Errors.sol";
 import "../interfaces/bloq/IAddressList.sol";
 import "../interfaces/bloq/IAddressListFactory.sol";
 import "../interfaces/vesper/IVesperPool.sol";
@@ -117,7 +117,7 @@ contract BuyBack is UsingSwapManager, Batchable {
 
     /**
      * @notice Add given address in provided address list.
-     * @dev Use it to add keeper in keepers list and to add address in feeWhitelist
+     * @dev Use it to add keeper in keepers list
      * @param _addressToAdd address which we want to add in AddressList.
      */
     function addInKeepersList(address _addressToAdd) external onlyKeeper {
@@ -126,7 +126,7 @@ contract BuyBack is UsingSwapManager, Batchable {
 
     /**
      * @notice Remove given address from provided address list.
-     * @dev Use it to remove keeper from keepers list and to remove address from feeWhitelist
+     * @dev Use it to remove keeper from keepers list
      * @param _addressToRemove address which we want to remove from AddressList.
      */
     function removeFromKeepersList(address _addressToRemove) external onlyKeeper {

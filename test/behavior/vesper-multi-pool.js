@@ -95,14 +95,13 @@ async function shouldBehaveLikeMultiPool(poolName) {
         await rebalance(strategies)
         const strategyParamsBefore = await pool.strategy(strategies[0].instance.address)
         await accountant.connect(gov.signer).removeStrategy(0)
-        const strat0 = (await pool.getStrategies())[0]
-        expect(strat0).to.be.eq(strategies[1].instance.address, 'wrong strategies array')
+        const strategy0 = (await pool.getStrategies())[0]
+        expect(strategy0).to.be.eq(strategies[1].instance.address, 'wrong strategies array')
         const q0 = (await pool.getWithdrawQueue())[0]
         expect(q0).to.be.eq(strategies[1].instance.address, 'wrong strategies in withdraw queue')
         const strategyParamsAfter = await pool.strategy(strategies[0].instance.address)
         expect(strategyParamsBefore._active).to.be.eq(true, 'strategy should inactive')
         expect(strategyParamsAfter._active).to.be.eq(false, 'strategy should inactive')
-        expect(strategyParamsAfter._debtRate).to.be.eq(0, 'strategy should have 0 debt rate')
       })
 
       it('Should adjust total debt ratio', async function () {
@@ -120,18 +119,13 @@ async function shouldBehaveLikeMultiPool(poolName) {
         await rebalance(strategies)
 
         const newStrategy = await makeNewStrategy(strategies[0], pool.address, {
-          swapManager: hre.address.SWAP_MANAGER,
+          swapManager: hre.address.Vesper.SWAP_MANAGER,
         })
 
         await accountant.connect(gov.signer).updateDebtRatio(strategies[0].instance.address, 3000)
         await accountant.connect(gov.signer).updateDebtRatio(strategies[1].instance.address, 3000)
 
-        const config = {
-          interestFee: 1500,
-          debtRatio: 2000,
-          debtRate: strategies[0].config.debtRate,
-          externalDepositFee: 0,
-        }
+        const config = { debtRatio: 2000, externalDepositFee: 0 }
         await accountant.connect(gov.signer).addStrategy(newStrategy.instance.address, ...Object.values(config))
         await accountant
           .connect(gov.signer)

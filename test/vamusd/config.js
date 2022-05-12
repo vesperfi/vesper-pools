@@ -16,7 +16,6 @@ function prepareConfig(_strategies) {
     this.users = users
     await setupVPool(this, {
       poolConfig: poolConfig.VAMUSD,
-      feeCollector: users[7].address,
       strategies: strategies.map((item, i) => ({
         ...item,
         feeCollector: users[i + 8].address, // leave first 8 users for other testing

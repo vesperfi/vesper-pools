@@ -7,10 +7,9 @@ const { address: Address, strategyConfig } = require('../utils/chains').getChain
 
 describe('veETH pool strategies', function () {
   const strategy1 = strategyConfig.EarnAlphaLendStrategyETH
-  strategy1.config.interestFee = 2500
   strategy1.config.debtRatio = 9000
   const strategies = [strategy1]
-  prepareConfig(strategies, { growPool: { address: Address.vaDAI } })
+  prepareConfig(strategies, { growPool: { address: Address.Vesper.vaDAI } })
 
   describe('Pool Tests', function () {
     shouldBehaveLikePool('veETH', 'ETH', true)

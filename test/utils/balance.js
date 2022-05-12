@@ -5,7 +5,7 @@ const Address = require('../../helper/mainnet/address')
 const AvalancheAddress = require('../../helper/avalanche/address')
 const ethers = hre.ethers
 const { BigNumber } = require('ethers')
-const { hexlify, solidityKeccak256, zeroPad, getAddress } = ethers.utils
+const { hexlify, solidityKeccak256, zeroPad, getAddress, hexStripZeros } = ethers.utils
 
 // Slot number mapping for a token. Prepared using utility https://github.com/kendricktan/slot20
 const slots = {
@@ -17,11 +17,26 @@ const slots = {
   [Address.UNI]: 4,
   [Address.MIM]: 0,
   [Address.ALUSD]: 1,
-  '0x5d3a536E4D6DbD6114cc1Ead35777bAB948E3643': 14, // cDAI
-  '0xc00e94Cb662C3520282E6f5717214004A7f26888': 1, // COMP
+  [Address.LINK]: 1,
+  [Address.APE]: 0,
+  [Address.MUSD]: 51,
+  [Address.DPI]: 0,
+  [Address.Vesper.VSP]: 0,
+  [Address.Compound.cDAI]: 14,
+  [Address.Compound.COMP]: 1,
+  [Address.FEI]: 0,
+  [Address.FRAX]: 0,
+  [Address.APE]: 0,
+  [Address.MUSD]: 51,
+
+  // Avalanche addresses
   [AvalancheAddress.DAI]: 0,
+  [AvalancheAddress.USDC]: 9,
   [AvalancheAddress.USDC_e]: 0,
   [AvalancheAddress.WBTC]: 0,
+  [AvalancheAddress.WETH]: 0,
+  [AvalancheAddress.Benqi.QI]: 1,
+  [AvalancheAddress.Vesper.VSP]: 2,
 }
 
 /**
@@ -50,7 +65,8 @@ async function adjustBalance(token, targetAddress, balance) {
   }
 
   // reason: https://github.com/nomiclabs/hardhat/issues/1585 comments
-  const index = hexlify(solidityKeccak256(['uint256', 'uint256'], [targetAddress, slot])).replace('0x0', '0x')
+  // Create solidity has for index, convert it into hex string and remove all the leading zeros
+  const index = hexStripZeros(hexlify(solidityKeccak256(['uint256', 'uint256'], [targetAddress, slot])))
 
   if (!BigNumber.isBigNumber(balance)) {
     // eslint-disable-next-line no-param-reassign

@@ -8,6 +8,7 @@ const ethers = hre.ethers
 const provider = hre.waffle.provider
 const { smock } = require('@defi-wonderland/smock')
 const StrategyType = require('./strategyTypes')
+const { adjustBalance } = require('./balance')
 const chainData = require('./chains').getChainData()
 const Address = chainData.address
 hre.address = Address
@@ -31,10 +32,24 @@ const CollateralManager = 'CollateralManager'
  * @property {string} address - user account address
  */
 
-async function executeIfExist(fn) {
+async function executeIfExist(fn, param) {
   if (typeof fn === 'function') {
-    await fn()
+    if (param) {
+      await fn(param)
+    } else {
+      await fn()
+    }
   }
+}
+
+async function getIfExist(fn, param) {
+  if (typeof fn === 'function') {
+    if (param) {
+      return fn(param)
+    }
+    return fn()
+  }
+  return new Promise()
 }
 
 /**
@@ -91,11 +106,20 @@ async function addStrategies(obj) {
   }
 }
 
-async function setupVesperPool(poolObj = chainData.poolConfig.VDAI) {
-  const vPool = await deployContract(poolObj.contractName, poolObj.poolParams)
+/**
+ * Setups a local Vesper Pool for strategies that use it as underlying
+ *
+ * @param {string} collateralToken Address of collateralToken
+ * @returns {object} Pool Contract instance
+ */
+async function setupVesperPool(collateralToken = Address.DAI) {
+  const token = await ethers.getContractAt('IERC20Metadata', collateralToken)
+  const tokenName = await token.symbol()
+  const poolParams = [`v${tokenName} Pool`, `v${tokenName}`, collateralToken]
+  const vPool = await deployContract('VPool', poolParams)
   const accountant = await deployContract('PoolAccountant')
   await accountant.init(vPool.address)
-  await vPool.initialize(...poolObj.poolParams, accountant.address)
+  await vPool.initialize(...poolParams, accountant.address)
   return vPool
 }
 
@@ -206,43 +230,81 @@ async function createVesperMakerStrategy(strategy, poolAddress, options) {
   strategyInstance.collateralManager = collateralManager
   await Promise.all([strategyInstance.updateBalancingFactor(300, 250), collateralManager.addGemJoin(gemJoins)])
 
-  await options.vPool.addToFeeWhitelist(strategyInstance.address)
+  await executeIfExist(options.vPool.addToFeeWhitelist, strategyInstance.address)
 
   return strategyInstance
 }
 
 /**
- * Create and configure VesperEarn Strategy.
+ * Create and configure a EarnVesper Strategy.
+ * Using an up-to-date underlying vPool and VSP rewards enabled
  *
  * @param {object} strategy  Strategy config object
  * @param {object} poolAddress pool address
  * @param {object} options extra params
  * @returns {object} Strategy instance
  */
-async function createVesperEarnStrategy(strategy, poolAddress, options) {
-  await checkAndSetEarnPool(strategy, poolAddress, options)
-  if (!options.vPool && options.vesperPoolConfig) {
-    options.vPool = await setupVesperPool(options.vesperPoolConfig)
-    strategy.constructorArgs.receiptToken = options.vPool.address
+async function createEarnVesperStrategy(strategy, poolAddress, options) {
+  const underlyingVesperPool = await ethers.getContractAt('IVesperPool', strategy.constructorArgs.receiptToken)
+  const collateralToken = await underlyingVesperPool.token()
+
+  if (!options.vPool) {
+    options.vPool = await setupVesperPool(collateralToken)
   }
+
+  const TOTAL_REWARD = ethers.utils.parseUnits('150000')
+  const REWARD_DURATION = 30 * 24 * 60 * 60
+
+  const vPoolRewards = await deployContract('PoolRewards', [])
+  const rewardTokens = [Address.Vesper.VSP]
+  await vPoolRewards.initialize(poolAddress, rewardTokens)
+  await options.vPool.updatePoolRewards(vPoolRewards.address)
+
+  const vsp = await ethers.getContractAt('IVSP', Address.Vesper.VSP)
+
+  await adjustBalance(Address.Vesper.VSP, vPoolRewards.address, TOTAL_REWARD)
+
+  const notifyMultiSignature = 'notifyRewardAmount(address[],uint256[],uint256[])'
+  await vPoolRewards[`${notifyMultiSignature}`]([vsp.address], [TOTAL_REWARD], [REWARD_DURATION])
+
+  strategy.constructorArgs.receiptToken = options.vPool.address
 
   const strategyInstance = await deployContract(strategy.contract, [
     poolAddress,
     ...Object.values(strategy.constructorArgs),
   ])
+
   return strategyInstance
 }
 
 /**
- * Create and configure VesperCompoundXY Strategy.
+ * Create and configure VesperXY Strategy.
  *
  * @param {object} strategy  Strategy config object
  * @param {object} poolAddress pool address
  * @param {object} options extra params
  * @returns {object} Strategy instance
  */
-async function createVesperCompoundXYStrategy(strategy, poolAddress, options) {
-  options.vPool = await setupVesperPool()
+async function createVesperXYStrategy(strategy, poolAddress, options) {
+  const underlyingVesperPool = await ethers.getContractAt('IVesperPool', strategy.constructorArgs.vPool)
+  const collateralToken = await underlyingVesperPool.token()
+
+  options.vPool = await setupVesperPool(collateralToken)
+
+  const TOTAL_REWARD = ethers.utils.parseUnits('150000')
+  const REWARD_DURATION = 30 * 24 * 60 * 60
+
+  const vPoolRewards = await deployContract('PoolRewards', [])
+  const rewardTokens = [Address.Vesper.VSP]
+  await vPoolRewards.initialize(poolAddress, rewardTokens)
+  await options.vPool.updatePoolRewards(vPoolRewards.address)
+
+  const vsp = await ethers.getContractAt('IVSP', Address.Vesper.VSP)
+
+  await adjustBalance(Address.Vesper.VSP, vPoolRewards.address, TOTAL_REWARD)
+
+  const notifyMultiSignature = 'notifyRewardAmount(address[],uint256[],uint256[])'
+  await vPoolRewards[`${notifyMultiSignature}`]([vsp.address], [TOTAL_REWARD], [REWARD_DURATION])
 
   strategy.constructorArgs.vPool = options.vPool.address
 
@@ -251,7 +313,7 @@ async function createVesperCompoundXYStrategy(strategy, poolAddress, options) {
     ...Object.values(strategy.constructorArgs),
   ])
 
-  await options.vPool.addToFeeWhitelist(strategyInstance.address)
+  await executeIfExist(options.vPool.addToFeeWhitelist, strategyInstance.address)
 
   return strategyInstance
 }
@@ -268,10 +330,10 @@ async function createStrategy(strategy, poolAddress, options = {}) {
     instance = await createMakerStrategy(strategy, poolAddress, options)
   } else if (strategyType === StrategyType.VESPER_MAKER || strategyType === StrategyType.EARN_VESPER_MAKER) {
     instance = await createVesperMakerStrategy(strategy, poolAddress, options)
-  } else if (strategyType === StrategyType.VESPER_COMPOUND_XY) {
-    instance = await createVesperCompoundXYStrategy(strategy, poolAddress, options)
+  } else if (strategyType === StrategyType.VESPER_COMPOUND_XY || strategyType === StrategyType.VESPER_AAVE_XY) {
+    instance = await createVesperXYStrategy(strategy, poolAddress, options)
   } else if (strategyType === StrategyType.EARN_VESPER) {
-    instance = await createVesperEarnStrategy(strategy, poolAddress, options)
+    instance = await createEarnVesperStrategy(strategy, poolAddress, options)
   } else {
     instance = await deployContract(strategy.contract, [poolAddress, ...Object.values(strategy.constructorArgs)])
   }
@@ -302,12 +364,17 @@ async function createStrategy(strategy, poolAddress, options = {}) {
   } else {
     strategy.token = await ethers.getContractAt(strategyTokenName, strategyTokenAddress)
     if (strategyTokenName === IVesperPool) {
-      // TODO when 3.1.0 pools are deployed and used as receiptToken in VesperXXX strategy then
-      // we will have to fix below config
+      // If Vesper strategy is using the pool already deployed on mainnet for tests
+      // then there is high chance that the pool supports feeWhitelist so that into account
       // Mock feeWhitelist to withdraw without fee in case of Earn Vesper strategies
-      const mock = await smock.fake('IAddressList', { address: await strategy.token.feeWhitelist() })
-      // Pretend any address is whitelisted for withdraw without fee
-      mock.contains.returns(true)
+      try {
+        const mock = await smock.fake('IAddressList', { address: await getIfExist(strategy.token.feeWhitelist) })
+        // Pretend any address is whitelisted for withdraw without fee
+        mock.contains.returns(true)
+      } catch (e) {
+        // Newer pools don't have feeWhitelist,
+        // Even if the interface has feeWhitelist, mocking will fail in that case
+      }
     }
   }
   // Earn strategies require call to approveGrowToken
@@ -347,7 +414,6 @@ async function makeNewStrategy(oldStrategy, poolAddress, _options) {
   // New is copy of old except that it has new instance
   const newStrategy = { ...oldStrategy }
   newStrategy.instance = instance
-
   return newStrategy
 }
 
@@ -355,8 +421,6 @@ async function makeNewStrategy(oldStrategy, poolAddress, _options) {
  * @typedef {object} PoolData
  * @property {object} poolConfig - Pool config
  * @property {object []} strategies - Array of strategy configuration
- * @property {object} [vPool] - Optional. Vesper pool instance
- * @property {string} feeCollector - Fee collector address of pool
  */
 
 /**
@@ -367,27 +431,27 @@ async function makeNewStrategy(oldStrategy, poolAddress, _options) {
  * @param {object} options optional data
  */
 async function setupVPool(obj, poolData, options = {}) {
-  const { poolConfig, strategies, vPool, feeCollector } = poolData
+  const { poolConfig, strategies } = poolData
   const isInCache = obj.snapshot === undefined ? false : await provider.send('evm_revert', [obj.snapshot])
   if (isInCache === true) {
+    // Rollback manual changes to objects
+    delete obj.pool.depositsCount
     // Recreate the snapshot after rollback, reverting deletes the previous snapshot
     obj.snapshot = await provider.send('evm_snapshot')
   } else {
     obj.strategies = strategies
-    obj.feeCollector = feeCollector
     obj.accountant = await deployContract('PoolAccountant')
     obj.pool = await deployContract(poolConfig.contractName, poolConfig.poolParams)
 
     await obj.accountant.init(obj.pool.address)
     await obj.pool.initialize(...poolConfig.poolParams, obj.accountant.address)
-    options.vPool = vPool
+    await obj.pool.updateUniversalFee(poolConfig.setup.universalFee)
 
     await createStrategies(obj, options)
     await addStrategies(obj)
-    await obj.pool.updateFeeCollector(feeCollector)
     const collateralTokenAddress = await obj.pool.token()
     obj.collateralToken = await ethers.getContractAt(TokenLike, collateralTokenAddress)
-    obj.swapManager = await ethers.getContractAt('ISwapManager', Address.SWAP_MANAGER)
+    obj.swapManager = await ethers.getContractAt('ISwapManager', Address.Vesper.SWAP_MANAGER)
 
     // Must wait an hour for oracles to be effective, unless they were created before the strategy
     await provider.send('evm_increaseTime', [3600])

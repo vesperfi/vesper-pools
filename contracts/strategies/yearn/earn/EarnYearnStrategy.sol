@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.3;
+pragma solidity 0.8.9;
 
 import "../YearnStrategy.sol";
 import "../../Earn.sol";
@@ -23,8 +23,8 @@ contract EarnYearnStrategy is YearnStrategy, Earn {
         if (_collateralBalance > _totalDebt) {
             _withdrawHere(_collateralBalance - _totalDebt);
         }
-        _convertCollateralToDrip();
-        _forwardEarning();
+        // Any collateral here is profit
+        _handleProfit(collateralToken.balanceOf(address(this)));
         return 0;
     }
 

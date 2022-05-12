@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.3;
+pragma solidity 0.8.9;
 
 import "./MakerStrategy.sol";
 import "../../interfaces/vesper/IPoolRewards.sol";
@@ -43,7 +43,7 @@ contract VesperMakerStrategy is MakerStrategy {
         uint256 _share = (_amount * 1e18) / _pricePerShare;
         // Should not withdraw less than requested amount
         _share = _amount > ((_share * _pricePerShare) / 1e18) ? _share + 1 : _share;
-        IVesperPool(receiptToken).whitelistedWithdraw(_share);
+        IVesperPool(receiptToken).withdraw(_share);
     }
 
     function _rebalanceDaiInLender() internal virtual override {
@@ -56,9 +56,13 @@ contract VesperMakerStrategy is MakerStrategy {
 
     /// @notice Claim rewardToken from lender and convert it into DAI
     function _claimRewardsAndConvertTo(address _toToken) internal virtual override {
-        uint256 _vspAmount = IERC20(VSP).balanceOf(address(this));
-        if (_vspAmount > 0) {
-            _safeSwap(VSP, _toToken, _vspAmount, 1);
+        address _poolRewards = IVesperPool(receiptToken).poolRewards();
+        if (_poolRewards != address(0)) {
+            IPoolRewards(_poolRewards).claimReward(address(this));
+            uint256 _vspAmount = IERC20(VSP).balanceOf(address(this));
+            if (_vspAmount != 0) {
+                _safeSwap(VSP, _toToken, _vspAmount, 1);
+            }
         }
     }
 }

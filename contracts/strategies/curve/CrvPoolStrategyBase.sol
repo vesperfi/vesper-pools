@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.3;
+pragma solidity 0.8.9;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import "../../dependencies/openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "../../dependencies/openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "../../dependencies/openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "../../interfaces/vesper/IVesperPool.sol";
 import "../Strategy.sol";
 import "./CrvBase.sol";
@@ -87,11 +87,11 @@ abstract contract CrvPoolStrategyBase is CrvBase, Strategy {
     function updateCrvSlippage(uint256 _newCrvSlippage) external onlyGovernor {
         require(_newCrvSlippage < 10000, "invalid-slippage-value");
         emit UpdatedCrvSlippage(crvSlippage, _newCrvSlippage);
-        crvSlippage - _newCrvSlippage;
+        crvSlippage = _newCrvSlippage;
     }
 
     /// @dev Claimable rewards estimated into pool's collateral value
-    function claimableRewardsInCollateral() public view virtual returns (uint256 rewardAsCollateral) {
+    function estimateClaimableRewardsInCollateral() public view virtual returns (uint256 rewardAsCollateral) {
         //Total Mintable - Previously minted
         uint256 claimable =
             ILiquidityGaugeV2(crvGauge).integrate_fraction(address(this)) -
@@ -119,7 +119,7 @@ abstract contract CrvPoolStrategyBase is CrvBase, Strategy {
         _value =
             collateralToken.balanceOf(address(this)) +
             convertFrom18(_calcAmtOutAfterSlippage(getLpValue(totalLp()), crvSlippage)) +
-            claimableRewardsInCollateral();
+            estimateClaimableRewardsInCollateral();
     }
 
     function _setupOracles() internal virtual override {
@@ -147,7 +147,7 @@ abstract contract CrvPoolStrategyBase is CrvBase, Strategy {
         }
     }
 
-    // given the rates of 3 stablecoins compared with a common denominator
+    // given the rates of 3 stable coins compared with a common denominator
     // return the lowest divided by the highest
     function _getSafeUsdRate() internal returns (uint256) {
         // use a stored rate if we've looked it up recently
@@ -248,7 +248,7 @@ abstract contract CrvPoolStrategyBase is CrvBase, Strategy {
     }
 
     /**
-     * @notice some strategy may want to prepare before doing migration. 
+     * @notice some strategy may want to prepare before doing migration.
         Example In Maker old strategy want to give vault ownership to new strategy
      */
     function _beforeMigration(
@@ -286,7 +286,7 @@ abstract contract CrvPoolStrategyBase is CrvBase, Strategy {
      */
     function _liquidate(uint256 _excessDebt, uint256 _extra) internal returns (uint256 _payback) {
         _payback = _unstakeAndWithdrawAsCollateral(_excessDebt + _extra);
-        // we dont want to return a value greater than we need to
+        // we don't want to return a value greater than we need to
         if (_payback > _excessDebt) _payback = _excessDebt;
     }
 

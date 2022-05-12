@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: GNU LGPLv3
 // Copied from CompoundLeverageStrategy.sol
 
-pragma solidity 0.8.3;
+pragma solidity 0.8.9;
 
 import "../Strategy.sol";
 import "../../interfaces/aave/IAave.sol";
 import "../../interfaces/oracle/IUniswapV3Oracle.sol";
 import "../../FlashLoanHelper.sol";
-import "../../pool/Errors.sol";
+import "../../Errors.sol";
 import "./AaveCore.sol";
-import "@openzeppelin/contracts/utils/math/Math.sol";
+import "../../dependencies/openzeppelin/contracts/utils/math/Math.sol";
 
 /// @title This strategy will deposit collateral token in Aave and based on position
 /// it will borrow same collateral token. It will use borrowed asset as supply and borrow again.
@@ -23,9 +23,9 @@ contract AaveLeverageStrategy is Strategy, AaveCore, FlashLoanHelper {
     uint256 internal constant MAX_BPS = 10_000; //100%
     uint256 public minBorrowRatio = 5_000; // 50%
     uint256 public maxBorrowRatio = 6_000; // 60%
-    uint256 public slippage = 1_000; // 10%
-    IUniswapV3Oracle internal constant ORACLE = IUniswapV3Oracle(0x0F1f5A87f99f0918e6C81F16E59F3518698221Ff);
+    uint256 internal constant COLLATERAL_FACTOR_LIMIT = 9_000; // 90%
     uint32 internal constant TWAP_PERIOD = 3600;
+    IUniswapV3Oracle internal constant ORACLE = IUniswapV3Oracle(0x0F1f5A87f99f0918e6C81F16E59F3518698221Ff);
     address public rewardToken;
     AToken public vdToken; // Variable Debt Token
 
@@ -45,23 +45,16 @@ contract AaveLeverageStrategy is Strategy, AaveCore, FlashLoanHelper {
     }
 
     /**
-     * @notice Update upper, lower borrow  and slippage.
+     * @notice Update upper and lower borrow ratio
      * @dev It is possible to set 0 as _minBorrowRatio to not borrow anything
      * @param _minBorrowRatio Minimum % we want to borrow
      * @param _maxBorrowRatio Maximum % we want to borrow
-     * @param _slippage slippage for collateral factor
      */
-    function updateLeverageConfig(
-        uint256 _minBorrowRatio,
-        uint256 _maxBorrowRatio,
-        uint256 _slippage
-    ) external onlyGovernor {
+    function updateBorrowRatio(uint256 _minBorrowRatio, uint256 _maxBorrowRatio) external onlyGovernor {
         require(_maxBorrowRatio < _getCollateralFactor(), Errors.INVALID_MAX_BORROW_LIMIT);
         require(_maxBorrowRatio > _minBorrowRatio, Errors.MAX_LIMIT_LESS_THAN_MIN);
-        require(_slippage <= MAX_BPS, Errors.INVALID_SLIPPAGE);
         minBorrowRatio = _minBorrowRatio;
         maxBorrowRatio = _maxBorrowRatio;
-        slippage = _slippage;
     }
 
     function updateFlashLoanStatus(bool _dydxStatus, bool _aaveStatus) external virtual onlyGovernor {
@@ -75,7 +68,7 @@ contract AaveLeverageStrategy is Strategy, AaveCore, FlashLoanHelper {
     function _getCollateralFactor() internal view virtual returns (uint256 _collateralFactor) {
         (, uint256 ltvRatio, , , , , , , , ) =
             aaveProtocolDataProvider.getReserveConfigurationData(address(collateralToken));
-        _collateralFactor = (ltvRatio * (MAX_BPS - slippage)) / MAX_BPS;
+        _collateralFactor = (ltvRatio * COLLATERAL_FACTOR_LIMIT) / MAX_BPS;
     }
 
     /**
@@ -221,7 +214,7 @@ contract AaveLeverageStrategy is Strategy, AaveCore, FlashLoanHelper {
         )
     {
         uint256 _excessDebt = IVesperPool(pool).excessDebt(address(this));
-        (, , , , uint256 _totalDebt, , , uint256 _debtRatio) = IVesperPool(pool).strategy(address(this));
+        (, , , , uint256 _totalDebt, , , uint256 _debtRatio, ) = IVesperPool(pool).strategy(address(this));
 
         // Claim rewardToken and convert to collateral token
         _claimRewardsAndConvertTo(address(collateralToken));

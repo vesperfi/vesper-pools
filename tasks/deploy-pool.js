@@ -4,6 +4,12 @@ const _ = require('lodash')
 const del = require('del')
 const copy = require('recursive-copy')
 const fs = require('fs')
+const execSync = require('child_process').execSync
+
+const PoolAccountant = 'PoolAccountant'
+const PoolRewards = 'PoolRewards'
+const VesperEarnDrip = 'VesperEarnDrip'
+const poolBaseDir = 'contracts/pool'
 
 // Validate given keys exists in given object
 function validateObject(object, keys) {
@@ -19,12 +25,7 @@ function validatePoolConfig(poolConfig, targetChain) {
   if (!poolConfig) {
     throw new Error(`Missing pool configuration in /helper/${targetChain}/poolConfig file`)
   }
-  const topLevelKeys = ['contractName', 'poolParams', 'setup']
-  if (poolConfig.contractName.includes('VFR')) {
-    topLevelKeys.push('deploymentName')
-  } else {
-    topLevelKeys.push('rewards')
-  }
+  const topLevelKeys = ['contractName', 'poolParams', 'rewards', 'setup']
   // Validate top level properties in config object
   validateObject(poolConfig, topLevelKeys)
 
@@ -34,7 +35,7 @@ function validatePoolConfig(poolConfig, targetChain) {
   }
 
   // Validate setup in config object
-  const setupKeys = ['feeCollector', 'withdrawFee']
+  const setupKeys = ['universalFee']
   validateObject(poolConfig.setup, setupKeys)
 
   // Validate rewards in config object
@@ -42,12 +43,12 @@ function validatePoolConfig(poolConfig, targetChain) {
   if (poolConfig.poolParams[0].includes('Earn')) {
     rewardsKeys = ['contract', 'tokens']
     validateObject(poolConfig.rewards, rewardsKeys)
-    if (poolConfig.rewards.contract !== 'VesperEarnDrip') {
+    if (poolConfig.rewards.contract !== VesperEarnDrip) {
       throw new Error('Wrong contract name for Earn Rewards pool')
     }
-  } else if (!poolConfig.contractName.includes('VFR')) {
+  } else {
     validateObject(poolConfig.rewards, rewardsKeys)
-    if (poolConfig.rewards.contract !== 'PoolRewards') {
+    if (poolConfig.rewards.contract !== PoolRewards) {
       throw new Error('Wrong contract name for Rewards Pool')
     }
     if (!poolConfig.rewards.tokens.length) {
@@ -56,8 +57,91 @@ function validatePoolConfig(poolConfig, targetChain) {
   }
 }
 
+function getProxyContracts() {
+  const proxyContracts = [
+    { contract: hre.poolConfig.contractName, path: poolBaseDir },
+    { contract: PoolAccountant, path: poolBaseDir },
+    { contract: PoolRewards, path: poolBaseDir },
+  ]
+  if (hre.poolConfig.poolParams[0].includes('Earn')) {
+    proxyContracts[2] = { contract: VesperEarnDrip, path: `${poolBaseDir}/earn/` }
+  }
+  return proxyContracts
+}
+
+async function shouldReuseImplementation(network, versionInfo, config) {
+  if (!versionInfo || !versionInfo[config.contract]) {
+    console.debug(`Version info of ${config.contract} on ${network} is missing, will deploy new implementation`)
+    return false
+  }
+  const oldVersion = versionInfo[config.contract].version
+  const command = `cat ${config.path}/${config.contract}.sol | grep 'VERSION' | awk '{ print $6 }'`
+  const newVersion = execSync(command).toString().slice(1, 6)
+  console.debug(`${config.contract}:: old version is ${oldVersion}`)
+  console.debug(`${config.contract}:: new versions is ${newVersion}`)
+
+  // We will reuse already deployed implementation if versions are same.
+  return newVersion === oldVersion
+}
+
+async function getContractsToReuse() {
+  const networkName = hre.network.name
+  const versionInfoFile = `./deployments/${networkName}/.versionInfo.json`
+  let versionInfo
+  if (fs.existsSync(versionInfoFile)) {
+    versionInfo = JSON.parse(fs.readFileSync(versionInfoFile))
+  }
+
+  const contractsToReuse = []
+  const proxyContracts = getProxyContracts()
+
+  for (const proxy of proxyContracts) {
+    const shouldReuse = await shouldReuseImplementation(networkName, versionInfo, proxy)
+    if (shouldReuse) {
+      contractsToReuse[proxy.contract] = versionInfo[proxy.contract]
+    }
+  }
+
+  console.debug('Contracts to reuse', contractsToReuse)
+  return contractsToReuse
+}
+
+async function updateVersionInfo(reusedContracts, deployedContractInfo = {}) {
+  // Update version info
+  const versionInfoFile = `./deployments/${hre.network.name}/.versionInfo.json`
+  let versionInfo
+  if (fs.existsSync(versionInfoFile)) {
+    versionInfo = JSON.parse(fs.readFileSync(versionInfoFile))
+  }
+  // Get name of deployed contracts
+  const contractNames = Object.keys(deployedContractInfo).filter(name => !reusedContracts.includes(name))
+  // Prepare version info for each deployed contract
+  for (const contractName of contractNames) {
+    const contract = await ethers.getContractAt(contractName, deployedContractInfo[contractName])
+    const value = {
+      address: deployedContractInfo[contractName],
+      version: await contract.VERSION(),
+    }
+    if (versionInfo) {
+      versionInfo[contractName] = value
+    } else {
+      versionInfo = {
+        [contractName]: value,
+      }
+    }
+  }
+  // Store updated version info
+  fs.writeFileSync(versionInfoFile, JSON.stringify(versionInfo, null, 2))
+}
+
+/* eslint-disable complexity */
 async function deployPoolContracts(pool, deployParams, release) {
   let deployer = process.env.DEPLOYER
+  // If no deployer than use default
+  if (!deployer) {
+    deployer = (await ethers.getSigners())[0].address
+  }
+
   if (deployer && deployer.startsWith('ledger')) {
     deployer = deployer.split('ledger://')[1]
   }
@@ -76,26 +160,29 @@ async function deployPoolContracts(pool, deployParams, release) {
   try {
     // Copy files from pool directory to network directory for deployment
     if (fs.existsSync(poolDir)) {
-      await copy(poolDir, networkDir, {
-        overwrite: true,
-        filter: ['*.json', 'solcInputs/*', '!DefaultProxyAdmin.json', '!*Upgrader.json'],
-      })
+      await copy(poolDir, networkDir, { overwrite: true, filter: ['*.json', 'solcInputs/*'] })
     }
+    // Copy deployer's default proxy admin and upgrader to network directory for deployment
+    if (fs.existsSync(deployerDir)) {
+      await copy(deployerDir, networkDir, { overwrite: true, filter: ['*.json'] })
+    }
+
+    // Set in hre to later use in upgrade-pool script
+    hre.contractsToReuse = await getContractsToReuse()
+    const reuseFilter = []
+    Object.keys(hre.contractsToReuse).forEach(contract => reuseFilter.push(`${contract}_Implementation.json`))
+
     // Copy files from global directory to network directory for deployment
     if (fs.existsSync(globalDir)) {
-      await copy(globalDir, networkDir, { overwrite: true, filter: ['*.json'] })
-    }
-    // Copy deployer's default proxy admin to network directory for deployment
-    if (fs.existsSync(deployerDir)) {
-      await copy(deployerDir, networkDir, {
-        overwrite: true,
-        filter: ['*.json'],
-      })
+      await copy(globalDir, networkDir, { overwrite: true, filter: ['*.json', '!*Implementation*', ...reuseFilter] })
     }
 
+    // Call deploy script, this is where actual deployment will happen
     await run('deploy', { ...deployParams })
+    // Update implementation version info
+    await updateVersionInfo(hre.contractsToReuse, hre.implementations)
 
-    let copyFilter = ['*.json', 'solcInputs/*']
+    let copyFilter = ['*.json', 'solcInputs/*', '!*Implementation.json']
 
     // Do not copy global deployments into pool specific deployments
     if (fs.existsSync(globalDir)) {
@@ -107,6 +194,8 @@ async function deployPoolContracts(pool, deployParams, release) {
     await copy(networkDir, poolDir, { overwrite: true, filter: copyFilter })
     // Copy default proxy admin to deployer directory
     await copy(networkDir, deployerDir, { overwrite: true, filter: ['DefaultProxyAdmin.json', '*Upgrader.json'] })
+    // Copy deployed implementation to global directory
+    await copy(networkDir, globalDir, { overwrite: true, filter: ['CollateralManager.json', '*Implementation.json'] })
   } catch (error) {
     if (error.message.includes('TransportStatusError')) {
       console.error('Error: Ledger device is locked. Please unlock your ledger device!')
@@ -158,17 +247,7 @@ task('deploy-pool', 'Deploy vesper pool')
     hre.poolConfig = require(`../helper/${targetChain}/poolConfig`)[pool.toUpperCase()]
     hre.poolName = pool.toLowerCase()
 
-    if (pool.includes('VFR')) {
-      validatePoolConfig(hre.poolConfig.Coverage, targetChain)
-      validatePoolConfig(hre.poolConfig.Stable, targetChain)
-      if (strategyName && strategyName.includes('Coverage')) {
-        hre.poolConfig = require(`../helper/${targetChain}/poolConfig`)[pool.toUpperCase()].Coverage
-      } else if (strategyName && strategyName.includes('Stable')) {
-        hre.poolConfig = require(`../helper/${targetChain}/poolConfig`)[pool.toUpperCase()].Stable
-      }
-    } else {
-      validatePoolConfig(hre.poolConfig, targetChain)
-    }
+    validatePoolConfig(hre.poolConfig, targetChain)
 
     // Set target chain in hre
     hre.targetChain = targetChain

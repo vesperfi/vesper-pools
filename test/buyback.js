@@ -30,8 +30,8 @@ describe('Buyback', function () {
     snapshotId = await ethers.provider.send('evm_snapshot', [])
     ;[, someAccount] = await ethers.getSigners()
     governor = await unlock(GOVERNOR)
-    feeCollector = await unlock(Address.FEE_COLLECTOR)
-    vspHolder = await unlock(Address.vVSP)
+    feeCollector = await unlock(Address.Vesper.FEE_COLLECTOR)
+    vspHolder = await unlock(Address.Vesper.vVSP)
     hre.targetChain = getChain()
     const {
       BuyBack: { address: buyBackAddress },
@@ -44,12 +44,12 @@ describe('Buyback', function () {
     buyback = buyback.connect(feeCollector)
     keepers = await ethers.getContractAt('IAddressList', await buyback.keepers(), feeCollector)
 
-    vVSP = await ethers.getContractAt('ERC20', Address.vVSP, feeCollector)
-    vsp = await ethers.getContractAt('ERC20', Address.VSP, feeCollector)
+    vVSP = await ethers.getContractAt('ERC20', Address.Vesper.vVSP, feeCollector)
+    vsp = await ethers.getContractAt('ERC20', Address.Vesper.VSP, feeCollector)
     dai = await ethers.getContractAt('ERC20', Address.DAI, feeCollector)
     usdc = await ethers.getContractAt('ERC20', Address.USDC, feeCollector)
-    vaDAI = await ethers.getContractAt('ERC20', Address.vaDAI, feeCollector)
-    await swapEthForToken(1, Address.DAI, someAccount, Address.FEE_COLLECTOR)
+    vaDAI = await ethers.getContractAt('ERC20', Address.Vesper.vaDAI, feeCollector)
+    await swapEthForToken(1, Address.DAI, someAccount, Address.Vesper.FEE_COLLECTOR)
   })
 
   afterEach(async function () {
@@ -66,7 +66,7 @@ describe('Buyback', function () {
       const amount = await dai.balanceOf(feeCollector.address)
       await dai.transfer(buyback.address, amount)
       const buybackDaiBefore = await dai.balanceOf(buyback.address)
-      const vVspVspBefore = await vsp.balanceOf(Address.vVSP)
+      const vVspVspBefore = await vsp.balanceOf(Address.Vesper.vVSP)
       expect(buybackDaiBefore).gt('0')
 
       // when
@@ -75,7 +75,7 @@ describe('Buyback', function () {
 
       // then
       const buybackDaiAfter = await dai.balanceOf(buyback.address)
-      const vVspVspAfter = await vsp.balanceOf(Address.vVSP)
+      const vVspVspAfter = await vsp.balanceOf(Address.Vesper.vVSP)
       const expectedVspBought = vVspVspAfter.sub(vVspVspBefore)
 
       const receipt = await tx.wait()

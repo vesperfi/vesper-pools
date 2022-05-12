@@ -39,10 +39,10 @@ function shouldBehaveLikeCrvStrategy(strategyIndex) {
     })
 
     it('Should get total value', async function () {
-      deposit(pool, collateralToken, 1, user1)
+      await deposit(pool, collateralToken, 1, user1)
       await strategy.rebalance()
       const totalValue = await strategy.totalValue()
-      expect(totalValue).to.be.equal(0, 'Total tokens should be zero')
+      expect(totalValue).to.be.gt(0, 'Total tokens should be > zero')
     })
 
     // Note: Waiting clarification from Curve team to be able to simulate
@@ -55,9 +55,9 @@ function shouldBehaveLikeCrvStrategy(strategyIndex) {
         await strategy.rebalance()
         await advanceBlock(1000)
         await strategy.setCheckpoint()
-        const crvAccruedBefore = await strategy.claimableRewardsInCollateral()
+        const crvAccruedBefore = await strategy.estimateClaimableRewardsInCollateral()
         await strategy.rebalance()
-        const crvAccruedAfter = await strategy.claimableRewardsInCollateral()
+        const crvAccruedAfter = await strategy.estimateClaimableRewardsInCollateral()
         expect(crvAccruedBefore).to.be.gt(0, 'crv accrued should be > 0 before rebalance')
         expect(crvAccruedAfter).to.be.equal(0, 'crv accrued should be 0 after rebalance')
       })
