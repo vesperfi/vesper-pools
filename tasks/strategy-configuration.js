@@ -72,6 +72,7 @@ function validateStrategyConfig(strategyName, strategyConfig) {
   }
 }
 
+/* eslint-disable complexity */
 task('strategy-configuration', 'Prepare strategy configuration for deployment')
   .addOptionalParam('strategyName', 'Name of strategy to deploy')
   .addOptionalParam('targetChain', 'Target chain where contracts will be deployed')
@@ -118,13 +119,26 @@ task('strategy-configuration', 'Prepare strategy configuration for deployment')
     hre.multisigNonce = multisigNonce
     hre.oldStrategyName = oldStrategyName
 
-    // For localhost deployment, if pool dir do not exits, then copy from targetChain.
-    const networkDir = `./deployments/${hre.network.name}`
+    // For localhost strategy deployment, if pool dir do not exits, then copy from targetChain.
+    const networkDir = './deployments/localhost'
     const poolDir = `${networkDir}/${hre.poolName}`
+    const targetChainNetworkDir = `./deployments/${targetChain}`
     if (hre.network.name === 'localhost' && !fs.existsSync(poolDir)) {
-      const targetChainDir = `./deployments/${targetChain}/${hre.poolName}`
-      if (fs.existsSync(targetChainDir)) {
-        await copy(targetChainDir, poolDir, { overwrite: true })
+      const targetChainPoolDir = `${targetChainNetworkDir}/${hre.poolName}`
+      if (fs.existsSync(targetChainPoolDir)) {
+        await copy(targetChainPoolDir, poolDir, { overwrite: true })
+      }
+      // If not .chainId in localhost network directory then copy from targetChain network directory
+      if (!fs.existsSync(`${networkDir}/.chainId`)) {
+        await copy(`./deployments/${targetChain}`, networkDir, { dot: true, filter: '.chainId' })
+      }
+    }
+
+    // CollateralManger.json is required for localhost Maker strategy deployment.
+    if (hre.network.name === 'localhost' && strategyName.includes('Maker')) {
+      const targetChainGlobalDir = `${targetChainNetworkDir}/global`
+      if (fs.existsSync(targetChainGlobalDir)) {
+        await copy(targetChainGlobalDir, `${networkDir}/global`, { overwrite: true, filter: 'CollateralManager.json' })
       }
     }
   })
