@@ -6,7 +6,7 @@ on:
       - "contracts/utils/BuyBack.sol"
 
 jobs:
-  vesper-pool-test:
+  buyback-test:
     runs-on: ubuntu-latest
     env:
       NODE_URL: ${{ secrets.NODE_URL }}
@@ -19,9 +19,9 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v2
         with:
-          node-version-file: '.nvmrc'
+          node-version-file: ".nvmrc"
 
-      - name: Run npm install with node v${{ matrix.node }}
+      - name: Run npm install
         run: npm install
 
       - name: Running tests for BuyBack

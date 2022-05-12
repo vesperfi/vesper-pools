@@ -289,7 +289,7 @@ describe('Buyback', function () {
 
     it('should revert if not governor', async function () {
       const tx = buyback.connect(someAccount).migrateAssets([dai.address], someAccount.address)
-      await expect(tx).revertedWith('not-the-governor')
+      await expect(tx).revertedWith('not-governor')
     })
   })
 
@@ -319,7 +319,7 @@ describe('Buyback', function () {
     it('should revert if not have enough access', async function () {
       const call = buyback.interface.encodeFunctionData('migrateAssets', [[dai.address], someAccount.address])
       const tx = buyback.connect(someAccount).batch([call], true)
-      await expect(tx).revertedWith('not-the-governor')
+      await expect(tx).revertedWith('not-governor')
     })
   })
 
