@@ -1,14 +1,14 @@
-name: vaUSDC with Alpha Lend Avalanche Strategy
+name: vaDAI with TraderJoe.
 on:
   pull_request:
     paths:
-      - "test/vausdc/alpha-lend-avalanche.js"
+      - "test/vadai/trader-joe.js"
       - "contracts/strategies/Strategy.sol"
-      - "contracts/strategies/alpha/AlphaLendStrategy.sol"
-      - "contracts/strategies/alpha/AlphaLendAvalancheStrategy.sol"
+      - "contracts/strategies/compound/CompoundMultiRewardAvalancheStrategy.sol"
+      - "contracts/strategies/compound/CompoundStrategy.sol"
 
 jobs:
-  vausdc-alpha-lend-avalanche-strategy-test:
+  vadai-traderjoe-strategy-test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2.3.1
@@ -24,5 +24,5 @@ jobs:
       - name: Run npm install
         run: npm install
 
-      - name: Running tests for vaUSDC Alpha Lend Avalanche
-        run: npm test "test/vausdc/alpha-lend-avalanche.js"
+      - name: Running tests for vaDAI TraderJoe
+        run: npm test "test/vadai/trader-joe.js"

@@ -1,3 +1,4 @@
+/* eslint-disable complexity */
 'use strict'
 const swapper = require('./tokenSwapper')
 const hre = require('hardhat')
@@ -194,6 +195,18 @@ async function harvestVesper(strategy) {
   return harvestYearn(strategy)
 }
 
+async function makeStrategyProfitable(strategy, collateralToken, user) {
+  // some strategies are loss making so lets make strategy profitable by sending token
+  if (collateralToken.address === NATIVE_TOKEN) {
+    const weth = await ethers.getContractAt('TokenLike', collateralToken.address, user.signer)
+    const transferAmount = ethers.utils.parseEther('2')
+    await weth.deposit({ value: transferAmount })
+    await weth.transfer(strategy.address, transferAmount)
+  } else {
+    await swapper.swapEthForToken(2, collateralToken.address, user, strategy.address)
+  }
+}
+
 /**
  * Rebalance one strategy
  *
@@ -220,7 +233,11 @@ async function rebalanceStrategy(strategy) {
       // Alpha SafeBox has a cToken - this method calls exchangeRateCurrent on the cToken
       await strategy.instance.updateTokenRate()
     }
-    if (strategy.type.includes('rariFuse') || strategy.type.includes('earnRariFuse')) {
+    if (
+      strategy.type.includes('rariFuse') ||
+      strategy.type.includes('earnRariFuse') ||
+      strategy.type.includes('trader')
+    ) {
       const cToken = await ethers.getContractAt('CToken', strategy.token.address)
       await cToken.accrueInterest()
     }
@@ -290,4 +307,5 @@ module.exports = {
   totalDebtOfAllStrategy,
   executeIfExist,
   timeTravel,
+  makeStrategyProfitable,
 }

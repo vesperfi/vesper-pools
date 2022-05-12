@@ -13,7 +13,7 @@ describe('vaDAI Pool', function () {
     const strategies = [strategy1]
 
     prepareConfig(strategies)
-    shouldBehaveLikePool('vaDai', 'DAI')
+    shouldBehaveLikePool('vaDAI', 'DAI')
     shouldBehaveLikeStrategy(0, strategies[0].type, strategies[0].contract)
   }
 })

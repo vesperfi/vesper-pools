@@ -182,15 +182,14 @@ async function createMakerStrategy(strategy, poolAddress, options) {
 }
 
 /**
- * Create and configure Vesper Maker Strategy. Also update test class object with required data.
+ * Check and Set earn pool
  *
  * @param {object} strategy  Strategy config object
  * @param {object} poolAddress pool address
  * @param {object} options extra params
- * @returns {object} Strategy instance
  */
-async function createVesperMakerStrategy(strategy, poolAddress, options) {
-  // For Earn VesperMaker, make sure growToken and receiptToken aka vPool is same
+async function checkAndSetEarnPool(strategy, poolAddress, options) {
+  // For Earn Vesper, make sure growToken and receiptToken aka vPool is same
   if (strategy.type.toUpperCase().includes('EARN')) {
     const pool = await ethers.getContractAt('VPool', poolAddress)
     const earnDrip = await ethers.getContractAt('VesperEarnDrip', await pool.poolRewards())
@@ -199,13 +198,23 @@ async function createVesperMakerStrategy(strategy, poolAddress, options) {
       options.vPool = await ethers.getContractAt('VPool', growToken)
     }
   }
+}
+/**
+ * Create and configure Vesper Maker Strategy. Also update test class object with required data.
+ *
+ * @param {object} strategy  Strategy config object
+ * @param {object} poolAddress pool address
+ * @param {object} options extra params
+ * @returns {object} Strategy instance
+ */
+async function createVesperMakerStrategy(strategy, poolAddress, options) {
+  await checkAndSetEarnPool(strategy, poolAddress, options)
   // For VesperMaker if no vPool and then deploy one vDAI pool
   if (!options.vPool) {
     options.vPool = await setupVesperPool()
   }
   // For test purpose we will not use receiptToken defined in config. Update vPool in config
   strategy.constructorArgs.receiptToken = options.vPool.address
-
   const collateralManager = options.collateralManager
     ? options.collateralManager
     : await deployContract(CollateralManager)
@@ -239,7 +248,9 @@ async function createEarnVesperStrategy(strategy, poolAddress, options) {
   const underlyingVesperPool = await ethers.getContractAt('IVesperPool', strategy.constructorArgs.receiptToken)
   const collateralToken = await underlyingVesperPool.token()
 
-  options.vPool = await setupVesperPool(collateralToken)
+  if (!options.vPool) {
+    options.vPool = await setupVesperPool(collateralToken)
+  }
 
   const TOTAL_REWARD = ethers.utils.parseUnits('150000')
   const REWARD_DURATION = 30 * 24 * 60 * 60

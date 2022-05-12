@@ -7,7 +7,7 @@ const { shouldMigrateStrategies } = require('../behavior/strategy-migration')
 const { strategyConfig } = require('../utils/chains').getChainData()
 
 describe('vaDAI Pool', function () {
-  const strategy = strategyConfig.TraderJoeCompoundStrategyAvalancheDAI
+  const strategy = strategyConfig.TraderJoeStrategyDAI
   strategy.config.debtRatio = 9000
 
   const strategies = [strategy]
