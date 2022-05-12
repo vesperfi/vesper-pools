@@ -1,7 +1,7 @@
 'use strict'
 
 const { makeNewStrategy } = require('../utils/setupHelper')
-const { deposit: _deposit, timeTravel, rebalanceStrategy } = require('../utils/poolOps')
+const { deposit: _deposit, rebalanceStrategy } = require('../utils/poolOps')
 const StrategyType = require('../utils/strategyTypes')
 const { expect } = require('chai')
 
@@ -75,7 +75,7 @@ async function shouldMigrateStrategies(poolName) {
     await rebalanceStrategy(newStrategy)
     await pool.connect(user2.signer).withdraw(amountBefore)
     const amountAfter = await pool.balanceOf(user2.address)
-    expect(amountAfter).to.be.equal(0, 'amount should be 0 after withdraw')
+    expect(amountAfter).to.be.lt(amountBefore, "User's pool amount should decrease after withdraw")
   }
 
   async function assertTotalDebt(newStrategy) {
@@ -88,20 +88,11 @@ async function shouldMigrateStrategies(poolName) {
     expect(totalDebtAfter).to.be.gt(totalDebtBefore, `Total debt of strategy in ${poolName} is wrong`)
   }
 
-  async function assertProfit(newStrategy) {
-    await timeTravel()
-    await rebalanceStrategy(newStrategy)
-    const strategyParams = await pool.strategy(newStrategy.instance.address)
-    const totalProfit = strategyParams._totalProfit
-    expect(totalProfit).to.be.gt(0, `Total debt of strategy in ${poolName} is wrong`)
-  }
-
   async function strategyMigration(strategy) {
     const newStrategy = await makeNewStrategy(strategy, pool.address, options)
     await migrateAndAssert(strategy, newStrategy, strategy.token)
     await assertDepositAndWithdraw(newStrategy)
     await assertTotalDebt(newStrategy)
-    await assertProfit(newStrategy)
   }
 
   describe(`${poolName} Strategy Migration`, function () {

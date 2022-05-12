@@ -8,7 +8,6 @@ on:
       - "contracts/strategies/alpha/AlphaLendAvalancheStrategy.sol"
       - "contracts/strategies/alpha/AlphaLendAvalancheStrategyAVAX.sol"
       - "contracts/strategies/alpha/AlphaLendStrategyETH.sol"
-
 jobs:
   vaavax-alpha-lend-avalanche-strategy-test:
     runs-on: ubuntu-latest

@@ -96,6 +96,12 @@ const PoolConfig = {
     setup: { ...setup },
     rewards: { contract: 'VesperEarnDrip', tokens: [Address.PUNK, Address.Vesper.VSP] },
   },
+  VEUSDC_LMR: {
+    contractName: 'VPool',
+    poolParams: ['veUSDC-LMR Earn Pool', 'veUSDC-LMR', Address.USDC],
+    setup: { ...setup },
+    rewards: { contract: 'VesperEarnDrip', tokens: [Address.LMR, Address.Vesper.VSP] },
+  },
   VLINK: {
     contractName: 'VPool',
     poolParams: ['vLINK Pool', 'vLINK', Address.LINK],

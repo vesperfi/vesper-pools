@@ -116,7 +116,7 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
       let depositAmount
       const valueDust = '100000'
       beforeEach(async function () {
-        depositAmount = await deposit(20, user1)
+        depositAmount = await deposit(10, user1)
       })
 
       it(`Should withdraw all ${collateralName} before rebalance`, async function () {
@@ -190,7 +190,7 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
         }
         // reset universal fee to 0.
         await pool.updateUniversalFee('0')
-        depositAmount = await deposit(15, user2)
+        depositAmount = await deposit(5, user2)
         const dust = DECIMAL18.div(100) // Dust is less than 1e16
         await rebalance(strategies)
         // Some strategies can report a loss if they don't have time to earn anything

@@ -8,7 +8,7 @@ const { strategyConfig } = require('../utils/chains').getChainData()
 
 describe('vaUSDC Pool', function () {
   if (network.AVALANCHE === process.env.TEST_CHAIN) {
-    const strategy1 = strategyConfig.AlphaLendAvalancheStrategyUSDC
+    const strategy1 = strategyConfig.AlphaLendAvalancheStrategyUSDC_E
     strategy1.config.debtRatio = 9000
     const strategies = [strategy1]
 

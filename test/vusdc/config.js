@@ -3,7 +3,7 @@
 const { getUsers, setupVPool } = require('../utils/setupHelper')
 const { poolConfig, strategyConfig } = require('../utils/chains').getChainData()
 
-function prepareConfig(_strategies) {
+function prepareConfig(_strategies, options) {
   let strategies = _strategies
 
   if (!strategies) {
@@ -17,13 +17,17 @@ function prepareConfig(_strategies) {
   beforeEach(async function () {
     const users = await getUsers()
     this.users = users
-    await setupVPool(this, {
-      poolConfig: poolConfig.VUSDC,
-      strategies: strategies.map((item, i) => ({
-        ...item,
-        feeCollector: users[i + 8].address, // leave first 8 users for other testing
-      })),
-    })
+    await setupVPool(
+      this,
+      {
+        poolConfig: poolConfig.VAUSDC,
+        strategies: strategies.map((item, i) => ({
+          ...item,
+          feeCollector: users[i + 8].address, // leave first 8 users for other testing
+        })),
+      },
+      options,
+    )
   })
   return strategies
 }

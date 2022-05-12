@@ -7,7 +7,7 @@ const swapManager = Address.Vesper.SWAP_MANAGER
 const config = { debtRatio: 0, externalDepositFee: 0 }
 const setup = {
   feeCollector: Address.Vesper.FEE_COLLECTOR,
-  keepers: [Address.Vesper.KEEPER],
+  keepers: [Address.Vesper.KEEPER, Address.Vesper.MP, Address.Vesper.JCV],
 }
 
 // TODO update setup to remove strategy type, once done remove type from heres too
@@ -171,7 +171,7 @@ const StrategyConfig = {
     setup: { ...setup },
   },
 
-  TraderJoeCompoundStrategyAvalancheDAI: {
+  TraderJoeStrategyDAI: {
     contract: 'CompoundMultiRewardAvalancheStrategy',
     type: StrategyTypes.TRADER_JOE,
     constructorArgs: {
@@ -180,7 +180,7 @@ const StrategyConfig = {
       rewardDistributor: Address.TraderJoe.REWARD_DISTRIBUTOR,
       rewardToken: Address.TraderJoe.JOE,
       receiptToken: Address.TraderJoe.jDAI,
-      strategyName: 'TraderJoeCompoundStrategyAvalancheDAI',
+      strategyName: 'TraderJoeStrategyDAI',
     },
     config: { ...config }, // Shallow copy
     setup: { ...setup },
@@ -520,7 +520,19 @@ const StrategyConfig = {
     setup: { ...setup },
   },
 
-  AlphaLendAvalancheStrategyUSDC: {
+  AlphaLendAvalancheStrategyUSDC_E: {
+    contract: 'AlphaLendAvalancheStrategy',
+    type: StrategyTypes.ALPHA_LEND,
+    constructorArgs: {
+      swapManager,
+      receiptToken: Address.Alpha.ibUSDCev2,
+      strategyName: 'AlphaLendAvalancheStrategyUSDC',
+    },
+    config: { ...config },
+    setup: { ...setup },
+  },
+
+  AlphaLendAvalancheStrategyUSDC_N: {
     contract: 'AlphaLendAvalancheStrategy',
     type: StrategyTypes.ALPHA_LEND,
     constructorArgs: {
