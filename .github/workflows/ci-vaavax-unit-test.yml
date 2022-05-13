@@ -1,11 +1,11 @@
-name: CI vaavax Unit Test 
+name: CI vaavax Unit Test
 on:
   schedule:
-    - cron: '0 2 * * *' # run at 2 AM UTC
+    - cron: "0 2 * * *" # run at 2 AM UTC
   pull_request:
     paths:
       - ".github/workflows/ci-vaavax-unit-test.yml"
-      
+
 jobs:
   ci-vaavax-unit-test:
     runs-on: ubuntu-latest
@@ -20,11 +20,11 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v2
         with:
-          node-version-file: '.nvmrc'
+          node-version-file: ".nvmrc"
 
       - name: Run npm install
         run: npm install
 
-      - name: Running vaavax unit tests
+      - name: Running vaAVAX unit tests
         run: |
           npm test test/vaavax/*.js -- --parallel
