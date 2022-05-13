@@ -32,7 +32,7 @@ const slots = {
   // Avalanche addresses
   [AvalancheAddress.DAI]: 0,
   [AvalancheAddress.USDC]: 9,
-  [AvalancheAddress.USDC_e]: 0,
+  [AvalancheAddress.USDCe]: 0,
   [AvalancheAddress.WBTC]: 0,
   [AvalancheAddress.WETH]: 0,
   [AvalancheAddress.Benqi.QI]: 1,

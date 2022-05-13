@@ -5,9 +5,9 @@ const { shouldBehaveLikeStrategy } = require('../behavior/strategy')
 const network = require('./../utils/network')
 const { strategyConfig } = require('../utils/chains').getChainData()
 
-describe('vaUSDC Pool', function () {
+describe('vaUSDCe Pool', function () {
   if (network.AVALANCHE === process.env.TEST_CHAIN) {
-    const strategy = strategyConfig.BenqiStrategyUSDC
+    const strategy = strategyConfig.BenqiLeverageStrategyUSDCe
     strategy.config.debtRatio = 9000
 
     const strategies = [strategy]

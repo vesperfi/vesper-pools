@@ -7,7 +7,7 @@ function prepareConfig(_strategies) {
   let strategies = _strategies
 
   if (!strategies) {
-    const strategy1 = strategyConfig.BenqiCompoundStrategyAvalancheQI
+    const strategy1 = strategyConfig.BenqiStrategyQI
     strategy1.config.debtRatio = 9500
     strategies = [strategy1]
   }

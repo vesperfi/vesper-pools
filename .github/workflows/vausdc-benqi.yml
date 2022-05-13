@@ -1,14 +1,14 @@
-name: vaUSDCN with Benqi.
+name: vaUSDC with Benqi.
 on:
   pull_request:
     paths:
-      - "test/vausdcn/benqi.js"
+      - "test/vausdc/benqi.js"
       - "contracts/strategies/Strategy.sol"
       - "contracts/strategies/compound/CompoundMultiRewardAvalancheStrategy.sol"
       - "contracts/strategies/compound/CompoundStrategy.sol"
 
 jobs:
-  vausdcn-benqi-strategy-test:
+  vausdc-benqi-strategy-test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2.3.1
@@ -24,5 +24,5 @@ jobs:
       - name: Run npm install
         run: npm install
 
-      - name: Running tests for vaUSDCN Benqi
-        run: BLOCK_NUMBER=13880050 && npm test "test/vausdcn/benqi.js"
+      - name: Running tests for vaUSDC Benqi
+        run: BLOCK_NUMBER=13880050 && npm test "test/vausdc/benqi.js"

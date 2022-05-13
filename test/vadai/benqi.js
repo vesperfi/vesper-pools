@@ -7,7 +7,7 @@ const { strategyConfig } = require('../utils/chains').getChainData()
 
 describe('vaDAI Pool', function () {
   if (network.AVALANCHE === process.env.TEST_CHAIN) {
-    const strategy = strategyConfig.BenqiCompoundStrategyAvalancheDAI
+    const strategy = strategyConfig.BenqiStrategyDAI
     strategy.config.debtRatio = 9000
 
     const strategies = [strategy]

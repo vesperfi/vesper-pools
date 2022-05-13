@@ -103,7 +103,7 @@
           "TraderJoeLeverageStrategyWBTC": "0xf9E141376579866b4d7040A114dfdFb61bB4764a"
         }
       },
-      "vausdc": {
+      "vausdce": {
         "pool": {
           "proxyAdmin": "0xB6D75A53442844e8F1eed35d7A65225c57B282EB",
           "proxy": "0x13AECC59A88A65F02E053eEce29d743a952D6f1e",
@@ -149,7 +149,7 @@
           "BenqiCompoundStrategyAvalancheQI": "0x95ADd6A66bED963CcdA6fCc11ae109400E1b1743"
         }
       },
-      "vausdcn": {
+      "vausdc": {
         "pool": {
           "proxyAdmin": "0xB6D75A53442844e8F1eed35d7A65225c57B282EB",
           "proxy": "0x4378041dceF18713CE30E36A6b9c8aA41C0dB631",
