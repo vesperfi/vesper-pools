@@ -20,6 +20,8 @@ async function getAccountData(mnemonic) {
   }
 }
 
+// There are multiple ways to get chainId from hardhat/ethers. We have overwritten fork chainId
+// for tests but not for compilation hence below chainId is correct and do not update.
 function getDomainSeparator(name, tokenAddress) {
   return keccak256(
     defaultAbiCoder.encode(
@@ -28,14 +30,14 @@ function getDomainSeparator(name, tokenAddress) {
         keccak256(toUtf8Bytes('EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)')),
         keccak256(toUtf8Bytes(name)),
         keccak256(toUtf8Bytes('1')),
-        ethers.getDefaultProvider().network.chainId,
+        ethers.provider._network.chainId, // DO NOT UPDATE THIS
         tokenAddress,
       ],
     ),
   )
 }
 
-async function getPermitlDigest(token, approve, nonce, deadline) {
+async function getPermitDigest(token, approve, nonce, deadline) {
   const name = await token.name()
   const DOMAIN_SEPARATOR = getDomainSeparator(name, token.address)
   return keccak256(
@@ -56,7 +58,7 @@ async function getPermitlDigest(token, approve, nonce, deadline) {
   )
 }
 
-async function getDelegatelDigest(token, delegatee, nonce, deadline) {
+async function getDelegateDigest(token, delegatee, nonce, deadline) {
   const name = await token.name()
   const DOMAIN_SEPARATOR = getDomainSeparator(name, token.address)
   return keccak256(
@@ -82,7 +84,7 @@ async function getPermitData(token, amount, ownerMnemonic, spender) {
   const nonce = await token.nonces(owner)
   const block = await ethers.provider.getBlock()
   const deadline = block.timestamp + 120
-  const digest = await getPermitlDigest(token, { owner, spender, value: amount }, nonce, deadline)
+  const digest = await getPermitDigest(token, { owner, spender, value: amount }, nonce, deadline)
   const { v, r, s } = signingKey.signDigest(digest)
   return {
     owner,
@@ -96,7 +98,7 @@ async function getDelegateData(token, ownerMnemonic, delegatee) {
   const nonce = await token.nonces(owner)
   const block = await ethers.provider.getBlock()
   const deadline = block.timestamp + 120
-  const digest = await getDelegatelDigest(token, delegatee, nonce, deadline)
+  const digest = await getDelegateDigest(token, delegatee, nonce, deadline)
   const { v, r, s } = signingKey.signDigest(digest)
   return {
     deadline,

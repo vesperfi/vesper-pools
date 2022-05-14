@@ -1,13 +1,24 @@
 'use strict'
 const fs = require('fs')
+const hre = require('hardhat')
 const path = require('path')
-const network = require('./network')
+
+const CHAIN = {
+  1: 'mainnet',
+  137: 'polygon',
+  42161: 'arbitrum',
+  43114: 'avalanche',
+}
 
 function getChain() {
-  const chain = process.env.TEST_CHAIN ? process.env.TEST_CHAIN : network.MAINNET
+  const chainId = hre.network.config.chainId
+  const chain = CHAIN[chainId]
+  if (!chain) {
+    throw new Error(`Please configure chainId: ${chainId} in /test/chains.js`)
+  }
   const supported = fs.readdirSync(path.join(__dirname, '../../helper'))
   if (!supported.includes(chain)) {
-    throw Error(`Unexpected process.env.TEST_CHAIN=${chain}. Use: [${supported}]`)
+    throw Error(`Chain configuration data does not exist for "${chain}".`)
   }
   return chain
 }
