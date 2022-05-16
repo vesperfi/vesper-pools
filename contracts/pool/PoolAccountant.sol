@@ -112,6 +112,16 @@ contract PoolAccountant is Initializable, Context, PoolAccountantStorageV2 {
     }
 
     /**
+     * @notice OnlyPool:: Helper function for V5 upgrade
+     */
+    function setup() external onlyPool {
+        uint256 _len = strategies.length;
+        for (uint256 i = 0; i < _len; i++) {
+            strategy[strategies[i]].interestFee = 0;
+        }
+    }
+
+    /**
      * @notice Remove strategy and recalculate pool level external deposit fee.
      * @dev Revoke and remove strategy from array. Update withdraw queue.
      * Withdraw queue order should not change after remove.

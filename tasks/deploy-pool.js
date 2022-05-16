@@ -182,7 +182,7 @@ async function deployPoolContracts(pool, deployParams, release) {
     // Update implementation version info
     await updateVersionInfo(hre.contractsToReuse, hre.implementations)
 
-    let copyFilter = ['*.json', 'solcInputs/*', '!*Implementation.json']
+    let copyFilter = ['*.json', 'solcInputs/*', '!*Implementation.json', '!DefaultProxyAdmin.json', '!*Upgrader.json']
 
     // Do not copy global deployments into pool specific deployments
     if (fs.existsSync(globalDir)) {

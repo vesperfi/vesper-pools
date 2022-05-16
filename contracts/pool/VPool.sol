@@ -499,10 +499,10 @@ contract VPool is Initializable, PoolERC20Permit, Governable, Pausable, Reentran
      * @notice OnlyGovernor:: Helper function for V5 upgrade
      */
     function setup() external onlyGovernor {
-        require(universalFee == 0, Errors.ALREADY_INITIALIZED);
         universalFee = 200; // 2%
         maxProfitAsFee = 5_000; // 50%
         minDepositLimit = 1;
+        IPoolAccountant(poolAccountant).setup();
     }
 
     /**

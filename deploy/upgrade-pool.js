@@ -6,8 +6,15 @@ const { isDelegateOrOwner, proposeTxn, proposeMultiTxn } = require('./gnosis-txn
 
 const PoolAccountant = 'PoolAccountant'
 const VPoolUpgrader = 'VPoolUpgrader'
-const DefaultProxyAdmin = 'DefaultProxyAdmin'
 const ADMIN_SLOT = '0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103'
+
+// eslint-disable-next-line consistent-return
+function sleep(network, ms) {
+  if (network !== 'localhost') {
+    console.log(`waiting for ${ms} ms`)
+    return new Promise(resolve => setTimeout(resolve, ms))
+  }
+}
 
 async function prepareTxn(contractName, address, method, methodArgs) {
   const contract = await ethers.getContractAt(contractName, address)
@@ -25,9 +32,10 @@ async function getProxyAdminAddress(proxyAddress) {
   return `0x${proxyAdminStorage.slice(26)}`
 }
 
-async function deployUpgraderIfNeeded(hre, upgraderName, deployer, proxy) {
+// eslint-disable-next-line max-params
+async function deployUpgraderIfNeeded(hre, upgraderName, existingUpgraderAddress, deployer, proxy) {
   const { deployments, targetChain } = hre
-  const { deploy, execute, read } = deployments
+  const { deploy, read } = deployments
   const address = require(`../helper/${targetChain}/address`)
 
   // Deploy upgrader. Hardhat-deploy will reuse contract if already exist
@@ -37,23 +45,18 @@ async function deployUpgraderIfNeeded(hre, upgraderName, deployer, proxy) {
     log: true,
     args: [MULTICALL],
   })
-
   const proxyAdmin = await read(upgraderName, 'getProxyAdmin', proxy.address).catch(() => null)
   if (!proxyAdmin) {
-    // Fail fast. It will fail if no deployment exist or DefaultProxyAdmin is not proxyAdmin of proxy
-    await read(DefaultProxyAdmin, 'getProxyAdmin', proxy.address).catch(function (error) {
+    const existingUpgrader = await ethers.getContractAt(upgraderName, existingUpgraderAddress)
+    await existingUpgrader.getProxyAdmin(proxy.address).catch(function (error) {
       throw new Error(`Either no artifact found or not the proxyAdmin, ${error}`)
     })
-
-    console.log('DefaultProxyAdmin exist and it is admin of proxy.')
-    // Check ownership of defaultProxyAdmin
-    if ((await read(DefaultProxyAdmin, 'owner')) !== deployer) {
+    if ((await existingUpgrader.owner()) !== deployer) {
       throw new Error('Deployer is not owner of DefaultProxyAdmin. Cant upgrade pool')
     }
 
-    // DefaultProxyAdmin is admin of proxy. Change proxyAdmin to safe upgrader
-    console.log(`Changing proxyAdmin to ${upgraderName}`)
-    await execute(DefaultProxyAdmin, { from: deployer, log: true }, 'changeProxyAdmin', proxy.address, upgrader.address)
+    console.log('Changing proxy admin to new proxy admin.', upgrader.address)
+    await existingUpgrader.changeProxyAdmin(proxy.address, upgrader.address)
   }
 }
 
@@ -72,9 +75,7 @@ async function safeUpgrade(hre, deployer, contract, params = []) {
   // Deployment may not exist so keep using ethers.getContractAt. DO NOT use read()
   const upgrader = await ethers.getContractAt(upgraderName, await getProxyAdminAddress(proxy.address))
   const upgraderOwner = await upgrader.owner()
-
   const canPropose = isDelegateOrOwner(safe, deployer, targetChain)
-
   // Safe is owner of upgrader but deployer is neither owner nor delegate. Fail fast
   if (safe === upgraderOwner && !canPropose) {
     throw new Error('Deployer is neither owner nor delegate of Gnosis safe', safe)
@@ -82,11 +83,11 @@ async function safeUpgrade(hre, deployer, contract, params = []) {
 
   // This is temporary process until we use upgrader everywhere
   if (deployer === upgraderOwner) {
-    await deployUpgraderIfNeeded(hre, upgraderName, deployer, proxy)
+    await deployUpgraderIfNeeded(hre, upgraderName, upgrader.address, deployer, proxy)
   }
 
   console.log(`\nInitiating safeUpgrade of ${contract}`)
-
+  await sleep(hre.network.name, 5000)
   let deployedImpl
   if (Object.keys(hre.contractsToReuse).includes(contract)) {
     deployedImpl = hre.contractsToReuse[contract]
@@ -101,7 +102,7 @@ async function safeUpgrade(hre, deployer, contract, params = []) {
     // Add implementation address in hre
     hre.implementations[contract] = deployedImpl.address
   }
-
+  await sleep(hre.network.name, 5000)
   const txnsToPropose = []
   if (deployer === upgraderOwner) {
     console.log(`Deployer is owner of upgrader. Safe upgrading ${contract} via ${upgraderName}`)
@@ -115,13 +116,16 @@ async function safeUpgrade(hre, deployer, contract, params = []) {
   }
 
   // This is temporary and for V5 upgrade only
+  await sleep(hre.network.name, 5000)
   if (upgraderName === VPoolUpgrader) {
     // If universal fee is zero then call setup
     const vPool = await ethers.getContractAt(contract, proxy.address)
     const universalFee = await vPool.universalFee().catch(() => 0)
     if (universalFee.toString() === '0') {
       const governor = await vPool.governor()
-      if (governor === safe && canPropose) {
+      if (governor === deployer) {
+        await vPool.setup()
+      } else if (governor === safe && canPropose) {
         txnsToPropose.push(await prepareTxn(contract, proxy.address, 'setup', []))
       } else {
         console.log('\nSafe is not governor of pool, setup needs to be call manually\n')
@@ -139,6 +143,7 @@ const deployFunction = async function (hre) {
 
   const txnsToPropose = []
   const poolTxns = await safeUpgrade(hre, deployer, poolConfig.contractName, poolConfig.poolParams)
+  await sleep(hre.network.name, 5000)
   const accountantTxns = await safeUpgrade(hre, deployer, PoolAccountant)
   txnsToPropose.push(...poolTxns)
   txnsToPropose.push(...accountantTxns)

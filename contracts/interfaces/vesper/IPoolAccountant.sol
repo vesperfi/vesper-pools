@@ -46,4 +46,7 @@ interface IPoolAccountant {
     function totalDebtOf(address _strategy) external view returns (uint256);
 
     function totalDebtRatio() external view returns (uint256);
+
+    // V5 upgrade function
+    function setup() external;
 }

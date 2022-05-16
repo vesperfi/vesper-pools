@@ -32,6 +32,9 @@ const Address = {
     vWBTC: '0x36366EA27B777622017d3583060ee64BB49eDbE5',
     vWETH: '0xD66FDcA0b120427C90C0318a454b37B88a3Aa40F',
   },
+  MultiSig: {
+    safe: '0xbbeC498b8B8A403446E31777B7F906Fe451d7Ef1',
+  },
 }
 
 module.exports = Object.freeze(Address)
