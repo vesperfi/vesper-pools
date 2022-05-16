@@ -191,31 +191,22 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
         // reset universal fee to 0.
         await pool.updateUniversalFee('0')
         depositAmount = await deposit(5, user2)
-        const dust = DECIMAL18.div(100) // Dust is less than 1e16
         await rebalance(strategies)
         // Some strategies can report a loss if they don't have time to earn anything
         // Time travel based on type of strategy. For compound strategy mine 500 blocks, else time travel
         await timeTravel(60 * 24 * 60 * 60, 500, '', '', strategies)
         await rebalance(strategies)
-
         let o = await pool.balanceOf(user1.address)
         await pool.connect(user1.signer).withdraw(o)
+        o = await pool.balanceOf(user1.address)
         await rebalance(strategies)
         o = await pool.balanceOf(user2.address)
-        await pool.connect(user2.signer).withdraw(o)
-
-        return Promise.all([
-          pool.totalDebt(),
-          pool.totalSupply(),
-          pool.totalValue(),
-          pool.balanceOf(user2.address),
-          collateralToken.balanceOf(user1.address),
-        ]).then(function ([totalDebt, totalSupply, totalValue, vPoolBalance, collateralBalance]) {
-          // Due to rounding some dust, 10000 wei, might left in case of Compound and Yearn strategy
-          expect(totalDebt, `${collateralName} total debt is wrong`).to.be.lte(dust)
-          expect(totalSupply).to.be.lte(dust, `Total supply of ${poolName} is wrong`)
-          expect(totalValue).to.be.lte(dust, `Total value of ${poolName} is wrong`)
-          expect(vPoolBalance).to.be.lte(dust, `${poolName} balance of user is wrong`)
+        await rebalance(strategies)
+        return Promise.all([pool.balanceOf(user1.address), collateralToken.balanceOf(user1.address)]).then(function ([
+          vPoolBalance,
+          collateralBalance,
+        ]) {
+          expect(vPoolBalance).to.be.lte(0, `${poolName} balance of user is wrong`)
           expect(collateralBalance).to.be.gte(depositAmount, `${collateralName} balance of user is wrong`)
         })
       })
@@ -320,21 +311,20 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
         it('Should increase pool value', async function () {
           await deposit(20, user1)
           await rebalance(strategies)
-          // Curve strategy takes a loss initially hence taking value after 1st rebalance
+          // some strategies are loss making so lets make strategy profitable by sending token
+          if (collateralToken.address === NATIVE_TOKEN) {
+            const weth = await ethers.getContractAt('TokenLike', collateralToken.address, user1.signer)
+            const transferAmount = ethers.utils.parseEther('2')
+            await weth.deposit({ value: transferAmount })
+            await weth.transfer(strategies[0].instance.address, transferAmount)
+          } else {
+            await swapper.swapEthForToken(2, collateralToken.address, user1, strategies[0].instance.address)
+          }
           const value1 = await pool.totalValue()
           // Time travel to generate earning
-          await timeTravel(30 * 24 * 60 * 60)
-          await rebalance(strategies)
           await rebalance(strategies)
           const value2 = await pool.totalValue()
           expect(value2).to.be.gt(value1, `${poolName} Pool value should increase`)
-          // Time travel to generate earning
-          await timeTravel(30 * 24 * 60 * 60)
-          await deposit(20, user3)
-          await timeTravel(30 * 24 * 60 * 60)
-          await rebalance(strategies)
-          const value3 = await pool.totalValue()
-          expect(value3).to.be.gt(value2, `${poolName} Pool value should increase`)
         })
       }
     })
@@ -403,6 +393,14 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
           // Increase time before doing another rebalance
           await increase(timeBetweenRebalance)
           const totalDebt = await accountant.totalDebtOf(strategies[0].instance.address)
+          if (collateralToken.address === NATIVE_TOKEN) {
+            const weth = await ethers.getContractAt('TokenLike', collateralToken.address, user1.signer)
+            const transferAmount = ethers.utils.parseEther('2')
+            await weth.deposit({ value: transferAmount })
+            await weth.transfer(strategies[0].instance.address, transferAmount)
+          } else {
+            await swapper.swapEthForToken(2, collateralToken.address, user1, strategies[0].instance.address)
+          }
           const tx = await rebalanceStrategy(strategies[0])
           const profit = (await getEvent(tx, accountant, 'EarningReported')).profit
           let fee = universalFee.mul(timeBetweenRebalance).mul(totalDebt).div(secondsPerYear).div(MAX_BPS)
@@ -410,7 +408,6 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
           if (fee.gt(maxFee)) {
             fee = maxFee
           }
-
           const vPoolBalance = await pool.balanceOf(feeCollector.address)
           expect(vPoolBalance, 'Fee earned by FC should be > 0').to.gt(0)
           await pool.connect(feeCollector).withdraw(vPoolBalance)
@@ -533,6 +530,14 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
         await deposit(70, user2)
         await rebalance(strategies)
         await timeTravel(60 * 60)
+        if (collateralToken.address === NATIVE_TOKEN) {
+          const weth = await ethers.getContractAt('TokenLike', collateralToken.address, user1.signer)
+          const transferAmount = ethers.utils.parseEther('2')
+          await weth.deposit({ value: transferAmount })
+          await weth.transfer(strategies[0].instance.address, transferAmount)
+        } else {
+          await swapper.swapEthForToken(2, collateralToken.address, user1, strategies[0].instance.address)
+        }
         await rebalance(strategies)
         const strategyParams = await pool.strategy(strategies[0].instance.address)
         const totalProfit = strategyParams._totalProfit

@@ -412,7 +412,7 @@ const StrategyConfig = {
       comptroller: Address.Compound.COMPTROLLER,
       rewardToken: Address.Compound.COMP,
       receiptToken: Address.Compound.cETH,
-      borrowCToken: Address.Compound.cWBTC,
+      borrowCToken: Address.Compound.cDAI,
       strategyName: 'CompoundXYStrategyETH',
     },
     config: { ...config },
