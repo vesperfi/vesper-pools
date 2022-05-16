@@ -1,14 +1,14 @@
-name: vaUSDC with Benqi Compound 
+name: vaUSDCe with Benqi
 on:
   pull_request:
     paths:
-      - "test/vausdc/benqi.js"
+      - "test/vausdce/benqi.js"
       - "contracts/strategies/Strategy.sol"
       - "contracts/strategies/compound/CompoundStrategy.sol"
       - "contracts/strategies/compound/CompoundMultiRewardAvalancheStrategy.sol"
 
 jobs:
-  vausdc-benqi-strategy-test:
+  vausdce-benqi-strategy-test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2.3.1
@@ -19,10 +19,10 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v2
         with:
-          node-version-file: '.nvmrc'
+          node-version-file: ".nvmrc"
 
-      - name: Run npm install with node v${{ matrix.node }}
+      - name: Run npm install
         run: npm install
 
-      - name: Running tests for vaUSDC Benqi Compound 
-        run: npm test "test/vausdc/benqi.js"
+      - name: Running tests for vaUSDCe Benqi Compound
+        run: npm test "test/vausdce/benqi.js"

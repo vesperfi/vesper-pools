@@ -36,15 +36,15 @@ const PoolConfig = {
     setup: { ...setup }, // Shallow copy
     rewards: { ...rewards },
   },
-  VAUSDC: {
+  VAUSDCe: {
     contractName: 'VPool',
-    poolParams: ['vaUSDC Pool', 'vaUSDC', Address.USDC_e],
+    poolParams: ['vaUSDC.e Pool', 'vaUSDC.e', Address.USDCe],
     setup: { ...setup }, // Shallow copy
     rewards: { ...rewards },
   },
-  VAUSDCN: {
+  VAUSDC: {
     contractName: 'VPool',
-    poolParams: ['vaUSDC Native Pool', 'vaUSDC.n', Address.USDC],
+    poolParams: ['vaUSDC Pool', 'vaUSDC', Address.USDC],
     setup: { ...setup }, // Shallow copy
     rewards: { ...rewards },
   },
@@ -54,9 +54,9 @@ const PoolConfig = {
     setup: { ...setup }, // Shallow copy
     rewards: { ...rewards },
   },
-  VUSDC: {
+  VUSDCe: {
     contractName: 'VPool',
-    poolParams: ['vUSDC Pool', 'vUSDC', Address.USDC_e],
+    poolParams: ['vUSDC.e Pool', 'vUSDC.e', Address.USDCe],
     setup: { ...setup }, // Shallow copy
     rewards: { ...rewards },
   },

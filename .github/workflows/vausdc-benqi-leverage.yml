@@ -1,14 +1,14 @@
-name: vaUSDCN with Benqi Leverage.
+name: vaUSDC with Benqi Leverage.
 on:
   pull_request:
     paths:
-      - "test/vausdcn/benqi-leverage.js"
+      - "test/vausdc/benqi-leverage.js"
       - "contracts/strategies/Strategy.sol"
       - "contracts/strategies/compound/CompoundMultiRewardAvalancheStrategy.sol"
       - "contracts/strategies/compound/CompoundStrategy.sol"
 
 jobs:
-  vausdcn-benqi-leverage-strategy-test:
+  vausdc-benqi-leverage-strategy-test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2.3.1
@@ -24,5 +24,5 @@ jobs:
       - name: Run npm install
         run: npm install
 
-      - name: Running tests for vaUSDCN Benqi Leverage
-        run: BLOCK_NUMBER=13880050 && npm test "test/vausdcn/benqi-leverage.js"
+      - name: Running tests for vaUSDC Benqi Leverage
+        run: BLOCK_NUMBER=13880050 && npm test "test/vausdc/benqi-leverage.js"
