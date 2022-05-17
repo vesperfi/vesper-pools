@@ -6,27 +6,27 @@ const setup = { universalFee: 200 }
 const rewards = { contract: 'PoolRewards', tokens: [Address.Vesper.VSP] }
 
 const PoolConfig = {
-  VADAI: {
+  VADAIe: {
     contractName: 'VPool',
-    poolParams: ['vaDAI Pool', 'vaDAI', Address.DAIe],
+    poolParams: ['vaDAIe Pool', 'vaDAIe', Address.DAIe],
     setup: { ...setup }, // Shallow copy
     rewards: { ...rewards },
   },
-  VDAI: {
+  VDAIe: {
     contractName: 'VPool',
-    poolParams: ['vaDAI Pool', 'vaDAI', Address.DAIe],
+    poolParams: ['vaDAIe Pool', 'vaDAIe', Address.DAIe],
     setup: { ...setup }, // Shallow copy
     rewards: { ...rewards },
   },
-  VAWETH: {
+  VAWETHe: {
     contractName: 'VPool',
-    poolParams: ['vaWETH Pool', 'vaWETH', Address.WETHe],
+    poolParams: ['vaWETHe Pool', 'vaWETHe', Address.WETHe],
     setup: { ...setup }, // Shallow copy
     rewards: { ...rewards },
   },
-  VAWBTC: {
+  VAWBTCe: {
     contractName: 'VPool',
-    poolParams: ['vaWBTC Pool', 'vaWBTC', Address.WBTCe],
+    poolParams: ['vaWBTCe Pool', 'vaWBTCe', Address.WBTCe],
     setup: { ...setup }, // Shallow copy
     rewards: { ...rewards },
   },
@@ -38,7 +38,7 @@ const PoolConfig = {
   },
   VAUSDCe: {
     contractName: 'VPool',
-    poolParams: ['vaUSDC.e Pool', 'vaUSDC.e', Address.USDCe],
+    poolParams: ['vaUSDCe Pool', 'vaUSDCe', Address.USDCe],
     setup: { ...setup }, // Shallow copy
     rewards: { ...rewards },
   },
@@ -56,7 +56,7 @@ const PoolConfig = {
   },
   VUSDCe: {
     contractName: 'VPool',
-    poolParams: ['vUSDC.e Pool', 'vUSDC.e', Address.USDCe],
+    poolParams: ['vUSDCe Pool', 'vUSDCe', Address.USDCe],
     setup: { ...setup }, // Shallow copy
     rewards: { ...rewards },
   },

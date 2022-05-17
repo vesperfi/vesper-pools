@@ -2,7 +2,7 @@ name: vaUSDCe with Benqi
 on:
   pull_request:
     paths:
-      - "test/vausdce/benqi.js"
+      - "test/avalanche/vausdce/benqi.js"
       - "contracts/strategies/Strategy.sol"
       - "contracts/strategies/compound/CompoundStrategy.sol"
       - "contracts/strategies/compound/CompoundMultiRewardAvalancheStrategy.sol"
@@ -25,4 +25,4 @@ jobs:
         run: npm install
 
       - name: Running tests for vaUSDCe Benqi Compound
-        run: npm test "test/vausdce/benqi.js"
+        run: npm test "test/avalanche/vausdce/benqi.js"

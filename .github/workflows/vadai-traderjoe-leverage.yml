@@ -3,7 +3,7 @@ on:
   pull_request:
     paths:
       - ".github/workflows/vadai-traderjoe-leverage.yml"
-      - "test/vadai/trader-joe-leverage.js"
+      - "test/avalanche/vadaie/trader-joe-leverage.js"
       - "contracts/strategies/Strategy.sol"
       - "contracts/strategies/compound/CompoundLeverageStrategy.sol"
       - "contracts/strategies/compound/CompoundLeverageAvalancheCore.sol"
@@ -27,4 +27,4 @@ jobs:
         run: npm install
 
       - name: Running tests for vaDAI TraderJoe Leverage
-        run: BLOCK_NUMBER=14505583 && npm test "test/vadai/trader-joe-leverage.js"
+        run: BLOCK_NUMBER=14505583 && npm test "test/avalanche/vadaie/trader-joe-leverage.js"

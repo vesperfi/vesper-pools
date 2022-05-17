@@ -2,7 +2,7 @@ name: vaWBTC with Curve avWBTC 2Pool
 on:
   pull_request:
     paths:
-      - "test/vawbtc/curve-avwbtc-2pool.js"
+      - "test/avalanche/vawbtc/curve-avwbtc-2pool.js"
       - "contracts/strategies/Strategy.sol"
       - "contracts/strategies/curve/CrvBase.sol"
       - "contracts/strategies/curve/CrvPoolStrategyBase.sol"
@@ -26,4 +26,4 @@ jobs:
         run: npm install
 
       - name: Running tests for vaWBTC Curve avWBTC 2Pool
-        run: npm test "test/vawbtc/crv-avwbtc-2pool.js"
+        run: npm test "test/avalanche/vawbtc/crv-avwbtc-2pool.js"

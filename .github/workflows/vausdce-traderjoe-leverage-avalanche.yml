@@ -2,7 +2,7 @@ name: vaUSDCe with TraderJoe Leverage.
 on:
   pull_request:
     paths:
-      - "test/vausdce/trader-joe-leverage.js"
+      - "test/avalanche/vausdce/trader-joe-leverage.js"
       - "contracts/strategies/Strategy.sol"
       - "contracts/strategies/compound/CompoundLeverageStrategy.sol"
       - "contracts/strategies/compound/CompoundLeverageAvalancheCore.sol"
@@ -26,4 +26,4 @@ jobs:
         run: npm install
 
       - name: Running tests for vaUSDCe TraderJoe Compound Leverage
-        run: npm test "test/vausdce/trader-joe-leverage.js"
+        run: npm test "test/avalanche/vausdce/trader-joe-leverage.js"

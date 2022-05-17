@@ -2,7 +2,7 @@ name: vaAVAX with Vesper TraderJoe XY.
 on:
   pull_request:
     paths:
-      - "test/vaavax/vesper-trader-joe-xy.js"
+      - "test/avalanche/vaavax/vesper-trader-joe-xy.js"
       - "contracts/strategies/Strategy.sol"
       - "contracts/strategies/compound/CompoundXYCore.sol"
       - "contracts/strategies/compound/TraderJoeXYStrategy.sol"
@@ -26,4 +26,4 @@ jobs:
         run: npm install
 
       - name: Running tests for vaAVAX Vesper TraderJoe XY
-        run: BLOCK_NUMBER=13942928 npm test test/vaavax/vesper-trader-joe-xy.js
+        run: BLOCK_NUMBER=13942928 npm test test/avalanche/vaavax/vesper-trader-joe-xy.js

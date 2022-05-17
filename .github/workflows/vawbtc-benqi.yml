@@ -1,8 +1,8 @@
-name: vaWBTC with Benqi 
+name: vaWBTC with Benqi
 on:
   pull_request:
     paths:
-      - "test/vawbtc/benqi.js"
+      - "test/avalanche/vawbtc/benqi.js"
       - "contracts/strategies/Strategy.sol"
       - "contracts/strategies/compound/CompoundStrategy.sol"
       - "contracts/strategies/compound/CompoundMultiRewardAvalancheStrategy.sol"
@@ -19,10 +19,10 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v2
         with:
-          node-version-file: '.nvmrc'
+          node-version-file: ".nvmrc"
 
       - name: Run npm install
         run: npm install
 
-      - name: Running tests for vaWBTC Benqi 
-        run: npm test "test/vawbtc/benqi.js"
+      - name: Running tests for vaWBTC Benqi
+        run: npm test "test/avalanche/vawbtc/benqi.js"

@@ -2,7 +2,7 @@ name: vaAVAX with Aave Leverage
 on:
   pull_request:
     paths:
-      - "test/vaavax/aave-leverage.js"
+      - "test/avalanche/vaavax/aave-leverage.js"
       - "contracts/strategies/Strategy.sol"
       - "contracts/strategies/aave/AaveLeverageAvalancheStrategy.sol"
       - "contracts/strategies/aave/AaveCoreAvalanche.sol"
@@ -25,4 +25,4 @@ jobs:
         run: npm install
 
       - name: Running tests for vaAVAX Aave Leverage
-        run: npm test "test/vaavax/aave-leverage.js"
+        run: npm test "test/avalanche/vaavax/aave-leverage.js"

@@ -27,4 +27,4 @@ jobs:
 
       - name: Running vaAVAX unit tests
         run: |
-          npm test test/vaavax/*.js -- --parallel
+          npm test test/avalanche/vaavax/*.js -- --parallel
