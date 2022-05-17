@@ -20,11 +20,9 @@ abstract contract CompoundXYCore is Strategy {
     string public constant VERSION = "4.0.0";
 
     uint256 internal constant MAX_BPS = 10_000; //100%
-    uint256 public minBorrowRatio = 4_500; // 45%
-    uint256 public maxBorrowRatio = 6_000; // 60%
     uint32 internal constant TWAP_PERIOD = 3_600;
-    uint256 public minBorrowLimit;
-    uint256 public maxBorrowLimit;
+    uint256 public minBorrowLimit = 7_000; // 70% of actual collateral factor of protocol
+    uint256 public maxBorrowLimit = 8_500; // 85% of actual collateral factor of protocol
     address public borrowToken;
 
     Comptroller public comptroller;
@@ -34,11 +32,11 @@ abstract contract CompoundXYCore is Strategy {
 
     IUniswapV3Oracle internal constant ORACLE = IUniswapV3Oracle(0x0F1f5A87f99f0918e6C81F16E59F3518698221Ff);
 
-    event UpdatedBorrowRatio(
-        uint256 previousMinBorrowRatio,
-        uint256 newMinBorrowRatio,
-        uint256 previousMaxBorrowRatio,
-        uint256 newMaxBorrowRatio
+    event UpdatedBorrowLimit(
+        uint256 previousMinBorrowLimit,
+        uint256 newMinBorrowLimit,
+        uint256 previousMaxBorrowLimit,
+        uint256 newMaxBorrowLimit
     );
 
     constructor(
@@ -63,24 +61,6 @@ abstract contract CompoundXYCore is Strategy {
         _cTokens[0] = _receiptToken;
         _cTokens[1] = _borrowCToken;
         comptroller.enterMarkets(_cTokens);
-        uint256 _collateralFactor = _getCollateralFactor(_receiptToken);
-        minBorrowLimit = (minBorrowRatio * 1e18) / _collateralFactor;
-        maxBorrowLimit = (maxBorrowRatio * 1e18) / _collateralFactor;
-    }
-
-    /**
-     * @notice Current borrow ratio, calculated as current borrow divide by current supply as borrow
-     * Return value is based on basis points, i.e. 7500 = 75% ratio
-     */
-    function currentBorrowRatio() external view returns (uint256) {
-        uint256 _cTokenAmount = supplyCToken.balanceOf(address(this));
-        uint256 _supply = (_cTokenAmount * supplyCToken.exchangeRateStored()) / 1e18;
-        uint256 _currentBorrow = borrowCToken.borrowBalanceStored(address(this));
-        if (_currentBorrow == 0) {
-            return 0;
-        }
-        (, uint256 _maxBorrow, ) = swapManager.bestOutputFixedInput(address(collateralToken), borrowToken, _supply);
-        return _maxBorrow == 0 ? 0 : (_currentBorrow * MAX_BPS) / _maxBorrow;
     }
 
     /// @notice Calculate current position based on totalValue and debt of strategy
@@ -152,50 +132,59 @@ abstract contract CompoundXYCore is Strategy {
     }
 
     /**
-     * @notice Calculate borrow position based on current supply, borrow, amount being deposited or
-     * withdraw and borrow limits.
-     * @param _amount Collateral amount
-     * @param _isDeposit Flag indicating whether we are depositing _amount or withdrawing
-     * @return _position Amount of borrow that need to be adjusted
-     * @return _shouldRepay Flag indicating whether _position is borrow amount or repay amount
+     * @notice Calculate borrow and repay amount based on current collateral and new deposit/withdraw amount.
+     * @param _depositAmount deposit amount
+     * @param _withdrawAmount withdraw amount
+     * @return _borrowAmount borrow more amount
+     * @return _repayAmount repay amount to keep ltv within limit
      */
-    function _calculateBorrowPosition(uint256 _amount, bool _isDeposit)
+    function _calculateBorrowPosition(uint256 _depositAmount, uint256 _withdrawAmount)
         internal
-        returns (uint256 _position, bool _shouldRepay)
+        returns (uint256 _borrowAmount, uint256 _repayAmount)
     {
-        uint256 _currentBorrow = borrowCToken.borrowBalanceCurrent(address(this));
-        // If minimum borrow limit set to 0 then repay borrow
-        if (minBorrowLimit == 0) {
-            return (_currentBorrow, true);
+        require(_depositAmount == 0 || _withdrawAmount == 0, "all-input-gt-zero");
+        uint256 _borrowed = borrowCToken.borrowBalanceCurrent(address(this));
+        // If maximum borrow limit set to 0 then repay borrow
+        if (maxBorrowLimit == 0) {
+            return (0, _borrowed);
         }
 
-        uint256 _supply = supplyCToken.balanceOfUnderlying(address(this));
+        uint256 _collateral = supplyCToken.balanceOfUnderlying(address(this));
         uint256 _collateralFactor = _getCollateralFactor(address(supplyCToken));
         // In case of withdraw, _amount can be greater than _supply
-        uint256 _newSupply = _isDeposit ? _supply + _amount : _supply > _amount ? _supply - _amount : 0;
+        uint256 _hypotheticalCollateral =
+            _depositAmount > 0 ? _collateral + _depositAmount : _collateral > _withdrawAmount
+                ? _collateral - _withdrawAmount
+                : 0;
 
-        // Calculate max borrow based on supply and market rate
-        uint256 _maxBorrowAsCollateral = (_newSupply * _collateralFactor) / 1e18;
-        (, uint256 _maxBorrow, ) =
-            swapManager.bestOutputFixedInput(address(collateralToken), borrowToken, _maxBorrowAsCollateral);
+        // Calculate max borrow based on collateral factor
+        uint256 _maxCollateralForBorrow = (_hypotheticalCollateral * _collateralFactor) / 1e18;
+        Oracle _oracle = Oracle(comptroller.oracle());
+
+        // Compound "UnderlyingPrice" decimal = (30 + 6 - tokenDecimal)
+        // Rari "UnderlyingPrice" decimal = (30 + 6 - tokenDecimal)
+        // Iron "UnderlyingPrice" decimal = (18 + 8 - tokenDecimal)
+        uint256 _collateralTokenPrice = _oracle.getUnderlyingPrice(address(supplyCToken));
+        uint256 _borrowTokenPrice = _oracle.getUnderlyingPrice(address(borrowCToken));
+        // Max borrow limit in borrow token
+        uint256 _maxBorrowPossible = (_maxCollateralForBorrow * _collateralTokenPrice) / _borrowTokenPrice;
         // If maxBorrow is zero, we should repay total amount of borrow
-        if (_maxBorrow == 0) {
-            return (_currentBorrow, true);
+        if (_maxBorrowPossible == 0) {
+            return (0, _borrowed);
         }
 
-        uint256 _borrowUpperBound = (_maxBorrow * maxBorrowLimit) / MAX_BPS;
-        uint256 _borrowLowerBound = (_maxBorrow * minBorrowLimit) / MAX_BPS;
+        // Safe buffer to avoid liquidation due to price variations.
+        uint256 _borrowUpperBound = (_maxBorrowPossible * maxBorrowLimit) / MAX_BPS;
 
-        // If our current borrow is greater than max borrow allowed, then we will have to repay
-        // some to achieve safe position else borrow more.
-        if (_currentBorrow > _borrowUpperBound) {
-            _shouldRepay = true;
+        // Borrow up to _borrowLowerBound and keep buffer of _borrowUpperBound - _borrowLowerBound for price variation
+        uint256 _borrowLowerBound = (_maxBorrowPossible * minBorrowLimit) / MAX_BPS;
+
+        // If current borrow is greater than max borrow, then repay to achieve safe position else borrow more.
+        if (_borrowed > _borrowUpperBound) {
             // If borrow > upperBound then it is greater than lowerBound too.
-            _position = _currentBorrow - _borrowLowerBound;
-        } else if (_currentBorrow < _borrowLowerBound) {
-            _shouldRepay = false;
-            // We can borrow more.
-            _position = _borrowLowerBound - _currentBorrow;
+            _repayAmount = _borrowed - _borrowLowerBound;
+        } else if (_borrowLowerBound > _borrowed) {
+            _borrowAmount = _borrowLowerBound - _borrowed;
         }
     }
 
@@ -289,10 +278,10 @@ abstract contract CompoundXYCore is Strategy {
     function _reinvest() internal override {
         uint256 _collateralBalance = collateralToken.balanceOf(address(this));
 
-        (uint256 _borrowAmount, bool _shouldRepay) = _calculateBorrowPosition(_collateralBalance, true);
-        if (_shouldRepay) {
-            // Repay _borrowAmount to maintain safe position
-            _repay(_borrowAmount, false);
+        (uint256 _borrowAmount, uint256 _repayAmount) = _calculateBorrowPosition(_collateralBalance, 0);
+        if (_repayAmount > 0) {
+            // Repay to maintain safe position
+            _repay(_repayAmount, false);
             _mintX(collateralToken.balanceOf(address(this)));
         } else {
             // Happy path, mint more borrow more
@@ -389,12 +378,9 @@ abstract contract CompoundXYCore is Strategy {
 
     /// @dev Withdraw collateral here. Do not transfer to pool
     function _withdrawHere(uint256 _amount) internal returns (uint256) {
-        (uint256 _repayAmount, bool _shouldRepay) = _calculateBorrowPosition(_amount, false);
-        if (_shouldRepay) {
-            _repay(_repayAmount, true);
-        }
+        (, uint256 _repayAmount) = _calculateBorrowPosition(0, _amount);
+        _repay(_repayAmount, true);
         uint256 _collateralBefore = collateralToken.balanceOf(address(this));
-
         uint256 _supply = supplyCToken.balanceOfUnderlying(address(this));
         _redeemX(_supply > _amount ? _amount : _supply);
         return collateralToken.balanceOf(address(this)) - _collateralBefore;
@@ -435,25 +421,26 @@ abstract contract CompoundXYCore is Strategy {
     function repayAll() external onlyKeeper {
         _repay(borrowCToken.borrowBalanceCurrent(address(this)), true);
         minBorrowLimit = 0;
-        minBorrowRatio = 0;
+        maxBorrowLimit = 0;
     }
 
     /**
-     * @notice Update upper and lower borrow ratio
-     * @dev It is possible to set 0 as _minBorrowRatio to not borrow anything
-     * @param _minBorrowRatio Minimum % we want to borrow
-     * @param _maxBorrowRatio Maximum % we want to borrow
+     * @notice Update upper and lower borrow limit. Usually maxBorrowLimit < 100% of actual collateral factor of protocol.
+     * @dev It is possible to set 0 as _minBorrowLimit to not borrow anything
+     * @param _minBorrowLimit It is % of actual collateral factor of protocol
+     * @param _maxBorrowLimit It is % of actual collateral factor of protocol
      */
-    function updateBorrowRatio(uint256 _minBorrowRatio, uint256 _maxBorrowRatio) external onlyGovernor {
-        uint256 _collateralFactor = _getCollateralFactor(address(supplyCToken));
-        require(_maxBorrowRatio < (_collateralFactor / 1e14), "invalid-max-borrow-ratio");
-        require(_maxBorrowRatio > _minBorrowRatio, "max-should-be-higher-than-min");
-        emit UpdatedBorrowRatio(minBorrowRatio, _minBorrowRatio, maxBorrowRatio, _maxBorrowRatio);
-        minBorrowRatio = _minBorrowRatio;
-        maxBorrowRatio = _maxBorrowRatio;
-
-        minBorrowLimit = (_minBorrowRatio * 1e18) / _collateralFactor;
-        maxBorrowLimit = (_maxBorrowRatio * 1e18) / _collateralFactor;
+    function updateBorrowLimit(uint256 _minBorrowLimit, uint256 _maxBorrowLimit) external onlyGovernor {
+        require(_maxBorrowLimit < MAX_BPS, "invalid-max-borrow-limit");
+        // set _maxBorrowLimit and _minBorrowLimit to zero to disable borrow;
+        require(
+            (_maxBorrowLimit == 0 && _minBorrowLimit == 0) || _maxBorrowLimit > _minBorrowLimit,
+            "max-should-be-higher-than-min"
+        );
+        emit UpdatedBorrowLimit(minBorrowLimit, _minBorrowLimit, maxBorrowLimit, _maxBorrowLimit);
+        // To avoid liquidation due to price variations maxBorrowLimit is a collateral factor that is less than actual collateral factor of protocol
+        minBorrowLimit = _minBorrowLimit;
+        maxBorrowLimit = _maxBorrowLimit;
     }
 
     // We overridden _generateReport which eliminates need of below function.

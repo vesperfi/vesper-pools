@@ -2,8 +2,8 @@
 
 const { makeNewStrategy } = require('../utils/setupHelper')
 const { deposit: _deposit, rebalanceStrategy } = require('../utils/poolOps')
-const StrategyType = require('../utils/strategyTypes')
 const { expect } = require('chai')
+const { BigNumber } = require('ethers')
 
 async function shouldMigrateStrategies(poolName) {
   let pool, strategies, collateralToken
@@ -50,18 +50,12 @@ async function shouldMigrateStrategies(poolName) {
       totalDebtRatioBefore,
       `${poolName} total debt ratio after migration is not correct`,
     )
-    if (newStrategy.type === StrategyType.COMPOUND_LEVERAGE || newStrategy.type === StrategyType.AAVE_LEVERAGE) {
-      // new strategy will have less receipt tokens due to deleverage at migration
-      expect(receiptTokenAfter2).to.be.lt(
-        receiptTokenBefore,
-        `${poolName} receipt token balance of new strategy after migration is not correct`,
-      )
-    } else {
-      expect(receiptTokenAfter2).to.be.gte(
-        receiptTokenBefore,
-        `${poolName} receipt token balance of new strategy after migration is not correct`,
-      )
-    }
+    // Some strategy like leverage and compoundXY bear some loss before migration. Allow 0.1% deviation in loss
+    expect(receiptTokenAfter2).to.be.closeTo(
+      receiptTokenBefore,
+      receiptTokenBefore.mul(BigNumber.from('1')).div(BigNumber.from('1000')),
+      `${poolName} receipt token balance of new strategy after migration is not correct`,
+    )
     expect(receiptTokenAfter).to.be.eq(
       0,
       `${poolName} receipt token balance of old strategy after migration is not correct`,

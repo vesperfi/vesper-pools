@@ -29,13 +29,8 @@ contract CompoundXYStrategy is CompoundXYCore {
         rewardToken = _rewardToken;
     }
 
-    /// @dev Only receive ETH from either cTokens or WETH
-    receive() external payable {
-        require(
-            msg.sender == address(supplyCToken) || msg.sender == address(borrowCToken) || msg.sender == WETH,
-            "not-allowed-to-send-ether"
-        );
-    }
+    //solhint-disable-next-line no-empty-blocks
+    receive() external payable {}
 
     function isReservedToken(address _token) public view virtual override returns (bool) {
         return super.isReservedToken(_token) || _token == rewardToken;

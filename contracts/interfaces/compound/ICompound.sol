@@ -52,6 +52,8 @@ interface CToken {
     ) external returns (bool);
 
     function underlying() external view returns (address);
+
+    function comptroller() external view returns (address);
 }
 
 interface Comptroller {
@@ -80,4 +82,12 @@ interface Comptroller {
             uint256 collateralFactorMantissa,
             bool isCompted
         );
+
+    function oracle() external view returns (address);
+}
+
+interface Oracle {
+    function getUnderlyingPrice(address cToken) external view returns (uint256);
+
+    function price(string memory symbol) external view returns (uint256);
 }

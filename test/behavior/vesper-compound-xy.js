@@ -7,6 +7,7 @@ const { deposit, rebalanceStrategy } = require('../utils/poolOps')
 const { advanceBlock } = require('../utils/time')
 const { adjustBalance } = require('../utils/balance')
 const { calculateAPY } = require('../utils/apy')
+const { BigNumber } = require('ethers')
 
 async function simulateVesperPoolProfit(strategy) {
   const vPool = await ethers.getContractAt('IVesperPool', await strategy.instance.vPool())
@@ -24,10 +25,28 @@ async function simulateVesperPoolProfit(strategy) {
 
 // Vesper Compound XY strategy specific tests
 function shouldBehaveLikeVesperCompoundXYStrategy(strategyIndex) {
-  let strategy, pool, collateralToken, token
-  let borrowCToken, borrowToken
+  let strategy, pool, collateralToken, supplyCToken, comptroller, oracle
+  let borrowCToken, borrowToken, borrowTokenPrice, supplyTokenPrice
   let governor, user1, user2
-
+  const DECIMAL18 = ethers.utils.parseUnits('1', 18)
+  async function assertCurrentBorrow() {
+    const borrowed = await borrowCToken.borrowBalanceStored(strategy.address)
+    borrowTokenPrice = await oracle.getUnderlyingPrice(borrowCToken.address)
+    supplyTokenPrice = await oracle.getUnderlyingPrice(supplyCToken.address)
+    const collateralSupplied = (await supplyCToken.balanceOf(strategy.address))
+      .mul(await supplyCToken.exchangeRateStored())
+      .div(DECIMAL18)
+    const cf = (await comptroller.markets(supplyCToken.address)).collateralFactorMantissa
+    const maxBorrowPossible = collateralSupplied.mul(cf).div(DECIMAL18).mul(supplyTokenPrice).div(borrowTokenPrice)
+    const borrowUpperBound = maxBorrowPossible.mul(await strategy.maxBorrowLimit()).div(BigNumber.from('10000'))
+    const borrowLowerBound = maxBorrowPossible.mul(await strategy.minBorrowLimit()).div(BigNumber.from('10000'))
+    expect(borrowed).to.be.lt(borrowUpperBound, 'Borrow more than max limit')
+    expect(borrowed).to.be.closeTo(
+      borrowLowerBound,
+      borrowLowerBound.mul(1).div(100),
+      'borrowed is too much deviated from minBorrowLimit',
+    )
+  }
   describe('VesperCompoundXYStrategy specific tests', function () {
     beforeEach(async function () {
       const users = await getUsers()
@@ -35,15 +54,19 @@ function shouldBehaveLikeVesperCompoundXYStrategy(strategyIndex) {
       pool = this.pool
       strategy = this.strategies[strategyIndex].instance
       collateralToken = this.collateralToken
-      token = await ethers.getContractAt('CToken', this.strategies[strategyIndex].token.address)
+      supplyCToken = await ethers.getContractAt('CToken', this.strategies[strategyIndex].token.address)
       borrowCToken = await ethers.getContractAt('CToken', await strategy.borrowCToken())
       borrowToken = await ethers.getContractAt('IERC20Metadata', await strategy.borrowToken())
+      const comptrollerAddress = await strategy.comptroller()
+      comptroller = await ethers.getContractAt('Comptroller', comptrollerAddress)
+      const oracleAddress = await comptroller.oracle()
+      oracle = await ethers.getContractAt('Oracle', oracleAddress)
     })
 
     it('Should borrow tokens at rebalance', async function () {
       await deposit(pool, collateralToken, 10, user1)
       await strategy.connect(governor.signer).rebalance()
-      const cTokenBalance = await token.balanceOf(strategy.address)
+      const cTokenBalance = await supplyCToken.balanceOf(strategy.address)
       const borrow = await strategy.borrowBalance()
       const currentBorrow = await borrowCToken.callStatic.borrowBalanceCurrent(strategy.address)
       expect(cTokenBalance).to.be.gt('0', 'Supply CToken balance should be > 0')
@@ -55,16 +78,10 @@ function shouldBehaveLikeVesperCompoundXYStrategy(strategyIndex) {
       await deposit(pool, collateralToken, 10, user2)
       await strategy.connect(governor.signer).rebalance()
       await advanceBlock(100)
-      await token.exchangeRateCurrent()
+      await supplyCToken.exchangeRateCurrent()
       await borrowCToken.exchangeRateCurrent()
       await strategy.connect(governor.signer).rebalance()
-
-      const borrowRatio = await strategy.currentBorrowRatio()
-      const minBorrowRatio = await strategy.minBorrowRatio()
-      const maxBorrowRatio = await strategy.maxBorrowRatio()
-
-      expect(borrowRatio).to.be.gte(minBorrowRatio, 'Borrow should be >= min borrow ratio')
-      expect(borrowRatio).to.be.lte(maxBorrowRatio, 'Borrow should be <= max borrow ratio')
+      await assertCurrentBorrow()
     })
 
     it('Should adjust borrow to keep it within defined limits', async function () {
@@ -72,27 +89,21 @@ function shouldBehaveLikeVesperCompoundXYStrategy(strategyIndex) {
       await strategy.connect(governor.signer).rebalance()
       await advanceBlock(100)
 
-      await token.exchangeRateCurrent()
+      await supplyCToken.exchangeRateCurrent()
       await borrowCToken.exchangeRateCurrent()
       const borrowBefore = await strategy.borrowBalance()
 
       const withdrawAmount = (await pool.balanceOf(user1.address)).div('2')
       await pool.connect(user1.signer).withdraw(withdrawAmount)
 
-      await token.exchangeRateCurrent()
+      await supplyCToken.exchangeRateCurrent()
       await borrowCToken.exchangeRateCurrent()
       const borrowAfter = await strategy.borrowBalance()
-
-      const borrowRatio = await strategy.currentBorrowRatio()
-      const minBorrowRatio = await strategy.minBorrowRatio()
-      const maxBorrowRatio = await strategy.maxBorrowRatio()
-
-      expect(borrowRatio).to.be.gte(minBorrowRatio, 'Borrow should be >= min borrow ratio')
-      expect(borrowRatio).to.be.lte(maxBorrowRatio, 'Borrow should be <= max borrow ratio')
+      await assertCurrentBorrow()
       expect(borrowAfter).to.be.lt(borrowBefore, 'Borrow amount after withdraw should be less')
     })
 
-    it('Should repayAll and reset minBorrowRatio via governor', async function () {
+    it('Should repayAll and reset minBorrowLimit via governor', async function () {
       await deposit(pool, collateralToken, 50, user2)
       await strategy.connect(governor.signer).rebalance()
       let borrowBalance = await strategy.borrowBalance()
@@ -102,41 +113,36 @@ function shouldBehaveLikeVesperCompoundXYStrategy(strategyIndex) {
 
       borrowBalance = await strategy.borrowBalance()
       expect(borrowBalance).to.be.eq(0, 'Borrow token balance should be = 0')
-      const newMinBorrowRatio = await strategy.minBorrowRatio()
-      expect(newMinBorrowRatio).to.be.eq(0, 'minBorrowRatio should be 0')
+      const newMinBorrowLimit = await strategy.minBorrowLimit()
+      expect(newMinBorrowLimit).to.be.eq(0, 'minBorrowRatio should be 0')
     })
 
-    it('Should update borrow ratio', async function () {
+    it('Should update borrow limit', async function () {
       await deposit(pool, collateralToken, 100, user1)
       await strategy.connect(governor.signer).rebalance()
       await advanceBlock(100)
-      await strategy.connect(governor.signer).updateBorrowRatio(5000, 6000)
-      const newMinBorrowRatio = await strategy.minBorrowRatio()
-      const minBorrowRatio = await strategy.minBorrowRatio()
+      await strategy.connect(governor.signer).updateBorrowLimit(5000, 6000)
+      const newMinBorrowLimit = await strategy.minBorrowLimit()
       await strategy.connect(governor.signer).rebalance()
-      await token.exchangeRateCurrent()
+      await supplyCToken.exchangeRateCurrent()
       await borrowCToken.exchangeRateCurrent()
-      const borrowRatio = await strategy.currentBorrowRatio()
-      // Due to rounding there can be less than 1% deviation from actual minBorrowRatio
-      expect(borrowRatio).to.be.gte(minBorrowRatio.mul(99).div(100), 'Borrow should be >= min borrow ratio')
-      expect(newMinBorrowRatio).to.be.eq(5000, 'Min borrow ratio is wrong')
+      await assertCurrentBorrow()
+      expect(newMinBorrowLimit).to.be.eq(5000, 'Min borrow limit is wrong')
 
-      let tx = strategy.connect(governor.signer).updateBorrowRatio(5000, ethers.constants.MaxUint256)
-      await expect(tx).to.be.revertedWith('invalid-max-borrow-ratio')
+      let tx = strategy.connect(governor.signer).updateBorrowLimit(5000, ethers.constants.MaxUint256)
+      await expect(tx).to.be.revertedWith('invalid-max-borrow-limit')
 
-      tx = strategy.connect(governor.signer).updateBorrowRatio(5500, 5000)
+      tx = strategy.connect(governor.signer).updateBorrowLimit(5500, 5000)
       await expect(tx).to.be.revertedWith('max-should-be-higher-than-min')
     })
 
-    it('Should repay borrow if borrow ratio set to 0', async function () {
+    it('Should repay borrow if borrow limit set to 0', async function () {
       await deposit(pool, collateralToken, 100, user1)
       await strategy.connect(governor.signer).rebalance()
       const borrowBefore = await strategy.borrowBalance()
       expect(borrowBefore).to.be.gt(0, 'Borrow amount should be > 0')
-      await strategy.connect(governor.signer).updateBorrowRatio(0, 5000)
+      await strategy.connect(governor.signer).updateBorrowLimit(0, 0)
       await strategy.connect(governor.signer).rebalance()
-      const borrowRatio = await strategy.currentBorrowRatio()
-      expect(borrowRatio, 'Borrow ratio should be zero').to.eq(0)
       const borrowAfter = await strategy.borrowBalance()
       expect(borrowAfter).to.be.eq(0, 'Borrow amount should be = 0')
     })
