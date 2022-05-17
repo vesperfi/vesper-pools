@@ -8,25 +8,25 @@ const rewards = { contract: 'PoolRewards', tokens: [Address.Vesper.VSP] }
 const PoolConfig = {
   VADAI: {
     contractName: 'VPool',
-    poolParams: ['vaDAI Pool', 'vaDAI', Address.DAI],
+    poolParams: ['vaDAI Pool', 'vaDAI', Address.DAIe],
     setup: { ...setup }, // Shallow copy
     rewards: { ...rewards },
   },
   VDAI: {
     contractName: 'VPool',
-    poolParams: ['vaDAI Pool', 'vaDAI', Address.DAI],
+    poolParams: ['vaDAI Pool', 'vaDAI', Address.DAIe],
     setup: { ...setup }, // Shallow copy
     rewards: { ...rewards },
   },
   VAWETH: {
     contractName: 'VPool',
-    poolParams: ['vaWETH Pool', 'vaWETH', Address.WETH],
+    poolParams: ['vaWETH Pool', 'vaWETH', Address.WETHe],
     setup: { ...setup }, // Shallow copy
     rewards: { ...rewards },
   },
   VAWBTC: {
     contractName: 'VPool',
-    poolParams: ['vaWBTC Pool', 'vaWBTC', Address.WBTC],
+    poolParams: ['vaWBTC Pool', 'vaWBTC', Address.WBTCe],
     setup: { ...setup }, // Shallow copy
     rewards: { ...rewards },
   },

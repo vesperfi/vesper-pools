@@ -7,7 +7,7 @@ const { shouldMigrateStrategies } = require('../behavior/strategy-migration')
 const { strategyConfig } = require('../utils/chains').getChainData()
 
 describe('vaWETH Pool', function () {
-  const strategy = strategyConfig.TraderJoeCompoundStrategyAvalancheWETH
+  const strategy = strategyConfig.TraderJoeStrategyWETHe
   strategy.config.debtRatio = 9000
 
   const strategies = [strategy]

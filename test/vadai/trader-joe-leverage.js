@@ -5,7 +5,7 @@ const { shouldBehaveLikeStrategy } = require('../behavior/strategy')
 const { strategyConfig } = require('../utils/chains').getChainData()
 
 describe('vaDAI Pool', function () {
-  const strategy = strategyConfig.TraderJoeLeverageStrategyDAI
+  const strategy = strategyConfig.TraderJoeLeverageStrategyDAIe
   strategy.config.debtRatio = 9000
 
   const strategies = [strategy]

@@ -6,7 +6,7 @@ const { shouldBehaveLikeStrategy } = require('../behavior/strategy')
 const { strategyConfig } = require('../utils/chains').getChainData()
 
 describe('vDAI Pool with CrvA3PoolStrategy', function () {
-  const strategy1 = strategyConfig.CrvA3PoolStrategyDAI
+  const strategy1 = strategyConfig.CrvA3PoolStrategyDAIe
   strategy1.config.debtRatio = 10000
   const strategies = [strategy1]
   prepareConfig(strategies)
