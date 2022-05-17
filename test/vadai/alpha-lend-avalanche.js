@@ -6,7 +6,7 @@ const { shouldBehaveLikeStrategy } = require('../behavior/strategy')
 const { strategyConfig } = require('../utils/chains').getChainData()
 
 describe('vaDAI Pool', function () {
-  const strategy1 = strategyConfig.AlphaLendAvalancheStrategyDAI
+  const strategy1 = strategyConfig.AlphaLendAvalancheStrategyDAIe
   strategy1.config.debtRatio = 9000
   const strategies = [strategy1]
 

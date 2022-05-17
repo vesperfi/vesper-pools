@@ -7,7 +7,7 @@ const { shouldMigrateStrategies } = require('../behavior/strategy-migration')
 const { strategyConfig } = require('../utils/chains').getChainData()
 
 describe('vaWBTC Pool', function () {
-  const strategy = strategyConfig.BenqiStrategyWBTC
+  const strategy = strategyConfig.BenqiStrategyWBTCe
   strategy.config.debtRatio = 9000
 
   const strategies = [strategy]

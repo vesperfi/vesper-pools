@@ -6,7 +6,7 @@ const { shouldBehaveLikePool } = require('../behavior/vesper-pool')
 const { shouldMigrateStrategies } = require('../behavior/strategy-migration')
 const { strategyConfig } = require('../utils/chains').getChainData()
 
-const strategy1 = strategyConfig.AaveStrategyAvalancheDAI
+const strategy1 = strategyConfig.AaveStrategyAvalancheDAIe
 
 describe('vDAI Pool', function () {
   strategy1.config.debtRatio = 9000

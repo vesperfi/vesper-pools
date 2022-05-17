@@ -6,7 +6,7 @@ const { shouldBehaveLikePool } = require('../behavior/vesper-pool')
 const { strategyConfig } = require('../utils/chains').getChainData()
 
 describe('vaWBTC Pool', function () {
-  const strategy = strategyConfig.TraderJoeCompoundStrategyAvalancheWBTC
+  const strategy = strategyConfig.TraderJoeStrategyWBTCe
   strategy.config.debtRatio = 9000
 
   const strategies = [strategy]

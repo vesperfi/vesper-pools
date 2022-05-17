@@ -10,7 +10,7 @@ const POOL_NAME = 'vaWBTC'
 // const COLLATERAL_NAME = 'WBTC'
 
 describe(`${POOL_NAME} Pool`, function () {
-  const strategy = strategyConfig.VesperBenqiXYStrategyWBTC
+  const strategy = strategyConfig.VesperBenqiXYStrategyWBTCe
   strategy.config.debtRatio = 9000
 
   const strategies = [strategy]
