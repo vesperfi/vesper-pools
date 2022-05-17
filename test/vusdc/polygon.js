@@ -2,7 +2,7 @@
 
 const { prepareConfig } = require('./config')
 const { shouldBehaveLikePool } = require('../behavior/vesper-pool')
-const { shouldBehaveLikeMultiPool } = require('../behavior/vesper-multi-pool')
+const { shouldBehaveLikeMultiStrategyPool } = require('../behavior/vesper-multi-strategy-pool')
 const { strategyConfig } = require('../utils/chains').getChainData()
 
 const strategy1 = strategyConfig.AaveStrategyPolygonUSDC
@@ -14,5 +14,5 @@ describe('vUSDC Pool', function () {
   const strategies = [strategy1, strategy2]
   prepareConfig(strategies)
   shouldBehaveLikePool('vUsdc', 'USDC')
-  shouldBehaveLikeMultiPool('vUsdc')
+  shouldBehaveLikeMultiStrategyPool('vUsdc')
 })

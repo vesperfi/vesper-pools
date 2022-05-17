@@ -30,11 +30,11 @@ const slots = {
   [Address.MUSD]: 51,
 
   // Avalanche addresses
-  [AvalancheAddress.DAI]: 0,
+  [AvalancheAddress.DAIe]: 0,
   [AvalancheAddress.USDC]: 9,
   [AvalancheAddress.USDCe]: 0,
-  [AvalancheAddress.WBTC]: 0,
-  [AvalancheAddress.WETH]: 0,
+  [AvalancheAddress.WBTCe]: 0,
+  [AvalancheAddress.WETHe]: 0,
   [AvalancheAddress.Benqi.QI]: 1,
   [AvalancheAddress.Vesper.VSP]: 2,
 }

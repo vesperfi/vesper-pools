@@ -1,14 +1,6 @@
 'use strict'
 
-const { shouldMigrateStrategies } = require('../behavior/strategy-migration')
-const { shouldBehaveLikeStrategy } = require('../behavior/strategy')
-const { prepareConfig } = require('./config')
-
+const testRunner = require('../utils/testRunner')
 describe('vUNI Pool', function () {
-  const strategies = prepareConfig()
-
-  for (let i = 0; i < strategies.length; i++) {
-    shouldBehaveLikeStrategy(i, strategies[i].type, strategies[i].contract)
-  }
-  shouldMigrateStrategies('vUNI')
+  testRunner('VUNI', ['AaveStrategyUNI', 'CompoundStrategyUNI'], [{ debtRatio: 4000 }, { debtRatio: 4000 }])
 })
