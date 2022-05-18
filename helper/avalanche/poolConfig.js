@@ -54,12 +54,6 @@ const PoolConfig = {
     setup: { ...setup }, // Shallow copy
     rewards: { ...rewards },
   },
-  VUSDCe: {
-    contractName: 'VPool',
-    poolParams: ['vUSDCe Pool', 'vUSDCe', Address.USDCe],
-    setup: { ...setup }, // Shallow copy
-    rewards: { ...rewards },
-  },
 }
 
 module.exports = Object.freeze(PoolConfig)

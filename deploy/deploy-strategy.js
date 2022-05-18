@@ -3,7 +3,7 @@
 
 const { OperationType } = require('ethers-multisend')
 const { ethers } = require('hardhat')
-const { isDelegateOrOwner, getMultisigNonce, submitGnosisTxn } = require('./gnosis-txn')
+const { isDelegateOrOwner, getNextNonce, submitGnosisTxn } = require('./gnosis-txn')
 const CollateralManager = 'CollateralManager'
 const PoolAccountant = 'PoolAccountant'
 
@@ -36,13 +36,9 @@ async function executeOrProposeTx(contractName, contractAddress, alias, params =
   } else if (params.isDelegateOrOwner) {
     const contract = await ethers.getContractAt(contractName, contractAddress)
     params.multisigNonce =
-      params.multisigNonce === 0
-        ? (await getMultisigNonce(params.safe, params.targetChain)).nonce
-        : params.multisigNonce
+      params.multisigNonce === 0 ? await getNextNonce(params.safe, params.targetChain) : params.multisigNonce
     const data = await contract.populateTransaction[params.methodName](...params.methodArgs)
     await sendGnosisSafeTxn(data, params)
-    // increase nonce number
-    params.multisigNonce = parseInt(params.multisigNonce) + 1
   } else {
     console.log(`Pool governor is not deployer, skipping ${params.methodName} operation`)
   }

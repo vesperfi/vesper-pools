@@ -20,8 +20,18 @@ const isDeployerADelegate = async function (safe, deployer, targetChain) {
   return delegates.includes(deployer)
 }
 
-const getMultisigNonce = async function (safe, targetChain) {
-  return (await axios.get(`${getBaseUrl(targetChain)}/api/v1/safes/${safe}`)).data
+const getNextNonce = async function (safe, targetChain) {
+  const nonce = (await axios.get(`${getBaseUrl(targetChain)}/api/v1/safes/${safe}`)).data.nonce
+  const url = `${getBaseUrl(
+    targetChain,
+  )}/api/v1/safes/${safe}/multisig-transactions/?executed=false&nonce__gte=${nonce}`
+  const pendingTxs = (await axios.get(url)).data.results
+  if (pendingTxs && pendingTxs.length > 0) {
+    const nonces = pendingTxs.map(tx => tx.nonce)
+    const lastNonce = Math.max(...nonces)
+    return lastNonce + 1
+  }
+  return nonce + 1
 }
 
 function getProvider() {
@@ -117,8 +127,7 @@ const submitGnosisTxn = async function (txnData) {
 async function proposeTxn(targetChain, deployer, multisigNonce = 0, transaction) {
   const Address = require(`../helper/${targetChain}/address`)
   const safe = Address.MultiSig.safe
-
-  const nonce = multisigNonce === 0 ? (await getMultisigNonce(safe, targetChain)).nonce : multisigNonce
+  const nonce = multisigNonce === 0 ? await getNextNonce(safe, targetChain) : multisigNonce
   const txnParams = { baseTxn: transaction, safe, nonce, sender: deployer, targetChain }
   await submitGnosisTxn(txnParams)
 }
@@ -134,7 +143,7 @@ async function proposeMultiTxn(targetChain, deployer, multisigNonce = 0, transac
     value: 0,
     data: txn.data || '0x',
   }
-  const nonce = multisigNonce === 0 ? (await getMultisigNonce(safe, targetChain)).nonce : multisigNonce
+  const nonce = multisigNonce === 0 ? await getNextNonce(safe, targetChain) : multisigNonce
   const txnParams = { baseTxn, safe, nonce, sender: deployer, targetChain }
   await submitGnosisTxn(txnParams)
 }
@@ -142,7 +151,7 @@ async function proposeMultiTxn(targetChain, deployer, multisigNonce = 0, transac
 module.exports = {
   isDelegateOrOwner,
   submitGnosisTxn,
-  getMultisigNonce,
+  getNextNonce,
   proposeTxn,
   proposeMultiTxn,
 }
