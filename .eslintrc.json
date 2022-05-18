@@ -28,7 +28,8 @@
         "hre": false,
         "run": false,
         "task": false,
-        "types": false
+        "types": false,
+        "subtask": false
       }
     }
   ],
