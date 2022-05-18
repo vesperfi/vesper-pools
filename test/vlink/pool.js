@@ -2,10 +2,10 @@
 
 const { prepareConfig } = require('./config')
 const { shouldBehaveLikePool } = require('../behavior/vesper-pool')
-const { shouldBehaveLikeMultiPool } = require('../behavior/vesper-multi-pool')
+const { shouldBehaveLikeMultiStrategyPool } = require('../behavior/vesper-multi-strategy-pool')
 
 describe('vLINK Pool', function () {
   prepareConfig()
   shouldBehaveLikePool('vLINK', 'LINK')
-  shouldBehaveLikeMultiPool('vLINK')
+  shouldBehaveLikeMultiStrategyPool('vLINK')
 })

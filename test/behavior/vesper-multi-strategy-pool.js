@@ -5,7 +5,7 @@ const { deposit: _deposit, rebalance, rebalanceStrategy } = require('../utils/po
 const { expect } = require('chai')
 const { makeNewStrategy } = require('../utils/setupHelper')
 const DECIMAL = '1000000000000000000'
-async function shouldBehaveLikeMultiPool(poolName) {
+async function shouldBehaveLikeMultiStrategyPool(poolName) {
   let pool, strategies, collateralToken, accountant
   let user1, user2, gov
 
@@ -148,4 +148,4 @@ async function shouldBehaveLikeMultiPool(poolName) {
   })
 }
 
-module.exports = { shouldBehaveLikeMultiPool }
+module.exports = { shouldBehaveLikeMultiStrategyPool }

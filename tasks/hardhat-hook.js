@@ -11,8 +11,8 @@ task(TASK_TEST, async function (args, hre, runSuper) {
   // Create provider using actual node url being used for fork
   const provider = new ethers.providers.JsonRpcProvider(process.env.NODE_URL)
   const chainId = (await provider.getNetwork()).chainId
-  // Set the chain id in fork configuration
-  hre.config.networks.hardhat.chainId = chainId
+  // Set the actual node chain id in fork configuration
+  hre.network.config.nodeChainId = chainId
   // Run parent "test" task from hardhat
   await runSuper()
 })
@@ -27,5 +27,6 @@ task(TASK_TEST_RUN_MOCHA_TESTS, async function (args, hre, runSuper) {
       typeError.stack = `${typeError.stack.split('\n').slice(0, 2).join('\n')}\n${error.stack}`
       throw typeError
     }
+    throw error
   })
 })

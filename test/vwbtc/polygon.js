@@ -2,7 +2,7 @@
 
 const { prepareConfig } = require('./config')
 const { shouldBehaveLikePool } = require('../behavior/vesper-pool')
-const { shouldBehaveLikeMultiPool } = require('../behavior/vesper-multi-pool')
+const { shouldBehaveLikeMultiStrategyPool } = require('../behavior/vesper-multi-strategy-pool')
 const { strategyConfig } = require('../utils/chains').getChainData()
 
 describe('vWBTC Pool', function () {
@@ -14,5 +14,5 @@ describe('vWBTC Pool', function () {
 
   prepareConfig(strategies)
   shouldBehaveLikePool('vWBTC', 'WBTC')
-  shouldBehaveLikeMultiPool('vWBTC')
+  shouldBehaveLikeMultiStrategyPool('vWBTC')
 })

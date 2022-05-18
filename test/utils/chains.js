@@ -11,7 +11,8 @@ const CHAIN = {
 }
 
 function getChain() {
-  const chainId = hre.network.config.chainId
+  // If exist use nodeChainId else use default chainId
+  const chainId = hre.network.config.nodeChainId || hre.network.config.chainId
   const chain = CHAIN[chainId]
   if (!chain) {
     throw new Error(`Please configure chainId: ${chainId} in /test/chains.js`)

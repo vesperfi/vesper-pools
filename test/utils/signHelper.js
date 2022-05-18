@@ -1,6 +1,7 @@
 'use strict'
 
-const { ethers } = require('hardhat')
+const hre = require('hardhat')
+const ethers = hre.ethers
 const { keccak256, defaultAbiCoder, toUtf8Bytes, solidityPack, SigningKey } = ethers.utils
 const Wallet = ethers.Wallet
 
@@ -20,8 +21,6 @@ async function getAccountData(mnemonic) {
   }
 }
 
-// There are multiple ways to get chainId from hardhat/ethers. We have overwritten fork chainId
-// for tests but not for compilation hence below chainId is correct and do not update.
 function getDomainSeparator(name, tokenAddress) {
   return keccak256(
     defaultAbiCoder.encode(
@@ -30,7 +29,7 @@ function getDomainSeparator(name, tokenAddress) {
         keccak256(toUtf8Bytes('EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)')),
         keccak256(toUtf8Bytes(name)),
         keccak256(toUtf8Bytes('1')),
-        ethers.provider._network.chainId, // DO NOT UPDATE THIS
+        hre.network.config.chainId,
         tokenAddress,
       ],
     ),
