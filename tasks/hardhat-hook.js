@@ -21,12 +21,13 @@ task(TASK_TEST, async function (args, hre, runSuper) {
 // message to error for easier error interpretation.
 task(TASK_TEST_RUN_MOCHA_TESTS, async function (args, hre, runSuper) {
   // Run parent task which runs tests and on failure process error as needed.
-  await runSuper().catch(function (error) {
+  const exitCode = await runSuper().catch(function (error) {
     if (error.message === "Cannot read properties of undefined (reading 'config')") {
-      const typeError = new Error('Missing strategy configuration for selected chain')
+      const typeError = new Error(`Missing strategy configuration for ${hre.network.config.nodeChainId}`)
       typeError.stack = `${typeError.stack.split('\n').slice(0, 2).join('\n')}\n${error.stack}`
       throw typeError
     }
     throw error
   })
+  return exitCode
 })
