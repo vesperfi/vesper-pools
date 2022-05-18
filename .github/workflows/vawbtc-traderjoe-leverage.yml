@@ -3,7 +3,7 @@ on:
   pull_request:
     paths:
       - ".github/workflows/vawbtc-traderjoe-leverage.yml"
-      - "test/vawbtc/trader-joe-leverage.js"
+      - "test/avalanche/vawbtc/trader-joe-leverage.js"
       - "contracts/strategies/Strategy.sol"
       - "contracts/strategies/compound/CompoundLeverageStrategy.sol"
       - "contracts/strategies/compound/CompoundLeverageAvalancheCore.sol"
@@ -27,4 +27,4 @@ jobs:
         run: npm install
 
       - name: Running tests for vaWBTC TraderJoe Leverage
-        run: BLOCK_NUMBER=14505583 && npm test "test/vawbtc/trader-joe-leverage.js"
+        run: BLOCK_NUMBER=14505583 && npm test "test/avalanche/vawbtc/trader-joe-leverage.js"

@@ -2,7 +2,7 @@ name: vaAVAX with Benqi Compound
 on:
   pull_request:
     paths:
-      - "test/vaavax/benqi.js"
+      - "test/avalanche/vaavax/benqi.js"
       - "contracts/strategies/Strategy.sol"
       - "contracts/strategies/compound/CompoundStrategy.sol"
       - "contracts/strategies/compound/CompoundMultiRewardAvalancheStrategy.sol"
@@ -22,8 +22,8 @@ jobs:
         with:
           node-version-file: ".nvmrc"
 
-      - name: Run npm install with node v${{ matrix.node }}
+      - name: Run npm install
         run: npm install
 
       - name: Running tests for vaAVAX Benqi Compound
-        run: npm test "test/vaavax/benqi.js"
+        run: npm test "test/avalanche/vaavax/benqi.js"

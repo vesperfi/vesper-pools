@@ -2,7 +2,7 @@ name: vaWETH with TraderJoe.
 on:
   pull_request:
     paths:
-      - "test/vaweth/trader-joe.js"
+      - "test/avalanche/vaweth/trader-joe.js"
       - "contracts/strategies/Strategy.sol"
       - "contracts/strategies/compound/CompoundMultiRewardAvalancheStrategy.sol"
       - "contracts/strategies/compound/CompoundStrategy.sol"
@@ -25,4 +25,4 @@ jobs:
         run: npm install
 
       - name: Running tests for vaWETH TraderJoe
-        run: npm test "test/vaweth/trader-joe.js"
+        run: npm test "test/avalanche/vaweth/trader-joe.js"

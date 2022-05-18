@@ -2,7 +2,7 @@ name: vaWBTC with TraderJoe.
 on:
   pull_request:
     paths:
-      - "test/vawbtc/trader-joe.js"
+      - "test/avalanche/vawbtc/trader-joe.js"
       - "contracts/strategies/Strategy.sol"
       - "contracts/strategies/compound/CompoundMultiRewardAvalancheStrategy.sol"
       - "contracts/strategies/compound/CompoundStrategy.sol"
@@ -25,4 +25,4 @@ jobs:
         run: npm install
 
       - name: Running tests for vaWBTC TraderJoe
-        run: npm test "test/vawbtc/trader-joe.js"
+        run: npm test "test/avalanche/vawbtc/trader-joe.js"

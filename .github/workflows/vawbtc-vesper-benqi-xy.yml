@@ -2,7 +2,7 @@ name: vaWBTC with Vesper Benqi XY
 on:
   pull_request:
     paths:
-      - "test/vawbtc/vesper-benqi-xy.js"
+      - "test/avalanche/vawbtc/vesper-benqi-xy.js"
       - "contracts/strategies/Strategy.sol"
       - "contracts/strategies/compound/CompoundXYCore.sol"
       - "contracts/strategies/compound/CompoundXYStrategy.sol"
@@ -27,4 +27,4 @@ jobs:
         run: npm install
 
       - name: Running tests for vaWBTC Vesper Benqi XY
-        run: npm test "test/vawbtc/vesper-benqi-xy.js"
+        run: npm test "test/avalanche/vawbtc/vesper-benqi-xy.js"

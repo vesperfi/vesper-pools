@@ -2,7 +2,7 @@ name: vaDAI with TraderJoe.
 on:
   pull_request:
     paths:
-      - "test/vadai/trader-joe.js"
+      - "test/avalanche/vadaie/trader-joe.js"
       - "contracts/strategies/Strategy.sol"
       - "contracts/strategies/compound/CompoundMultiRewardAvalancheStrategy.sol"
       - "contracts/strategies/compound/CompoundStrategy.sol"
@@ -25,4 +25,4 @@ jobs:
         run: npm install
 
       - name: Running tests for vaDAI TraderJoe
-        run: npm test "test/vadai/trader-joe.js"
+        run: npm test "test/avalanche/vadaie/trader-joe.js"

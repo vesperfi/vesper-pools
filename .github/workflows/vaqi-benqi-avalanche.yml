@@ -3,7 +3,7 @@ on:
   pull_request:
     paths:
       - ".github/workflows/vaqi-benqi-avalanche.yml"
-      - "test/vaqi/benqi.js"
+      - "test/avalanche/vaqi/benqi.js"
       - "contracts/strategies/Strategy.sol"
       - "contracts/strategies/compound/CompoundMultiRewardAvalancheStrategy.sol"
       - "contracts/strategies/compound/CompoundStrategy.sol"
@@ -20,10 +20,10 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v2
         with:
-          node-version-file: '.nvmrc'
+          node-version-file: ".nvmrc"
 
       - name: Run npm install
         run: npm install
 
       - name: Running tests for vaQI Benqi
-        run: npm test "test/vaqi/benqi.js"
+        run: npm test "test/avalanche/vaqi/benqi.js"

@@ -2,7 +2,7 @@ name: vaWETH with TraderJoe Compound Leverage
 on:
   pull_request:
     paths:
-      - "test/vaweth/trader-joe-leverage.js"
+      - "test/avalanche/vaweth/trader-joe-leverage.js"
       - "contracts/strategies/Strategy.sol"
       - "contracts/strategies/compound/CompoundLeverageStrategy.sol"
       - "contracts/strategies/compound/CompoundLeverageAvalancheCore.sol"
@@ -26,4 +26,4 @@ jobs:
         run: npm install
 
       - name: Running tests for vaWETH TraderJoe Compound Leverage
-        run: npm test "test/vaweth/trader-joe-leverage.js"
+        run: npm test "test/avalanche/vaweth/trader-joe-leverage.js"

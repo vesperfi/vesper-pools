@@ -2,7 +2,7 @@ name: vaUSDCe with Benqi Leverage
 on:
   pull_request:
     paths:
-      - "test/vausdce/benqi-leverage.js"
+      - "test/avalanche/vausdce/benqi-leverage.js"
       - "contracts/strategies/Strategy.sol"
       - "contracts/strategies/compound/CompoundLeverageStrategy.sol"
       - "contracts/strategies/compound/CompoundLeverageAvalancheCore.sol"
@@ -26,4 +26,4 @@ jobs:
         run: npm install
 
       - name: Running tests for vaUSDCe Benqi Compound Leverage
-        run: npm test "test/vausdce/benqi-leverage.js"
+        run: npm test "test/avalanche/vausdce/benqi-leverage.js"
