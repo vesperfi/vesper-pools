@@ -3,7 +3,6 @@
 const { makeNewStrategy } = require('../utils/setupHelper')
 const { deposit: _deposit, rebalanceStrategy } = require('../utils/poolOps')
 const { expect } = require('chai')
-const { BigNumber } = require('ethers')
 
 async function shouldMigrateStrategies(poolName) {
   let pool, strategies, collateralToken
@@ -27,7 +26,15 @@ async function shouldMigrateStrategies(poolName) {
       ])
 
     await pool.connect(gov.signer).migrateStrategy(oldStrategy.instance.address, newStrategy.instance.address)
-
+    if (newStrategy.type.includes('Leverage')) {
+      // Leverage strategies perform deleverage during migration. To achieve same state as old strategy, new strategy
+      // should be rebalanced. As we want to keep pool state same, we will have to set universalFee to zero else
+      // rebalance will mint new share for fee
+      await pool.connect(gov.signer).updateUniversalFee(0)
+      await newStrategy.instance.rebalance()
+      // Reset universal fee
+      await pool.connect(gov.signer).updateUniversalFee(200)
+    }
     const [
       totalSupplyAfter,
       totalValueAfter,
@@ -44,21 +51,24 @@ async function shouldMigrateStrategies(poolName) {
       receiptToken.balanceOf(newStrategy.instance.address),
     ])
     expect(totalSupplyAfter).to.be.eq(totalSupplyBefore, `${poolName} total supply after migration is not correct`)
-    expect(totalValueAfter).to.be.eq(totalValueBefore, `${poolName} total value after migration is not correct`)
+    // Some strategy earn interest during rebalance after migration hence checking "gte"
+    expect(totalValueAfter).to.be.gte(totalValueBefore, `${poolName} total value after migration is not correct`)
     expect(totalDebtAfter).to.be.eq(totalDebtBefore, `${poolName} total debt after migration is not correct`)
     expect(totalDebtRatioAfter).to.be.eq(
       totalDebtRatioBefore,
       `${poolName} total debt ratio after migration is not correct`,
     )
-    // Some strategy like leverage and compoundXY bear some loss before migration. Allow 0.1% deviation in loss
-    expect(receiptTokenAfter2).to.be.closeTo(
-      receiptTokenBefore,
-      receiptTokenBefore.mul(BigNumber.from('1')).div(BigNumber.from('1000')),
-      `${poolName} receipt token balance of new strategy after migration is not correct`,
-    )
+
     expect(receiptTokenAfter).to.be.eq(
       0,
       `${poolName} receipt token balance of old strategy after migration is not correct`,
+    )
+
+    // Some strategy like leverage and compoundXY bear some loss before migration. Allow 0.1% deviation in loss
+    expect(receiptTokenAfter2).to.be.closeTo(
+      receiptTokenBefore,
+      receiptTokenBefore.div('1000'),
+      `${poolName} receipt token balance of new strategy after migration is not correct`,
     )
   }
 

@@ -43,6 +43,21 @@ jobs:
       - name: Running Aave strategy for VADAI pool
         run: npm test test/mainnet/aave/vadai.js
 
+  vauni-test:
+    needs: [setup-job]
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.NODE_URL }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup env
+        uses: ./.github/actions/setup-env
+
+      - name: Running Aave strategy for VAUNI pool
+        run: npm test test/mainnet/aave/vauni.js
+
   vausdc-test:
     needs: [setup-job]
     runs-on: ubuntu-latest
@@ -57,3 +72,18 @@ jobs:
 
       - name: Running Aave strategy for VAUSDC pool
         run: npm test test/mainnet/aave/vausdc.js
+
+  vausdt-test:
+    needs: [setup-job]
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.NODE_URL }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup env
+        uses: ./.github/actions/setup-env
+
+      - name: Running Aave strategy for VAUSDT pool
+        run: npm test test/mainnet/aave/vausdt.js
