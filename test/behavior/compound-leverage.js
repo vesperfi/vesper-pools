@@ -14,13 +14,16 @@ function shouldBehaveLikeCompoundLeverageStrategy(strategyIndex) {
   let governor, user1, user2
 
   async function isMarketExist() {
-    const solo = await ethers.getContractAt('ISoloMargin', address.DyDx.SOLO)
-    const totalMarkets = await solo.getNumMarkets()
+    if (getChain() === 'mainnet') {
+      // address.DyDx.SOLO on avalanche chain is not a contract
+      const solo = await ethers.getContractAt('ISoloMargin', address.DyDx.SOLO)
+      const totalMarkets = await solo.getNumMarkets()
 
-    for (let i = 0; i < totalMarkets; i++) {
-      const tokenAddress = await solo.getMarketTokenAddress(i)
-      if (collateralToken.address === tokenAddress) {
-        return true
+      for (let i = 0; i < totalMarkets; i++) {
+        const tokenAddress = await solo.getMarketTokenAddress(i)
+        if (collateralToken.address === tokenAddress) {
+          return true
+        }
       }
     }
     return false
@@ -122,7 +125,7 @@ function shouldBehaveLikeCompoundLeverageStrategy(strategyIndex) {
     })
 
     it('Should adjust borrow to keep it within defined limits', async function () {
-      await deposit(pool, collateralToken, 100, user1)
+      await deposit(pool, collateralToken, 200, user1)
       await strategy.connect(governor.signer).rebalance()
       await advanceBlock(100)
 
@@ -271,7 +274,9 @@ function shouldBehaveLikeCompoundLeverageStrategy(strategyIndex) {
         await strategy.connect(governor.signer).updateSwapSlippage('1000')
       }
       const rewardToken = await ethers.getContractAt('IERC20', strategy.rewardToken())
-      await deposit(pool, collateralToken, 10, user2)
+      // using bigger amount for avalanche to generate significant rewards for wbtc pool
+      const amount = getChain() === 'mainnet' ? 20 : 500
+      await deposit(pool, collateralToken, amount, user2)
       await strategy.connect(governor.signer).rebalance()
       await advanceBlock(100)
       const strategyName = await strategy.NAME()
