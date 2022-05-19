@@ -5,7 +5,9 @@ const { getUsers } = require('../utils/setupHelper')
 const { deposit } = require('../utils/poolOps')
 const ZERO_ADDRESS = require('../../helper/mainnet/address').ZERO
 const time = require('../utils/time')
+const { ethers } = require('hardhat')
 
+const icAbi = ['function assets(address _aToken) external view returns(uint104, uint104, uint40)']
 // Aave strategy specific tests
 function shouldBehaveLikeAaveStrategy(strategyIndex) {
   let strategy, user2
@@ -22,7 +24,14 @@ function shouldBehaveLikeAaveStrategy(strategyIndex) {
     })
 
     it('Should increase totalValue due to aave rewards', async function () {
-      if ((await strategy.aaveIncentivesController()) !== ZERO_ADDRESS) {
+      const icAddress = await strategy.aaveIncentivesController()
+      if (icAddress !== ZERO_ADDRESS) {
+        const incentivesController = await ethers.getContractAt(icAbi, icAddress)
+        const emissionPerSecond = (await incentivesController.assets(token.address))[0]
+        if (emissionPerSecond.eq(0)) {
+          // No rewards
+          return
+        }
         await deposit(pool, collateralToken, 10, user2)
         await strategy.rebalance()
         const totalValueBefore = await strategy.totalValue()
