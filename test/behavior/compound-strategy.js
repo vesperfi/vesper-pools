@@ -2,7 +2,7 @@
 
 const { expect } = require('chai')
 const swapper = require('../utils/tokenSwapper')
-const { getUsers } = require('../utils/setupHelper')
+const { getStrategyToken, getUsers } = require('../utils/setupHelper')
 const { deposit } = require('../utils/poolOps')
 const { adjustBalance } = require('../utils/balance')
 const { advanceBlock } = require('../utils/time')
@@ -30,7 +30,7 @@ function shouldBehaveLikeCompoundStrategy(strategyIndex) {
       strategy = this.strategies[strategyIndex].instance
       collateralToken = this.collateralToken
       collateralDecimal = await this.collateralToken.decimals()
-      token = this.strategies[strategyIndex].token
+      token = await getStrategyToken(this.strategies[strategyIndex])
       comp = await ethers.getContractAt('ERC20', await strategy.rewardToken())
       comptroller = await ethers.getContractAt('Comptroller', await strategy.COMPTROLLER())
     })

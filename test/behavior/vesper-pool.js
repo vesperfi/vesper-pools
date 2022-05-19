@@ -3,14 +3,13 @@
 const swapper = require('../utils/tokenSwapper')
 const { getPermitData } = require('../utils/signHelper')
 const { MNEMONIC } = require('../utils/testKey')
-const { getEvent, unlock } = require('../utils/setupHelper')
+const { getEvent, unlock, getIfExist } = require('../utils/setupHelper')
 const {
   deposit: _deposit,
   rebalance,
   rebalanceStrategy,
   totalDebtOfAllStrategy,
   timeTravel,
-  executeIfExist,
 } = require('../utils/poolOps')
 const chaiAlmost = require('chai-almost')
 const chai = require('chai')
@@ -88,15 +87,16 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
 
       it(`Should deposit ${collateralName} and call rebalance() of each strategy`, async function () {
         const depositAmount = await deposit(50, user4)
-
         const totalValue = await pool.totalValue()
         for (const strategy of strategies) {
-          await executeIfExist(strategy.token.exchangeRateCurrent)
           await rebalanceStrategy(strategy)
-          await executeIfExist(strategy.token.exchangeRateCurrent)
           const strategyParams = await pool.strategy(strategy.instance.address)
           if (strategyParams._debtRatio.gt(0)) {
-            const receiptTokenBalance = await strategy.token.balanceOf(strategy.instance.address)
+            const receiptToken = await ethers.getContractAt('IERC20', await strategy.instance.token())
+            let receiptTokenBalance = await getIfExist(strategy.instance.totalLp)
+            if (!receiptTokenBalance) {
+              receiptTokenBalance = await receiptToken.balanceOf(strategy.instance.address)
+            }
             expect(receiptTokenBalance).to.be.gt(0, 'receipt token balance of strategy is wrong')
           }
         }

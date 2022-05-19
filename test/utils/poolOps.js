@@ -13,12 +13,6 @@ const { getChain } = require('../utils/chains')
 const { unlock } = require('./setupHelper')
 const { NATIVE_TOKEN, DAI, MIM, ALUSD, Vesper } = require(`../../helper/${getChain()}/address`)
 
-async function executeIfExist(fn) {
-  if (typeof fn === 'function') {
-    await fn()
-  }
-}
-
 /**
  *  Swap given ETH for given token type and deposit tokens into Vesper pool
  *
@@ -213,7 +207,6 @@ async function makeStrategyProfitable(strategy, collateralToken, user) {
  * @param {object} strategy - strategy object
  */
 async function rebalanceStrategy(strategy) {
-  await executeIfExist(strategy.token.exchangeRateCurrent)
   let tx
   try {
     if (strategy.type.includes('Maker')) {
@@ -249,7 +242,6 @@ async function rebalanceStrategy(strategy) {
     await bringAboveWater(strategy, 50)
     tx = await strategy.instance.rebalance()
   }
-  await executeIfExist(strategy.token.exchangeRateCurrent)
   return tx
 }
 
@@ -305,7 +297,6 @@ module.exports = {
   rebalanceStrategy,
   rebalanceUnderlying,
   totalDebtOfAllStrategy,
-  executeIfExist,
   timeTravel,
   makeStrategyProfitable,
 }

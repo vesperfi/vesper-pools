@@ -2,7 +2,7 @@
 
 const { expect } = require('chai')
 const { ethers } = require('hardhat')
-const { getUsers } = require('../utils/setupHelper')
+const { getStrategyToken, getUsers } = require('../utils/setupHelper')
 const { deposit, makeStrategyProfitable } = require('../utils/poolOps')
 const { advanceBlock } = require('../utils/time')
 const { getChain } = require('../utils/chains')
@@ -70,7 +70,7 @@ function shouldBehaveLikeCompoundLeverageStrategy(strategyIndex) {
       strategy = this.strategies[strategyIndex].instance
       collateralToken = this.collateralToken
       collateralDecimal = await this.collateralToken.decimals()
-      token = this.strategies[strategyIndex].token
+      token = await getStrategyToken(this.strategies[strategyIndex])
     })
 
     it('Should work as expected when debtRatio is 0', async function () {
