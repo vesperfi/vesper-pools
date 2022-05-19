@@ -49,6 +49,10 @@ contract VesperBenqiXYStrategy is BenqiXYStrategy {
         return _getBorrowBalance();
     }
 
+    function isReservedToken(address _token) public view virtual override returns (bool) {
+        return super.isReservedToken(_token) || _token == address(vPool);
+    }
+
     /// @notice Calculate total value based Benqi protocol rewards, VSP rewards, supply and borrow position
     function totalValue() public view override returns (uint256 _totalValue) {
         _totalValue = super.totalValue();

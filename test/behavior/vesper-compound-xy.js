@@ -63,6 +63,11 @@ function shouldBehaveLikeVesperCompoundXYStrategy(strategyIndex) {
       oracle = await ethers.getContractAt('Oracle', oracleAddress)
     })
 
+    it('Validate that vPool is reserved token', async function () {
+      const isReserved = await strategy.isReservedToken(await strategy.vPool())
+      expect(isReserved).to.be.eq(true, 'VPool should be reserved token')
+    })
+
     it('Should borrow tokens at rebalance', async function () {
       await deposit(pool, collateralToken, 10, user1)
       await strategy.connect(governor.signer).rebalance()

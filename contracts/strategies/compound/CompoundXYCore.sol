@@ -116,7 +116,7 @@ abstract contract CompoundXYCore is Strategy {
      */
     function _beforeMigration(address _newStrategy) internal override {
         require(IStrategy(_newStrategy).token() == address(supplyCToken), "wrong-receipt-token");
-        _repay(borrowCToken.borrowBalanceCurrent(address(this)), true);
+        _repay(borrowCToken.borrowBalanceCurrent(address(this)), false);
     }
 
     /// @dev Hook that executes before repaying borrowed collateral
