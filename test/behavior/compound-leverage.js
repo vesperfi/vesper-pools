@@ -13,6 +13,19 @@ function shouldBehaveLikeCompoundLeverageStrategy(strategyIndex) {
   let strategy, pool, collateralToken, collateralDecimal, token
   let governor, user1, user2
 
+  async function isMarketExist() {
+    const solo = await ethers.getContractAt('ISoloMargin', address.DyDx.SOLO)
+    const totalMarkets = await solo.getNumMarkets()
+
+    for (let i = 0; i < totalMarkets; i++) {
+      const tokenAddress = await solo.getMarketTokenAddress(i)
+      if (collateralToken.address === tokenAddress) {
+        return true
+      }
+    }
+    return false
+  }
+
   function calculateAPY(pricePerShare, blockElapsed, decimals = 18) {
     // APY calculation
     const DECIMALS = ethers.BigNumber.from('10').pow(decimals)
@@ -68,7 +81,9 @@ function shouldBehaveLikeCompoundLeverageStrategy(strategyIndex) {
         expect(position._supply).to.gt(0, 'Incorrect supply')
         expect(position._borrow).to.gt(0, 'Incorrect borrow')
         expect(await pool.totalDebtOf(strategy.address)).to.gt(0, 'Incorrect total debt of strategy')
-
+        if (await strategy.callStatic.isLossMaking()) {
+          return
+        }
         const accountant = await ethers.getContractAt('PoolAccountant', await pool.poolAccountant())
         await accountant.updateDebtRatio(strategy.address, 0)
 
@@ -161,8 +176,7 @@ function shouldBehaveLikeCompoundLeverageStrategy(strategyIndex) {
     })
 
     it('Should verify that DyDx flash loan works', async function () {
-      // Ignore FEI as no-marketId-found-for-fei-token
-      if (getChain() !== 'avalanche' && collateralToken.address !== address.FEI) {
+      if (await isMarketExist()) {
         await strategy.connect(governor.signer).updateDyDxStatus(true)
         await strategy.connect(governor.signer).updateAaveStatus(false)
         await deposit(pool, collateralToken, 100, user1)
