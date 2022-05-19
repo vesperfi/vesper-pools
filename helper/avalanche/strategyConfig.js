@@ -12,57 +12,57 @@ const setup = {
 
 // TODO update setup to remove strategy type, once done remove type from heres too
 const StrategyConfig = {
-  AaveStrategyAvalancheDAIe: {
+  AaveStrategyDAIe: {
     contract: 'AaveStrategyAvalanche',
     type: StrategyTypes.AAVE,
     constructorArgs: {
       swapManager,
       receiptToken: Address.Aave.avDAI,
-      strategyName: 'AaveStrategyAvalancheDAIe',
+      strategyName: 'AaveStrategyDAIe',
     },
     config: { ...config }, // Shallow copy
     setup: { ...setup },
   },
-  AaveStrategyAvalancheWETHe: {
+  AaveStrategyWETHe: {
     contract: 'AaveStrategyAvalanche',
     type: StrategyTypes.AAVE,
     constructorArgs: {
       swapManager,
       receiptToken: Address.Aave.avWETH,
-      strategyName: 'AaveStrategyAvalancheWETHe',
+      strategyName: 'AaveStrategyWETHe',
     },
     config: { ...config }, // Shallow copy
     setup: { ...setup },
   },
-  AaveStrategyAvalancheWBTCe: {
+  AaveStrategyWBTCe: {
     contract: 'AaveStrategyAvalanche',
     type: StrategyTypes.AAVE,
     constructorArgs: {
       swapManager,
       receiptToken: Address.Aave.avWBTC,
-      strategyName: 'AaveStrategyAvalancheWBTCe',
+      strategyName: 'AaveStrategyWBTCe',
     },
     config: { ...config }, // Shallow copy
     setup: { ...setup },
   },
-  AaveStrategyAvalancheAVAX: {
+  AaveStrategyAVAX: {
     contract: 'AaveStrategyAvalanche',
     type: StrategyTypes.AAVE,
     constructorArgs: {
       swapManager,
       receiptToken: Address.Aave.avWAVAX,
-      strategyName: 'AaveStrategyAvalancheAVAX',
+      strategyName: 'AaveStrategyAVAX',
     },
     config: { ...config }, // Shallow copy
     setup: { ...setup },
   },
-  AaveStrategyAvalancheUSDCe: {
+  AaveStrategyUSDCe: {
     contract: 'AaveStrategyAvalanche',
     type: StrategyTypes.AAVE,
     constructorArgs: {
       swapManager,
       receiptToken: Address.Aave.avUSDC,
-      strategyName: 'AaveStrategyAvalancheUSDCe',
+      strategyName: 'AaveStrategyUSDCe',
     },
     config: { ...config }, // Shallow copy
     setup: { ...setup },
