@@ -496,73 +496,73 @@ const StrategyConfig = {
     setup: { ...setup },
   },
 
-  AlphaLendAvalancheStrategyDAIe: {
+  AlphaLendStrategyDAIe: {
     contract: 'AlphaLendAvalancheStrategy',
     type: StrategyTypes.ALPHA_LEND,
     constructorArgs: {
       swapManager,
       receiptToken: Address.Alpha.ibDAIev2,
-      strategyName: 'AlphaLendAvalancheStrategyDAIe',
+      strategyName: 'AlphaLendStrategyDAIe',
     },
     config: { ...config },
     setup: { ...setup },
   },
 
-  AlphaLendAvalancheStrategyWETHe: {
+  AlphaLendStrategyWETHe: {
     contract: 'AlphaLendAvalancheStrategy',
     type: StrategyTypes.ALPHA_LEND,
     constructorArgs: {
       swapManager,
-      receiptToken: Address.Alpha.ibWETHv2,
-      strategyName: 'AlphaLendAvalancheStrategyWETHe',
+      receiptToken: Address.Alpha.ibWETHev2,
+      strategyName: 'AlphaLendStrategyWETHe',
     },
     config: { ...config },
     setup: { ...setup },
   },
 
-  AlphaLendAvalancheStrategyUSDCe: {
+  AlphaLendStrategyUSDCe: {
     contract: 'AlphaLendAvalancheStrategy',
     type: StrategyTypes.ALPHA_LEND,
     constructorArgs: {
       swapManager,
       receiptToken: Address.Alpha.ibUSDCev2,
-      strategyName: 'AlphaLendAvalancheStrategyUSDCe',
+      strategyName: 'AlphaLendStrategyUSDCe',
     },
     config: { ...config },
     setup: { ...setup },
   },
 
-  AlphaLendAvalancheStrategyUSDC: {
+  AlphaLendStrategyUSDC: {
     contract: 'AlphaLendAvalancheStrategy',
     type: StrategyTypes.ALPHA_LEND,
     constructorArgs: {
       swapManager,
       receiptToken: Address.Alpha.ibUSDCv2,
-      strategyName: 'AlphaLendAvalancheStrategyUSDC',
+      strategyName: 'AlphaLendStrategyUSDC',
     },
     config: { ...config },
     setup: { ...setup },
   },
 
-  AlphaLendAvalancheStrategyWBTCe: {
+  AlphaLendStrategyWBTCe: {
     contract: 'AlphaLendAvalancheStrategy',
     type: StrategyTypes.ALPHA_LEND,
     constructorArgs: {
       swapManager,
       receiptToken: Address.Alpha.ibWBTCev2,
-      strategyName: 'AlphaLendAvalancheStrategyWBTCe',
+      strategyName: 'AlphaLendStrategyWBTCe',
     },
     config: { ...config },
     setup: { ...setup },
   },
 
-  AlphaLendAvalancheStrategyAVAX: {
+  AlphaLendStrategyAVAX: {
     contract: 'AlphaLendAvalancheStrategyAVAX',
     type: StrategyTypes.ALPHA_LEND,
     constructorArgs: {
       swapManager,
       receiptToken: Address.Alpha.ibAVAXv2,
-      strategyName: 'AlphaLendAvalancheStrategyAVAX',
+      strategyName: 'AlphaLendStrategyAVAX',
     },
     config: { ...config },
     setup: { ...setup },
