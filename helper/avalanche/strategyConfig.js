@@ -67,13 +67,13 @@ const StrategyConfig = {
     config: { ...config }, // Shallow copy
     setup: { ...setup },
   },
-  AaveLeverageAvalancheStrategyAVAX: {
+  AaveLeverageStrategyAVAX: {
     contract: 'AaveLeverageAvalancheStrategy',
     type: StrategyTypes.AAVE_LEVERAGE,
     constructorArgs: {
       swapManager,
       receiptToken: Address.Aave.avWAVAX,
-      strategyName: 'AaveLeverageAvalancheStrategyAVAX',
+      strategyName: 'AaveLeverageStrategyAVAX',
     },
     config: { ...config }, // Shallow copy
     setup: { ...setup },
