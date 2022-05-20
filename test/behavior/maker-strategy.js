@@ -26,7 +26,7 @@ function shouldBehaveLikeMakerStrategy(strategyIndex) {
       accountant = this.accountant
       strategy = this.strategies[strategyIndex]
       collateralToken = this.collateralToken
-      token = getStrategyToken(strategy.instance, strategy.type)
+      token = await getStrategyToken(strategy)
       cm = strategy.instance.collateralManager
     })
 

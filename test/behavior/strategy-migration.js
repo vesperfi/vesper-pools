@@ -107,7 +107,7 @@ async function shouldMigrateStrategies(poolName) {
 
   async function strategyMigration(strategy) {
     const newStrategy = await makeNewStrategy(strategy, pool.address, options)
-    const receiptToken = await getStrategyToken(strategy.instance, strategy.type)
+    const receiptToken = await getStrategyToken(strategy)
     await migrateAndAssert(strategy, newStrategy, receiptToken)
     await assertDepositAndWithdraw(newStrategy)
     await assertTotalDebt(newStrategy)

@@ -10,6 +10,7 @@ const {
   rebalanceStrategy,
   totalDebtOfAllStrategy,
   timeTravel,
+  makeStrategyProfitable,
 } = require('../utils/poolOps')
 const chaiAlmost = require('chai-almost')
 const chai = require('chai')
@@ -196,17 +197,15 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
         // Time travel based on type of strategy. For compound strategy mine 500 blocks, else time travel
         await timeTravel(60 * 24 * 60 * 60, 500, '', '', strategies)
         await rebalance(strategies)
-        let o = await pool.balanceOf(user1.address)
-        await pool.connect(user1.signer).withdraw(o)
-        o = await pool.balanceOf(user1.address)
-        await rebalance(strategies)
-        o = await pool.balanceOf(user2.address)
-        await rebalance(strategies)
+        const user1Balance = await pool.balanceOf(user1.address)
+        // Earn pool leaves dust behind sometimes
+        const dust = user1Balance.div(1000000) // 0.0001 % dust
+        await pool.connect(user1.signer).withdraw(user1Balance)
         return Promise.all([pool.balanceOf(user1.address), collateralToken.balanceOf(user1.address)]).then(function ([
           vPoolBalance,
           collateralBalance,
         ]) {
-          expect(vPoolBalance).to.be.lte(0, `${poolName} balance of user is wrong`)
+          expect(vPoolBalance).to.be.closeTo('0', dust, `${poolName} balance of user is wrong`)
           expect(collateralBalance).to.be.gte(depositAmount, `${collateralName} balance of user is wrong`)
         })
       })
@@ -593,14 +592,16 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
 
         it('Earn Pool should collect profits in rewardToken in drip contract', async function () {
           const rewardTokenBalanceBefore = await rewardToken.balanceOf(earnDrip.address)
-
           await deposit(20, user1)
           await rebalance(strategies)
           // Time travel to generate earning
           await timeTravel(30 * 24 * 60 * 60)
+          // Making 1 strategy profitable is enough, no need to loop over all strategies
+          await makeStrategyProfitable(strategies[0].instance, dripToken)
           await rebalance(strategies)
+          // If VSP is drip token, then 1 rebalance will deposit VSP into vVSP  and then
+          // next rebalance, after 24 hours, will transfer those and drip as rewards
           await rebalance(strategies)
-
           const rewardTokenBalanceAfter = await rewardToken.balanceOf(earnDrip.address)
 
           expect(rewardTokenBalanceAfter).to.be.gt(
@@ -620,7 +621,11 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
           await rebalance(strategies)
           // Time travel to generate earning
           await timeTravel(30 * 24 * 60 * 60)
+          // Making 1 strategy profitable is enough, no need to loop over all strategies
+          await makeStrategyProfitable(strategies[0].instance, dripToken)
           await rebalance(strategies)
+          // If VSP is drip token, then 1 rebalance will deposit VSP into vVSP  and then
+          // next rebalance, after 24 hours, will transfer those and drip as rewards
           await rebalance(strategies)
           await earnDrip.claimReward(user1.address)
           const dripTokenBalanceAfter =
@@ -632,11 +637,15 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
         })
 
         it('Users should collect profits in dripToken on withdraw', async function () {
-          await deposit(20, user1)
+          await deposit(50, user1)
           await rebalance(strategies)
           // Time travel to generate earning
           await timeTravel(30 * 24 * 60 * 60)
+          // Making 1 strategy profitable is enough, no need to loop over all strategies
+          await makeStrategyProfitable(strategies[0].instance, dripToken)
           await rebalance(strategies)
+          // If VSP is drip token, then 1 rebalance will deposit VSP into vVSP  and then
+          // next rebalance, after 24 hours, will transfer those and drip as rewards
           await rebalance(strategies)
           const withdrawAmount = await pool.balanceOf(user1.address)
 

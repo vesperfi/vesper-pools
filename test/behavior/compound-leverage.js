@@ -324,7 +324,7 @@ function shouldBehaveLikeCompoundLeverageStrategy(strategyIndex) {
       const totalValueBefore = await strategy.callStatic.totalValueCurrent()
       await strategy.connect(governor.signer).rebalance()
       await advanceBlock(100)
-      await makeStrategyProfitable(strategy, collateralToken, user1)
+      await makeStrategyProfitable(strategy, collateralToken)
       const totalValueAfter = await strategy.callStatic.totalValueCurrent()
       expect(totalValueAfter).to.gt(totalValueBefore, 'loss making strategy')
     })

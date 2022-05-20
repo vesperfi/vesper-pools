@@ -250,24 +250,22 @@ async function createEarnVesperStrategy(strategy, poolAddress, options) {
 
   if (!options.vPool) {
     options.vPool = await setupVesperPool(collateralToken)
+    const TOTAL_REWARD = ethers.utils.parseUnits('150000')
+    const REWARD_DURATION = 30 * 24 * 60 * 60
+
+    const vPoolRewards = await deployContract('PoolRewards', [])
+    const rewardTokens = [Address.Vesper.VSP]
+    await vPoolRewards.initialize(poolAddress, rewardTokens)
+    await options.vPool.updatePoolRewards(vPoolRewards.address)
+
+    const vsp = await ethers.getContractAt('IVSP', Address.Vesper.VSP)
+
+    await adjustBalance(Address.Vesper.VSP, vPoolRewards.address, TOTAL_REWARD)
+
+    const notifyMultiSignature = 'notifyRewardAmount(address[],uint256[],uint256[])'
+    await vPoolRewards[`${notifyMultiSignature}`]([vsp.address], [TOTAL_REWARD], [REWARD_DURATION])
+    strategy.constructorArgs.receiptToken = options.vPool.address
   }
-
-  const TOTAL_REWARD = ethers.utils.parseUnits('150000')
-  const REWARD_DURATION = 30 * 24 * 60 * 60
-
-  const vPoolRewards = await deployContract('PoolRewards', [])
-  const rewardTokens = [Address.Vesper.VSP]
-  await vPoolRewards.initialize(poolAddress, rewardTokens)
-  await options.vPool.updatePoolRewards(vPoolRewards.address)
-
-  const vsp = await ethers.getContractAt('IVSP', Address.Vesper.VSP)
-
-  await adjustBalance(Address.Vesper.VSP, vPoolRewards.address, TOTAL_REWARD)
-
-  const notifyMultiSignature = 'notifyRewardAmount(address[],uint256[],uint256[])'
-  await vPoolRewards[`${notifyMultiSignature}`]([vsp.address], [TOTAL_REWARD], [REWARD_DURATION])
-
-  strategy.constructorArgs.receiptToken = options.vPool.address
 
   const strategyInstance = await deployContract(strategy.contract, [
     poolAddress,

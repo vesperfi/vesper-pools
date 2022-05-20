@@ -189,16 +189,10 @@ async function harvestVesper(strategy) {
   return harvestYearn(strategy)
 }
 
-async function makeStrategyProfitable(strategy, collateralToken, user) {
-  // some strategies are loss making so lets make strategy profitable by sending token
-  if (collateralToken.address === NATIVE_TOKEN) {
-    const weth = await ethers.getContractAt('TokenLike', collateralToken.address, user.signer)
-    const transferAmount = ethers.utils.parseEther('2')
-    await weth.deposit({ value: transferAmount })
-    await weth.transfer(strategy.address, transferAmount)
-  } else {
-    await swapper.swapEthForToken(2, collateralToken.address, user, strategy.address)
-  }
+async function makeStrategyProfitable(strategy, token) {
+  const balance = await token.balanceOf(strategy.address)
+  const increaseBalanceBy = ethers.utils.parseUnits('20', await token.decimals())
+  await adjustBalance(token.address, strategy.address, balance.add(increaseBalanceBy))
 }
 
 /**
@@ -231,7 +225,7 @@ async function rebalanceStrategy(strategy) {
       strategy.type.includes('earnRariFuse') ||
       strategy.type.includes('trader')
     ) {
-      const cToken = await ethers.getContractAt('CToken', strategy.token.address)
+      const cToken = await ethers.getContractAt('CToken', await strategy.instance.token())
       await cToken.accrueInterest()
     }
     tx = await strategy.instance.rebalance()
