@@ -45,6 +45,9 @@ function shouldBehaveLikeAaveLeverageStrategy(strategyIndex) {
       expect(position._supply).to.gt(0, 'Incorrect supply')
       expect(position._borrow).to.gt(0, 'Incorrect borrow')
       expect(await pool.totalDebtOf(strategy.address)).to.gt(0, 'Incorrect total debt of strategy')
+      if (await strategy.callStatic.isLossMaking()) {
+        return
+      }
 
       const accountant = await ethers.getContractAt('PoolAccountant', await pool.poolAccountant())
       await accountant.updateDebtRatio(strategy.address, 0)
