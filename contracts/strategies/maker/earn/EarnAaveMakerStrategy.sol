@@ -50,6 +50,10 @@ contract EarnAaveMakerStrategy is AaveMakerStrategy, Earn {
         }
     }
 
+    function _realizeLoss(uint256) internal view virtual override(Strategy, MakerStrategy) returns (uint256) {
+        return 0;
+    }
+
     /**
      * @notice Calculate earning and convert it to drip token
      * @dev Also claim rewards if available.
