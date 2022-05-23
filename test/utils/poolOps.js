@@ -189,10 +189,20 @@ async function harvestVesper(strategy) {
   return harvestYearn(strategy)
 }
 
-async function makeStrategyProfitable(strategy, token) {
+async function makeStrategyProfitable(strategy, token, token2 = {}) {
   const balance = await token.balanceOf(strategy.address)
   const increaseBalanceBy = ethers.utils.parseUnits('20', await token.decimals())
-  await adjustBalance(token.address, strategy.address, balance.add(increaseBalanceBy))
+  try {
+    // Do not fail if adjust balance fails on first token.
+    await adjustBalance(token.address, strategy.address, balance.add(increaseBalanceBy))
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.error('Error while making strategy profitable', e)
+  }
+  // Adjust balance of token 2 if provided
+  if (token2.address) {
+    await adjustBalance(token2.address, strategy.address, balance.add(increaseBalanceBy))
+  }
 }
 
 /**

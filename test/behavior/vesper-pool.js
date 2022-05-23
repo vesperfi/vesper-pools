@@ -597,7 +597,7 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
           // Time travel to generate earning
           await timeTravel(30 * 24 * 60 * 60)
           // Making 1 strategy profitable is enough, no need to loop over all strategies
-          await makeStrategyProfitable(strategies[0].instance, dripToken)
+          await makeStrategyProfitable(strategies[0].instance, dripToken, collateralToken)
           await rebalance(strategies)
           // If VSP is drip token, then 1 rebalance will deposit VSP into vVSP  and then
           // next rebalance, after 24 hours, will transfer those and drip as rewards
@@ -622,7 +622,7 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
           // Time travel to generate earning
           await timeTravel(30 * 24 * 60 * 60)
           // Making 1 strategy profitable is enough, no need to loop over all strategies
-          await makeStrategyProfitable(strategies[0].instance, dripToken)
+          await makeStrategyProfitable(strategies[0].instance, dripToken, collateralToken)
           await rebalance(strategies)
           // If VSP is drip token, then 1 rebalance will deposit VSP into vVSP  and then
           // next rebalance, after 24 hours, will transfer those and drip as rewards
@@ -642,7 +642,7 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
           // Time travel to generate earning
           await timeTravel(30 * 24 * 60 * 60)
           // Making 1 strategy profitable is enough, no need to loop over all strategies
-          await makeStrategyProfitable(strategies[0].instance, dripToken)
+          await makeStrategyProfitable(strategies[0].instance, dripToken, collateralToken)
           await rebalance(strategies)
           // If VSP is drip token, then 1 rebalance will deposit VSP into vVSP  and then
           // next rebalance, after 24 hours, will transfer those and drip as rewards
