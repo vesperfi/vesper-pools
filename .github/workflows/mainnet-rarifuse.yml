@@ -1,0 +1,135 @@
+name: Mainnet RariFuse Strategy
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/mainnet-rarifuse.yml"
+      - ".github/actions/setup-env/action.yml"
+      - "contracts/pool/**/*.sol"
+      - "contracts/pool/*.sol"
+      - "contracts/strategies/Strategy.sol"
+      - "contracts/strategies/compound/CompoundStrategy.sol"
+      - "contracts/strategies/rari-fuse/RariFuseStrategy.sol"
+      - "contracts/strategies/rari-fuse/RariFuseStrategyETH.sol"
+      - "test/mainnet/rari/**"
+
+# Limit concurrency to one workflow per branch and one per pull_request
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: true
+
+jobs:
+  setup-job:
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.NODE_URL }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup env
+        uses: ./.github/actions/setup-env
+
+  vaape-test:
+      needs: [setup-job]
+      runs-on: ubuntu-latest
+      env:
+        NODE_URL: ${{ secrets.NODE_URL }}
+      steps:
+        - name: Checkout repo
+          uses: actions/checkout@v3
+
+        - name: Setup env
+          uses: ./.github/actions/setup-env
+
+        - name: Running Rarifuse strategy for VAAPE pool
+          run: npm test test/mainnet/rarifuse/vaape.js
+
+  vadai-test:
+      needs: [setup-job]
+      runs-on: ubuntu-latest
+      env:
+        NODE_URL: ${{ secrets.NODE_URL }}
+      steps:
+        - name: Checkout repo
+          uses: actions/checkout@v3
+
+        - name: Setup env
+          uses: ./.github/actions/setup-env
+
+        - name: Running Rarifuse strategy for VADAI pool
+          run: npm test test/mainnet/rarifuse/vadai.js
+
+  vaeth-test:
+    needs: [setup-job]
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.NODE_URL }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup env
+        uses: ./.github/actions/setup-env
+
+      - name: Running Rarifuse strategy for VAETH pool
+        run: npm test test/mainnet/rarifuse/vaeth.js
+
+  vafei-test:
+    needs: [setup-job]
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.NODE_URL }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup env
+        uses: ./.github/actions/setup-env
+
+      - name: Running Rarifuse strategy for VAFEI pool
+        run: npm test test/mainnet/rarifuse/vafei.js
+
+  vafrax-test:
+    needs: [setup-job]
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.NODE_URL }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup env
+        uses: ./.github/actions/setup-env
+
+      - name: Running Rarifuse strategy for VAFRAX pool
+        run: npm test test/mainnet/rarifuse/vafrax.js
+
+  vausdc-test:
+    needs: [setup-job]
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.NODE_URL }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup env
+        uses: ./.github/actions/setup-env
+
+      - name: Running Rarifuse strategy for VAUSDC pool
+        run: npm test test/mainnet/rarifuse/vausdc.js
+
+  vawbtc-test:
+    needs: [setup-job]
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.NODE_URL }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup env
+        uses: ./.github/actions/setup-env
+
+      - name: Running Rarifuse strategy for VAWBTC pool
+        run: npm test test/mainnet/rarifuse/vawbtc.js

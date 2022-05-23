@@ -498,7 +498,33 @@ const StrategyConfig = {
     setup: { ...setup },
   },
 
-  RariFuseStrategy: {
+  RariFuseStrategyDAI: {
+    contract: 'RariFuseStrategy',
+    type: StrategyTypes.RARI_FUSE,
+    constructorArgs: {
+      swapManager,
+      fusePoolId: 23, // default
+      fusePoolDirectory: Address.Rari.fusePoolDirectory,
+      strategyName: 'RariFuseStrategy',
+    },
+    config: { ...config },
+    setup: { ...setup },
+  },
+
+  RariFuseStrategyUSDC: {
+    contract: 'RariFuseStrategy',
+    type: StrategyTypes.RARI_FUSE,
+    constructorArgs: {
+      swapManager,
+      fusePoolId: 23, // default
+      fusePoolDirectory: Address.Rari.fusePoolDirectory,
+      strategyName: 'RariFuseStrategy',
+    },
+    config: { ...config },
+    setup: { ...setup },
+  },
+
+  RariFuseStrategyWBTC: {
     contract: 'RariFuseStrategy',
     type: StrategyTypes.RARI_FUSE,
     constructorArgs: {
@@ -524,14 +550,27 @@ const StrategyConfig = {
     setup: { ...setup },
   },
 
-  RariFuseStrategyDAI: {
+  RariFuseStrategyFEI: {
     contract: 'RariFuseStrategy',
     type: StrategyTypes.RARI_FUSE,
     constructorArgs: {
       swapManager,
       fusePoolId: 8,
       fusePoolDirectory: Address.Rari.fusePoolDirectory,
-      strategyName: 'RariFuseStrategyDAI',
+      strategyName: 'RariFuseStrategy',
+    },
+    config: { ...config },
+    setup: { ...setup },
+  },
+
+  RariFuseStrategyFRAX: {
+    contract: 'RariFuseStrategy',
+    type: StrategyTypes.RARI_FUSE,
+    constructorArgs: {
+      swapManager,
+      fusePoolId: 18,
+      fusePoolDirectory: Address.Rari.fusePoolDirectory,
+      strategyName: 'RariFuseStrategy',
     },
     config: { ...config },
     setup: { ...setup },
@@ -544,7 +583,7 @@ const StrategyConfig = {
       swapManager,
       fusePoolId: 127,
       fusePoolDirectory: Address.Rari.fusePoolDirectory,
-      strategyName: 'RariFuseStrategyAPE',
+      strategyName: 'RariFuseStrategy',
     },
     config: { ...config },
     setup: { ...setup },
