@@ -363,11 +363,7 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
 
           await deposit(20, user1)
           await rebalance(strategies)
-          // Advance some block will help compound related strategy to earn some profit
-          await advanceBlock(300)
-          // Increase time before doing another rebalance
-          await increase(30 * 24 * 60 * 60)
-          await rebalance(strategies)
+          await makeStrategyProfitable(strategies[0].instance, dripToken, collateralToken)
           await rebalance(strategies)
 
           const rewardBalanceAfter = await rewardToken.balanceOf(feeCollector)
@@ -518,9 +514,10 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
         expect(totalDebtAfter).to.be.lt(totalDebtBefore, `Total debt of ${poolName} is wrong after withdraw`)
         await rebalance(strategies)
         totalDebtAfter = await pool.totalDebt()
-        // Allow ~5 decimals tolerance
-        expect(totalDebtAfter.div(100000)).to.be.lte(
-          maxTotalDebt.div(100000),
+
+        expect(totalDebtAfter).to.be.closeTo(
+          maxTotalDebt,
+          maxTotalDebt.div(100000), // allow 0.001% deviation
           `Total debt of ${poolName} is wrong after withdraw and rebalance`,
         )
       })

@@ -39,9 +39,10 @@ function testRunner(poolKey, strategyKeys, strategyTestParams = [{ debtRatio: 90
     strategies.push(strategy)
   }
 
-  // Prep pool and collateral name
+  // Prep pool test params
   const poolName = pool.poolParams[0]
   const collateralSymbol = pool.poolParams[1].split('-')[0].split(/([A-Z]+)/g)[1]
+  const isEarnPool = poolName.includes('Earn')
 
   // Do pool and strategy setup
   beforeEach(async function () {
@@ -60,7 +61,7 @@ function testRunner(poolKey, strategyKeys, strategyTestParams = [{ debtRatio: 90
     )
   })
 
-  shouldBehaveLikePool(poolName, collateralSymbol)
+  shouldBehaveLikePool(poolName, collateralSymbol, isEarnPool)
   for (let i = 0; i < strategies.length; i++) {
     shouldBehaveLikeStrategy(i, strategies[i].type, strategies[i].contract)
   }

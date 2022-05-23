@@ -35,12 +35,15 @@ async function shouldMigrateStrategies(poolName) {
       ])
 
     await pool.connect(gov.signer).migrateStrategy(oldStrategy.instance.address, newStrategy.instance.address)
-    // Rebalance will mint new shares equal to fee, to keep supply same as before set fee to 0
-    const universalFee = await pool.universalFee()
-    await pool.connect(gov.signer).updateUniversalFee(0)
-    await newStrategy.instance.rebalance()
-    // Reset universal fee
-    await pool.connect(gov.signer).updateUniversalFee(universalFee)
+    // Leverage strategy perform deleverage during migration. To achieve same state new strategy needs to be rebalanced.
+    if (newStrategy.type.includes('Leverage')) {
+      // Rebalance will mint new shares equal to fee, to keep supply same as before set fee to 0
+      const universalFee = await pool.universalFee()
+      await pool.connect(gov.signer).updateUniversalFee(0)
+      await newStrategy.instance.rebalance()
+      // Reset universal fee
+      await pool.connect(gov.signer).updateUniversalFee(universalFee)
+    }
     const [
       totalSupplyAfter,
       totalValueAfter,
