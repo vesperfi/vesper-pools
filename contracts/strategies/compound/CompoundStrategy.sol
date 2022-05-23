@@ -140,7 +140,7 @@ contract CompoundStrategy is Strategy {
      * @notice Calculate realized loss.
      * @return _loss Realized loss in collateral token
      */
-    function _realizeLoss(uint256 _totalDebt) internal view override returns (uint256 _loss) {
+    function _realizeLoss(uint256 _totalDebt) internal view virtual override returns (uint256 _loss) {
         uint256 _collateralBalance = _convertToCollateral(cToken.balanceOf(address(this)));
         if (_collateralBalance < _totalDebt) {
             _loss = _totalDebt - _collateralBalance;

@@ -5,18 +5,12 @@ const { expect } = require('chai')
 const { ethers } = require('hardhat')
 const hre = require('hardhat')
 const { BigNumber: BN } = require('ethers')
-const { getUsers, unlock } = require('../utils/setupHelper')
+const { executeIfExist, getUsers, unlock } = require('../utils/setupHelper')
 
 async function shouldBehaveLikeUnderlyingVesperPoolStrategy(strategyIndex) {
   let pool, strategy
   let collateralToken
   let user1, user2
-
-  async function executeIfExist(fn, param) {
-    if (typeof fn === 'function') {
-      await fn(param)
-    }
-  }
 
   describe(`Underlying Vesper pool strategy specific tests[${strategyIndex}]`, function () {
     beforeEach(async function () {

@@ -2,7 +2,7 @@
 
 const { expect } = require('chai')
 const { ethers } = require('hardhat')
-const { getUsers } = require('../utils/setupHelper')
+const { getStrategyToken, getUsers } = require('../utils/setupHelper')
 const { deposit } = require('../utils/poolOps')
 const { advanceBlock } = require('../utils/time')
 const { adjustBalance } = require('../utils/balance')
@@ -48,7 +48,7 @@ function shouldBehaveLikeCompoundXYStrategy(strategyIndex) {
       pool = this.pool
       strategy = this.strategies[strategyIndex].instance
       collateralToken = this.collateralToken
-      supplyCToken = this.strategies[strategyIndex].token
+      supplyCToken = await getStrategyToken(this.strategies[strategyIndex])
       borrowCToken = await ethers.getContractAt('CToken', await strategy.borrowCToken())
       borrowToken = await ethers.getContractAt('IERC20Metadata', await strategy.borrowToken())
       comptroller = await ethers.getContractAt('Comptroller', await strategy.comptroller())

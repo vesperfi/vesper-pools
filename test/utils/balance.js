@@ -28,6 +28,9 @@ const slots = {
   [Address.FRAX]: 0,
   [Address.APE]: 0,
   [Address.MUSD]: 51,
+  [Address.Aave.stkAAVE]: 0,
+  [Address.LMR]: 0,
+  [Address.SHIB]: 0,
 
   // Avalanche addresses
   [AvalancheAddress.DAIe]: 0,
@@ -35,6 +38,7 @@ const slots = {
   [AvalancheAddress.USDCe]: 0,
   [AvalancheAddress.WBTCe]: 0,
   [AvalancheAddress.WETHe]: 0,
+  [AvalancheAddress.NATIVE_TOKEN]: 3, // WAVAX
   [AvalancheAddress.Benqi.QI]: 1,
   [AvalancheAddress.Vesper.VSP]: 2,
 }

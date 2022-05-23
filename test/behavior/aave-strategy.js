@@ -1,11 +1,13 @@
 'use strict'
 
 const { expect } = require('chai')
-const { getUsers } = require('../utils/setupHelper')
+const { getStrategyToken, getUsers } = require('../utils/setupHelper')
 const { deposit } = require('../utils/poolOps')
-const ZERO_ADDRESS = require('../../helper/mainnet/address').ZERO
+const Address = require('../../helper/mainnet/address')
+const ZERO_ADDRESS = Address.ZERO
 const time = require('../utils/time')
 const { ethers } = require('hardhat')
+const { adjustBalance } = require('../utils/balance')
 
 const icAbi = ['function assets(address _aToken) external view returns(uint104, uint104, uint40)']
 // Aave strategy specific tests
@@ -18,12 +20,13 @@ function shouldBehaveLikeAaveStrategy(strategyIndex) {
       const users = await getUsers()
       ;[, , user2] = users
       strategy = this.strategies[strategyIndex].instance
-      token = this.strategies[strategyIndex].token
+      token = await getStrategyToken(this.strategies[strategyIndex])
       pool = this.pool
       collateralToken = this.collateralToken
     })
 
     it('Should increase totalValue due to aave rewards', async function () {
+      // TODO remove address and emission check as we are mocking rewards on line 47
       const icAddress = await strategy.aaveIncentivesController()
       if (icAddress !== ZERO_ADDRESS) {
         const incentivesController = await ethers.getContractAt(icAbi, icAddress)
@@ -39,6 +42,8 @@ function shouldBehaveLikeAaveStrategy(strategyIndex) {
         expect(totalValueBefore).to.be.eq(aTokenBefore, 'Total value should be = aToken balance')
         // Time travel to earn some aave rewards
         await time.increase(5 * 24 * 60 * 60)
+        // Send some stkAave to strategy to mock reward profit
+        await adjustBalance(Address.Aave.stkAAVE, strategy.address, ethers.utils.parseEther('20'))
         const totalValueAfter = await strategy.totalValue()
         const aTokenAfter = await token.balanceOf(strategy.address)
         expect(aTokenAfter).to.be.gt(aTokenBefore, 'aToken balance after should be > aToken balance before')

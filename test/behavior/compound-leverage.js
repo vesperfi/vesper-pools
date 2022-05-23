@@ -2,7 +2,7 @@
 
 const { expect } = require('chai')
 const { ethers } = require('hardhat')
-const { getUsers } = require('../utils/setupHelper')
+const { getStrategyToken, getUsers } = require('../utils/setupHelper')
 const { deposit, makeStrategyProfitable } = require('../utils/poolOps')
 const { advanceBlock } = require('../utils/time')
 const { getChain } = require('../utils/chains')
@@ -70,7 +70,7 @@ function shouldBehaveLikeCompoundLeverageStrategy(strategyIndex) {
       strategy = this.strategies[strategyIndex].instance
       collateralToken = this.collateralToken
       collateralDecimal = await this.collateralToken.decimals()
-      token = this.strategies[strategyIndex].token
+      token = await getStrategyToken(this.strategies[strategyIndex])
     })
 
     it('Should work as expected when debtRatio is 0', async function () {
@@ -324,7 +324,7 @@ function shouldBehaveLikeCompoundLeverageStrategy(strategyIndex) {
       const totalValueBefore = await strategy.callStatic.totalValueCurrent()
       await strategy.connect(governor.signer).rebalance()
       await advanceBlock(100)
-      await makeStrategyProfitable(strategy, collateralToken, user1)
+      await makeStrategyProfitable(strategy, collateralToken)
       const totalValueAfter = await strategy.callStatic.totalValueCurrent()
       expect(totalValueAfter).to.gt(totalValueBefore, 'loss making strategy')
     })

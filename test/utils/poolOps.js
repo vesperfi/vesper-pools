@@ -13,12 +13,6 @@ const { getChain } = require('../utils/chains')
 const { unlock } = require('./setupHelper')
 const { NATIVE_TOKEN, DAI, MIM, ALUSD, Vesper } = require(`../../helper/${getChain()}/address`)
 
-async function executeIfExist(fn) {
-  if (typeof fn === 'function') {
-    await fn()
-  }
-}
-
 /**
  *  Swap given ETH for given token type and deposit tokens into Vesper pool
  *
@@ -195,15 +189,19 @@ async function harvestVesper(strategy) {
   return harvestYearn(strategy)
 }
 
-async function makeStrategyProfitable(strategy, collateralToken, user) {
-  // some strategies are loss making so lets make strategy profitable by sending token
-  if (collateralToken.address === NATIVE_TOKEN) {
-    const weth = await ethers.getContractAt('TokenLike', collateralToken.address, user.signer)
-    const transferAmount = ethers.utils.parseEther('2')
-    await weth.deposit({ value: transferAmount })
-    await weth.transfer(strategy.address, transferAmount)
-  } else {
-    await swapper.swapEthForToken(2, collateralToken.address, user, strategy.address)
+async function makeStrategyProfitable(strategy, token, token2 = {}) {
+  const balance = await token.balanceOf(strategy.address)
+  const increaseBalanceBy = ethers.utils.parseUnits('20', await token.decimals())
+  try {
+    // Do not fail if adjust balance fails on first token.
+    await adjustBalance(token.address, strategy.address, balance.add(increaseBalanceBy))
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.error('Error while making strategy profitable', e)
+  }
+  // Adjust balance of token 2 if provided
+  if (token2.address) {
+    await adjustBalance(token2.address, strategy.address, balance.add(increaseBalanceBy))
   }
 }
 
@@ -213,7 +211,6 @@ async function makeStrategyProfitable(strategy, collateralToken, user) {
  * @param {object} strategy - strategy object
  */
 async function rebalanceStrategy(strategy) {
-  await executeIfExist(strategy.token.exchangeRateCurrent)
   let tx
   try {
     if (strategy.type.includes('Maker')) {
@@ -238,7 +235,7 @@ async function rebalanceStrategy(strategy) {
       strategy.type.includes('earnRariFuse') ||
       strategy.type.includes('trader')
     ) {
-      const cToken = await ethers.getContractAt('CToken', strategy.token.address)
+      const cToken = await ethers.getContractAt('CToken', await strategy.instance.token())
       await cToken.accrueInterest()
     }
     tx = await strategy.instance.rebalance()
@@ -249,7 +246,6 @@ async function rebalanceStrategy(strategy) {
     await bringAboveWater(strategy, 50)
     tx = await strategy.instance.rebalance()
   }
-  await executeIfExist(strategy.token.exchangeRateCurrent)
   return tx
 }
 
@@ -305,7 +301,6 @@ module.exports = {
   rebalanceStrategy,
   rebalanceUnderlying,
   totalDebtOfAllStrategy,
-  executeIfExist,
   timeTravel,
   makeStrategyProfitable,
 }

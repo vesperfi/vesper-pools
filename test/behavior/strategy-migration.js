@@ -1,6 +1,6 @@
 'use strict'
 
-const { makeNewStrategy } = require('../utils/setupHelper')
+const { makeNewStrategy, getStrategyToken, getIfExist } = require('../utils/setupHelper')
 const { deposit: _deposit, rebalanceStrategy } = require('../utils/poolOps')
 const { expect } = require('chai')
 
@@ -13,6 +13,15 @@ async function shouldMigrateStrategies(poolName) {
     return _deposit(pool, collateralToken, amount, depositor)
   }
 
+  async function getBalance(strategy, token) {
+    // For curve strategy totalLp should be consider as balanceOf
+    let balance = await getIfExist(strategy.totalLp)
+    if (!balance) {
+      balance = await token.balanceOf(strategy.address)
+    }
+    return balance
+  }
+
   async function migrateAndAssert(oldStrategy, newStrategy, receiptToken) {
     await Promise.all([deposit(50, user2), deposit(30, user1)])
     await rebalanceStrategy(oldStrategy)
@@ -22,7 +31,7 @@ async function shouldMigrateStrategies(poolName) {
         pool.totalValue(),
         pool.totalDebt(),
         pool.totalDebtRatio(),
-        receiptToken.balanceOf(oldStrategy.instance.address),
+        getBalance(oldStrategy.instance, receiptToken),
       ])
 
     await pool.connect(gov.signer).migrateStrategy(oldStrategy.instance.address, newStrategy.instance.address)
@@ -44,11 +53,10 @@ async function shouldMigrateStrategies(poolName) {
       pool.totalValue(),
       pool.totalDebt(),
       pool.totalDebtRatio(),
-      receiptToken.balanceOf(oldStrategy.instance.address),
-      receiptToken.balanceOf(newStrategy.instance.address),
+      getBalance(oldStrategy.instance, receiptToken),
+      getBalance(newStrategy.instance, receiptToken),
     ])
     expect(totalSupplyAfter).to.be.eq(totalSupplyBefore, `${poolName} total supply after migration is not correct`)
-
     // Some strategies incur loss during migration or during the rebalance after migration. Hence allow 0.1% deviation
     expect(totalValueAfter).to.be.closeTo(
       totalValueBefore,
@@ -99,7 +107,8 @@ async function shouldMigrateStrategies(poolName) {
 
   async function strategyMigration(strategy) {
     const newStrategy = await makeNewStrategy(strategy, pool.address, options)
-    await migrateAndAssert(strategy, newStrategy, strategy.token)
+    const receiptToken = await getStrategyToken(strategy)
+    await migrateAndAssert(strategy, newStrategy, receiptToken)
     await assertDepositAndWithdraw(newStrategy)
     await assertTotalDebt(newStrategy)
   }

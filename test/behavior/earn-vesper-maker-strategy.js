@@ -1,10 +1,10 @@
 'use strict'
 
-const { deposit, executeIfExist, timeTravel, rebalanceStrategy } = require('../utils/poolOps')
+const { deposit, timeTravel, rebalanceStrategy } = require('../utils/poolOps')
 const { expect } = require('chai')
 const { swapEthForToken } = require('../utils/tokenSwapper')
 const { ethers } = require('hardhat')
-const { getUsers } = require('../utils/setupHelper')
+const { executeIfExist, getUsers, getStrategyToken } = require('../utils/setupHelper')
 const Address = require('../../helper/mainnet/address')
 const { shouldValidateMakerCommonBehavior } = require('./maker-common')
 const { shouldBehaveLikeUnderlyingVesperPoolStrategy } = require('./strategy-underlying-vesper-pool')
@@ -14,7 +14,8 @@ async function shouldBehaveLikeEarnVesperMakerStrategy(strategyIndex) {
   let collateralToken
   let gov, user1, user2
   async function updateRate() {
-    await executeIfExist(strategy.instance.token.exchangeRateCurrent)
+    const token = await getStrategyToken(strategy)
+    await executeIfExist(token.exchangeRateCurrent)
     // Update rate using Jug drip
     const jugLike = await ethers.getContractAt('JugLike', '0x19c0976f590D67707E62397C87829d896Dc0f1F1')
     const vaultType = await strategy.instance.collateralType()

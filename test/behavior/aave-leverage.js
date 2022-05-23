@@ -2,7 +2,7 @@
 
 const { expect } = require('chai')
 const { ethers } = require('hardhat')
-const { getUsers } = require('../utils/setupHelper')
+const { getStrategyToken, getUsers } = require('../utils/setupHelper')
 const { deposit } = require('../utils/poolOps')
 const { advanceBlock } = require('../utils/time')
 const network = require('../utils/network')
@@ -33,7 +33,7 @@ function shouldBehaveLikeAaveLeverageStrategy(strategyIndex) {
       strategy = this.strategies[strategyIndex].instance
       collateralToken = this.collateralToken
       collateralDecimal = await this.collateralToken.decimals()
-      token = this.strategies[strategyIndex].token
+      token = await getStrategyToken(this.strategies[strategyIndex])
       vdToken = await ethers.getContractAt('TokenLike', await strategy.vdToken())
     })
 

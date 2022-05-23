@@ -18,12 +18,22 @@ contract EarnAlphaLendStrategy is AlphaLendStrategy, Earn {
         string memory _name
     ) AlphaLendStrategy(_pool, _swapManager, _receiptToken, _name) Earn(_dripToken) {}
 
-    function _setupOracles() internal override(Strategy, AlphaLendStrategy) {
-        AlphaLendStrategy._setupOracles();
+    /// @notice Approve all required tokens
+    function _approveToken(uint256 _amount) internal override(Strategy, AlphaLendStrategy) {
+        collateralToken.safeApprove(pool, _amount);
+        collateralToken.safeApprove(address(safeBox), _amount);
+        for (uint256 i = 0; i < swapManager.N_DEX(); i++) {
+            IERC20(alpha).safeApprove(address(swapManager.ROUTERS(i)), _amount);
+            collateralToken.safeApprove(address(swapManager.ROUTERS(i)), _amount);
+        }
     }
 
     function _claimRewardsAndConvertTo(address _toToken) internal override(Strategy, AlphaLendStrategy) {
         AlphaLendStrategy._claimRewardsAndConvertTo(_toToken);
+    }
+
+    function _realizeLoss(uint256) internal view virtual override(Strategy, AlphaLendStrategy) returns (uint256) {
+        return 0;
     }
 
     function _realizeProfit(uint256 _totalDebt)
@@ -42,13 +52,7 @@ contract EarnAlphaLendStrategy is AlphaLendStrategy, Earn {
         return 0;
     }
 
-    /// @notice Approve all required tokens
-    function _approveToken(uint256 _amount) internal override(Strategy, AlphaLendStrategy) {
-        collateralToken.safeApprove(pool, _amount);
-        collateralToken.safeApprove(address(safeBox), _amount);
-        for (uint256 i = 0; i < swapManager.N_DEX(); i++) {
-            IERC20(alpha).safeApprove(address(swapManager.ROUTERS(i)), _amount);
-            collateralToken.safeApprove(address(swapManager.ROUTERS(i)), _amount);
-        }
+    function _setupOracles() internal override(Strategy, AlphaLendStrategy) {
+        AlphaLendStrategy._setupOracles();
     }
 }

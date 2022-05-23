@@ -144,7 +144,7 @@ contract AlphaLendStrategy is Strategy {
         return collateralToken.balanceOf(address(this));
     }
 
-    function _realizeLoss(uint256 _totalDebt) internal view override returns (uint256 _loss) {
+    function _realizeLoss(uint256 _totalDebt) internal view virtual override returns (uint256 _loss) {
         uint256 _collateralBalance = _convertToCollateral(safeBox.balanceOf(address(this)));
         if (_collateralBalance < _totalDebt) {
             _loss = _totalDebt - _collateralBalance;

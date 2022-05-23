@@ -21,12 +21,22 @@ contract EarnAaveStrategy is AaveStrategy, Earn {
 
     // solhint-enable no-empty-blocks
 
-    function _setupOracles() internal override(Strategy, AaveStrategy) {
-        AaveStrategy._setupOracles();
+    /// @notice Approve all required tokens
+    function _approveToken(uint256 _amount) internal virtual override(Strategy, AaveStrategy) {
+        collateralToken.safeApprove(pool, _amount);
+        collateralToken.safeApprove(address(aaveLendingPool), _amount);
+        for (uint256 i = 0; i < swapManager.N_DEX(); i++) {
+            IERC20(AAVE).safeApprove(address(swapManager.ROUTERS(i)), _amount);
+            collateralToken.safeApprove(address(swapManager.ROUTERS(i)), _amount);
+        }
     }
 
     function _claimRewardsAndConvertTo(address _toToken) internal override(Strategy, AaveStrategy) {
         AaveStrategy._claimRewardsAndConvertTo(_toToken);
+    }
+
+    function _realizeLoss(uint256) internal view virtual override(Strategy, AaveStrategy) returns (uint256) {
+        return 0;
     }
 
     function _realizeProfit(uint256 _totalDebt) internal virtual override(Strategy, AaveStrategy) returns (uint256) {
@@ -40,13 +50,7 @@ contract EarnAaveStrategy is AaveStrategy, Earn {
         return 0;
     }
 
-    /// @notice Approve all required tokens
-    function _approveToken(uint256 _amount) internal virtual override(Strategy, AaveStrategy) {
-        collateralToken.safeApprove(pool, _amount);
-        collateralToken.safeApprove(address(aaveLendingPool), _amount);
-        for (uint256 i = 0; i < swapManager.N_DEX(); i++) {
-            IERC20(AAVE).safeApprove(address(swapManager.ROUTERS(i)), _amount);
-            collateralToken.safeApprove(address(swapManager.ROUTERS(i)), _amount);
-        }
+    function _setupOracles() internal override(Strategy, AaveStrategy) {
+        AaveStrategy._setupOracles();
     }
 }

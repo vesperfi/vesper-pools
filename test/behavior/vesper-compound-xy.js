@@ -2,7 +2,7 @@
 
 const { expect } = require('chai')
 const { ethers } = require('hardhat')
-const { getUsers } = require('../utils/setupHelper')
+const { getStrategyToken, getUsers } = require('../utils/setupHelper')
 const { deposit, rebalanceStrategy } = require('../utils/poolOps')
 const { advanceBlock } = require('../utils/time')
 const { adjustBalance } = require('../utils/balance')
@@ -54,7 +54,7 @@ function shouldBehaveLikeVesperCompoundXYStrategy(strategyIndex) {
       pool = this.pool
       strategy = this.strategies[strategyIndex].instance
       collateralToken = this.collateralToken
-      supplyCToken = await ethers.getContractAt('CToken', this.strategies[strategyIndex].token.address)
+      supplyCToken = await getStrategyToken(strategy)
       borrowCToken = await ethers.getContractAt('CToken', await strategy.borrowCToken())
       borrowToken = await ethers.getContractAt('IERC20Metadata', await strategy.borrowToken())
       const comptrollerAddress = await strategy.comptroller()
