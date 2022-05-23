@@ -28,6 +28,7 @@ const slots = {
   [Address.FRAX]: 0,
   [Address.APE]: 0,
   [Address.MUSD]: 51,
+  [Address.Aave.stkAAVE]: 0,
 
   // Avalanche addresses
   [AvalancheAddress.DAIe]: 0,
