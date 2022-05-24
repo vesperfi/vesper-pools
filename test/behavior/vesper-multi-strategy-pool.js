@@ -4,6 +4,7 @@ const hre = require('hardhat')
 const { deposit: _deposit, rebalance, rebalanceStrategy } = require('../utils/poolOps')
 const { expect } = require('chai')
 const { makeNewStrategy } = require('../utils/setupHelper')
+const { BigNumber } = require('ethers')
 const DECIMAL = '1000000000000000000'
 async function shouldBehaveLikeMultiStrategyPool(poolName) {
   let pool, strategies, collateralToken, accountant
@@ -57,19 +58,28 @@ async function shouldBehaveLikeMultiStrategyPool(poolName) {
         await rebalance(strategies)
         await rebalance(strategies)
         let tokenHere = await pool.tokensHere()
-        let debt1 = await pool.totalDebtOf(strategies[1].instance.address)
+        const debt1Before = await pool.totalDebtOf(strategies[1].instance.address)
         const debt0Before = await pool.totalDebtOf(strategies[0].instance.address)
         const withdrawAmount = await pool.balanceOf(user1.address)
         const poolSharePrice = await pool.pricePerShare()
         const expectedAmount = withdrawAmount.mul(poolSharePrice).div(DECIMAL)
-        const expectedFromS0 = expectedAmount.sub(tokenHere).sub(debt1)
+        let expectedFromS1 = expectedAmount.sub(tokenHere)
+        const zero = BigNumber.from('0')
+        let expectedFromS0
+        if (expectedFromS1.lt(zero)) {
+          expectedFromS1 = zero
+          expectedFromS0 = zero
+        } else {
+          expectedFromS0 = expectedAmount.sub(tokenHere).sub(expectedFromS1)
+        }
         await pool.connect(user1.signer).withdraw(withdrawAmount)
+        const debt1After = await pool.totalDebtOf(strategies[1].instance.address)
         const debt0After = await pool.totalDebtOf(strategies[0].instance.address)
         const actualWithdrawFromS0 = debt0Before.sub(debt0After)
-        debt1 = await pool.totalDebtOf(strategies[1].instance.address)
+        const actualWithdrawFromS1 = debt1Before.sub(debt1After)
         tokenHere = await pool.tokensHere()
         expect(actualWithdrawFromS0).to.be.eq(expectedFromS0, 'Withdraw from Strategy 2 is wrong')
-        expect(debt1).to.be.eq(0, 'Withdraw from Strategy 2 is wrong')
+        expect(actualWithdrawFromS1).to.be.eq(expectedFromS1, 'Withdraw from Strategy 1 is wrong')
       })
     })
 

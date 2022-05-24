@@ -54,7 +54,7 @@ function shouldBehaveLikeVesperCompoundXYStrategy(strategyIndex) {
       pool = this.pool
       strategy = this.strategies[strategyIndex].instance
       collateralToken = this.collateralToken
-      supplyCToken = await getStrategyToken(strategy)
+      supplyCToken = await getStrategyToken(this.strategies[strategyIndex])
       borrowCToken = await ethers.getContractAt('CToken', await strategy.borrowCToken())
       borrowToken = await ethers.getContractAt('IERC20Metadata', await strategy.borrowToken())
       const comptrollerAddress = await strategy.comptroller()
