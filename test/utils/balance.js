@@ -3,6 +3,7 @@
 const hre = require('hardhat')
 const Address = require('../../helper/mainnet/address')
 const AvalancheAddress = require('../../helper/avalanche/address')
+const PolygonAddress = require('../../helper/polygon/address')
 const ethers = hre.ethers
 const { BigNumber } = require('ethers')
 const { hexlify, solidityKeccak256, zeroPad, getAddress, hexStripZeros } = ethers.utils
@@ -41,6 +42,14 @@ const slots = {
   [AvalancheAddress.NATIVE_TOKEN]: 3, // WAVAX
   [AvalancheAddress.Benqi.QI]: 1,
   [AvalancheAddress.Vesper.VSP]: 2,
+
+  // Polygon addresses
+  [PolygonAddress.DAI]: 0,
+  [PolygonAddress.USDC]: 0,
+  [PolygonAddress.USDT]: 0,
+  [PolygonAddress.WBTC]: 0,
+  [PolygonAddress.WETH]: 0,
+  [PolygonAddress.NATIVE_TOKEN]: 3, // WMATIC
 }
 
 /**

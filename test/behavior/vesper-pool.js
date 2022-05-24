@@ -519,17 +519,35 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
         )
         const withdrawAmount = await pool.balanceOf(user1.address)
         await pool.connect(user1.signer).withdraw(withdrawAmount)
+        // Withdraw decreases value
         totalValue = await pool.totalValue()
+        // Value decreases maxTotalDebt
         maxTotalDebt = totalValue.mul(totalDebtRatio).div(MAX_BPS)
+        // Withdraw decreases totalDebt of pool
         let totalDebtAfter = await pool.totalDebt()
+        // TotalDebt of pool can be higher or equal than maxTotalDebt until rebalance happen
         expect(totalDebtAfter).to.be.gte(maxTotalDebt, `Total debt of ${poolName} is wrong after withdraw`)
+        // TotalDebt after withdraw will be less than it was before
         expect(totalDebtAfter).to.be.lt(totalDebtBefore, `Total debt of ${poolName} is wrong after withdraw`)
-        await rebalance(strategies)
+
+        // In case of multiple strategies, most withdraw will happen from first strategy and most of
+        // remaining debt is in other strategies hence rebalance other strategies to get fund back
+        // and then rebalance first strategy.
+        for (let i = 1; i < strategies.length; i++) {
+          await strategies[i].instance.rebalance()
+        }
+        await strategies[0].instance.rebalance()
+
+        // totalDebt of pool after rebalance, it should be close to maxTotalDebt
         totalDebtAfter = await pool.totalDebt()
 
+        let delta = maxTotalDebt.div(100000) // allow 0.001% deviation
+        if (delta.eq('0')) {
+          delta = '1'
+        }
         expect(totalDebtAfter).to.be.closeTo(
           maxTotalDebt,
-          maxTotalDebt.div(100000), // allow 0.001% deviation
+          delta,
           `Total debt of ${poolName} is wrong after withdraw and rebalance`,
         )
       })

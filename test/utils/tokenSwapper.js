@@ -4,7 +4,7 @@ const { expect } = require('chai')
 const { ethers } = require('hardhat')
 const { BigNumber } = require('ethers')
 const { getChain } = require('../utils/chains')
-const { UNI2_ROUTER, NATIVE_TOKEN } = require(`../../helper/${getChain()}/address`)
+const { UNI2_ROUTER, NATIVE_TOKEN, SUSHI_ROUTER } = require(`../../helper/${getChain()}/address`)
 
 const DECIMAL = BigNumber.from('1000000000000000000')
 
@@ -12,6 +12,9 @@ const DECIMAL = BigNumber.from('1000000000000000000')
 const RouterInterface = getChain() === 'avalanche' ? 'IAvalancheRouterTest' : 'IUniswapRouterTest'
 const SwapExactNaveForTokensFunction = getChain() === 'avalanche' ? 'swapExactAVAXForTokens' : 'swapExactETHForTokens'
 
+function getRouter() {
+  return getChain() === 'polygon' ? SUSHI_ROUTER : UNI2_ROUTER
+}
 /**
  * Swap ETH into given token
  *
@@ -24,7 +27,7 @@ const SwapExactNaveForTokensFunction = getChain() === 'avalanche' ? 'swapExactAV
 async function swapEthForToken(ethAmount, toToken, caller, receiver) {
   const toAddress = receiver || caller.address
   const amountIn = BigNumber.from(ethAmount).mul(DECIMAL).toString()
-  const uni = await ethers.getContractAt(RouterInterface, UNI2_ROUTER)
+  const uni = await ethers.getContractAt(RouterInterface, getRouter())
   const block = await ethers.provider.getBlock()
   const path = [NATIVE_TOKEN, toToken]
   const token = await ethers.getContractAt('ERC20', toToken)
@@ -40,7 +43,7 @@ async function swapExactToken(amountIn, path, caller, receiver) {
   const toAddress = receiver || caller.address
   const tokenIn = await ethers.getContractAt('ERC20', path[0])
   const tokenOut = await ethers.getContractAt('ERC20', path[path.length - 1])
-  const uni = await ethers.getContractAt(RouterInterface, UNI2_ROUTER)
+  const uni = await ethers.getContractAt(RouterInterface, getRouter())
   const block = await ethers.provider.getBlock()
   await tokenIn.connect(caller.signer).approve(uni.address, amountIn)
   await uni.connect(caller.signer).swapExactTokensForTokens(amountIn, 1, path, toAddress, block.timestamp + 60)
@@ -49,7 +52,7 @@ async function swapExactToken(amountIn, path, caller, receiver) {
 }
 
 async function getAmountsOut(amountIn, path) {
-  const uni = await ethers.getContractAt(RouterInterface, UNI2_ROUTER)
+  const uni = await ethers.getContractAt(RouterInterface, getRouter())
   const amountsOut = await uni.getAmountsOut(amountIn, path)
   return amountsOut[path.length - 1]
 }
