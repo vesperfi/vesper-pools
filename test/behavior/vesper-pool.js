@@ -161,6 +161,18 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
         expect(collateralBalance).to.equal(expectedCollateral, `${collateralName} balance of user is wrong`)
       })
 
+      it(`Should withdraw ${collateralName} using whitelistedWithdraw()`, async function () {
+        await rebalance(strategies)
+        const collateralBalanceBefore = await collateralToken.balanceOf(user1.address)
+        const withdrawAmount = '10000000000000000'
+        await pool.connect(user1.signer).whitelistedWithdraw(withdrawAmount)
+        const collateralBalance = await collateralToken.balanceOf(user1.address)
+        const totalDebt = await pool.totalDebt()
+        const totalDebtOfStrategies = await totalDebtOfAllStrategy(strategies, pool)
+        expect(totalDebtOfStrategies).to.be.equal(totalDebt, `${collateralName} totalDebt of strategies is wrong`)
+        expect(collateralBalance).to.be.gt(collateralBalanceBefore, 'Withdraw failed')
+      })
+
       it(`Should withdraw very small ${collateralName} after rebalance`, async function () {
         await rebalance(strategies)
         const collateralBalanceBefore = await collateralToken.balanceOf(user1.address)
