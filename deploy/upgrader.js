@@ -3,7 +3,7 @@ const hre = require('hardhat')
 const copy = require('recursive-copy')
 
 const deployFunction = async function ({ getNamedAccounts, deployments, targetChain, name }) {
-  const MULTICALL = require(`../helper/${targetChain}/address`).MULTICALL
+  const multiCall = require(`../helper/${targetChain}/address`).MultiCall
 
   const { deploy } = deployments
   const { deployer } = await getNamedAccounts()
@@ -11,7 +11,7 @@ const deployFunction = async function ({ getNamedAccounts, deployments, targetCh
   await deploy(name, {
     from: deployer,
     log: true,
-    args: [MULTICALL],
+    args: [multiCall],
   })
   const hreNetwork = hre.network.name
   const networkDir = `./deployments/${hreNetwork}`

@@ -26,7 +26,7 @@ const deployFunction = async function (hre) {
   hre.implementations = {}
 
   // Deploy upgrader
-  await deploy(PoolAccountantUpgrader, { from: deployer, log: true, args: [Address.MULTICALL], waitConfirmations })
+  await deploy(PoolAccountantUpgrader, { from: deployer, log: true, args: [Address.MultiCall], waitConfirmations })
 
   // Deploy PoolAccountant. This call will deploy ProxyAdmin, proxy and PoolAccountant
   const accountantProxy = await deploy(PoolAccountant, {
@@ -45,7 +45,7 @@ const deployFunction = async function (hre) {
   await sleep(networkName, 5000)
 
   // Deploy upgrader
-  await deploy(VPoolUpgrader, { from: deployer, log: true, args: [Address.MULTICALL], waitConfirmations })
+  await deploy(VPoolUpgrader, { from: deployer, log: true, args: [Address.MultiCall], waitConfirmations })
 
   // Deploy Pool. This call will use ProxyAdmin. It will deploy proxy and Pool and also initialize pool
   const poolProxy = await deploy(poolConfig.contractName, {
@@ -96,7 +96,7 @@ const deployFunction = async function (hre) {
   await sleep(networkName, 5000)
 
   // Deploy upgrader
-  await deploy(PoolRewardsUpgrader, { from: deployer, log: true, args: [Address.MULTICALL], waitConfirmations })
+  await deploy(PoolRewardsUpgrader, { from: deployer, log: true, args: [Address.MultiCall], waitConfirmations })
   const rewardsProxy = await deploy(rewards.contract, {
     from: deployer,
     log: true,
