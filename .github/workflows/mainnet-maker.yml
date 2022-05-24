@@ -7,10 +7,8 @@ on:
       - "contracts/pool/**/*.sol"
       - "contracts/pool/*.sol"
       - "contracts/strategies/Strategy.sol"
-      - "contracts/strategies/maker/AaveMakerStrategy.sol"
-      - "contracts/strategies/maker/MakerStrategy.sol"
+      - "contracts/strategies/maker/*.sol"
       - "contracts/strategies/aave/AaveCore.sol"
-      - "contracts/strategies/maker/CompoundMakerStrategy.sol"
       - "test/mainnet/maker/**/*.js"
 
 # Limit concurrency to one workflow per branch and one per pull_request
@@ -60,7 +58,6 @@ jobs:
       - name: Running Maker Compound strategy for VAETH pool
         run: npm test test/mainnet/maker/compound/vaeth.js
 
-
   vauni-compound-test:
     needs: [setup-job]
     runs-on: ubuntu-latest
@@ -76,3 +73,32 @@ jobs:
       - name: Running Maker Compound strategy for VAUNI pool
         run: npm test test/mainnet/maker/compound/vauni.js
 
+  vaeth-vesper-test:
+    needs: [setup-job]
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.NODE_URL }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup env
+        uses: ./.github/actions/setup-env
+
+      - name: Running Maker Vesper strategy for VAETH pool
+        run: npm test test/mainnet/maker/vesper/vaeth.js
+
+  vawbtc-vesper-test:
+    needs: [setup-job]
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.NODE_URL }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup env
+        uses: ./.github/actions/setup-env
+
+      - name: Running Maker Vesper strategy for VAWBTC pool
+        run: npm test test/mainnet/maker/vesper/vawbtc.js
