@@ -6,13 +6,12 @@ const { getStrategyToken, getUsers } = require('../utils/setupHelper')
 const { deposit, rebalanceStrategy } = require('../utils/poolOps')
 const { advanceBlock } = require('../utils/time')
 const { adjustBalance } = require('../utils/balance')
-const { calculateAPY } = require('../utils/apy')
 const { BigNumber } = require('ethers')
+const { unlock } = require('../utils/setupHelper')
 
 async function simulateVesperPoolProfit(strategy) {
   const vPool = await ethers.getContractAt('IVesperPool', await strategy.instance.vPool())
   const collateralTokenAddress = await vPool.token()
-
   const collateralToken = await ethers.getContractAt('IERC20Metadata', collateralTokenAddress)
   const collateralDecimal = await collateralToken.decimals()
   const poolBalance = await collateralToken.balanceOf(vPool.address)
@@ -23,10 +22,28 @@ async function simulateVesperPoolProfit(strategy) {
   )
 }
 
+// Rebalance this strategy and underlying Pool also.
+async function rebalance(strategy) {
+  const keeper = (await strategy.keepers())[0]
+  const keeperSigner = await unlock(keeper)
+  await strategy.connect(keeperSigner).rebalance()
+  const vPool = await ethers.getContractAt('VPool', await strategy.vPool())
+  const strategyAddresses = await vPool.getStrategies()
+  let authorized
+  for (const strategyAddress of strategyAddresses) {
+    const instance = await ethers.getContractAt('IStrategy', strategyAddress)
+    const keepers = await instance.keepers()
+    authorized = keepers[0] || (await vPool.governor())
+    const signer = await unlock(authorized)
+    await instance.connect(signer).rebalance()
+  }
+  await strategy.connect(keeperSigner).rebalance()
+}
+
 // Vesper Compound XY strategy specific tests
 function shouldBehaveLikeVesperCompoundXYStrategy(strategyIndex) {
   let strategy, pool, collateralToken, supplyCToken, comptroller, oracle
-  let borrowCToken, borrowToken, borrowTokenPrice, supplyTokenPrice
+  let borrowCToken, borrowTokenPrice, supplyTokenPrice
   let governor, user1, user2
   const DECIMAL18 = ethers.utils.parseUnits('1', 18)
   async function assertCurrentBorrow() {
@@ -56,7 +73,6 @@ function shouldBehaveLikeVesperCompoundXYStrategy(strategyIndex) {
       collateralToken = this.collateralToken
       supplyCToken = await getStrategyToken(this.strategies[strategyIndex])
       borrowCToken = await ethers.getContractAt('CToken', await strategy.borrowCToken())
-      borrowToken = await ethers.getContractAt('IERC20Metadata', await strategy.borrowToken())
       const comptrollerAddress = await strategy.comptroller()
       comptroller = await ethers.getContractAt('Comptroller', comptrollerAddress)
       const oracleAddress = await comptroller.oracle()
@@ -173,26 +189,23 @@ function shouldBehaveLikeVesperCompoundXYStrategy(strategyIndex) {
     })
 
     context('Calculate APY', function () {
-      it('Should calculate APY', async function () {
-        /* eslint-disable no-console */
-        const XY = `${await collateralToken.symbol()}-${await borrowToken.symbol()}`
+      // Not doing any assert. This block is only for pool token price and apy display purpose.
+      xit('Should calculate APY', async function () {
         await deposit(pool, collateralToken, 10, user1)
-        const blockNumberStart = (await ethers.provider.getBlock()).number
-        await strategy.connect(governor.signer).rebalance()
-        await advanceBlock(100)
-        await strategy.connect(governor.signer).rebalance()
-        let blockNumberEnd = (await ethers.provider.getBlock()).number
         let pricePerShare = await pool.pricePerShare()
-        let blockElapsed = blockNumberEnd - blockNumberStart
-        console.log(`\nAPY for ${XY}::`, calculateAPY(pricePerShare, blockElapsed))
-        console.log('Calculating APY again over 100  more blocks')
-        await advanceBlock(100)
-        await strategy.connect(governor.signer).rebalance()
+        /* eslint-disable no-console */
+        console.log('PricePerShare before rebalance', pricePerShare)
+        await rebalance(strategy)
         pricePerShare = await pool.pricePerShare()
-        blockNumberEnd = (await ethers.provider.getBlock()).number
-        blockElapsed = blockNumberEnd - blockNumberStart
-        console.log(`APY for ${XY}::`, calculateAPY(pricePerShare, blockElapsed))
-        /* eslint-enable no-console */
+        console.log('PricePerShare after rebalance', pricePerShare)
+        await advanceBlock(100)
+        await rebalance(strategy)
+        pricePerShare = await pool.pricePerShare()
+        console.log('PricePerShare after 100 blocks and rebalance', pricePerShare)
+        await advanceBlock(100)
+        await rebalance(strategy)
+        pricePerShare = await pool.pricePerShare()
+        console.log('PricePerShare after 200 blocks and rebalance', pricePerShare)
       })
     })
   })

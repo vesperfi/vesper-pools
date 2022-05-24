@@ -170,6 +170,30 @@
           "BenqiLeverageStrategyUSDCN": "0x0844913292bB5953Eda9904aa5Dde7ba43659274",
           "BenqiStrategyUSDCN": "0x0b9b5723861b491B75c5Ba6b7722b5479c47Ec0e"
         }
+      },
+      "vawbtce": {
+        "pool": {
+          "proxy": "0xba3Fb2277c7b33D1C3E1b558cf8060bc7443b13d",
+          "poolAccountant": {
+            "proxy": "0x1BeC55fe2C2bFB140507E190C3A5e74FBc9B5322"
+          }
+        },
+        "poolRewards": {
+          "proxy": "0x53D574e6CCA7aD67f2b6fBa9EeCE3744952BE639"
+        },
+        "strategies": {
+          "AaveStrategyAvalancheWBTC": "0x604af53401f7e84C3c332CB3C64a3FfE48A68cBf",
+          "AlphaLendAvalancheStrategyWBTC": "0xE72591e01123ebb866a24727bdfFfcE19BD4Fb36",
+          "BenqiCompoundLeverageStrategyAvalancheWBTC": "0x9519Ec6402304Fe66d09Ee6ADE655Aa989D0239C",
+          "BenqiCompoundStrategyAvalancheWBTC": "0xFd01E8Db5fB5B170E9d290ab24Ae63df0b26A317",
+          "BenqiLeverageStrategyWBTC": "0x109749106926E097C3a7809392FFE6350cF6fc05",
+          "BenqiStrategyWBTC": "0x8C7244b9321cBAEe8C1a3E28dEBd8a8BB3f1DBcd",
+          "Crv2PoolAvaStrategyAvWBTCRenBTC": "0x5459F2c90977d3bd133e85dB45CF90bF6e3d3AD2",
+          "TraderJoeCompoundStrategyAvalancheWBTC": "0xBDdb3D0CD69Ff81E46ccb283C128D9C5C50C8840",
+          "TraderJoeLeverageStrategyWBTC": "0xf9E141376579866b4d7040A114dfdFb61bB4764a",
+          "VesperTraderJoeXYStrategyWBTC_USDCe": "0xc7FA34ef87ad08bDCE50f5CB4d68da1BaE39c657",
+          "VesperTraderJoeXYStrategyWBTC_WETH": "0x9E372716651b890fF6B2B32a8cEa04D901948918"
+        }
       }
     },
     "mainnet": {
@@ -478,7 +502,7 @@
         "pool": {
           "proxyAdmin": "0x3F7C06b73c97D09163bDb6b04D17F2d5D9B278FE",
           "proxy": "0xF8ea0eE6818C6CF798a1b208139f6b56563F6067",
-          "implementation": "0x1f3ab4b286c393694f013260eba1048e09ee7b77", 
+          "implementation": "0x1f3ab4b286c393694f013260eba1048e09ee7b77",
           "poolAccountant": {
             "proxyAdmin": "0x18658b466023a73c4448b054169fa9ae1f6ea1a8",
             "proxy": "0x334fA95235Ff746AD8f7CD93C9dD4021D14cABD7",
@@ -614,6 +638,6 @@
           "EarnVesperStrategyDAIWBTC": "0x40971A53fa57b3D26bF0c98075f81955dE78b61F"
         }
       }
-    }
+    },
   }
 }

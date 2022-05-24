@@ -6,7 +6,7 @@ const { getUsers, deployContract, createStrategy } = require('./utils/setupHelpe
 const { address, poolConfig, strategyConfig } = require('./utils/chains').getChainData()
 const VDAI = poolConfig.VDAI
 const AaveStrategyDAI = strategyConfig.AaveStrategyDAI
-const MULTICALL = address.MULTICALL
+const multiCall = address.MultiCall
 describe('Pool accountant proxy', function () {
   let pool, strategy, poolAccountant, poolAccountantImpl
   let governor, user1
@@ -72,7 +72,7 @@ describe('Pool accountant proxy', function () {
 
       beforeEach(async function () {
         // Deploy upgrader
-        upgrader = await deployContract('PoolAccountantUpgrader', [MULTICALL])
+        upgrader = await deployContract('PoolAccountantUpgrader', [multiCall])
 
         // Transfer proxy ownership to the upgrader
         await proxyAdmin.connect(governor.signer).changeProxyAdmin(proxy.address, upgrader.address)
@@ -88,7 +88,7 @@ describe('Pool accountant proxy', function () {
 
       it('Should properly revert wrong upgrades via upgrader', async function () {
         // Trigger upgrade
-        await expect(upgrader.connect(governor.signer).safeUpgrade(proxy.address, MULTICALL)).to.be.reverted
+        await expect(upgrader.connect(governor.signer).safeUpgrade(proxy.address, multiCall)).to.be.reverted
       })
     })
   })

@@ -8,7 +8,7 @@ const { address, poolConfig, strategyConfig } = require('./utils/chains').getCha
 
 const VDAI = poolConfig.VDAI
 const AaveStrategyDAI = strategyConfig.AaveStrategyDAI
-const MULTICALL = address.MULTICALL
+const multiCall = address.MultiCall
 
 describe('Vesper Pool: proxy', function () {
   const poolName = VDAI.contractName
@@ -90,7 +90,7 @@ describe('Vesper Pool: proxy', function () {
 
       beforeEach(async function () {
         // Deploy upgrader
-        upgrader = await deployContract('VPoolUpgrader', [MULTICALL])
+        upgrader = await deployContract('VPoolUpgrader', [multiCall])
 
         // Transfer proxy ownership to the upgrader
         await proxyAdmin.connect(governor.signer).changeProxyAdmin(proxy.address, upgrader.address)
@@ -113,7 +113,7 @@ describe('Vesper Pool: proxy', function () {
 
       it('Should properly revert wrong upgrades via upgrader', async function () {
         // Trigger upgrade
-        await expect(upgrader.connect(governor.signer).safeUpgrade(proxy.address, MULTICALL)).to.be.reverted
+        await expect(upgrader.connect(governor.signer).safeUpgrade(proxy.address, multiCall)).to.be.reverted
       })
     })
   })

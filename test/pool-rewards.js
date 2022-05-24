@@ -387,7 +387,7 @@ describe('Rewards for VDAI Pool', function () {
 
       beforeEach(async function () {
         // Deploy upgrader
-        upgrader = await deployContract('PoolRewardsUpgrader', [Address.MULTICALL])
+        upgrader = await deployContract('PoolRewardsUpgrader', [Address.MultiCall])
 
         // Transfer proxy ownership to the upgrader
         await proxyAdmin.connect(governor.signer).changeProxyAdmin(proxy.address, upgrader.address)
@@ -403,7 +403,7 @@ describe('Rewards for VDAI Pool', function () {
 
       it('Should properly revert wrong upgrades via upgrader', async function () {
         // Trigger upgrade
-        await expect(upgrader.connect(governor.signer).safeUpgrade(proxy.address, Address.MULTICALL)).to.be.reverted
+        await expect(upgrader.connect(governor.signer).safeUpgrade(proxy.address, Address.MultiCall)).to.be.reverted
       })
     })
   })
