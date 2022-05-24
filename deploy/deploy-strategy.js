@@ -137,7 +137,7 @@ const deployFunction = async function (hre) {
       bundleTxs.push(await prepareTxn(operation.contractName, operation.contractAddress, ...operation.params))
     } else {
       await sleep(5000)
-      await execute(operation.alias, { from: deployer, log: true }, ...operation.params)
+      await execute(operation.alias, { from: deployer, log: true }, operation.params[0], ...operation.params[1])
     }
   }
   if (bundleTxs.length > 0) {
