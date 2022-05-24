@@ -12,73 +12,73 @@ const setup = {
 
 // TODO update setup to remove strategy type, once done remove type from heres too
 const StrategyConfig = {
-  AaveStrategyPolygonDAI: {
+  AaveStrategyDAI: {
     contract: 'AaveStrategyPolygon',
     type: StrategyTypes.AAVE,
     constructorArgs: {
       swapManager,
       receiptToken: Address.Aave.amDAI,
-      strategyName: 'AaveStrategyPolygonDAI',
+      strategyName: 'AaveStrategyDAI',
     },
     config: { ...config }, // Shallow copy
     setup: { ...setup },
   },
 
-  AaveStrategyPolygonUSDC: {
+  AaveStrategyUSDC: {
     contract: 'AaveStrategyPolygon',
     type: StrategyTypes.AAVE,
     constructorArgs: {
       swapManager,
       receiptToken: Address.Aave.amUSDC,
-      strategyName: 'AaveStrategyPolygonUSDC',
+      strategyName: 'AaveStrategyUSDC',
     },
     config: { ...config },
     setup: { ...setup },
   },
 
-  AaveStrategyPolygonUSDT: {
+  AaveStrategyUSDT: {
     contract: 'AaveStrategyPolygon',
     type: StrategyTypes.AAVE,
     constructorArgs: {
       swapManager,
       receiptToken: Address.Aave.amUSDT,
-      strategyName: 'AaveStrategyPolygonUSDT',
+      strategyName: 'AaveStrategyUSDT',
     },
     config: { ...config },
     setup: { ...setup },
   },
 
-  AaveStrategyPolygonWBTC: {
+  AaveStrategyWBTC: {
     contract: 'AaveStrategyPolygon',
     type: StrategyTypes.AAVE,
     constructorArgs: {
       swapManager,
       receiptToken: Address.Aave.amWBTC,
-      strategyName: 'AaveStrategyPolygonWBTC',
+      strategyName: 'AaveStrategyWBTC',
     },
     config: { ...config },
     setup: { ...setup },
   },
 
-  AaveStrategyPolygonWETH: {
+  AaveStrategyWETH: {
     contract: 'AaveStrategyPolygon',
     type: StrategyTypes.AAVE,
     constructorArgs: {
       swapManager,
       receiptToken: Address.Aave.amWETH,
-      strategyName: 'AaveStrategyPolygonWETH',
+      strategyName: 'AaveStrategyWETH',
     },
     config: { ...config },
     setup: { ...setup },
   },
 
-  AaveStrategyPolygonWMATIC: {
+  AaveStrategyWMATIC: {
     contract: 'AaveStrategyPolygon',
     type: StrategyTypes.AAVE,
     constructorArgs: {
       swapManager,
       receiptToken: Address.Aave.amWMATIC,
-      strategyName: 'AaveStrategyPolygonWMATIC',
+      strategyName: 'AaveStrategyWMATIC',
     },
     config: { ...config },
     setup: { ...setup },
