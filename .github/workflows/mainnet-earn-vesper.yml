@@ -1,0 +1,180 @@
+name: Mainnet Earn Vesper Strategy
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/mainnet-earn-vesper.yml"
+      - ".github/actions/setup-env/action.yml"
+      - "contracts/pool/**/*.sol"
+      - "contracts/pool/*.sol"
+      - "contracts/strategies/Strategy.sol"
+      - "contracts/strategies/Earn.sol"
+      - "contracts/strategies/vesper/VesperStrategy.sol"
+      - "contracts/strategies/earn/**"
+      - "test/mainnet/earn/vesper/**"
+
+# Limit concurrency to one workflow per branch and one per pull_request
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: true
+
+jobs:
+  setup-job:
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.NODE_URL }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup env
+        uses: ./.github/actions/setup-env
+
+  vedai-link-test:
+    needs: [setup-job]
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.NODE_URL }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup env
+        uses: ./.github/actions/setup-env
+
+      - name: Running Earn Vesper strategy for VEDAI_LINK pool
+        run: npm test test/mainnet/earn/vesper/vedai-link.js
+
+  vedai-punk-test:
+    needs: [setup-job]
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.NODE_URL }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup env
+        uses: ./.github/actions/setup-env
+
+      - name: Running Earn Vesper strategy for VEDAI_PUNK pool
+        run: npm test test/mainnet/earn/vesper/vedai-punk.js
+
+  vedai-shib-test:
+    needs: [setup-job]
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.NODE_URL }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup env
+        uses: ./.github/actions/setup-env
+
+      - name: Running Earn Vesper strategy for VEDAI_SHIB pool
+        run: npm test test/mainnet/earn/vesper/vedai-shib.js
+
+  vedai-vsp-test:
+    needs: [setup-job]
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.NODE_URL }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup env
+        uses: ./.github/actions/setup-env
+
+      - name: Running Earn Vesper strategy for VEDAI_VSP pool
+        run: npm test test/mainnet/earn/vesper/vedai-vsp.js
+
+  vedai-wbtc-test:
+    needs: [setup-job]
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.NODE_URL }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup env
+        uses: ./.github/actions/setup-env
+
+      - name: Running Earn Vesper strategy for VEDAI_WBTC pool
+        run: npm test test/mainnet/earn/vesper/vedai-wbtc.js
+
+  vedai-weth-test:
+    needs: [setup-job]
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.NODE_URL }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup env
+        uses: ./.github/actions/setup-env
+
+      - name: Running Earn Vesper strategy for VEDAI_WETH pool
+        run: npm test test/mainnet/earn/vesper/vedai-weth.js
+
+  veeth-dai-test:
+    needs: [setup-job]
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.NODE_URL }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup env
+        uses: ./.github/actions/setup-env
+
+      - name: Running Earn Vesper strategy for VEETH_DAI pool
+        run: npm test test/mainnet/earn/vesper/veeth-dai.js
+
+  velink-dai-test:
+    needs: [setup-job]
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.NODE_URL }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup env
+        uses: ./.github/actions/setup-env
+
+      - name: Running Earn Vesper strategy for VELINK_DAI pool
+        run: npm test test/mainnet/earn/vesper/velink-dai.js
+
+  veusdc-lmr-test:
+    needs: [setup-job]
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.NODE_URL }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup env
+        uses: ./.github/actions/setup-env
+
+      - name: Running Earn Vesper strategy for VEUSDC_LMR pool
+        run: npm test test/mainnet/earn/vesper/veusdc-lmr.js
+
+  vewbtc-dai-test:
+    needs: [setup-job]
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.NODE_URL }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup env
+        uses: ./.github/actions/setup-env
+
+      - name: Running Earn Vesper strategy for VEWBTC_DAI pool
+        run: npm test test/mainnet/earn/vesper/vewbtc-dai.js
