@@ -29,7 +29,7 @@ jobs:
       - name: Setup env
         uses: ./.github/actions/setup-env
 
-  vaavax-test:
+  vaavax-vesper-test:
     needs: [setup-job]
     runs-on: ubuntu-latest
     env:
@@ -41,5 +41,20 @@ jobs:
       - name: Setup env
         uses: ./.github/actions/setup-env
 
-      - name: Running TraderJoe XY strategy for VAAVAX pool
-        run: npm test test/avalanche/traderjoe-xy/vaavax.js
+      - name: Running TraderJoe Vesper XY strategy for VAAVAX pool
+        run: npm test test/avalanche/traderjoe-xy/vesper/vaavax.js
+
+  vawbtce-vesper-test:
+    needs: [setup-job]
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.AVALANCHE_NODE_URL }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup env
+        uses: ./.github/actions/setup-env
+
+      - name: Running TraderJoe Vesper XY strategy for VAWBTCe pool
+        run: npm test test/avalanche/traderjoe-xy/vesper/vawbtce.js

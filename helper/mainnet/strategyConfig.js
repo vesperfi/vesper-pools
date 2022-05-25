@@ -434,7 +434,7 @@ const StrategyConfig = {
     setup: { ...setup },
   },
 
-  VesperCompoundXYStrategyETH_DAI: {
+  VesperCompoundXYStrategyETH_WBTC: {
     contract: 'VesperCompoundXYStrategyETH',
     type: StrategyTypes.VESPER_COMPOUND_XY,
     constructorArgs: {
@@ -445,7 +445,7 @@ const StrategyConfig = {
       borrowCToken: Address.Compound.cWBTC,
       vPool: Address.Vesper.vaWBTC,
       vsp: Address.Vesper.VSP,
-      strategyName: 'VesperCompoundXYStrategyETH_DAI',
+      strategyName: 'VesperCompoundXYStrategyETH_WBTC',
     },
     config: { ...config },
     setup: { ...setup },
@@ -1064,7 +1064,7 @@ const StrategyConfig = {
       strategyName: 'VesperMakerStrategyWBTC',
     },
     config: { ...config },
-    setup: { ...setup, maker: { gemJoin: Address.Maker.MCD_JOIN_WBTC_A, highWater: 250, lowWater: 225 } },
+    setup: { ...setup, maker: { gemJoin: Address.Maker.MCD_JOIN_WBTC_C, highWater: 250, lowWater: 225 } },
   },
 
   EarnAaveMakerStrategyETH_DAI: {

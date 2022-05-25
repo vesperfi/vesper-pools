@@ -6,22 +6,14 @@
 const hre = require('hardhat')
 const ethers = hre.ethers
 const provider = hre.waffle.provider
-const { smock } = require('@defi-wonderland/smock')
 const StrategyType = require('./strategyTypes')
 const { adjustBalance } = require('./balance')
+const gemJoins = require('./gemJoins')
 const chainData = require('./chains').getChainData()
 const Address = chainData.address
 hre.address = Address
 
-const mcdEthAJoin = '0x2F0b23f53734252Bda2277357e97e1517d6B042A'
-const mcdEthCJoin = '0xF04a5cC80B1E94C69B48f5ee68a08CD2F09A7c3E'
-const mcdWbtcJoin = '0xBF72Da2Bd84c5170618Fbe5914B0ECA9638d5eb5'
-const mcdLinkJoin = '0xdFccAf8fDbD2F4805C174f856a317765B49E4a50'
-const mcdUniAJoin = '0x3BC3A58b4FC1CbE7e98bB4aB7c99535e8bA9b8F1'
-const gemJoins = [mcdEthAJoin, mcdWbtcJoin, mcdLinkJoin, mcdEthCJoin, mcdUniAJoin]
-
 // Contract names
-
 const CToken = 'CToken'
 const TokenLike = 'TokenLikeTest'
 const CollateralManager = 'CollateralManager'
@@ -209,12 +201,6 @@ async function checkAndSetEarnPool(strategy, poolAddress, options) {
  */
 async function createVesperMakerStrategy(strategy, poolAddress, options) {
   await checkAndSetEarnPool(strategy, poolAddress, options)
-  // For VesperMaker if no vPool and then deploy one vDAI pool
-  if (!options.vPool) {
-    options.vPool = await setupVesperPool()
-  }
-  // For test purpose we will not use receiptToken defined in config. Update vPool in config
-  strategy.constructorArgs.receiptToken = options.vPool.address
   const collateralManager = options.collateralManager
     ? options.collateralManager
     : await deployContract(CollateralManager)
@@ -229,8 +215,6 @@ async function createVesperMakerStrategy(strategy, poolAddress, options) {
   }
   strategyInstance.collateralManager = collateralManager
   await Promise.all([strategyInstance.updateBalancingFactor(300, 250), collateralManager.addGemJoin(gemJoins)])
-
-  await executeIfExist(options.vPool.addToFeeWhitelist, strategyInstance.address)
 
   return strategyInstance
 }
@@ -297,8 +281,6 @@ async function createVesperXYStrategy(strategy, poolAddress) {
     poolAddress,
     ...Object.values(strategy.constructorArgs),
   ])
-  const underlyingVPool = strategy.constructorArgs.vPool
-  await executeIfExist(underlyingVPool.addToFeeWhitelist, strategyInstance.address)
 
   return strategyInstance
 }
@@ -325,17 +307,21 @@ async function createStrategy(strategy, poolAddress, options = {}) {
   await instance.approveToken()
   await instance.updateFeeCollector(strategy.feeCollector)
 
-  if (strategyType === StrategyType.VESPER_MAKER || strategyType === StrategyType.EARN_VESPER) {
+  if (strategyType.toLowerCase().includes('vesper')) {
+    let underlyingPoolAddress
+    if (strategyType.toLowerCase().includes('xy')) {
+      underlyingPoolAddress = await instance.vPool()
+    } else {
+      underlyingPoolAddress = await instance.token()
+    }
     // If Vesper strategy is using the pool already deployed on mainnet for tests
-    // then there is high chance that the pool supports feeWhitelist so that into account
-    // Mock feeWhitelist to withdraw without fee in case of Earn Vesper strategies
+    // then there may be withdraw fee in pool so update withdraw fee to zero
     try {
-      const mock = await smock.fake('IAddressList', { address: await getIfExist(strategy.token.feeWhitelist) })
-      // Pretend any address is whitelisted for withdraw without fee
-      mock.contains.returns(true)
+      const underlyingPool = await ethers.getContractAt('IVesperPoolTest', underlyingPoolAddress)
+      const governor = await unlock(await underlyingPool.governor())
+      await underlyingPool.connect(governor).updateWithdrawFee(0)
     } catch (e) {
-      // Newer pools don't have feeWhitelist,
-      // Even if the interface has feeWhitelist, mocking will fail in that case
+      // V5 pool has no updateWithdrawFee function and execution will fail.
     }
   }
 

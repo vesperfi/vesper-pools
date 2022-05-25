@@ -30,7 +30,7 @@ jobs:
       - name: Setup env
         uses: ./.github/actions/setup-env
 
-  vawbtce-test:
+  vawbtce-vesper-test:
     needs: [setup-job]
     runs-on: ubuntu-latest
     env:
@@ -42,5 +42,5 @@ jobs:
       - name: Setup env
         uses: ./.github/actions/setup-env
 
-      - name: Running Benqi XY strategy for VAWBTCe pool
-        run: npm test test/avalanche/benqi-xy/vawbtce.js
+      - name: Running Benqi Vesper XY strategy for VAWBTCe pool
+        run: npm test test/avalanche/benqi-xy/vesper/vawbtce.js
