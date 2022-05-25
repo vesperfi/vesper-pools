@@ -1,8 +1,9 @@
 'use strict'
 
 const { makeNewStrategy, getStrategyToken, getIfExist } = require('../utils/setupHelper')
-const { deposit: _deposit, rebalanceStrategy } = require('../utils/poolOps')
+const { deposit: _deposit, rebalanceStrategy, makeStrategyProfitable } = require('../utils/poolOps')
 const { expect } = require('chai')
+const { ethers } = require('hardhat')
 
 async function shouldMigrateStrategies(poolName) {
   let pool, strategies, collateralToken
@@ -25,6 +26,14 @@ async function shouldMigrateStrategies(poolName) {
   async function migrateAndAssert(oldStrategy, newStrategy, receiptToken) {
     await Promise.all([deposit(50, user2), deposit(30, user1)])
     await rebalanceStrategy(oldStrategy)
+    // TODO ideally this should be done during rebalance call on above line
+    const type = oldStrategy.type.toLowerCase()
+    if (type.includes('vesper') && type.includes('xy')) {
+      await makeStrategyProfitable(
+        oldStrategy.instance,
+        await ethers.getContractAt('ERC20', await oldStrategy.instance.vPool()),
+      )
+    }
     const [totalSupplyBefore, totalValueBefore, totalDebtBefore, totalDebtRatioBefore, receiptTokenBefore] =
       await Promise.all([
         pool.totalSupply(),

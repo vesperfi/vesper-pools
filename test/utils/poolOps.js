@@ -10,7 +10,7 @@ const DECIMAL = BigNumber.from('1000000000000000000')
 const { parseEther } = require('@ethersproject/units')
 const { adjustBalance } = require('./balance')
 const { getChain } = require('../utils/chains')
-const { unlock } = require('./setupHelper')
+const { unlock, getIfExist } = require('./setupHelper')
 const { NATIVE_TOKEN, DAI, MIM, ALUSD, Vesper } = require(`../../helper/${getChain()}/address`)
 
 /**
@@ -81,12 +81,18 @@ async function timeTravel(
 }
 
 async function bringAboveWater(strategy, amount) {
-  if (strategy.instance.isUnderwater !== undefined && (await strategy.instance.isUnderwater())) {
+  if (await getIfExist(strategy.instance.isUnderwater)) {
     // deposit some amount in aave/compound to bring it above water.
     if (strategy.contract.includes('AaveMaker')) {
       await depositTokenToAave(amount, DAI, strategy.instance.address)
     } else if (strategy.contract.includes('CompoundMaker')) {
       await depositTokenToCompound(amount, DAI, strategy.instance.address)
+    } else {
+      // Update vaDAI balance in VesperMakerStrategy
+      const token = await ethers.getContractAt('IERC20', Vesper.vaDAI)
+      const balance = await token.balanceOf(strategy.instance.address)
+      const increaseBalanceBy = ethers.utils.parseEther('1000')
+      await adjustBalance(token.address, strategy.instance.address, balance.add(increaseBalanceBy))
     }
     const lowWater = await strategy.instance.isUnderwater()
     // if still low water do a resurface
@@ -155,7 +161,7 @@ async function harvestVesperMaker(strategy) {
  * @param {object} strategy - strategy object
  */
 async function harvestVesperXY(strategy) {
-  const vPool = await ethers.getContractAt('IVesperPool', await strategy.instance.vPool())
+  const vPool = await ethers.getContractAt('IVesperPoolTest', await strategy.instance.vPool())
   const collateralTokenAddress = await vPool.token()
 
   const signer = await ethers.provider.getSigner(strategy.signer)

@@ -32,6 +32,7 @@ const slots = {
   [Address.Aave.stkAAVE]: 0,
   [Address.LMR]: 0,
   [Address.SHIB]: 0,
+  [Address.Vesper.vaDAI]: 0,
 
   // Avalanche addresses
   [AvalancheAddress.DAIe]: 0,

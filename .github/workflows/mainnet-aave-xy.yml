@@ -1,17 +1,16 @@
-name: Avalanche Benqi XY Strategy
+name: Mainnet Aave XY Strategy
 on:
   pull_request:
     paths:
-      - ".github/workflows/avalanche-benqi-xy.yml"
+      - ".github/workflows/mainnet-aave-xy.yml"
       - ".github/actions/setup-env/action.yml"
       - "contracts/pool/**/*.sol"
       - "contracts/pool/*.sol"
       - "contracts/strategies/Strategy.sol"
-      - "contracts/strategies/compound/CompoundXYCore.sol"
-      - "contracts/strategies/compound/CompoundXYStrategy.sol"
-      - "contracts/strategies/compound/BenqiXYStrategy.sol"
-      - "contracts/strategies/compound/VesperBenqiXYStrategy.sol"
-      - "test/avalanche/benqi-xy/**"
+      - "contracts/strategies/aave/AaveXYStrategy.sol"
+      - "contracts/strategies/aave/AaveCore.sol"
+      - "contracts/strategies/aave/VesperAaveXYStrategy.sol"
+      - "test/mainnet/aave-xy/**/*.js"
 
 # Limit concurrency to one workflow per branch and one per pull_request
 concurrency:
@@ -22,7 +21,7 @@ jobs:
   setup-job:
     runs-on: ubuntu-latest
     env:
-      NODE_URL: ${{ secrets.AVALANCHE_NODE_URL }}
+      NODE_URL: ${{ secrets.NODE_URL }}
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
@@ -30,11 +29,11 @@ jobs:
       - name: Setup env
         uses: ./.github/actions/setup-env
 
-  vawbtce-vesper-test:
+  vaeth-vesper-test:
     needs: [setup-job]
     runs-on: ubuntu-latest
     env:
-      NODE_URL: ${{ secrets.AVALANCHE_NODE_URL }}
+      NODE_URL: ${{ secrets.NODE_URL }}
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
@@ -42,5 +41,5 @@ jobs:
       - name: Setup env
         uses: ./.github/actions/setup-env
 
-      - name: Running Benqi Vesper XY strategy for VAWBTCe pool
-        run: npm test test/avalanche/benqi-xy/vesper/vawbtce.js
+      - name: Running Aave Vesper XY strategy for VAETH pool
+        run: npm test test/mainnet/aave-xy/vesper/vaeth.js

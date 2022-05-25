@@ -114,7 +114,7 @@ const StrategyConfig = {
     setup: { ...setup },
   },
 
-  VesperAaveXYStrategyWETH: {
+  VesperAaveXYStrategyETH_DAI: {
     contract: 'VesperAaveXYStrategy',
     type: StrategyTypes.VESPER_AAVE_XY,
     constructorArgs: {
@@ -124,7 +124,7 @@ const StrategyConfig = {
       borrowToken: Address.DAI,
       vPool: Address.Vesper.vaDAI,
       vsp: Address.Vesper.VSP,
-      strategyName: 'VesperAaveXYStrategyWBTC',
+      strategyName: 'VesperAaveXYStrategyETH_DAI',
     },
     config: { ...config },
     setup: { ...setup },
@@ -404,7 +404,7 @@ const StrategyConfig = {
     setup: { ...setup },
   },
 
-  CompoundXYStrategyETH: {
+  CompoundXYStrategyETH_DAI: {
     contract: 'CompoundXYStrategyETH',
     type: StrategyTypes.COMPOUND_XY,
     constructorArgs: {
@@ -413,13 +413,13 @@ const StrategyConfig = {
       rewardToken: Address.Compound.COMP,
       receiptToken: Address.Compound.cETH,
       borrowCToken: Address.Compound.cDAI,
-      strategyName: 'CompoundXYStrategyETH',
+      strategyName: 'CompoundXYStrategyETH_DAI',
     },
     config: { ...config },
     setup: { ...setup },
   },
 
-  CompoundXYStrategyWBTC: {
+  CompoundXYStrategyWBTC_DAI: {
     contract: 'CompoundXYStrategy',
     type: StrategyTypes.COMPOUND_XY,
     constructorArgs: {
@@ -428,13 +428,13 @@ const StrategyConfig = {
       rewardToken: Address.Compound.COMP,
       receiptToken: Address.Compound.cWBTC,
       borrowCToken: Address.Compound.cDAI,
-      strategyName: 'CompoundXYStrategyWBTC',
+      strategyName: 'CompoundXYStrategyWBTC_DAI',
     },
     config: { ...config },
     setup: { ...setup },
   },
 
-  VesperCompoundXYStrategyETH: {
+  VesperCompoundXYStrategyETH_WBTC: {
     contract: 'VesperCompoundXYStrategyETH',
     type: StrategyTypes.VESPER_COMPOUND_XY,
     constructorArgs: {
@@ -445,13 +445,13 @@ const StrategyConfig = {
       borrowCToken: Address.Compound.cWBTC,
       vPool: Address.Vesper.vaWBTC,
       vsp: Address.Vesper.VSP,
-      strategyName: 'VesperCompoundXYStrategyETH',
+      strategyName: 'VesperCompoundXYStrategyETH_WBTC',
     },
     config: { ...config },
     setup: { ...setup },
   },
 
-  VesperCompoundXYStrategyWBTC: {
+  VesperCompoundXYStrategyWBTC_DAI: {
     contract: 'VesperCompoundXYStrategy',
     type: StrategyTypes.VESPER_COMPOUND_XY,
     constructorArgs: {
@@ -462,13 +462,13 @@ const StrategyConfig = {
       borrowCToken: Address.Compound.cDAI,
       vPool: Address.Vesper.vaDAI,
       vsp: Address.Vesper.VSP,
-      strategyName: 'VesperCompoundXYStrategyWBTC',
+      strategyName: 'VesperCompoundXYStrategyWBTC_DAI',
     },
     config: { ...config },
     setup: { ...setup },
   },
 
-  IronBankXYStrategyETH: {
+  IronBankXYStrategyETH_DAI: {
     contract: 'IronBankXYStrategy',
     type: StrategyTypes.COMPOUND_XY,
     constructorArgs: {
@@ -476,13 +476,13 @@ const StrategyConfig = {
       comptroller: Address.IronBank.Unitroller,
       receiptToken: Address.IronBank.iWETH,
       borrowCToken: Address.IronBank.iDAI,
-      strategyName: 'IronBankXYStrategyETH',
+      strategyName: 'IronBankXYStrategyETH_DAI',
     },
     config: { ...config },
     setup: { ...setup },
   },
 
-  VesperIronBankXYStrategyETH: {
+  VesperIronBankXYStrategyETH_DAI: {
     contract: 'VesperIronBankXYStrategy',
     type: StrategyTypes.VESPER_COMPOUND_XY,
     constructorArgs: {
@@ -492,7 +492,7 @@ const StrategyConfig = {
       borrowCToken: Address.IronBank.iDAI,
       vPool: Address.Vesper.vaDAI,
       vsp: Address.Vesper.VSP,
-      strategyName: 'VesperIronBankXYStrategyETH',
+      strategyName: 'VesperIronBankXYStrategyETH_DAI',
     },
     config: { ...config },
     setup: { ...setup },
@@ -1064,7 +1064,7 @@ const StrategyConfig = {
       strategyName: 'VesperMakerStrategyWBTC',
     },
     config: { ...config },
-    setup: { ...setup, maker: { gemJoin: Address.Maker.MCD_JOIN_WBTC_A, highWater: 250, lowWater: 225 } },
+    setup: { ...setup, maker: { gemJoin: Address.Maker.MCD_JOIN_WBTC_C, highWater: 250, lowWater: 225 } },
   },
 
   EarnAaveMakerStrategyETH_DAI: {
