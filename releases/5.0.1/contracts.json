@@ -1,5 +1,5 @@
 {
-  "version": "5.0.0",
+  "version": "5.0.1",
   "networks": {
     "avalanche": {
       "vadai": {
@@ -474,6 +474,20 @@
         },
         "strategies": {
           "RariFuseStrategyAPE#127": "0xb436d8a2e3e23aF57040B2dA8E01463c818e0999"
+        }
+      },
+      "veusdc_lmr": {
+        "pool": {
+          "proxy": "0xA7C21fD948c44830541b8561B31ABDe09CC32719",
+          "poolAccountant": {
+            "proxy": "0x102507268748Cca215871f571F0bAFC7f5842428"
+          }
+        },
+        "poolRewards": {
+          "proxy": "0xf5aE3095be887004A5df20ef6f2786563836aCCA"
+        },
+        "strategies": {
+          "EarnVesperStrategyUSDCLMR": "0x6d94ce384cf6b51F93F8c702b039333fC95d66A5"
         }
       }
     },

@@ -9,7 +9,7 @@ const config = { debtRatio: 0, externalDepositFee: 0 }
 
 const setup = {
   feeCollector: Address.Vesper.FEE_COLLECTOR,
-  keepers: [Address.Vesper.KEEPER],
+  keepers: [Address.Vesper.KEEPER, Address.Vesper.MP, Address.Vesper.JCV],
 }
 // Maker related strategies will have to add more setup config.
 // For example const maker = { gemJoin: Address.MCD_JOIN_ETH_A, highWater: 275, lowWater: 250 }
