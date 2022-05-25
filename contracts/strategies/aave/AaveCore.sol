@@ -15,6 +15,7 @@ abstract contract AaveCore {
     AaveLendingPool public immutable aaveLendingPool;
     AaveProtocolDataProvider public aaveProtocolDataProvider;
     AaveIncentivesController public immutable aaveIncentivesController;
+    AaveLendingPoolAddressesProvider internal immutable aaveAddressesProvider_;
 
     AToken internal immutable aToken;
     bytes32 private constant AAVE_PROVIDER_ID = 0x0100000000000000000000000000000000000000000000000000000000000000;
@@ -26,10 +27,9 @@ abstract contract AaveCore {
         try AToken(_receiptToken).getIncentivesController() returns (address _aaveIncentivesController) {
             aaveIncentivesController = AaveIncentivesController(_aaveIncentivesController);
         } catch {} //solhint-disable no-empty-blocks
-        AaveLendingPoolAddressesProvider aaveAddressesProvider =
-            AaveLendingPoolAddressesProvider(0xB53C1a33016B2DC2fF3653530bfF1848a515c8c5);
-        aaveLendingPool = AaveLendingPool(aaveAddressesProvider.getLendingPool());
-        aaveProtocolDataProvider = AaveProtocolDataProvider(aaveAddressesProvider.getAddress(AAVE_PROVIDER_ID));
+        aaveAddressesProvider_ = AaveLendingPoolAddressesProvider(0xB53C1a33016B2DC2fF3653530bfF1848a515c8c5);
+        aaveLendingPool = AaveLendingPool(aaveAddressesProvider_.getLendingPool());
+        aaveProtocolDataProvider = AaveProtocolDataProvider(aaveAddressesProvider_.getAddress(AAVE_PROVIDER_ID));
     }
 
     ///////////////////////// External access functions /////////////////////////

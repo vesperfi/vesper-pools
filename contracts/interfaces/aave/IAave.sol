@@ -8,6 +8,12 @@ interface AaveLendingPoolAddressesProvider {
     function getLendingPool() external view returns (address);
 
     function getAddress(bytes32 id) external view returns (address);
+
+    function getPriceOracle() external view returns (address);
+}
+
+interface AaveOracle {
+    function getAssetPrice(address _asset) external view returns (uint256);
 }
 
 interface AToken is IERC20 {
