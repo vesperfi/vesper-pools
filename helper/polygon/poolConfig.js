@@ -12,37 +12,37 @@ const earnRewards = {
 }
 
 const PoolConfig = {
-  VADAI: {
+  VDAI: {
     contractName: 'VPool',
     poolParams: ['vDAI Pool', 'vDAI', Address.DAI],
     setup: { ...setup }, // Shallow copy
     rewards: { ...rewards },
   },
-  VAUSDC: {
+  VUSDC: {
     contractName: 'VPool',
     poolParams: ['vUSDC Pool', 'vUSDC', Address.USDC],
     setup: { ...setup },
     rewards: { ...rewards },
   },
-  VAUSDT: {
+  VUSDT: {
     contractName: 'VPool',
     poolParams: ['vUSDT Pool', 'vUSDT', Address.USDT],
     setup: { ...setup },
     rewards: { ...rewards },
   },
-  VAWETH: {
+  VWETH: {
     contractName: 'VPool',
     poolParams: ['vWETH Pool', 'vWETH', Address.WETH],
     setup: { ...setup },
     rewards: { ...rewards },
   },
-  VAWBTC: {
+  VWBTC: {
     contractName: 'VPool',
     poolParams: ['vWBTC Pool', 'vWBTC', Address.WBTC],
     setup: { ...setup },
     rewards: { ...rewards },
   },
-  VAMATIC: {
+  VMATIC: {
     contractName: 'VETH',
     poolParams: ['vMATIC Pool', 'vMATIC', Address.WMATIC],
     setup: { ...setup },
