@@ -186,36 +186,24 @@ contract AaveLeverageAvalancheStrategy is Strategy, FlashLoanHelper, AaveCoreAva
     }
 
     /**
-     * @dev Aave flash is used only for withdrawal due to high fee compare to DyDx
+     * @dev Aave flash is used only for withdrawal/deleverage
      * @param _flashAmount Amount for flash loan
      * @param _shouldRepay Flag indicating we want to leverage or deleverage
-     * @return Total amount we leverage or deleverage using flash loan
+     * @return _totalFlashAmount Total amount deleveraged using flash loan
      */
-    function _doFlashLoan(uint256 _flashAmount, bool _shouldRepay) internal returns (uint256) {
-        uint256 _totalFlashAmount;
-        // Due to less fee DyDx is our primary flash loan provider
-        if (isDyDxActive && _flashAmount > 0) {
-            _totalFlashAmount = _doDyDxFlashLoan(
-                address(collateralToken),
-                _flashAmount,
-                abi.encode(_flashAmount, _shouldRepay)
-            );
-            _flashAmount -= _totalFlashAmount;
-        }
+    function _doFlashLoan(uint256 _flashAmount, bool _shouldRepay) internal returns (uint256 _totalFlashAmount) {
         if (isAaveActive && _shouldRepay && _flashAmount > 0) {
-            _totalFlashAmount += _doAaveFlashLoan(
+            _totalFlashAmount = _doAaveFlashLoan(
                 address(collateralToken),
                 _flashAmount,
                 abi.encode(_flashAmount, _shouldRepay)
             );
         }
-        return _totalFlashAmount;
     }
 
     /**
-     * @notice This function will be called by flash loan
-     * @dev In case of borrow, DyDx is preferred as fee is so low that it does not effect
-     * our collateralRatio and liquidation risk.
+     * @dev This function will be called by flash loan
+     * @dev Currently we use flash loan for repay only.
      */
     function _flashLoanLogic(bytes memory _data, uint256 _repayAmount) internal override {
         (uint256 _amount, bool _deficit) = abi.decode(_data, (uint256, bool));
@@ -453,8 +441,6 @@ contract AaveLeverageAvalancheStrategy is Strategy, FlashLoanHelper, AaveCoreAva
     }
 
     function updateFlashLoanStatus(bool, bool _aaveStatus) external virtual onlyGovernor {
-        // No DYDX support on AVA chain
-        // _updateDyDxStatus(_dydxStatus, address(collateralToken));
         _updateAaveStatus(_aaveStatus);
     }
 
