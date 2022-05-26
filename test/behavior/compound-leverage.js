@@ -6,7 +6,8 @@ const { getStrategyToken, getUsers } = require('../utils/setupHelper')
 const { deposit, makeStrategyProfitable } = require('../utils/poolOps')
 const { advanceBlock } = require('../utils/time')
 const { getChain } = require('../utils/chains')
-const address = require('../../helper/mainnet/address')
+const chain = getChain()
+const address = require(`../../helper/${chain}/address`)
 
 // Compound Leverage strategy specific tests
 function shouldBehaveLikeCompoundLeverageStrategy(strategyIndex) {
@@ -14,8 +15,7 @@ function shouldBehaveLikeCompoundLeverageStrategy(strategyIndex) {
   let governor, user1, user2
 
   async function isMarketExist() {
-    if (getChain() === 'mainnet') {
-      // address.DyDx.SOLO on avalanche chain is not a contract
+    if (address.DyDx && address.DyDx.SOLO) {
       const solo = await ethers.getContractAt('ISoloMargin', address.DyDx.SOLO)
       const totalMarkets = await solo.getNumMarkets()
 
@@ -44,6 +44,7 @@ function shouldBehaveLikeCompoundLeverageStrategy(strategyIndex) {
 
   async function rewardAccrued() {
     const strategyName = await strategy.NAME()
+    let outcome
     if (getChain() === 'mainnet') {
       if (strategyName.includes('Rari')) {
         const rewardDistributor = await ethers.getContractAt(
@@ -52,14 +53,18 @@ function shouldBehaveLikeCompoundLeverageStrategy(strategyIndex) {
         )
         const collateralsWithRewards = await rewardDistributor.getAllMarkets()
         // return -1 when Rari pool do not have reward token
-        return collateralsWithRewards.includes(collateralToken) ? rewardDistributor.compAccrued(strategy.address) : -1
+        outcome = collateralsWithRewards.includes(collateralToken)
+          ? rewardDistributor.compAccrued(strategy.address)
+          : -1
       }
       const comptroller = await ethers.getContractAt('Comptroller', await strategy.comptroller())
       return comptroller.compAccrued(strategy.address)
+    } else if (chain === 'avalanche') {
+      // avalanche
+      const rewardDistributor = await ethers.getContractAt('IRewardDistributor', await strategy.rewardDistributor())
+      outcome = rewardDistributor.rewardAccrued(0, strategy.address)
     }
-    // avalanche
-    const rewardDistributor = await ethers.getContractAt('IRewardDistributor', await strategy.rewardDistributor())
-    return rewardDistributor.rewardAccrued(0, strategy.address)
+    return outcome
   }
 
   describe('CompoundLeverageStrategy specific tests', function () {
@@ -74,34 +79,30 @@ function shouldBehaveLikeCompoundLeverageStrategy(strategyIndex) {
     })
 
     it('Should work as expected when debtRatio is 0', async function () {
-      // Skipping this for Avalanche as it seems to fail randomly against a fixed block number
-      // TODO: Debug and fix this test case for Avalanche
-      if (getChain() !== 'avalanche') {
-        await deposit(pool, collateralToken, 2, user1)
-        await strategy.connect(governor.signer).rebalance()
-        let position = await strategy.getPosition()
+      await deposit(pool, collateralToken, 2, user1)
+      await strategy.connect(governor.signer).rebalance()
+      let position = await strategy.getPosition()
 
-        expect(position._supply).to.gt(0, 'Incorrect supply')
-        expect(position._borrow).to.gt(0, 'Incorrect borrow')
-        expect(await pool.totalDebtOf(strategy.address)).to.gt(0, 'Incorrect total debt of strategy')
-        if (await strategy.callStatic.isLossMaking()) {
-          return
-        }
-        const accountant = await ethers.getContractAt('PoolAccountant', await pool.poolAccountant())
-        await accountant.updateDebtRatio(strategy.address, 0)
-
-        await strategy.connect(governor.signer).rebalance()
-        position = await strategy.getPosition()
-        expect(position._supply).to.eq(0, 'Incorrect supply')
-        expect(position._borrow).to.eq(0, 'Incorrect borrow')
-        expect(await pool.totalDebtOf(strategy.address)).to.eq(0, 'Incorrect total debt of strategy')
-
-        await strategy.connect(governor.signer).rebalance()
-        position = await strategy.getPosition()
-        expect(position._supply).to.eq(0, 'Incorrect supply')
-        expect(position._borrow).to.eq(0, 'Incorrect borrow')
-        expect(await pool.totalDebtOf(strategy.address)).to.eq(0, 'Incorrect total debt of strategy')
+      expect(position._supply).to.gt(0, 'Incorrect supply')
+      expect(position._borrow).to.gt(0, 'Incorrect borrow')
+      expect(await pool.totalDebtOf(strategy.address)).to.gt(0, 'Incorrect total debt of strategy')
+      if (await strategy.callStatic.isLossMaking()) {
+        return
       }
+      const accountant = await ethers.getContractAt('PoolAccountant', await pool.poolAccountant())
+      await accountant.updateDebtRatio(strategy.address, 0)
+
+      await strategy.connect(governor.signer).rebalance()
+      position = await strategy.getPosition()
+      expect(position._supply).to.eq(0, 'Incorrect supply')
+      expect(position._borrow).to.eq(0, 'Incorrect borrow')
+      expect(await pool.totalDebtOf(strategy.address)).to.eq(0, 'Incorrect total debt of strategy')
+
+      await strategy.connect(governor.signer).rebalance()
+      position = await strategy.getPosition()
+      expect(position._supply).to.eq(0, 'Incorrect supply')
+      expect(position._borrow).to.eq(0, 'Incorrect borrow')
+      expect(await pool.totalDebtOf(strategy.address)).to.eq(0, 'Incorrect total debt of strategy')
     })
 
     it('Should borrow collateral at rebalance', async function () {
@@ -227,18 +228,14 @@ function shouldBehaveLikeCompoundLeverageStrategy(strategyIndex) {
     })
 
     it('Should repay borrow if borrow limit set to 0', async function () {
-      // Skipping this for Avalanche as it seems to fail randomly against a fixed block number
-      // TODO: Debug and fix this test case for Avalanche
-      if (getChain() !== 'avalanche') {
-        await deposit(pool, collateralToken, 100, user1)
-        await strategy.connect(governor.signer).rebalance()
-        const borrowBefore = await token.callStatic.borrowBalanceCurrent(strategy.address)
-        expect(borrowBefore).to.gt(0, 'Borrow amount should be > 0')
-        await strategy.connect(governor.signer).updateBorrowRatio(0, 5500)
-        await strategy.connect(governor.signer).rebalance()
-        const borrowAfter = await token.callStatic.borrowBalanceCurrent(strategy.address)
-        expect(borrowAfter).to.eq(0, 'Borrow amount should be = 0')
-      }
+      await deposit(pool, collateralToken, 100, user1)
+      await strategy.connect(governor.signer).rebalance()
+      const borrowBefore = await token.callStatic.borrowBalanceCurrent(strategy.address)
+      expect(borrowBefore).to.gt(0, 'Borrow amount should be > 0')
+      await strategy.connect(governor.signer).updateBorrowRatio(0, 5500)
+      await strategy.connect(governor.signer).rebalance()
+      const borrowAfter = await token.callStatic.borrowBalanceCurrent(strategy.address)
+      expect(borrowAfter).to.eq(0, 'Borrow amount should be = 0')
     })
 
     it('Should get rewardToken token as reserve token', async function () {
@@ -270,17 +267,17 @@ function shouldBehaveLikeCompoundLeverageStrategy(strategyIndex) {
 
     it('Should liquidate rewardToken when claimed by external source', async function () {
       const comptroller = await strategy.comptroller()
-      if (comptroller !== address.Inverse.COMPTROLLER) {
+      if (address.Inverse && comptroller !== address.Inverse.COMPTROLLER) {
         await strategy.connect(governor.signer).updateSwapSlippage('1000')
       }
       const rewardToken = await ethers.getContractAt('IERC20', strategy.rewardToken())
       // using bigger amount for avalanche to generate significant rewards for wbtc pool
-      const amount = getChain() === 'mainnet' ? 20 : 500
+      const amount = chain === 'mainnet' ? 20 : 500
       await deposit(pool, collateralToken, amount, user2)
       await strategy.connect(governor.signer).rebalance()
       await advanceBlock(100)
       const strategyName = await strategy.NAME()
-      if (getChain() === 'mainnet') {
+      if (chain === 'mainnet') {
         if (strategyName.includes('Rari')) {
           const rewardDistributor = await ethers.getContractAt(
             'IRariRewardDistributor',
@@ -295,7 +292,7 @@ function shouldBehaveLikeCompoundLeverageStrategy(strategyIndex) {
           const comptrollerInstance = await ethers.getContractAt('Comptroller', comptroller)
           await comptrollerInstance.connect(user2.signer).claimComp(strategy.address, [token.address])
         }
-      } else if (getChain() === 'avalanche') {
+      } else if (chain === 'avalanche') {
         // avalanche case
         const comptrollerInstance = await ethers.getContractAt('ComptrollerMultiReward', comptroller)
         await comptrollerInstance.connect(user2.signer).claimReward(0, strategy.address)
@@ -313,7 +310,7 @@ function shouldBehaveLikeCompoundLeverageStrategy(strategyIndex) {
       await strategy.connect(governor.signer).rebalance()
       const rewardTokenBalance = await rewardToken.balanceOf(strategy.address)
       expect(rewardTokenBalance).to.equal('0', 'rewardToken balance should be 0 on rebalance')
-      if (getChain() === 'avalanche') {
+      if (chain === 'avalanche') {
         const avaxBalance = await ethers.provider.getBalance(strategy.address)
         expect(avaxBalance, 'Avax balance should be zero').to.eq('0')
       }
