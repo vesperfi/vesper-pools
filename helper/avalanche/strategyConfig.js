@@ -557,7 +557,7 @@ const StrategyConfig = {
     setup: { ...setup },
   },
 
-  VesperBenqiXYStrategyWBTCe: {
+  VesperBenqiXYStrategyWBTCe_WETHe: {
     contract: 'VesperBenqiXYStrategy',
     type: StrategyTypes.VESPER_COMPOUND_XY,
     constructorArgs: {
@@ -569,13 +569,13 @@ const StrategyConfig = {
       borrowCToken: Address.Benqi.qiETH,
       vPool: Address.Vesper.vaWETHe,
       vsp: Address.Vesper.VSP,
-      strategyName: 'VesperBenqiXYStrategyWBTCe',
+      strategyName: 'VesperBenqiXYStrategyWBTCe_WETHe',
     },
     config: { ...config },
     setup: { ...setup },
   },
 
-  VesperTraderJoeXYStrategyAVAX: {
+  VesperTraderJoeXYStrategyAVAX_WETHe: {
     contract: 'VesperTraderJoeXYStrategy',
     type: StrategyTypes.VESPER_COMPOUND_XY,
     constructorArgs: {
@@ -587,12 +587,12 @@ const StrategyConfig = {
       borrowCToken: Address.TraderJoe.jWETH,
       vPool: Address.Vesper.vaWETHe,
       vsp: Address.Vesper.VSP,
-      strategyName: 'VesperTraderJoeXYStrategyAVAX',
+      strategyName: 'VesperTraderJoeXYStrategyAVAX_WETHe',
     },
     config: { ...config },
     setup: { ...setup },
   },
-  VesperTraderJoeXYStrategyWBTC_WETHe: {
+  VesperTraderJoeXYStrategyWBTCe_WETHe: {
     contract: 'VesperTraderJoeXYStrategy',
     type: StrategyTypes.VESPER_COMPOUND_XY,
     constructorArgs: {
@@ -609,7 +609,7 @@ const StrategyConfig = {
     config: { ...config },
     setup: { ...setup },
   },
-  VesperTraderJoeXYStrategyWBTC_USDCe: {
+  VesperTraderJoeXYStrategyWBTCe_USDCe: {
     contract: 'VesperTraderJoeXYStrategy',
     type: StrategyTypes.VESPER_COMPOUND_XY,
     constructorArgs: {
