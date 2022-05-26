@@ -52,7 +52,7 @@ const deployFunction = async function (hre) {
     from: deployer,
     log: true,
     skipIfAlreadyDeployed: true,
-    args: poolConfig.poolParams, // Constructor args
+    args: ['Vesper pool', 'vPool', Address.ZERO], // hardcoded impl constructor argument
     // proxy deployment
     proxy: {
       proxyContract: 'OpenZeppelinTransparentProxy',

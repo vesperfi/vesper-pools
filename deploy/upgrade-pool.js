@@ -39,11 +39,11 @@ async function deployUpgraderIfNeeded(hre, upgraderName, existingUpgraderAddress
   const address = require(`../helper/${targetChain}/address`)
 
   // Deploy upgrader. Hardhat-deploy will reuse contract if already exist
-  const MULTICALL = address.MULTICALL
+  const multiCall = address.MultiCall
   const upgrader = await deploy(upgraderName, {
     from: deployer,
     log: true,
-    args: [MULTICALL],
+    args: [multiCall],
   })
   const proxyAdmin = await read(upgraderName, 'getProxyAdmin', proxy.address).catch(() => null)
   if (!proxyAdmin) {
@@ -68,8 +68,8 @@ async function safeUpgrade(hre, deployer, contract, params = []) {
   if (contract === 'VETH') {
     upgraderName = VPoolUpgrader
   }
-  const Address = require(`../helper/${targetChain}/address`)
-  const safe = Address.MultiSig.safe
+  const address = require(`../helper/${targetChain}/address`)
+  const safe = address.MultiSig.safe
   const proxy = await deployments.get(contract)
 
   // Deployment may not exist so keep using ethers.getContractAt. DO NOT use read()
@@ -138,11 +138,12 @@ async function safeUpgrade(hre, deployer, contract, params = []) {
 const deployFunction = async function (hre) {
   const { getNamedAccounts, poolConfig, targetChain, multisigNonce } = hre
   const { deployer } = await getNamedAccounts()
+  const address = require(`../helper/${targetChain}/address`)
   // This info will be used later in deploy-pool task
   hre.implementations = {}
 
   const txnsToPropose = []
-  const poolTxns = await safeUpgrade(hre, deployer, poolConfig.contractName, poolConfig.poolParams)
+  const poolTxns = await safeUpgrade(hre, deployer, poolConfig.contractName, ['Vesper pool', 'vPool', address.ZERO])
   await sleep(hre.network.name, 5000)
   const accountantTxns = await safeUpgrade(hre, deployer, PoolAccountant)
   txnsToPropose.push(...poolTxns)
