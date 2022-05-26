@@ -101,7 +101,7 @@ const StrategyConfig = {
     setup: { ...setup },
   },
   TraderJoeStrategyUSDCe: {
-    contract: 'CompoundMultiRewardAvalancheStrategy',
+    contract: 'CompoundLikeStrategy',
     type: StrategyTypes.TRADER_JOE,
     constructorArgs: {
       swapManager,
@@ -116,7 +116,7 @@ const StrategyConfig = {
   },
 
   TraderJoeStrategyUSDC: {
-    contract: 'CompoundMultiRewardAvalancheStrategy',
+    contract: 'CompoundLikeStrategy',
     type: StrategyTypes.TRADER_JOE,
     constructorArgs: {
       swapManager,
@@ -131,7 +131,7 @@ const StrategyConfig = {
   },
 
   TraderJoeStrategyAVAX: {
-    contract: 'CompoundMultiRewardAvalancheStrategy',
+    contract: 'CompoundLikeStrategy',
     type: StrategyTypes.TRADER_JOE,
     constructorArgs: {
       swapManager,
@@ -146,7 +146,7 @@ const StrategyConfig = {
   },
 
   TraderJoeStrategyWETHe: {
-    contract: 'CompoundMultiRewardAvalancheStrategy',
+    contract: 'CompoundLikeStrategy',
     type: StrategyTypes.TRADER_JOE,
     constructorArgs: {
       swapManager,
@@ -161,7 +161,7 @@ const StrategyConfig = {
   },
 
   TraderJoeStrategyDAIe: {
-    contract: 'CompoundMultiRewardAvalancheStrategy',
+    contract: 'CompoundLikeStrategy',
     type: StrategyTypes.TRADER_JOE,
     constructorArgs: {
       swapManager,
@@ -176,7 +176,7 @@ const StrategyConfig = {
   },
 
   TraderJoeStrategyWBTCe: {
-    contract: 'CompoundMultiRewardAvalancheStrategy',
+    contract: 'CompoundLikeStrategy',
     type: StrategyTypes.TRADER_JOE,
     constructorArgs: {
       swapManager,
@@ -191,7 +191,7 @@ const StrategyConfig = {
   },
 
   BenqiStrategyUSDCe: {
-    contract: 'CompoundMultiRewardAvalancheStrategy',
+    contract: 'CompoundLikeStrategy',
     type: StrategyTypes.COMPOUND,
     constructorArgs: {
       swapManager,
@@ -205,7 +205,7 @@ const StrategyConfig = {
     setup: { ...setup },
   },
   BenqiStrategyDAIe: {
-    contract: 'CompoundMultiRewardAvalancheStrategy',
+    contract: 'CompoundLikeStrategy',
     type: StrategyTypes.COMPOUND,
     constructorArgs: {
       swapManager,
@@ -219,7 +219,7 @@ const StrategyConfig = {
     setup: { ...setup },
   },
   BenqiStrategyWETHe: {
-    contract: 'CompoundMultiRewardAvalancheStrategy',
+    contract: 'CompoundLikeStrategy',
     type: StrategyTypes.COMPOUND,
     constructorArgs: {
       swapManager,
@@ -234,7 +234,7 @@ const StrategyConfig = {
   },
 
   BenqiStrategyWBTCe: {
-    contract: 'CompoundMultiRewardAvalancheStrategy',
+    contract: 'CompoundLikeStrategy',
     type: StrategyTypes.COMPOUND,
     constructorArgs: {
       swapManager,
@@ -249,7 +249,7 @@ const StrategyConfig = {
   },
 
   BenqiStrategyUSDC: {
-    contract: 'CompoundMultiRewardAvalancheStrategy',
+    contract: 'CompoundLikeStrategy',
     type: StrategyTypes.COMPOUND,
     constructorArgs: {
       swapManager,
@@ -264,7 +264,7 @@ const StrategyConfig = {
   },
 
   BenqiStrategyAVAX: {
-    contract: 'BenqiCompoundMultiRewardAvalancheStrategyAVAX',
+    contract: 'BenqiStrategyAVAX',
     type: StrategyTypes.COMPOUND,
     constructorArgs: {
       swapManager,
@@ -279,7 +279,7 @@ const StrategyConfig = {
   },
 
   BenqiStrategyQI: {
-    contract: 'CompoundMultiRewardAvalancheStrategy',
+    contract: 'CompoundLikeStrategy',
     type: StrategyTypes.COMPOUND,
     constructorArgs: {
       swapManager,
