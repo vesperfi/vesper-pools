@@ -63,6 +63,12 @@ contract CrvA3PoolStrategy is CrvA3PoolStrategyBase {
         return IERC20(AAVE).balanceOf(address(this));
     }
 
+    function _claimRewards() internal virtual override {
+        ITokenMinter(CRV_MINTER).mint(crvGauge);
+        ILiquidityGaugeV2(crvGauge).claim_rewards(address(this));
+        _claimAave();
+    }
+
     function _canUnstake(uint256 _cooldownEnd, uint256 _unstakeEnd) internal view returns (bool) {
         return block.timestamp > _cooldownEnd && block.timestamp <= _unstakeEnd;
     }
