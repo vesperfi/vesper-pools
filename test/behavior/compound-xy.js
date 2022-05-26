@@ -112,15 +112,13 @@ function shouldBehaveLikeCompoundXYStrategy(strategyIndex) {
         const newMaxBorrowLimit = await strategy.maxBorrowLimit()
         expect(newMaxBorrowLimit).to.be.eq(0, 'minBorrowRatio should be 0')
       })
-      it('Should update borrow ratio', async function () {
+      it('Should update borrow limit', async function () {
         await deposit(pool, collateralToken, 100, user1)
         await strategy.connect(governor.signer).rebalance()
         await advanceBlock(100)
         await strategy.connect(governor.signer).updateBorrowLimit(5000, 6000)
         const newMinBorrowLimit = await strategy.minBorrowLimit()
         await strategy.connect(governor.signer).rebalance()
-        await supplyCToken.exchangeRateCurrent()
-        await borrowCToken.exchangeRateCurrent()
         expect(newMinBorrowLimit).to.be.eq(5000, 'Min borrow limit is wrong')
         await assertCurrentBorrow()
         let tx = strategy.connect(governor.signer).updateBorrowLimit(5000, ethers.constants.MaxUint256)
