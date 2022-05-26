@@ -2,10 +2,10 @@
 
 pragma solidity 0.8.9;
 
-import "./CompoundMultiRewardAvalancheStrategy.sol";
+import "./CompoundLikeStrategy.sol";
 import "../../interfaces/token/IToken.sol";
 
-contract BenqiCompoundMultiRewardAvalancheStrategyAVAX is CompoundMultiRewardAvalancheStrategy {
+contract BenqiStrategyAVAX is CompoundLikeStrategy {
     //solhint-disable no-empty-blocks
     constructor(
         address _pool,
@@ -15,17 +15,7 @@ contract BenqiCompoundMultiRewardAvalancheStrategyAVAX is CompoundMultiRewardAva
         address _rewardToken,
         address _receiptToken,
         string memory _name
-    )
-        CompoundMultiRewardAvalancheStrategy(
-            _pool,
-            _swapManager,
-            _comptroller,
-            _rewardDistributor,
-            _rewardToken,
-            _receiptToken,
-            _name
-        )
-    {}
+    ) CompoundLikeStrategy(_pool, _swapManager, _comptroller, _rewardDistributor, _rewardToken, _receiptToken, _name) {}
 
     function _afterRedeem() internal override {
         TokenLike(WAVAX).deposit{value: address(this).balance}();

@@ -7,7 +7,7 @@ import "../../interfaces/compound/IComptrollerMultiReward.sol";
 import "../../interfaces/token/IToken.sol";
 
 /// @title This strategy will deposit collateral token in a Compound Fork on avalanche and Earn Interest
-contract CompoundMultiRewardAvalancheStrategy is CompoundStrategy {
+contract CompoundLikeStrategy is CompoundStrategy {
     using SafeERC20 for IERC20;
 
     address internal constant WAVAX = 0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7;
