@@ -2,57 +2,6 @@
   "version": "5.0.1",
   "networks": {
     "avalanche": {
-      "vadai": {
-        "pool": {
-          "proxyAdmin": "0x2f4F85be85245c91779C3e36cBddf87b4eD73E3d",
-          "proxy": "0x5323F445A8665239222b117aE095423a238F5706",
-          "implementation": "0x2f12dfb525564055B4A007B0b15eA5CD0BfF986C",
-          "poolAccountant": {
-            "proxyAdmin": "0x6959CEACE5574A57cFBD1ac4654C7c2fb74Af4d2",
-            "proxy": "0x1450E77CA4a646676A051118320efe3ed1c4831b",
-            "implementation": "0xed6673F4bFaDD4D269BE68C7dbCC516218C0baD9"
-          }
-        },
-        "poolRewards": {
-          "proxyAdmin": "0xB6D75A53442844e8F1eed35d7A65225c57B282EB",
-          "proxy": "0x371eabb194C5e9B462C134cBcD699Ef3cb0d4468",
-          "implementation": "0x1b6c5bddaf46f5e28a4b2730f64ca060e2325513"
-        },
-        "strategies": {
-          "AaveStrategyAvalancheDAI": "0x867E89E47b7c252F4D991DF75eBd2CFD9188B929",
-          "BenqiCompoundStrategyAvalancheDAI": "0x847930F3DffC03043a6f59064B049c1Ff128f56A",
-          "AlphaLendAvalancheStrategyDAI": "0x8D460b5FDaBE2ef4CB2DA6dd78d574E580DFF2ed",
-          "BenqiCompoundLeverageStrategyAvalancheDAI": "0xBb4fCEf90D4259F476Ccb3BB7bc4842355B46c76",
-          "CrvA3PoolStrategyDAI": "0xAf147FD4C72807AFdd3CCFDcf3CF6a2587E88127",
-          "TraderJoeLeverageStrategyDAI": "0xfec82b66Bc1DBAacCa637ce151b89F5b872f6d7E",
-          "TraderJoeStrategyDAI": "0x0E95a8a4566b0324ad511108a83C47d78b554fAf"
-        }
-      },
-      "vaweth": {
-        "pool": {
-          "proxyAdmin": "0x2f4F85be85245c91779C3e36cBddf87b4eD73E3d",
-          "proxy": "0x2B6c40Ef15Db0D78D08A7D1b4E12d57E88a3e324",
-          "implementation": "0x2f12dfb525564055b4a007b0b15ea5cd0bff986c",
-          "poolAccountant": {
-            "proxyAdmin": "0x6959CEACE5574A57cFBD1ac4654C7c2fb74Af4d2",
-            "proxy": "0x7F896DDe137fBFc0347854fAa02E243aD6F2bE93",
-            "implementation": "0xed6673f4bfadd4d269be68c7dbcc516218c0bad9"
-          }
-        },
-        "poolRewards": {
-          "proxyAdmin": "0xB6D75A53442844e8F1eed35d7A65225c57B282EB",
-          "proxy": "0x9001633faa986Ec2fc8eb8e3EAea3a3642ea5946",
-          "implementation": "0x161B4cba576112a3a3A3c358c1915C3b157BEC19"
-        },
-        "strategies": {
-          "AaveStrategyAvalancheWETH": "0x0a46A9716b4632A57863d52123c5c10FDF9e10F8",
-          "AlphaLendAvalancheStrategyWETH": "0x3038a73c79963f25d4b9ba4bEF0c349cD2679154",
-          "BenqiCompoundStrategyAvalancheWETH": "0x85E646909D6a1E251a0b7f24909a03931A708463",
-          "BenqiCompoundLeverageStrategyAvalancheWETH": "0x589E116B1B9Ec445145e2FB20468222cd2DAEe00",
-          "TraderJoeCompoundStrategyAvalancheWETH": "0xC00fAe34553dbF360Dc8E2a90fd25b4BbBD3977f",
-          "TraderJoeLeverageStrategyWETH": "0xa2276B9799F35f216e4354B81Ba02957A575Eae8"
-        }
-      },
       "vaavax": {
         "pool": {
           "proxyAdmin": "0x2f4F85be85245c91779C3e36cBddf87b4eD73E3d",
@@ -73,34 +22,78 @@
           "AaveStrategyAvalancheAVAX": "0x93bD05BA341B9f40C232cA9C05e5F28e3aa917D2",
           "AlphaLendAvalancheStrategyAVAX": "0xBa6D61020067E296BA1bf4C5A4CE728e50d4a835",
           "BenqiCompoundLeverageStrategyAvalancheAVAX": "0x2727c4de420d94013b5cbcbec4e73b7893c4f818",
+          "BenqiCompoundStrategyAvalancheAVAX": "0x2Da7b2c35A6a4e5C41C95027ab090bc3Ee6263ff",
+          "TraderJoeCompoundLeverageStrategyAvalancheAVAX": "0x00fB8B4987b867F941985449AfA16F818750d60C",
           "TraderJoeCompoundStrategyAvalancheAVAX": "0xaAA36344B8A82F82F74f4Be1bdD7AA13D41853A4",
           "TraderJoeLeverageStrategyAVAX": "0xE9bBDCFA94E25AB786050c5bde06A613BBef9EF9"
         }
       },
-      "vawbtc": {
+      "vadaie": {
         "pool": {
           "proxyAdmin": "0x2f4F85be85245c91779C3e36cBddf87b4eD73E3d",
-          "proxy": "0xba3Fb2277c7b33D1C3E1b558cf8060bc7443b13d",
+          "proxy": "0x5323F445A8665239222b117aE095423a238F5706",
           "implementation": "0x2f12dfb525564055B4A007B0b15eA5CD0BfF986C",
           "poolAccountant": {
             "proxyAdmin": "0x6959CEACE5574A57cFBD1ac4654C7c2fb74Af4d2",
-            "proxy": "0x1BeC55fe2C2bFB140507E190C3A5e74FBc9B5322",
+            "proxy": "0x1450E77CA4a646676A051118320efe3ed1c4831b",
             "implementation": "0xed6673F4bFaDD4D269BE68C7dbCC516218C0baD9"
           }
         },
         "poolRewards": {
           "proxyAdmin": "0xB6D75A53442844e8F1eed35d7A65225c57B282EB",
-          "proxy": "0x53D574e6CCA7aD67f2b6fBa9EeCE3744952BE639",
-          "implementation": "0x6637d1520D356699d4AD3A26d732E8A7f3bF49D3"
+          "proxy": "0x371eabb194C5e9B462C134cBcD699Ef3cb0d4468",
+          "implementation": "0x1b6C5BDdAf46F5E28a4B2730f64CA060E2325513"
         },
         "strategies": {
-          "AaveStrategyAvalancheWBTC": "0x604af53401f7e84C3c332CB3C64a3FfE48A68cBf",
-          "AlphaLendAvalancheStrategyWBTC": "0xE72591e01123ebb866a24727bdfFfcE19BD4Fb36",
-          "BenqiLeverageStrategyWBTC": "0x109749106926E097C3a7809392FFE6350cF6fc05",
-          "BenqiStrategyWBTC": "0x8C7244b9321cBAEe8C1a3E28dEBd8a8BB3f1DBcd",
-          "Crv2PoolAvaStrategyAvWBTCRenBTC": "0x5459F2c90977d3bd133e85dB45CF90bF6e3d3AD2",
-          "TraderJoeCompoundStrategyAvalancheWBTC": "0xBDdb3D0CD69Ff81E46ccb283C128D9C5C50C8840",
-          "TraderJoeLeverageStrategyWBTC": "0xf9E141376579866b4d7040A114dfdFb61bB4764a"
+          "AaveStrategyAvalancheDAI": "0x867E89E47b7c252F4D991DF75eBd2CFD9188B929",
+          "AlphaLendAvalancheStrategyDAI": "0x8D460b5FDaBE2ef4CB2DA6dd78d574E580DFF2ed",
+          "BenqiCompoundLeverageStrategyAvalancheDAI": "0xBb4fCEf90D4259F476Ccb3BB7bc4842355B46c76",
+          "BenqiCompoundStrategyAvalancheDAI": "0x847930F3DffC03043a6f59064B049c1Ff128f56A",
+          "CrvA3PoolStrategyDAI": "0xAf147FD4C72807AFdd3CCFDcf3CF6a2587E88127",
+          "TraderJoeLeverageStrategyDAI": "0xfec82b66Bc1DBAacCa637ce151b89F5b872f6d7E",
+          "TraderJoeStrategyDAI": "0x0E95a8a4566b0324ad511108a83C47d78b554fAf"
+        }
+      },
+      "vaqi": {
+        "pool": {
+          "proxyAdmin": "0x2f4F85be85245c91779C3e36cBddf87b4eD73E3d",
+          "proxy": "0x4b915EaB9d1dd1def39E1E8aF16CB6A28375e5F6",
+          "implementation": "0x2f12dfb525564055B4A007B0b15eA5CD0BfF986C",
+          "poolAccountant": {
+            "proxyAdmin": "0x6959CEACE5574A57cFBD1ac4654C7c2fb74Af4d2",
+            "proxy": "0x23eEF1D32CEC3289DaF8854d05754A29b16f4f37",
+            "implementation": "0xed6673F4bFaDD4D269BE68C7dbCC516218C0baD9"
+          }
+        },
+        "poolRewards": {
+          "proxyAdmin": "0xB6D75A53442844e8F1eed35d7A65225c57B282EB",
+          "proxy": "0x25c173c236a6f0bCa04c9BB50B4F877082CbefFE",
+          "implementation": "0xD0bCa9fDEf17D4dD9F7F1b69AB27DCC298f3d52c"
+        },
+        "strategies": {
+          "BenqiCompoundStrategyAvalancheQI": "0x95ADd6A66bED963CcdA6fCc11ae109400E1b1743"
+        }
+      },
+      "vausdc": {
+        "pool": {
+          "proxyAdmin": "0x2f4F85be85245c91779C3e36cBddf87b4eD73E3d",
+          "proxy": "0x4378041dceF18713CE30E36A6b9c8aA41C0dB631",
+          "implementation": "0x2f12dfb525564055B4A007B0b15eA5CD0BfF986C",
+          "poolAccountant": {
+            "proxyAdmin": "0x6959CEACE5574A57cFBD1ac4654C7c2fb74Af4d2",
+            "proxy": "0x861Ab730B483904B28C56416fc7D08F75cd758ae",
+            "implementation": "0xed6673F4bFaDD4D269BE68C7dbCC516218C0baD9"
+          }
+        },
+        "poolRewards": {
+          "proxyAdmin": "0xB6D75A53442844e8F1eed35d7A65225c57B282EB",
+          "proxy": "0x657A0a7BcE6C881278bFA4C23b3b7284F1Fb5078",
+          "implementation": "0xCF15Af3677171DBBD7844B721c010a59e1e60201"
+        },
+        "strategies": {
+          "AlphaLendAvalancheStrategyUSDC_N": "0x468E9DA5e22baf34a2E89dd8438AFC5558eEdBEA",
+          "BenqiLeverageStrategyUSDCN": "0x0844913292bB5953Eda9904aa5Dde7ba43659274",
+          "BenqiStrategyUSDCN": "0x0b9b5723861b491B75c5Ba6b7722b5479c47Ec0e"
         }
       },
       "vausdce": {
@@ -122,64 +115,28 @@
         "strategies": {
           "AaveStrategyAvalancheUSDC": "0x718E58C448116FE7315caEE135b12793AFc4FDf4",
           "AlphaLendAvalancheStrategyUSDC": "0x76C78059581891Eb96eEf286d223015936bC6972",
-          "BenqiCompoundStrategyAvalancheUSDC": "0x182F72FfDB674250746A103272bbFBCA56d4510C",
           "BenqiCompoundLeverageStrategyAvalancheUSDC": "0x570d1Baa39809aca59b51202179e1E5d8A08D993",
+          "BenqiCompoundStrategyAvalancheUSDC": "0x182F72FfDB674250746A103272bbFBCA56d4510C",
           "CrvA3PoolStrategyUSDC": "0x45D5Ff2793f516287A953A18EA88C360Fff94678",
           "TraderJoeLeverageStrategyUSDC": "0xF2d1eF29da4eebD2EF7903DAA39eC1EBc3967e90",
           "TraderJoeStrategyUSDC": "0xA9E120c1d9b32E957d0ba0e6c601C9b6Bf6fcDf9"
         }
       },
-      "vaqi": {
-        "pool": {
-          "proxyAdmin": "0x2f4F85be85245c91779C3e36cBddf87b4eD73E3d",
-          "proxy": "0x4b915EaB9d1dd1def39E1E8aF16CB6A28375e5F6",
-          "implementation": "0x2f12dfb525564055b4a007b0b15ea5cd0bff986c",
-          "poolAccountant": {
-            "proxyAdmin": "0x6959CEACE5574A57cFBD1ac4654C7c2fb74Af4d2",
-            "proxy": "0x23eEF1D32CEC3289DaF8854d05754A29b16f4f37",
-            "implementation": "0xed6673f4bfadd4d269be68c7dbcc516218c0bad9"
-          }
-        },
-        "poolRewards": {
-          "proxyAdmin": "0xB6D75A53442844e8F1eed35d7A65225c57B282EB",
-          "proxy": "0x25c173c236a6f0bCa04c9BB50B4F877082CbefFE",
-          "implementation": "0xD0bCa9fDEf17D4dD9F7F1b69AB27DCC298f3d52c"
-        },
-        "strategies": {
-          "BenqiCompoundStrategyAvalancheQI": "0x95ADd6A66bED963CcdA6fCc11ae109400E1b1743"
-        }
-      },
-      "vausdc": {
-        "pool": {
-          "proxyAdmin": "0x2f4F85be85245c91779C3e36cBddf87b4eD73E3d",
-          "proxy": "0x4378041dceF18713CE30E36A6b9c8aA41C0dB631",
-          "implementation": "0x2f12dfb525564055b4a007b0b15ea5cd0bff986c",
-          "poolAccountant": {
-            "proxyAdmin": "0x6959CEACE5574A57cFBD1ac4654C7c2fb74Af4d2",
-            "proxy": "0x861Ab730B483904B28C56416fc7D08F75cd758ae",
-            "implementation": "0xed6673f4bfadd4d269be68c7dbcc516218c0bad9"
-          }
-        },
-        "poolRewards": {
-          "proxyAdmin": "0xB6D75A53442844e8F1eed35d7A65225c57B282EB",
-          "proxy": "0x657A0a7BcE6C881278bFA4C23b3b7284F1Fb5078",
-          "implementation": "0xCF15Af3677171DBBD7844B721c010a59e1e60201"
-        },
-        "strategies": {
-          "AlphaLendAvalancheStrategyUSDC_N": "0x468E9DA5e22baf34a2E89dd8438AFC5558eEdBEA",
-          "BenqiLeverageStrategyUSDCN": "0x0844913292bB5953Eda9904aa5Dde7ba43659274",
-          "BenqiStrategyUSDCN": "0x0b9b5723861b491B75c5Ba6b7722b5479c47Ec0e"
-        }
-      },
       "vawbtce": {
         "pool": {
+          "proxyAdmin": "0x2f4F85be85245c91779C3e36cBddf87b4eD73E3d",
           "proxy": "0xba3Fb2277c7b33D1C3E1b558cf8060bc7443b13d",
+          "implementation": "0x2f12dfb525564055B4A007B0b15eA5CD0BfF986C",
           "poolAccountant": {
-            "proxy": "0x1BeC55fe2C2bFB140507E190C3A5e74FBc9B5322"
+            "proxyAdmin": "0x6959CEACE5574A57cFBD1ac4654C7c2fb74Af4d2",
+            "proxy": "0x1BeC55fe2C2bFB140507E190C3A5e74FBc9B5322",
+            "implementation": "0xed6673F4bFaDD4D269BE68C7dbCC516218C0baD9"
           }
         },
         "poolRewards": {
-          "proxy": "0x53D574e6CCA7aD67f2b6fBa9EeCE3744952BE639"
+          "proxyAdmin": "0xB6D75A53442844e8F1eed35d7A65225c57B282EB",
+          "proxy": "0x53D574e6CCA7aD67f2b6fBa9EeCE3744952BE639",
+          "implementation": "0x6637d1520D356699d4AD3A26d732E8A7f3bF49D3"
         },
         "strategies": {
           "AaveStrategyAvalancheWBTC": "0x604af53401f7e84C3c332CB3C64a3FfE48A68cBf",
@@ -193,6 +150,32 @@
           "TraderJoeLeverageStrategyWBTC": "0xf9E141376579866b4d7040A114dfdFb61bB4764a",
           "VesperTraderJoeXYStrategyWBTC_USDCe": "0xc7FA34ef87ad08bDCE50f5CB4d68da1BaE39c657",
           "VesperTraderJoeXYStrategyWBTC_WETH": "0x9E372716651b890fF6B2B32a8cEa04D901948918"
+        }
+      },
+      "vawethe": {
+        "pool": {
+          "proxyAdmin": "0x2f4F85be85245c91779C3e36cBddf87b4eD73E3d",
+          "proxy": "0x2B6c40Ef15Db0D78D08A7D1b4E12d57E88a3e324",
+          "implementation": "0x2f12dfb525564055B4A007B0b15eA5CD0BfF986C",
+          "poolAccountant": {
+            "proxyAdmin": "0x6959CEACE5574A57cFBD1ac4654C7c2fb74Af4d2",
+            "proxy": "0x7F896DDe137fBFc0347854fAa02E243aD6F2bE93",
+            "implementation": "0xed6673F4bFaDD4D269BE68C7dbCC516218C0baD9"
+          }
+        },
+        "poolRewards": {
+          "proxyAdmin": "0xB6D75A53442844e8F1eed35d7A65225c57B282EB",
+          "proxy": "0x9001633faa986Ec2fc8eb8e3EAea3a3642ea5946",
+          "implementation": "0x161B4cba576112a3a3A3c358c1915C3b157BEC19"
+        },
+        "strategies": {
+          "AaveStrategyAvalancheWETH": "0x0a46A9716b4632A57863d52123c5c10FDF9e10F8",
+          "AlphaLendAvalancheStrategyWETH": "0x3038a73c79963f25d4b9ba4bEF0c349cD2679154",
+          "BenqiCompoundLeverageStrategyAvalancheWETH": "0x589E116B1B9Ec445145e2FB20468222cd2DAEe00",
+          "BenqiCompoundStrategyAvalancheWETH": "0x85E646909D6a1E251a0b7f24909a03931A708463",
+          "TraderJoeCompoundLeverageStrategyAvalancheWETH": "0xDdC5295D733023C7b117290929D8A06e2c55Dca0",
+          "TraderJoeCompoundStrategyAvalancheWETH": "0xC00fAe34553dbF360Dc8E2a90fd25b4BbBD3977f",
+          "TraderJoeLeverageStrategyWETH": "0xa2276B9799F35f216e4354B81Ba02957A575Eae8"
         }
       }
     },
