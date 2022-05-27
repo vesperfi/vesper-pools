@@ -7,9 +7,9 @@ on:
       - "contracts/pool/**/*.sol"
       - "contracts/pool/*.sol"
       - "contracts/strategies/Strategy.sol"
-      - "contracts/strategies/aave/AaveLeverageAvalancheStrategy.sol"
-      - "contracts/strategies/aave/AaveCoreAvalanche.sol"
-      - "contracts/FlashLoanHelper.sol"      
+      - "contracts/strategies/aave/avalanche/AaveLeverageStrategy.sol"
+      - "contracts/strategies/aave/avalanche/AaveCore.sol"
+      - "contracts/FlashLoanHelper.sol"
       - "test/avalanche/aave-leverage/**"
 
 # Limit concurrency to one workflow per branch and one per pull_request

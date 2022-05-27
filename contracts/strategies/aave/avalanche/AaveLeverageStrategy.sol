@@ -3,15 +3,15 @@
 
 pragma solidity 0.8.9;
 
-import "../Strategy.sol";
-import "./AaveCoreAvalanche.sol";
-import "../../interfaces/aave/IAave.sol";
-import "../../FlashLoanHelper.sol";
-import "../../dependencies/openzeppelin/contracts/utils/math/Math.sol";
+import "../../Strategy.sol";
+import "./AaveCore.sol";
+import "../../../interfaces/aave/IAave.sol";
+import "../../../FlashLoanHelper.sol";
+import "../../../dependencies/openzeppelin/contracts/utils/math/Math.sol";
 
 /// @title This strategy will deposit collateral token in Aave and based on position
 /// it will borrow same collateral token. It will use borrowed asset as supply and borrow again.
-contract AaveLeverageAvalancheStrategy is Strategy, FlashLoanHelper, AaveCoreAvalanche {
+contract AaveLeverageStrategy is Strategy, FlashLoanHelper, AaveCore {
     using SafeERC20 for IERC20;
 
     // solhint-disable-next-line var-name-mixedcase
@@ -33,8 +33,8 @@ contract AaveLeverageAvalancheStrategy is Strategy, FlashLoanHelper, AaveCoreAva
         string memory _name
     )
         Strategy(_pool, _swapManager, _receiptToken)
-        FlashLoanHelper(AaveCoreAvalanche.AAVE_ADDRESSES_PROVIDER)
-        AaveCoreAvalanche(_receiptToken)
+        FlashLoanHelper(AaveCore.AAVE_ADDRESSES_PROVIDER)
+        AaveCore(_receiptToken)
     {
         NAME = _name;
         (, , address _vdToken) =
@@ -186,24 +186,36 @@ contract AaveLeverageAvalancheStrategy is Strategy, FlashLoanHelper, AaveCoreAva
     }
 
     /**
-     * @dev Aave flash is used only for withdrawal/deleverage
+     * @dev Aave flash is used only for withdrawal due to high fee compare to DyDx
      * @param _flashAmount Amount for flash loan
      * @param _shouldRepay Flag indicating we want to leverage or deleverage
-     * @return _totalFlashAmount Total amount deleveraged using flash loan
+     * @return Total amount we leverage or deleverage using flash loan
      */
-    function _doFlashLoan(uint256 _flashAmount, bool _shouldRepay) internal returns (uint256 _totalFlashAmount) {
+    function _doFlashLoan(uint256 _flashAmount, bool _shouldRepay) internal returns (uint256) {
+        uint256 _totalFlashAmount;
+        // Due to less fee DyDx is our primary flash loan provider
+        if (isDyDxActive && _flashAmount > 0) {
+            _totalFlashAmount = _doDyDxFlashLoan(
+                address(collateralToken),
+                _flashAmount,
+                abi.encode(_flashAmount, _shouldRepay)
+            );
+            _flashAmount -= _totalFlashAmount;
+        }
         if (isAaveActive && _shouldRepay && _flashAmount > 0) {
-            _totalFlashAmount = _doAaveFlashLoan(
+            _totalFlashAmount += _doAaveFlashLoan(
                 address(collateralToken),
                 _flashAmount,
                 abi.encode(_flashAmount, _shouldRepay)
             );
         }
+        return _totalFlashAmount;
     }
 
     /**
-     * @dev This function will be called by flash loan
-     * @dev Currently we use flash loan for repay only.
+     * @notice This function will be called by flash loan
+     * @dev In case of borrow, DyDx is preferred as fee is so low that it does not effect
+     * our collateralRatio and liquidation risk.
      */
     function _flashLoanLogic(bytes memory _data, uint256 _repayAmount) internal override {
         (uint256 _amount, bool _deficit) = abi.decode(_data, (uint256, bool));
@@ -441,6 +453,8 @@ contract AaveLeverageAvalancheStrategy is Strategy, FlashLoanHelper, AaveCoreAva
     }
 
     function updateFlashLoanStatus(bool, bool _aaveStatus) external virtual onlyGovernor {
+        // No DYDX support on AVA chain
+        // _updateDyDxStatus(_dydxStatus, address(collateralToken));
         _updateAaveStatus(_aaveStatus);
     }
 

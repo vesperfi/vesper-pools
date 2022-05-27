@@ -11,7 +11,7 @@ on:
       - "contracts/strategies/aave/AaveCore.sol"
       - "test/mainnet/aave/**"
 
-# Limit concurrency to one workflow per branch and one per pull_request
+# Limit concurrency to one workflow per branch and one per pull_request.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
   cancel-in-progress: true

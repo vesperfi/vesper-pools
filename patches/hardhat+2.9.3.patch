@@ -1,0 +1,42 @@
+diff --git a/node_modules/hardhat/internal/artifacts.js b/node_modules/hardhat/internal/artifacts.js
+index 797d102..511edfd 100644
+--- a/node_modules/hardhat/internal/artifacts.js
++++ b/node_modules/hardhat/internal/artifacts.js
+@@ -186,6 +186,16 @@ class Artifacts {
+         const files = await this.getArtifactPaths();
+         return this._getArtifactPathFromFiles(name, files);
+     }
++    /**
++     * Pathced to not throw and return all artifacts with same name.
++     */
++    async _getArtifactPathNoError(name) {
++        if ((0, contract_names_1.isFullyQualifiedName)(name)) {
++            return this._getValidArtifactPathFromFullyQualifiedName(name);
++        }
++        const files = await this.getArtifactPaths();
++        return this._getArtifactPathFromFilesNoError(name, files);
++    }
+     _createBuildInfo(id, solcVersion, solcLongVersion, input, output) {
+         return {
+             id,
+@@ -417,6 +427,20 @@ Please replace "${contractName}" for the correct contract name wherever you are
+         }
+         return matchingFiles[0];
+     }
++
++    _getArtifactPathFromFilesNoError(contractName, files) {
++        const matchingFiles = files.filter((file) => {
++            return path.basename(file) === `${contractName}.json`;
++        });
++        if (matchingFiles.length === 0) {
++            return this._handleWrongArtifactForContractName(contractName, files);
++        }
++        if (matchingFiles.length > 1) {
++            const candidates = matchingFiles.map((file) => this._getFullyQualifiedNameFromPath(file));
++            return candidates
++        }
++        return matchingFiles[0];
++    }
+     /**
+      * Returns the FQN of a contract giving the absolute path to its artifact.
+      *

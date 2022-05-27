@@ -9,8 +9,9 @@ const provider = hre.waffle.provider
 const StrategyType = require('./strategyTypes')
 const { adjustBalance } = require('./balance')
 const gemJoins = require('./gemJoins')
-const chainData = require('./chains').getChainData()
-const Address = chainData.address
+const { getChain, getChainData } = require('./chains')
+const chain = getChain()
+const Address = getChainData().address
 hre.address = Address
 
 // Contract names
@@ -83,7 +84,24 @@ async function unlock(_address) {
  * @returns {object} Contract instance
  */
 async function deployContract(name, params = []) {
-  const contractFactory = await ethers.getContractFactory(name)
+  let contractName
+  try {
+    // Try to read artifact, if success then 'name' is valid input for deploy.
+    await hre.artifacts.readArtifact(name)
+    contractName = name
+  } catch (error) {
+    // Error will be thrown if more than 1 artifacts exist with same name.
+    // Get all artifact paths. '_getArtifactPathNoError' is custom method
+    const artifactPaths = await hre.artifacts._getArtifactPathNoError(name)
+    // Get path which has chain and given 'name' in path
+    let artifactPath = artifactPaths.filter(path => path.includes(chain))[0]
+    // If not such path exist then use the first path from all paths
+    if (!artifactPath) {
+      artifactPath = artifactPaths[0]
+    }
+    contractName = artifactPath
+  }
+  const contractFactory = await ethers.getContractFactory(contractName)
   return contractFactory.deploy(...params)
 }
 

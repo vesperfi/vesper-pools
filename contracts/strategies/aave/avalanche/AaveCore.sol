@@ -2,10 +2,10 @@
 
 pragma solidity 0.8.9;
 
-import "../../interfaces/aave/IAave.sol";
-import "../../Errors.sol";
+import "../../../interfaces/aave/IAave.sol";
+import "../../../Errors.sol";
 
-abstract contract AaveCoreAvalanche {
+abstract contract AaveCore {
     bytes32 private constant AAVE_PROVIDER_ID = 0x0100000000000000000000000000000000000000000000000000000000000000;
     AaveLendingPool public aaveLendingPool;
     AaveProtocolDataProvider public aaveProtocolDataProvider;
