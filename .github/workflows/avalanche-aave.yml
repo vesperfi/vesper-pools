@@ -7,8 +7,8 @@ on:
       - "contracts/pool/**/*.sol"
       - "contracts/pool/*.sol"
       - "contracts/strategies/Strategy.sol"
-      - "contracts/strategies/aave/AaveStrategyAvalanche.sol"
-      - "contracts/strategies/aave/AaveCoreAvalanche.sol"
+      - "contracts/strategies/aave/avalanche/AaveStrategy.sol"
+      - "contracts/strategies/aave/avalanche/AaveCore.sol"
       - "test/avalanche/aave/**"
 
 # Limit concurrency to one workflow per branch and one per pull_request
@@ -27,7 +27,6 @@ jobs:
 
       - name: Setup env
         uses: ./.github/actions/setup-env
-
 
   vaavax-test:
     needs: [setup-job]
@@ -58,7 +57,7 @@ jobs:
 
       - name: Running Aave strategy for VADAIe pool
         run: npm test test/avalanche/aave/vadaie.js
-        
+
   vausdce-test:
     needs: [setup-job]
     runs-on: ubuntu-latest

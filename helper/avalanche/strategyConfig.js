@@ -13,7 +13,7 @@ const setup = {
 // TODO update setup to remove strategy type, once done remove type from heres too
 const StrategyConfig = {
   AaveStrategyDAIe: {
-    contract: 'AaveStrategyAvalanche',
+    contract: 'AaveStrategy',
     type: StrategyTypes.AAVE,
     constructorArgs: {
       swapManager,
@@ -24,7 +24,7 @@ const StrategyConfig = {
     setup: { ...setup },
   },
   AaveStrategyWETHe: {
-    contract: 'AaveStrategyAvalanche',
+    contract: 'AaveStrategy',
     type: StrategyTypes.AAVE,
     constructorArgs: {
       swapManager,
@@ -35,7 +35,7 @@ const StrategyConfig = {
     setup: { ...setup },
   },
   AaveStrategyWBTCe: {
-    contract: 'AaveStrategyAvalanche',
+    contract: 'AaveStrategy',
     type: StrategyTypes.AAVE,
     constructorArgs: {
       swapManager,
@@ -46,7 +46,7 @@ const StrategyConfig = {
     setup: { ...setup },
   },
   AaveStrategyAVAX: {
-    contract: 'AaveStrategyAvalanche',
+    contract: 'AaveStrategy',
     type: StrategyTypes.AAVE,
     constructorArgs: {
       swapManager,
@@ -57,7 +57,7 @@ const StrategyConfig = {
     setup: { ...setup },
   },
   AaveStrategyUSDCe: {
-    contract: 'AaveStrategyAvalanche',
+    contract: 'AaveStrategy',
     type: StrategyTypes.AAVE,
     constructorArgs: {
       swapManager,
@@ -68,7 +68,7 @@ const StrategyConfig = {
     setup: { ...setup },
   },
   AaveLeverageStrategyAVAX: {
-    contract: 'AaveLeverageAvalancheStrategy',
+    contract: 'AaveLeverageStrategy',
     type: StrategyTypes.AAVE_LEVERAGE,
     constructorArgs: {
       swapManager,

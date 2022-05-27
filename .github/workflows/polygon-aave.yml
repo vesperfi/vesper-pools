@@ -7,7 +7,7 @@ on:
       - "contracts/pool/**/*.sol"
       - "contracts/pool/*.sol"
       - "contracts/strategies/Strategy.sol"
-      - "contracts/strategies/aave/AaveStrategyPolygon.sol"
+      - "contracts/strategies/aave/polygon/AaveStrategy.sol"
       - "test/polygon/aave/**"
 
 # Limit concurrency to one workflow per branch and one per pull_request
