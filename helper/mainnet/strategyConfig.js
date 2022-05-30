@@ -451,6 +451,23 @@ const StrategyConfig = {
     setup: { ...setup },
   },
 
+  VesperCompoundXYStrategyETH_LINK: {
+    contract: 'VesperCompoundXYStrategy',
+    type: StrategyTypes.VESPER_COMPOUND_XY,
+    constructorArgs: {
+      swapManager,
+      comptroller: Address.Compound.COMPTROLLER,
+      rewardToken: Address.Compound.COMP,
+      receiptToken: Address.Compound.cETH,
+      borrowCToken: Address.Compound.cLINK,
+      vPool: Address.Vesper.vaLINK,
+      vsp: Address.Vesper.VSP,
+      strategyName: 'VesperCompoundXYStrategyETH_LINK',
+    },
+    config: { ...config },
+    setup: { ...setup },
+  },
+
   VesperCompoundXYStrategyWBTC_DAI: {
     contract: 'VesperCompoundXYStrategy',
     type: StrategyTypes.VESPER_COMPOUND_XY,
@@ -463,6 +480,40 @@ const StrategyConfig = {
       vPool: Address.Vesper.vaDAI,
       vsp: Address.Vesper.VSP,
       strategyName: 'VesperCompoundXYStrategyWBTC_DAI',
+    },
+    config: { ...config },
+    setup: { ...setup },
+  },
+
+  VesperCompoundXYStrategyWBTC_USDC: {
+    contract: 'VesperCompoundXYStrategy',
+    type: StrategyTypes.VESPER_COMPOUND_XY,
+    constructorArgs: {
+      swapManager,
+      comptroller: Address.Compound.COMPTROLLER,
+      rewardToken: Address.Compound.COMP,
+      receiptToken: Address.Compound.cWBTC,
+      borrowCToken: Address.Compound.cUSDC,
+      vPool: Address.Vesper.vaUSDC,
+      vsp: Address.Vesper.VSP,
+      strategyName: 'VesperCompoundXYStrategyWBTC_USDC',
+    },
+    config: { ...config },
+    setup: { ...setup },
+  },
+
+  VesperCompoundXYStrategyWBTC_LINK: {
+    contract: 'VesperCompoundXYStrategy',
+    type: StrategyTypes.VESPER_COMPOUND_XY,
+    constructorArgs: {
+      swapManager,
+      comptroller: Address.Compound.COMPTROLLER,
+      rewardToken: Address.Compound.COMP,
+      receiptToken: Address.Compound.cWBTC,
+      borrowCToken: Address.Compound.cLINK,
+      vPool: Address.Vesper.vaLINK,
+      vsp: Address.Vesper.VSP,
+      strategyName: 'VesperCompoundXYStrategyWBTC_LINK',
     },
     config: { ...config },
     setup: { ...setup },
