@@ -4,6 +4,7 @@ on:
     paths:
       - ".github/workflows/mainnet-yearn.yml"
       - ".github/actions/setup-env/action.yml"
+      - "test/utils/setupHelper.js"
       - "contracts/pool/**/*.sol"
       - "contracts/pool/*.sol"
       - "contracts/strategies/Strategy.sol"

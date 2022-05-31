@@ -4,6 +4,8 @@ on:
     paths:
       - ".github/workflows/mainnet-rarifuse.yml"
       - ".github/actions/setup-env/action.yml"
+      - "test/utils/setupHelper.js"
+      - "test/behavior/rari-fuse-strategy.js"
       - "contracts/pool/**/*.sol"
       - "contracts/pool/*.sol"
       - "contracts/strategies/Strategy.sol"
@@ -30,34 +32,34 @@ jobs:
         uses: ./.github/actions/setup-env
 
   vaape-test:
-      needs: [setup-job]
-      runs-on: ubuntu-latest
-      env:
-        NODE_URL: ${{ secrets.NODE_URL }}
-      steps:
-        - name: Checkout repo
-          uses: actions/checkout@v3
+    needs: [setup-job]
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.NODE_URL }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
 
-        - name: Setup env
-          uses: ./.github/actions/setup-env
+      - name: Setup env
+        uses: ./.github/actions/setup-env
 
-        - name: Running Rarifuse strategy for VAAPE pool
-          run: npm test test/mainnet/rarifuse/vaape.js
+      - name: Running Rarifuse strategy for VAAPE pool
+        run: npm test test/mainnet/rarifuse/vaape.js
 
   vadai-test:
-      needs: [setup-job]
-      runs-on: ubuntu-latest
-      env:
-        NODE_URL: ${{ secrets.NODE_URL }}
-      steps:
-        - name: Checkout repo
-          uses: actions/checkout@v3
+    needs: [setup-job]
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.NODE_URL }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
 
-        - name: Setup env
-          uses: ./.github/actions/setup-env
+      - name: Setup env
+        uses: ./.github/actions/setup-env
 
-        - name: Running Rarifuse strategy for VADAI pool
-          run: npm test test/mainnet/rarifuse/vadai.js
+      - name: Running Rarifuse strategy for VADAI pool
+        run: npm test test/mainnet/rarifuse/vadai.js
 
   vaeth-test:
     needs: [setup-job]
