@@ -147,7 +147,8 @@ async function setupEarnDrip(obj, options) {
     if (strategy.type.toUpperCase().includes('EARN')) {
       let growPool
       if (strategy.type === 'earnVesperMaker') {
-        growPool = await setupVesperPool()
+        // For earn Vesper Maker growPool should be same as receiptToken
+        growPool = { address: strategy.constructorArgs.receiptToken }
       } else {
         growPool = options.growPool ? options.growPool : { address: ethers.constants.AddressZero }
       }
@@ -192,24 +193,6 @@ async function createMakerStrategy(strategy, poolAddress, options) {
 }
 
 /**
- * Check and Set earn pool
- *
- * @param {object} strategy  Strategy config object
- * @param {object} poolAddress pool address
- * @param {object} options extra params
- */
-async function checkAndSetEarnPool(strategy, poolAddress, options) {
-  // For Earn Vesper, make sure growToken and receiptToken aka vPool is same
-  if (strategy.type.toUpperCase().includes('EARN')) {
-    const pool = await ethers.getContractAt('VPool', poolAddress)
-    const earnDrip = await ethers.getContractAt('VesperEarnDrip', await pool.poolRewards())
-    const growToken = await earnDrip.growToken()
-    if (!options.vPool || growToken !== options.vPool.address) {
-      options.vPool = await ethers.getContractAt('VPool', growToken)
-    }
-  }
-}
-/**
  * Create and configure Vesper Maker Strategy. Also update test class object with required data.
  *
  * @param {object} strategy  Strategy config object
@@ -218,7 +201,6 @@ async function checkAndSetEarnPool(strategy, poolAddress, options) {
  * @returns {object} Strategy instance
  */
 async function createVesperMakerStrategy(strategy, poolAddress, options) {
-  await checkAndSetEarnPool(strategy, poolAddress, options)
   const collateralManager = options.collateralManager
     ? options.collateralManager
     : await deployContract(CollateralManager)

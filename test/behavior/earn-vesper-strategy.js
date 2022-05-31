@@ -37,7 +37,7 @@ async function shouldBehaveLikeEarnVesperStrategy(strategyIndex) {
   shouldBehaveLikeUnderlyingVesperPoolStrategy(strategyIndex)
   describe(`Earn Vesper specific tests for strategy[${strategyIndex}]`, function () {
     beforeEach(async function () {
-      ;[user1, user2] = await getUsers()
+      ;[, user1, user2] = await getUsers()
       ;[governor] = await ethers.getSigners()
       pool = this.pool
       accountant = this.accountant
