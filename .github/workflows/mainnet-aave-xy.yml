@@ -43,3 +43,18 @@ jobs:
 
       - name: Running Aave Vesper XY strategy for VAETH pool
         run: npm test test/mainnet/aave-xy/vesper/vaeth.js
+
+  vawbtc-vesper-test:
+    needs: [setup-job]
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.NODE_URL }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup env
+        uses: ./.github/actions/setup-env
+
+      - name: Running Aave Vesper XY strategy for VAWBTC pool
+        run: npm test test/mainnet/aave-xy/vesper/vawbtc.js

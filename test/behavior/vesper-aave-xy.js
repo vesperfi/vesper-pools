@@ -3,7 +3,7 @@
 const { expect } = require('chai')
 const { ethers } = require('hardhat')
 const { getUsers } = require('../utils/setupHelper')
-const { deposit, rebalanceStrategy } = require('../utils/poolOps')
+const { deposit } = require('../utils/poolOps')
 const { advanceBlock } = require('../utils/time')
 const { BigNumber } = require('ethers')
 // Read addresses of Compound in Address object
@@ -76,15 +76,18 @@ function shouldBehaveLikeVesperAaveXYStrategy(strategyIndex) {
     it('Borrowed Y amount should reflect in target Vesper Pool', async function () {
       await deposit(pool, collateralToken, 100, user1)
       await strategy.connect(governor.signer).rebalance()
-      await rebalanceStrategy(this.strategies[strategyIndex])
-
       const borrowBalance = await vdToken.balanceOf(strategy.address)
       const vPool = await ethers.getContractAt('IVesperPool', await strategy.vPool())
-      const vPoolBalance = await vPool.balanceOf(strategy.address)
+      const actualVTokens = await vPool.balanceOf(strategy.address)
       const vPoolPricePerShare = await vPool.pricePerShare()
-      const investedBorrowBalance = vPoolBalance.mul(vPoolPricePerShare).div(ethers.utils.parseEther('1'))
-
-      expect(borrowBalance).to.be.lte(investedBorrowBalance, 'Borrowed balance not reflecting in Vesper Pool')
+      const decimal18 = ethers.utils.parseEther('1')
+      // Actual logic inside pool contract
+      let expectedVTokens = borrowBalance.mul(decimal18).div(vPoolPricePerShare)
+      expectedVTokens =
+        borrowBalance > expectedVTokens.mul(vPoolPricePerShare).div(decimal18)
+          ? expectedVTokens.add(BigNumber.from('1'))
+          : expectedVTokens
+      expect(expectedVTokens).to.be.eq(actualVTokens, 'Borrowed balance not reflecting in Vesper Pool')
     })
 
     it('Should update borrow limit', async function () {

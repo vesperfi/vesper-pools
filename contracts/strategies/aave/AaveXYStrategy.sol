@@ -176,10 +176,10 @@ contract AaveXYStrategy is Strategy, AaveCore {
         // Collateral in base currency based on oracle price and cf;
         uint256 _actualCollateralForBorrow =
             (_hypotheticalCollateral * _collateralFactor * _collateralTokenPrice) /
-                (MAX_BPS * (IERC20Metadata(address(collateralToken)).decimals()));
+                (MAX_BPS * (10**IERC20Metadata(address(collateralToken)).decimals()));
         // Calculate max borrow possible in borrow token number
         uint256 _maxBorrowPossible =
-            (_actualCollateralForBorrow * IERC20Metadata(address(borrowToken)).decimals()) / _borrowTokenPrice;
+            (_actualCollateralForBorrow * (10**IERC20Metadata(address(borrowToken)).decimals())) / _borrowTokenPrice;
         if (_maxBorrowPossible == 0) {
             return (0, _borrowed);
         }
@@ -230,12 +230,8 @@ contract AaveXYStrategy is Strategy, AaveCore {
 
         uint256 _investedBorrowBalance = _getInvestedBorrowBalance();
 
-        if (_investedBorrowBalance > (_borrow + 1e18)) {
-            // Swaps excess profit from the underlying vPool
-            // For more collateral
-            // Keeps 1e18 of Y invested as buffer to deal with dust
-            // During last withdraw
-            _rebalanceBorrow(_investedBorrowBalance - (_borrow + 1e18));
+        if (_investedBorrowBalance > _borrow) {
+            _rebalanceBorrow(_investedBorrowBalance - _borrow);
         } else {
             _swapToBorrowToken(_borrow - _investedBorrowBalance);
         }
