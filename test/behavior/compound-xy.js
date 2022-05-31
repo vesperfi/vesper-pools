@@ -22,10 +22,9 @@ function shouldBehaveLikeCompoundXYStrategy(strategyIndex) {
   let DECIMAL18 = ethers.utils.parseUnits('1')
   const maxBps = BigNumber.from('10000')
   async function assertCurrentBorrow() {
-    const currentBorrowed = await borrowCToken.borrowBalanceStored(strategy.address)
+    const borrowed = await borrowCToken.borrowBalanceStored(strategy.address)
     borrowTokenPrice = await oracle.getUnderlyingPrice(borrowCToken.address)
     supplyTokenPrice = await oracle.getUnderlyingPrice(supplyCToken.address)
-    const borrowed = currentBorrowed.mul(borrowTokenPrice).div(DECIMAL18)
     const collateralSupplied = (await supplyCToken.balanceOf(strategy.address))
       .mul(await supplyCToken.exchangeRateStored())
       .div(DECIMAL18)
