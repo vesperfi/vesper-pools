@@ -2,11 +2,11 @@
 
 pragma solidity 0.8.9;
 
-import "./CompoundLeverageStrategy.sol";
-import "../../interfaces/compound/IComptrollerMultiReward.sol";
-import "../../interfaces/token/IToken.sol";
+import "../CompoundLeverageStrategy.sol";
+import "../../../interfaces/compound/IComptrollerMultiReward.sol";
+import "../../../interfaces/token/IToken.sol";
 
-abstract contract CompoundLeverageAvalancheCore is CompoundLeverageStrategy {
+abstract contract CompoundLeverageCore is CompoundLeverageStrategy {
     using SafeERC20 for IERC20;
 
     address internal constant WAVAX = 0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7;

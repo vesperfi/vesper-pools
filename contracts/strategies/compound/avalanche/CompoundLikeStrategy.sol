@@ -2,9 +2,9 @@
 
 pragma solidity 0.8.9;
 
-import "../compound/CompoundStrategy.sol";
-import "../../interfaces/compound/IComptrollerMultiReward.sol";
-import "../../interfaces/token/IToken.sol";
+import "../CompoundStrategy.sol";
+import "../../../interfaces/compound/IComptrollerMultiReward.sol";
+import "../../../interfaces/token/IToken.sol";
 
 /// @title This strategy will deposit collateral token in a Compound Fork on avalanche and Earn Interest
 contract CompoundLikeStrategy is CompoundStrategy {

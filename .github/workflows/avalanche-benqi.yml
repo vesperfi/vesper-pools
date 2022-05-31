@@ -7,9 +7,9 @@ on:
       - "contracts/pool/**/*.sol"
       - "contracts/pool/*.sol"
       - "contracts/strategies/Strategy.sol"
-      - "contracts/strategies/compound/CompoundMultiRewardAvalancheStrategy.sol"
-      - "contracts/strategies/compound/BenqiCompoundMultiRewardAvalancheStrategyAVAX.sol"
-      - "contracts/strategies/compound/CompoundStrategy.sol"      
+      - "contracts/strategies/compound/avalanche/CompoundLikeStrategy.sol"
+      - "contracts/strategies/compound/avalanche/BenqiStrategyAVAX.sol"
+      - "contracts/strategies/compound/CompoundStrategy.sol"
       - "test/avalanche/benqi/**"
 
 # Limit concurrency to one workflow per branch and one per pull_request

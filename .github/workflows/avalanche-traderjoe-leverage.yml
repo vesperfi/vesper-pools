@@ -7,10 +7,10 @@ on:
       - "contracts/pool/**/*.sol"
       - "contracts/pool/*.sol"
       - "contracts/strategies/Strategy.sol"
-      - "contracts/strategies/compound/TraderJoeLeverageStrategy.sol"
-      - "contracts/strategies/compound/CompoundLeverageAvalancheCore.sol"
+      - "contracts/strategies/compound/avalanche/TraderJoeLeverageStrategy.sol"
+      - "contracts/strategies/compound/avalanche/CompoundLeverageCore.sol"
       - "contracts/strategies/compound/CompoundLeverageStrategy.sol"
-      - "contracts/FlashLoanHelper.sol"      
+      - "contracts/FlashLoanHelper.sol"
       - "test/avalanche/traderjoe-leverage/**"
 
 # Limit concurrency to one workflow per branch and one per pull_request
