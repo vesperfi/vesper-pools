@@ -2,12 +2,12 @@
 
 pragma solidity 0.8.9;
 
-import "./TraderJoeXYStrategy.sol";
-import "../../interfaces/vesper/IVesperPool.sol";
-import "../../interfaces/vesper/IPoolRewards.sol";
+import "./BenqiXYStrategy.sol";
+import "../../../interfaces/vesper/IVesperPool.sol";
+import "../../../interfaces/vesper/IPoolRewards.sol";
 
 /// @title Deposit Collateral in Benqi and earn interest by depositing borrowed token in a Vesper Pool.
-contract VesperTraderJoeXYStrategy is TraderJoeXYStrategy {
+contract VesperBenqiXYStrategy is BenqiXYStrategy {
     using SafeERC20 for IERC20;
 
     // Destination Grow Pool for borrowed Token
@@ -27,7 +27,7 @@ contract VesperTraderJoeXYStrategy is TraderJoeXYStrategy {
         address _vsp,
         string memory _name
     )
-        TraderJoeXYStrategy(
+        BenqiXYStrategy(
             _pool,
             _swapManager,
             _comptroller,

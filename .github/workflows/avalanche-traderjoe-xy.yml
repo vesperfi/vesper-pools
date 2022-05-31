@@ -8,8 +8,8 @@ on:
       - "contracts/pool/*.sol"
       - "contracts/strategies/Strategy.sol"
       - "contracts/strategies/compound/CompoundXYCore.sol"
-      - "contracts/strategies/compound/TraderJoeXYStrategy.sol"
-      - "contracts/strategies/compound/VesperTraderJoeXYStrategy.sol"
+      - "contracts/strategies/compound/avalanche/TraderJoeXYStrategy.sol"
+      - "contracts/strategies/compound/avalanche/VesperTraderJoeXYStrategy.sol"
       - "test/avalanche/traderjoe-xy/**"
 
 # Limit concurrency to one workflow per branch and one per pull_request

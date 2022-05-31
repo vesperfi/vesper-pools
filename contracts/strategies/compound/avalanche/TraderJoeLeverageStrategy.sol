@@ -2,15 +2,15 @@
 
 pragma solidity 0.8.9;
 
-import "./CompoundLeverageAvalancheCore.sol";
-import "../../interfaces/compound/IComptrollerMultiReward.sol";
-import "../../interfaces/token/IToken.sol";
+import "./CompoundLeverageCore.sol";
+import "../../../interfaces/compound/IComptrollerMultiReward.sol";
+import "../../../interfaces/token/IToken.sol";
 
 // solhint-disable no-empty-blocks
 
 /// @title This strategy will deposit collateral token in TraderJoe and based on position
 /// it will borrow same collateral token. It will use borrowed asset as supply and borrow again.
-contract TraderJoeLeverageStrategy is CompoundLeverageAvalancheCore {
+contract TraderJoeLeverageStrategy is CompoundLeverageCore {
     constructor(
         address _pool,
         address _swapManager,
@@ -21,7 +21,7 @@ contract TraderJoeLeverageStrategy is CompoundLeverageAvalancheCore {
         address _receiptToken,
         string memory _name
     )
-        CompoundLeverageAvalancheCore(
+        CompoundLeverageCore(
             _pool,
             _swapManager,
             _comptroller,

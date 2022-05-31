@@ -3,7 +3,7 @@
 pragma solidity 0.8.9;
 
 import "./CompoundLikeStrategy.sol";
-import "../../interfaces/token/IToken.sol";
+import "../../../interfaces/token/IToken.sol";
 
 contract BenqiStrategyAVAX is CompoundLikeStrategy {
     //solhint-disable no-empty-blocks

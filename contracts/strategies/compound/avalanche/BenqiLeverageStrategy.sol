@@ -2,13 +2,13 @@
 
 pragma solidity 0.8.9;
 
-import "./CompoundLeverageAvalancheCore.sol";
+import "./CompoundLeverageCore.sol";
 
 // solhint-disable no-empty-blocks
 
 /// @title This strategy will deposit collateral token in Benqi and based on position
 /// it will borrow same collateral token. It will use borrowed asset as supply and borrow again.
-contract BenqiLeverageStrategy is CompoundLeverageAvalancheCore {
+contract BenqiLeverageStrategy is CompoundLeverageCore {
     constructor(
         address _pool,
         address _swapManager,
@@ -19,7 +19,7 @@ contract BenqiLeverageStrategy is CompoundLeverageAvalancheCore {
         address _receiptToken,
         string memory _name
     )
-        CompoundLeverageAvalancheCore(
+        CompoundLeverageCore(
             _pool,
             _swapManager,
             _comptroller,

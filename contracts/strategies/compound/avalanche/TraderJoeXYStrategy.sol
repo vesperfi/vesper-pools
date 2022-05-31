@@ -2,21 +2,20 @@
 
 pragma solidity 0.8.9;
 
-import "./CompoundXYStrategy.sol";
-import "../../interfaces/compound/IComptrollerMultiReward.sol";
-import "../../interfaces/vesper/IVesperPool.sol";
-import "../../interfaces/vesper/IPoolRewards.sol";
+import "../CompoundXYCore.sol";
+import "../../../interfaces/compound/ICompound.sol";
+import "../../../interfaces/compound/IComptrollerMultiReward.sol";
+import "../../../interfaces/oracle/IUniswapV3Oracle.sol";
+import "../../../interfaces/token/IToken.sol";
 
-/// @title This strategy will deposit collateral token in Benqi and based on position it will borrow
-/// another token. Supply X borrow Y and keep borrowed amount here. It does handle rewards and handle
-/// wrap/unwrap of WAVAX as AVAX is required to interact with Benqi.
-contract BenqiXYStrategy is CompoundXYStrategy {
+/// @title This strategy will deposit collateral token in TraderJoe and based on position it will borrow
+/// another token. Supply X borrow Y and keep borrowed amount here. It does handle rewards from TraderJoe
+contract TraderJoeXYStrategy is CompoundXYCore {
     using SafeERC20 for IERC20;
 
     address public rewardDistributor;
+    address public immutable rewardToken;
     address internal constant WAVAX = 0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7;
-    // solhint-disable-next-line const-name-snakecase
-    address internal constant qiAVAX = 0x5C0401e81Bc07Ca70fAD469b451682c0d747Ef1c;
 
     constructor(
         address _pool,
@@ -27,22 +26,28 @@ contract BenqiXYStrategy is CompoundXYStrategy {
         address _receiptToken,
         address _borrowCToken,
         string memory _name
-    ) CompoundXYStrategy(_pool, _swapManager, _comptroller, _rewardToken, _receiptToken, _borrowCToken, _name) {
+    ) CompoundXYCore(_pool, _swapManager, _comptroller, _receiptToken, _borrowCToken, _name) {
         require(_rewardDistributor != address(0), "reward-distributor-is-null");
+        require(_rewardToken != address(0), "rewardToken-address-is-zero");
         rewardDistributor = _rewardDistributor;
+        rewardToken = _rewardToken;
         WETH = WAVAX;
     }
 
-    /// @notice Calculate total value based reward accrued (Benqi rewards), supply and borrow position
+    function isReservedToken(address _token) public view virtual override returns (bool) {
+        return super.isReservedToken(_token) || _token == rewardToken;
+    }
+
+    /// @notice Calculate total value based reward accrued, supply and borrow position
     function totalValue() public view virtual override returns (uint256 _totalValue) {
         _totalValue = CompoundXYCore.totalValue();
         _totalValue += _getRewardsAsCollateral(0, rewardToken); // Protocol token rewards
         _totalValue += _getRewardsAsCollateral(1, WAVAX); // AVAX rewards, optional
     }
 
+    /// @dev Approve reward tokens to router
     function _approveRouter(address _router, uint256 _amount) internal virtual override {
-        // Parent contract is approving reward token, so calling parent function
-        super._approveRouter(_router, _amount);
+        IERC20(rewardToken).safeApprove(_router, _amount);
         // Parent contract is approving collateral so skip if WAVAX is collateral.
         if (address(collateralToken) != WAVAX) {
             IERC20(WAVAX).safeApprove(_router, _amount);
@@ -65,6 +70,11 @@ contract BenqiXYStrategy is CompoundXYStrategy {
         }
     }
 
+    /// @dev TraderJoe Compound fork has different markets API so allow this method to override.
+    function _getCollateralFactor(address _cToken) internal view override returns (uint256 _collateralFactor) {
+        (, _collateralFactor, ) = TraderJoeComptroller(address(comptroller)).markets(_cToken);
+    }
+
     function _getRewardsAsCollateral(uint8 rewardType_, address rewardToken_)
         internal
         view
@@ -82,13 +92,5 @@ contract BenqiXYStrategy is CompoundXYStrategy {
                 _rewardsAccrued
             );
         }
-    }
-
-    /// @dev Benqi qiAVAX doesn't has underlying method
-    function _getUnderlyingToken(address _cToken) internal view override returns (address) {
-        if (_cToken == qiAVAX) {
-            return WAVAX;
-        }
-        return CToken(_cToken).underlying();
     }
 }
