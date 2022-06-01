@@ -47,11 +47,11 @@ npm run coverage -- --testfiles "<<filename>>"
 ```
 ## Deploy
 
-Deployment will be done via custom `hardhat task deploy-pool` which behind the scene uses deploy scripts created using `hardhat-deploy`
+Deployment will be done via custom `hardhat task deploy-core-contracts` which behind the scene uses deploy scripts created using `hardhat-deploy`
 ### Usage
 * Help
    ```bash
-   npx hardhat help deploy-pool
+   npx hardhat help deploy-core-contracts
    ```
 
 * Deploy Vesper pool
