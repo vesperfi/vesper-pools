@@ -118,15 +118,15 @@ async function harvestYearn(strategy) {
   const collateralTokenAddress = await strategy.instance.collateralToken()
   const vault = await strategy.instance.receiptToken()
 
-  const signer = await ethers.provider.getSigner(strategy.signer)
-
+  const signer = (await ethers.getSigners())[10]
+  const user = { signer, address: signer.address }
   if (collateralTokenAddress === NATIVE_TOKEN) {
     const weth = await ethers.getContractAt('TokenLike', collateralTokenAddress, signer)
     const transferAmount = ethers.utils.parseEther('5')
     await weth.deposit({ value: transferAmount })
     await weth.transfer(vault, transferAmount)
   } else {
-    await swapper.swapEthForToken(5, collateralTokenAddress, { signer }, vault)
+    await swapper.swapEthForToken(5, collateralTokenAddress, user, vault)
   }
 }
 
@@ -138,10 +138,11 @@ async function harvestYearn(strategy) {
  * @param {object} strategy - strategy object
  */
 async function harvestVesperMaker(strategy) {
-  const vPool = await ethers.getContractAt('IVesperPool', await strategy.instance.receiptToken())
+  const vPool = await ethers.getContractAt('IVesperPoolTest', await strategy.instance.receiptToken())
   const collateralTokenAddress = await vPool.token()
 
-  const signer = await ethers.provider.getSigner(strategy.signer)
+  const signer = (await ethers.getSigners())[11]
+  const user = { signer, address: signer.address }
 
   if (collateralTokenAddress === NATIVE_TOKEN) {
     const weth = await ethers.getContractAt('TokenLike', collateralTokenAddress, signer)
@@ -149,7 +150,7 @@ async function harvestVesperMaker(strategy) {
     await weth.deposit({ value: transferAmount })
     await weth.transfer(vPool.address, transferAmount)
   } else {
-    await swapper.swapEthForToken(5, collateralTokenAddress, { signer }, vPool.address)
+    await swapper.swapEthForToken(5, collateralTokenAddress, user, vPool.address)
   }
 }
 
@@ -164,7 +165,8 @@ async function harvestVesperXY(strategy) {
   const vPool = await ethers.getContractAt('IVesperPoolTest', await strategy.instance.vPool())
   const collateralTokenAddress = await vPool.token()
 
-  const signer = await ethers.provider.getSigner(strategy.signer)
+  const signer = (await ethers.getSigners())[11]
+  const user = { signer, address: signer.address }
 
   if (collateralTokenAddress === NATIVE_TOKEN) {
     const weth = await ethers.getContractAt('TokenLike', collateralTokenAddress, signer)
@@ -172,7 +174,7 @@ async function harvestVesperXY(strategy) {
     await weth.deposit({ value: transferAmount })
     await weth.transfer(vPool.address, transferAmount)
   } else {
-    await swapper.swapEthForToken(5, collateralTokenAddress, { signer }, vPool.address)
+    await swapper.swapEthForToken(5, collateralTokenAddress, user, vPool.address)
   }
 }
 
