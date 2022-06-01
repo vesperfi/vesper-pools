@@ -291,6 +291,7 @@
           "InverseCompoundLeverageStrategyETH": "0x3A41aD519a248a5682da0FaC424F74350C0e3017",
           "RariFuseStrategy": "0x4769f18ba364658bf98Bf74606ef2f8cfB17D425",
           "RariFuseStrategyETH": "0x67893865686C22f0a243114B0893De65117d2f3b",
+          "VesperAaveXYStrategyETH_FEI": "0xA14D4c41b989DC4Ae20150AA2Ec7A6C6B5622406",
           "VesperCompoundXYStrategyETH_LINK": "0x7977581a346d330068FD5122F56fb1b4DC4E0Ff9",
           "VesperMakerStrategyETH": "0xc5cdf8cbe886fc5c1ef5cd4fdd599c975ec6bb54"
         }
