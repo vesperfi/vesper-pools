@@ -1,7 +1,7 @@
 'use strict'
 
 const { expect } = require('chai')
-const { getStrategyToken, getUsers } = require('../utils/setupHelper')
+const { getStrategyToken } = require('../utils/setupHelper')
 const { deposit } = require('../utils/poolOps')
 const Address = require('../../helper/mainnet/address')
 const ZERO_ADDRESS = Address.ZERO
@@ -17,8 +17,7 @@ function shouldBehaveLikeAaveStrategy(strategyIndex) {
 
   describe('AaveStrategy specific tests', function () {
     beforeEach(async function () {
-      const users = await getUsers()
-      ;[, , user2] = users
+      ;[, , user2] = this.users
       strategy = this.strategies[strategyIndex].instance
       token = await getStrategyToken(this.strategies[strategyIndex])
       pool = this.pool

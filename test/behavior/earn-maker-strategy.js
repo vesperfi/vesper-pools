@@ -3,7 +3,7 @@
 const { deposit, timeTravel, rebalanceStrategy } = require('../utils/poolOps')
 const { expect } = require('chai')
 const { ethers } = require('hardhat')
-const { executeIfExist, getUsers, getStrategyToken } = require('../utils/setupHelper')
+const { executeIfExist, getStrategyToken } = require('../utils/setupHelper')
 const { shouldValidateMakerCommonBehavior } = require('./maker-common')
 async function shouldBehaveLikeEarnMakerStrategy(strategyIndex) {
   let pool, strategy
@@ -20,7 +20,7 @@ async function shouldBehaveLikeEarnMakerStrategy(strategyIndex) {
   shouldValidateMakerCommonBehavior(strategyIndex)
   describe(`Earn MakerStrategy specific tests for strategy[${strategyIndex}]`, function () {
     beforeEach(async function () {
-      ;[user1, , user2] = await getUsers()
+      ;[user1, , user2] = this.users
       pool = this.pool
       strategy = this.strategies[strategyIndex]
       collateralToken = this.collateralToken

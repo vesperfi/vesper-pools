@@ -4,7 +4,7 @@ const { deposit, timeTravel, rebalanceStrategy } = require('../utils/poolOps')
 const { expect } = require('chai')
 const { swapEthForToken } = require('../utils/tokenSwapper')
 const { ethers } = require('hardhat')
-const { executeIfExist, getUsers, getStrategyToken } = require('../utils/setupHelper')
+const { executeIfExist, getStrategyToken } = require('../utils/setupHelper')
 const Address = require('../../helper/mainnet/address')
 const { shouldValidateMakerCommonBehavior } = require('./maker-common')
 const { shouldBehaveLikeUnderlyingVesperPoolStrategy } = require('./strategy-underlying-vesper-pool')
@@ -25,7 +25,7 @@ async function shouldBehaveLikeEarnVesperMakerStrategy(strategyIndex) {
   shouldBehaveLikeUnderlyingVesperPoolStrategy(strategyIndex)
   describe(`MakerStrategy specific tests for strategy[${strategyIndex}]`, function () {
     beforeEach(async function () {
-      ;[gov, user1, user2] = await getUsers()
+      ;[gov, user1, user2] = this.users
       pool = this.pool
       strategy = this.strategies[strategyIndex]
       accountant = this.accountant
@@ -47,8 +47,8 @@ async function shouldBehaveLikeEarnVesperMakerStrategy(strategyIndex) {
         await updateRate()
         await strategy.instance.rebalance()
         // Generating profit
-        await swapEthForToken(1, Address.DAI, { signer: this.users[0].signer }, vDAI)
-        await accountant.connect(gov.signer).updateDebtRatio(strategy.instance.address, 0)
+        await swapEthForToken(1, Address.DAI, gov, vDAI)
+        await accountant.connect(gov).updateDebtRatio(strategy.instance.address, 0)
         await strategy.instance.rebalance()
         const daiDebtAfter = await cm.getVaultDebt(strategy.instance.address)
         expect(daiDebtAfter).to.be.eq(0, 'Should increase vault debt on rebalance')

@@ -1,11 +1,12 @@
 'use strict'
 
-const { getUsers, setupVPool } = require('../utils/setupHelper')
+const { setupVPool } = require('../utils/setupHelper')
 const { shouldBehaveLikePool } = require('../behavior/vesper-pool')
 const { shouldBehaveLikeStrategy } = require('../behavior/strategy')
 const { shouldMigrateStrategies } = require('../behavior/strategy-migration')
 const { shouldBehaveLikeMultiStrategyPool } = require('../behavior/vesper-multi-strategy-pool')
 const { getChain, getChainData } = require('../utils/chains')
+const { ethers } = require('hardhat')
 const { poolConfig, strategyConfig } = getChainData()
 
 /**
@@ -46,7 +47,7 @@ function testRunner(poolKey, strategyKeys, strategyTestParams = [{ debtRatio: 90
 
   // Do pool and strategy setup
   beforeEach(async function () {
-    const users = await getUsers()
+    const users = await ethers.getSigners()
     this.users = users
     await setupVPool(
       this,

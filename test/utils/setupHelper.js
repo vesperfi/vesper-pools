@@ -19,12 +19,6 @@ const CToken = 'CToken'
 const TokenLike = 'TokenLikeTest'
 const CollateralManager = 'CollateralManager'
 
-/**
- * @typedef {object} User
- * @property {any} signer - ethers.js signer instance of user
- * @property {string} address - user account address
- */
-
 async function executeIfExist(fn, param) {
   if (typeof fn === 'function') {
     if (param) {
@@ -43,20 +37,6 @@ async function getIfExist(fn, param) {
     return fn()
   }
   return Promise.resolve()
-}
-
-/**
- *  Get all users from node
- *
- * @returns {User[]} Users array
- */
-async function getUsers() {
-  const users = []
-  const signers = await ethers.getSigners()
-  for (const signer of signers) {
-    users.push({ signer, address: signer.address })
-  }
-  return users
 }
 
 /**
@@ -454,7 +434,6 @@ async function getStrategyToken(strategy) {
 
 module.exports = {
   deployContract,
-  getUsers,
   setupVPool,
   getEvent,
   makeNewStrategy,

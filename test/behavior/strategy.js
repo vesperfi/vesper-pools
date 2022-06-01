@@ -4,7 +4,7 @@ const hre = require('hardhat')
 const ethers = hre.ethers
 const { expect } = require('chai')
 const { constants } = require('@openzeppelin/test-helpers')
-const { getUsers, getEvent } = require('../utils/setupHelper')
+const { getEvent } = require('../utils/setupHelper')
 const { shouldBehaveLikeAaveStrategy } = require('../behavior/aave-strategy')
 const { shouldBehaveLikeCompoundStrategy } = require('../behavior/compound-strategy')
 const { shouldBehaveLikeTraderJoeStrategy } = require('../behavior/traderjoe-strategy')
@@ -54,8 +54,7 @@ function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
     let snapshotId
     beforeEach(async function () {
       snapshotId = await ethers.provider.send('evm_snapshot', [])
-      const users = await getUsers()
-      ;[owner, user1, user2, user3, user4, user5] = users
+      ;[owner, user1, user2, user3, user4, user5] = this.users
       strategy = this.strategies[strategyIndex].instance
       pool = this.pool
       accountant = this.accountant
@@ -103,9 +102,7 @@ function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
       })
 
       it('Should revert if non-gov user add a keeper', async function () {
-        await expect(strategy.connect(user2.signer).addKeeper(user3.address)).to.be.revertedWith(
-          'caller-is-not-the-governor',
-        )
+        await expect(strategy.connect(user2).addKeeper(user3.address)).to.be.revertedWith('caller-is-not-the-governor')
       })
 
       it('Should remove a new keeper', async function () {
@@ -120,7 +117,7 @@ function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
       })
 
       it('Should revert if non-gov user remove a keeper', async function () {
-        await expect(strategy.connect(user2.signer).removeKeeper(user3.address)).to.be.revertedWith(
+        await expect(strategy.connect(user2).removeKeeper(user3.address)).to.be.revertedWith(
           'caller-is-not-the-governor',
         )
       })
@@ -165,7 +162,7 @@ function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
 
     describe('Rebalance', function () {
       it('Should revert if rebalance called from non keeper', async function () {
-        await expect(strategy.connect(user4.signer).rebalance()).to.be.revertedWith('caller-is-not-a-keeper')
+        await expect(strategy.connect(user4).rebalance()).to.be.revertedWith('caller-is-not-a-keeper')
       })
 
       // FIXME: Some platform may have deposit fee or slippage loss . This test need to fix.
@@ -220,7 +217,7 @@ function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
 
     describe('Approve token', function () {
       it('Should revert if called from non keeper', async function () {
-        await expect(strategy.connect(user4.signer).approveToken()).to.be.revertedWith('caller-is-not-a-keeper')
+        await expect(strategy.connect(user4).approveToken()).to.be.revertedWith('caller-is-not-a-keeper')
       })
 
       it('Should call approve tokens', async function () {

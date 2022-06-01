@@ -3,7 +3,7 @@
 const { deposit, timeTravel, rebalanceStrategy } = require('../utils/poolOps')
 const { expect } = require('chai')
 const { ethers } = require('hardhat')
-const { executeIfExist, getUsers, getEvent, getStrategyToken } = require('../utils/setupHelper')
+const { executeIfExist, getEvent, getStrategyToken } = require('../utils/setupHelper')
 const { shouldValidateMakerCommonBehavior } = require('./maker-common')
 
 function shouldBehaveLikeMakerStrategy(strategyIndex) {
@@ -21,7 +21,7 @@ function shouldBehaveLikeMakerStrategy(strategyIndex) {
   shouldValidateMakerCommonBehavior(strategyIndex)
   describe(`MakerStrategy specific tests for strategy[${strategyIndex}]`, function () {
     beforeEach(async function () {
-      ;[, user1, user2] = await getUsers()
+      ;[, user1, user2] = this.users
       pool = this.pool
       accountant = this.accountant
       strategy = this.strategies[strategyIndex]

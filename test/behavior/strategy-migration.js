@@ -43,15 +43,15 @@ async function shouldMigrateStrategies(poolName) {
         getBalance(oldStrategy.instance, receiptToken),
       ])
 
-    await pool.connect(gov.signer).migrateStrategy(oldStrategy.instance.address, newStrategy.instance.address)
+    await pool.connect(gov).migrateStrategy(oldStrategy.instance.address, newStrategy.instance.address)
     // Leverage strategy perform deleverage during migration. To achieve same state new strategy needs to be rebalanced.
     if (newStrategy.type.includes('Leverage')) {
       // Rebalance will mint new shares equal to fee, to keep supply same as before set fee to 0
       const universalFee = await pool.universalFee()
-      await pool.connect(gov.signer).updateUniversalFee(0)
+      await pool.connect(gov).updateUniversalFee(0)
       await newStrategy.instance.rebalance()
       // Reset universal fee
-      await pool.connect(gov.signer).updateUniversalFee(universalFee)
+      await pool.connect(gov).updateUniversalFee(universalFee)
     }
     const [
       totalSupplyAfter,
@@ -102,7 +102,7 @@ async function shouldMigrateStrategies(poolName) {
     const amountBefore = await pool.balanceOf(user2.address)
     expect(amountBefore).to.be.gt(0, 'failed to deposit in pool')
     await rebalanceStrategy(newStrategy)
-    await pool.connect(user2.signer).withdraw(amountBefore)
+    await pool.connect(user2).withdraw(amountBefore)
     const amountAfter = await pool.balanceOf(user2.address)
     expect(amountAfter).to.be.lt(amountBefore, "User's pool amount should decrease after withdraw")
   }

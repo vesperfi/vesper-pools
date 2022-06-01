@@ -7,7 +7,7 @@ const time = require('./utils/time')
 const poolOps = require('./utils/poolOps')
 const swapper = require('./utils/tokenSwapper')
 const { adjustBalance } = require('./utils/balance')
-const { deployContract, getUsers, setupVPool } = require('./utils/setupHelper')
+const { deployContract, setupVPool } = require('./utils/setupHelper')
 const { address: Address, poolConfig, strategyConfig } = require('./utils/chains').getChainData()
 const AaveStrategyDAI = strategyConfig.AaveStrategyDAI
 
@@ -24,7 +24,7 @@ describe('Rewards for VDAI Pool', function () {
   AaveStrategyDAI.config.debtRatio = 9000
   const strategies = [AaveStrategyDAI]
   beforeEach(async function () {
-    const users = await getUsers()
+    const users = await ethers.getSigners()
     ;[governor, user1, user2, user3] = users
     await setupVPool(this, {
       poolConfig: poolConfig.VDAI,
@@ -51,14 +51,14 @@ describe('Rewards for VDAI Pool', function () {
 
   describe('Governor function tests', function () {
     it('Should revert if non governor try to distribute rewards', async function () {
-      const tx = poolRewards.connect(user2.signer)[`${notifySignature}`](vsp.address, TOTAL_REWARD, REWARD_DURATION)
+      const tx = poolRewards.connect(user2)[`${notifySignature}`](vsp.address, TOTAL_REWARD, REWARD_DURATION)
       await expect(tx).to.be.revertedWith('not-authorized')
     })
 
     it('Only Governor should be able to distribute rewards', async function () {
-      await vsp.connect(governor.signer).mint(poolRewards.address, TOTAL_REWARD)
+      await vsp.connect(governor).mint(poolRewards.address, TOTAL_REWARD)
       expect(await poolRewards.rewardRates(vsp.address)).to.be.eq(0, 'Reward rate should be zero')
-      await poolRewards.connect(governor.signer)[`${notifySignature}`](vsp.address, TOTAL_REWARD, REWARD_DURATION)
+      await poolRewards.connect(governor)[`${notifySignature}`](vsp.address, TOTAL_REWARD, REWARD_DURATION)
       const rewardRate = await poolRewards.rewardRates(vsp.address)
       expect(rewardRate).to.be.gt(0, 'Reward rate should be > 0')
       const rewardForDuration = (await poolRewards.rewardForDuration())._rewardForDuration[0]
@@ -66,12 +66,12 @@ describe('Rewards for VDAI Pool', function () {
     })
 
     it('Ensure contract has balance before reward distribution starts', async function () {
-      const tx = poolRewards.connect(governor.signer)[`${notifySignature}`](vsp.address, TOTAL_REWARD, REWARD_DURATION)
+      const tx = poolRewards.connect(governor)[`${notifySignature}`](vsp.address, TOTAL_REWARD, REWARD_DURATION)
       await expect(tx).to.be.revertedWith('rewards-too-high')
     })
 
     it('Should allow to add new reward token', async function () {
-      const tx = await poolRewards.connect(governor.signer).addRewardToken(Address.UNI)
+      const tx = await poolRewards.connect(governor).addRewardToken(Address.UNI)
       expect(tx).to.emit(poolRewards, 'RewardTokenAdded').withArgs(Address.UNI, [vsp.address])
     })
   })
@@ -79,18 +79,18 @@ describe('Rewards for VDAI Pool', function () {
   describe('Reward claim', function () {
     beforeEach(async function () {
       // Add another reward token. We are not going to notify this though for single reward testing
-      await poolRewards.connect(governor.signer).addRewardToken(Address.UNI)
-      await vsp.connect(governor.signer).mint(poolRewards.address, TOTAL_REWARD)
-      await poolRewards.connect(governor.signer)[`${notifySignature}`](vsp.address, TOTAL_REWARD, REWARD_DURATION)
+      await poolRewards.connect(governor).addRewardToken(Address.UNI)
+      await vsp.connect(governor).mint(poolRewards.address, TOTAL_REWARD)
+      await poolRewards.connect(governor)[`${notifySignature}`](vsp.address, TOTAL_REWARD, REWARD_DURATION)
     })
 
     it('Should claim Rewards', async function () {
       await poolOps.deposit(vdai, dai, 10, user1)
       await time.increase(34 * 24 * 60 * 60)
-      await poolRewards.connect(user1.signer).claimReward(user1.address)
+      await poolRewards.connect(user1).claimReward(user1.address)
       const claimable = (await poolRewards.claimable(user1.address))._claimableAmounts[0]
       expect(claimable).to.be.eq(0, 'Claimable balance after claim should be 0')
-      await vdai.connect(user1.signer).withdraw(await vdai.balanceOf(user1.address))
+      await vdai.connect(user1).withdraw(await vdai.balanceOf(user1.address))
       const vspRewards = await vsp.balanceOf(user1.address)
       // ensure dust is within .01%, due to rounding
       expect(TOTAL_REWARD.sub(vspRewards)).to.be.lte(vspRewards.div(10000), 'Should get correct reward')
@@ -107,8 +107,8 @@ describe('Rewards for VDAI Pool', function () {
       const user2Claimable = (await poolRewards.claimable(user2.address))._claimableAmounts[0]
       expect(user2Claimable).to.be.gt(0, 'Claimable should be greater than zero')
 
-      await vsp.connect(governor.signer).mint(poolRewards.address, TOTAL_REWARD)
-      await poolRewards.connect(governor.signer)[`${notifySignature}`](vsp.address, TOTAL_REWARD, REWARD_DURATION)
+      await vsp.connect(governor).mint(poolRewards.address, TOTAL_REWARD)
+      await poolRewards.connect(governor)[`${notifySignature}`](vsp.address, TOTAL_REWARD, REWARD_DURATION)
       await time.increase(34 * 24 * 60 * 60)
 
       const user1ClaimableAfter = (await poolRewards.claimable(user1.address))._claimableAmounts[0]
@@ -126,7 +126,7 @@ describe('Rewards for VDAI Pool', function () {
     it('Should claim rewards via withdraw', async function () {
       await poolOps.deposit(vdai, dai, 10, user2)
       await time.increase(34 * 24 * 60 * 60)
-      await vdai.connect(user2.signer).withdrawAndClaim(await vdai.balanceOf(user2.address))
+      await vdai.connect(user2).withdrawAndClaim(await vdai.balanceOf(user2.address))
       const claimable = (await poolRewards.claimable(user2.address))._claimableAmounts[0]
       expect(claimable).to.be.eq(0, 'Claimable balance after claim should be 0')
       const vspRewards = await vsp.balanceOf(user2.address)
@@ -141,8 +141,8 @@ describe('Rewards for VDAI Pool', function () {
       // Get DAI and call depositAndClaim
       const amount = ethers.utils.parseEther('1000')
       await adjustBalance(Address.DAI, user2.address, ethers.utils.parseEther('1000'))
-      await dai.connect(user2.signer).approve(vdai.address, amount)
-      await vdai.connect(user2.signer).depositAndClaim(amount)
+      await dai.connect(user2).approve(vdai.address, amount)
+      await vdai.connect(user2).depositAndClaim(amount)
       const claimable = (await poolRewards.claimable(user2.address))._claimableAmounts[0]
       expect(claimable).to.be.eq(0, 'Claimable balance after claim should be 0')
       const vspRewards = await vsp.balanceOf(user2.address)
@@ -154,10 +154,10 @@ describe('Rewards for VDAI Pool', function () {
     it('Should claim rewards before withdraw', async function () {
       await poolOps.deposit(vdai, dai, 10, user3)
       await time.increase(34 * 24 * 60 * 60)
-      await poolRewards.connect(user3.signer).claimReward(user3.address)
+      await poolRewards.connect(user3).claimReward(user3.address)
       const claimable = (await poolRewards.claimable(user3.address))._claimableAmounts[0]
       expect(claimable).to.be.eq(0, 'Claimable balance after claim should be 0')
-      await vdai.connect(user3.signer).withdraw(await vdai.balanceOf(user3.address))
+      await vdai.connect(user3).withdraw(await vdai.balanceOf(user3.address))
       const vBalance = await vdai.balanceOf(user3.address)
       expect(vBalance).to.be.eq(0, 'vToken balance after withdraw should be 0')
       const vspRewards = await vsp.balanceOf(user3.address)
@@ -168,8 +168,8 @@ describe('Rewards for VDAI Pool', function () {
     it('Should claim rewards after withdraw', async function () {
       await poolOps.deposit(vdai, dai, 10, user2)
       await time.increase(34 * 24 * 60 * 60)
-      await vdai.connect(user2.signer).withdraw(await vdai.balanceOf(user2.address))
-      await poolRewards.connect(user2.signer).claimReward(user2.address)
+      await vdai.connect(user2).withdraw(await vdai.balanceOf(user2.address))
+      await poolRewards.connect(user2).claimReward(user2.address)
       const claimable = (await poolRewards.claimable(user2.address))._claimableAmounts[0]
       expect(claimable).to.be.eq(0, 'Claimable balance after claim should be 0')
       const vspRewards = await vsp.balanceOf(user2.address)
@@ -183,8 +183,8 @@ describe('Rewards for VDAI Pool', function () {
       await poolOps.deposit(vdai, dai, 3, user3)
       await time.increase(34 * 24 * 60 * 60)
 
-      await poolRewards.connect(user2.signer).claimReward(user2.address)
-      await poolRewards.connect(user3.signer).claimReward(user3.address)
+      await poolRewards.connect(user2).claimReward(user2.address)
+      await poolRewards.connect(user3).claimReward(user3.address)
       const vspBalance1 = await vsp.balanceOf(user2.address)
       const vspBalance2 = await vsp.balanceOf(user3.address)
       const totalGiven = vspBalance1.add(vspBalance2)
@@ -195,7 +195,7 @@ describe('Rewards for VDAI Pool', function () {
     it('Should claim rewards anytime', async function () {
       await poolOps.deposit(vdai, dai, 10, user1)
       await time.increase(10 * 24 * 60 * 60)
-      await poolRewards.connect(user1.signer).claimReward(user1.address)
+      await poolRewards.connect(user1).claimReward(user1.address)
       const vspRewards = await vsp.balanceOf(user1.address)
       expect(vspRewards).to.be.gt(0, 'Rewards should be > 0')
     })
@@ -211,7 +211,7 @@ describe('Rewards for VDAI Pool', function () {
       expect(claimable).to.be.equal(0, 'Claimable should be zero')
 
       const vBalance = await vdai.balanceOf(user1.address)
-      await vdai.connect(user1.signer).transfer(user2.address, vBalance.div(2))
+      await vdai.connect(user1).transfer(user2.address, vBalance.div(2))
       // Time travel
       await time.increase(2 * 24 * 60 * 60)
 
@@ -221,9 +221,9 @@ describe('Rewards for VDAI Pool', function () {
       expect(claimable).to.be.gt(0, 'Claimable should be greater than 0')
 
       // Trigger reward calculation by another transfer
-      await vdai.connect(user2.signer).transfer(user3.address, await vdai.balanceOf(user2.address))
+      await vdai.connect(user2).transfer(user3.address, await vdai.balanceOf(user2.address))
       // Claim reward for user2
-      await poolRewards.connect(user2.signer).claimReward(user2.address)
+      await poolRewards.connect(user2).claimReward(user2.address)
 
       claimable = (await poolRewards.claimable(user2.address))._claimableAmounts[0]
       expect(claimable).to.be.equal(0, 'Claimable should be zero')
@@ -232,7 +232,7 @@ describe('Rewards for VDAI Pool', function () {
       expect(vspRewards2).to.be.gt(0, 'Reward balance should be greater than 0')
 
       // Claim reward for user1
-      await poolRewards.connect(user1.signer).claimReward(user1.address)
+      await poolRewards.connect(user1).claimReward(user1.address)
 
       claimable = (await poolRewards.claimable(user1.address))._claimableAmounts[0]
       expect(claimable).to.be.equal(0, 'Claimable should be zero')
@@ -248,8 +248,8 @@ describe('Rewards for VDAI Pool', function () {
     const duration = 10 * 24 * 60 * 60
     beforeEach(async function () {
       await poolOps.deposit(vdai, dai, 3, user1)
-      await vsp.connect(governor.signer).mint(poolRewards.address, totalRewards)
-      await poolRewards.connect(governor.signer)[`${notifySignature}`](vsp.address, totalRewards, duration)
+      await vsp.connect(governor).mint(poolRewards.address, totalRewards)
+      await poolRewards.connect(governor)[`${notifySignature}`](vsp.address, totalRewards, duration)
     })
 
     it('Should claim proper rewards before and after notifyRewardAmount', async function () {
@@ -259,11 +259,11 @@ describe('Rewards for VDAI Pool', function () {
       // ensure dust is within .01%, due to rounding
       expect(expectedClaimable.sub(claimable)).to.be.lte(claimable.div(10000), 'Claimable is wrong')
 
-      await vsp.connect(governor.signer).mint(poolRewards.address, ethers.utils.parseUnits('100'))
+      await vsp.connect(governor).mint(poolRewards.address, ethers.utils.parseUnits('100'))
       const newDuration = 2 * 24 * 60 * 60
       const newRewards = ethers.utils.parseUnits('100')
       totalRewards = totalRewards.add(newRewards)
-      await poolRewards.connect(governor.signer)[`${notifySignature}`](vsp.address, newRewards, newDuration)
+      await poolRewards.connect(governor)[`${notifySignature}`](vsp.address, newRewards, newDuration)
       await time.increase(newDuration)
 
       const finalClaimable = (await poolRewards.claimable(user1.address))._claimableAmounts[0]
@@ -275,14 +275,14 @@ describe('Rewards for VDAI Pool', function () {
   describe('Multi reward token', function () {
     let uni
     beforeEach(async function () {
-      await poolRewards.connect(governor.signer).addRewardToken(Address.UNI)
+      await poolRewards.connect(governor).addRewardToken(Address.UNI)
       uni = await ethers.getContractAt('ERC20', Address.UNI)
-      await vsp.connect(governor.signer).mint(poolRewards.address, TOTAL_REWARD)
+      await vsp.connect(governor).mint(poolRewards.address, TOTAL_REWARD)
       // Swap and transfer to poolRewards
       await swapper.swapEthForToken(10, Address.UNI, user1, poolRewards.address)
       const uniBalance = await uni.balanceOf(poolRewards.address)
       await poolRewards
-        .connect(governor.signer)
+        .connect(governor)
         [`${notifyMultiSignature}`](
           [vsp.address, Address.UNI],
           [TOTAL_REWARD, uniBalance],
@@ -301,7 +301,7 @@ describe('Rewards for VDAI Pool', function () {
       expect(claimable[0]).to.be.gt(0, 'VSP Claimable balance before claim should be > 0')
       expect(claimable[1]).to.be.gt(0, 'UNI Claimable balance before claim should be > 0')
 
-      await poolRewards.connect(user2.signer).claimReward(user2.address)
+      await poolRewards.connect(user2).claimReward(user2.address)
 
       const claimableAfter = (await poolRewards.claimable(user2.address))._claimableAmounts
       expect(claimableAfter[0]).to.be.eq(0, 'VSP Claimable balance after claim should be 0')
@@ -322,18 +322,18 @@ describe('Rewards for VDAI Pool', function () {
       // Swap and transfer UNI to poolRewards
       await swapper.swapEthForToken(10, Address.UNI, user1, poolRewards.address)
       let uniBalance = await uni.balanceOf(poolRewards.address)
-      await poolRewards.connect(governor.signer)[`${notifySignature}`](Address.UNI, uniBalance, REWARD_DURATION)
+      await poolRewards.connect(governor)[`${notifySignature}`](Address.UNI, uniBalance, REWARD_DURATION)
       await time.increase(34 * 24 * 60 * 60)
       let claimableAfter = (await poolRewards.claimable(user3.address))._claimableAmounts
       expect(claimableAfter[0]).to.eq(claimable[0], 'VSP Claimable balance after 2nd epoch should be = to before')
       expect(claimableAfter[1]).to.gt(claimable[1], 'UNI Claimable balance after 2nd epoch should be > before')
 
-      await vsp.connect(governor.signer).mint(poolRewards.address, TOTAL_REWARD)
+      await vsp.connect(governor).mint(poolRewards.address, TOTAL_REWARD)
       // Swap and transfer UNI to poolRewards
       await swapper.swapEthForToken(10, Address.UNI, user1, poolRewards.address)
       uniBalance = await uni.balanceOf(poolRewards.address)
       await poolRewards
-        .connect(governor.signer)
+        .connect(governor)
         [`${notifyMultiSignature}`](
           [vsp.address, Address.UNI],
           [TOTAL_REWARD, uniBalance],
@@ -352,7 +352,7 @@ describe('Rewards for VDAI Pool', function () {
       // Swap and transfer to poolRewards
       await swapper.swapEthForToken(10, Address.USDC, user2, poolRewards.address)
       const usdcBalance = await usdc.balanceOf(poolRewards.address)
-      const tx = poolRewards.connect(governor.signer)[`${notifySignature}`](Address.USDC, usdcBalance, REWARD_DURATION)
+      const tx = poolRewards.connect(governor)[`${notifySignature}`](Address.USDC, usdcBalance, REWARD_DURATION)
       await expect(tx).to.revertedWith('invalid-reward-token')
     })
   })
@@ -361,8 +361,8 @@ describe('Rewards for VDAI Pool', function () {
 
     beforeEach(async function () {
       // Give some rewards to be able to test storage after upgrading
-      await vsp.connect(governor.signer).mint(poolRewards.address, TOTAL_REWARD)
-      await poolRewards.connect(governor.signer)[`${notifySignature}`](vsp.address, TOTAL_REWARD, REWARD_DURATION)
+      await vsp.connect(governor).mint(poolRewards.address, TOTAL_REWARD)
+      await poolRewards.connect(governor)[`${notifySignature}`](vsp.address, TOTAL_REWARD, REWARD_DURATION)
 
       // Deploy new implementation
       poolRewardsImpl = await deployContract('PoolRewards', [])
@@ -374,7 +374,7 @@ describe('Rewards for VDAI Pool', function () {
       const rewardRateBefore = await poolRewards.rewardRates(vsp.address)
 
       // Upgrade proxy to point to new implementation
-      await proxyAdmin.connect(governor.signer).upgrade(proxy.address, poolRewardsImpl.address)
+      await proxyAdmin.connect(governor).upgrade(proxy.address, poolRewardsImpl.address)
       poolRewards = await ethers.getContractAt('PoolRewards', proxy.address)
 
       expect(poolRewards.address === proxyAddress, 'Pool rewards proxy address should be same').to.be.true
@@ -390,12 +390,12 @@ describe('Rewards for VDAI Pool', function () {
         upgrader = await deployContract('PoolRewardsUpgrader', [Address.MultiCall])
 
         // Transfer proxy ownership to the upgrader
-        await proxyAdmin.connect(governor.signer).changeProxyAdmin(proxy.address, upgrader.address)
+        await proxyAdmin.connect(governor).changeProxyAdmin(proxy.address, upgrader.address)
       })
 
       it('Should upgrade in proxy via upgrader', async function () {
         // Trigger upgrade
-        await upgrader.connect(governor.signer).safeUpgrade(proxy.address, poolRewardsImpl.address)
+        await upgrader.connect(governor).safeUpgrade(proxy.address, poolRewardsImpl.address)
 
         poolRewards = await ethers.getContractAt('PoolRewards', proxy.address)
         expect(poolRewards.address === proxyAddress, 'Pool rewards proxy address should be same').to.be.true
@@ -403,7 +403,7 @@ describe('Rewards for VDAI Pool', function () {
 
       it('Should properly revert wrong upgrades via upgrader', async function () {
         // Trigger upgrade
-        await expect(upgrader.connect(governor.signer).safeUpgrade(proxy.address, Address.MultiCall)).to.be.reverted
+        await expect(upgrader.connect(governor).safeUpgrade(proxy.address, Address.MultiCall)).to.be.reverted
       })
     })
   })
