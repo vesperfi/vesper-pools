@@ -83,7 +83,7 @@ const StrategyConfig = {
     config: { ...config },
     setup: { ...setup },
   },
-  EarnVesperStrategyDAIWETH: {
+  EarnVesperStrategyDAI_WETH: {
     contract: 'EarnVesperStrategy',
     type: StrategyTypes.EARN_VESPER,
     constructorArgs: {
@@ -91,12 +91,12 @@ const StrategyConfig = {
       receiptToken: Address.Vesper.vDAI,
       dripToken: Address.WETH,
       vsp: Address.Vesper.VSP,
-      strategyName: 'EarnVesperStrategyDAIWETH',
+      strategyName: 'EarnVesperStrategyDAI_WETH',
     },
     config: { ...config },
     setup: { ...setup },
   },
-  EarnVesperStrategyDAIWBTC: {
+  EarnVesperStrategyDAI_WBTC: {
     contract: 'EarnVesperStrategy',
     type: StrategyTypes.EARN_VESPER,
     constructorArgs: {
@@ -104,7 +104,7 @@ const StrategyConfig = {
       receiptToken: Address.Vesper.vDAI,
       dripToken: Address.WBTC,
       vsp: Address.Vesper.VSP,
-      strategyName: 'EarnVesperStrategyDAIWBTC',
+      strategyName: 'EarnVesperStrategyDAI_WBTC',
     },
     config: { ...config },
     setup: { ...setup },

@@ -4,7 +4,7 @@ const testRunner = require('../../../utils/testRunner')
 const { address: Address } = require('../../../utils/chains').getChainData()
 
 describe('VEETH_DAI Pool', function () {
-  testRunner('VEETH_DAI', ['EarnVesperStrategyETHDAI'], [{ debtRatio: 9000 }], {
+  testRunner('VEETH_DAI', ['EarnVesperStrategyETH_DAI'], [{ debtRatio: 9000 }], {
     growPool: { address: Address.Vesper.vaDAI },
   })
 })

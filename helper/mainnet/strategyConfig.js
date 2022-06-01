@@ -190,19 +190,7 @@ const StrategyConfig = {
     config: { ...config },
     setup: { ...setup },
   },
-  EarnVesperStrategyDAIVSPDAI: {
-    contract: 'EarnVesperStrategyVSPDrip',
-    type: StrategyTypes.EARN_VESPER,
-    constructorArgs: {
-      swapManager,
-      receiptToken: Address.Vesper.vDAI,
-      dripToken: Address.Vesper.VSP,
-      vsp: Address.Vesper.VSP,
-      strategyName: 'EarnVesperStrategyDAIVSP',
-    },
-    config: { ...config },
-    setup: { ...setup },
-  },
+
   EarnAaveStrategyETH_DAI: {
     contract: 'EarnAaveStrategy',
     type: StrategyTypes.EARN_AAVE,
@@ -1236,7 +1224,7 @@ const StrategyConfig = {
     setup: { ...setup, maker: { gemJoin: Address.Maker.MCD_JOIN_WBTC_A, highWater: 250, lowWater: 225 } },
   },
 
-  EarnVesperStrategyDAIDPI: {
+  EarnVesperStrategyDAI_DPI: {
     contract: 'EarnVesperStrategy',
     type: StrategyTypes.EARN_VESPER,
     constructorArgs: {
@@ -1244,13 +1232,13 @@ const StrategyConfig = {
       receiptToken: Address.Vesper.vaDAI,
       dripToken: Address.DPI,
       vsp: Address.Vesper.VSP,
-      strategyName: 'EarnVesperStrategyDAIDPI',
+      strategyName: 'EarnVesperStrategyDAI_DPI',
     },
     config: { ...config },
     setup: { ...setup },
   },
 
-  EarnVesperStrategyDAILINK: {
+  EarnVesperStrategyDAI_LINK: {
     contract: 'EarnVesperStrategy',
     type: StrategyTypes.EARN_VESPER,
     constructorArgs: {
@@ -1258,13 +1246,13 @@ const StrategyConfig = {
       receiptToken: Address.Vesper.vaDAI,
       dripToken: Address.LINK,
       vsp: Address.Vesper.VSP,
-      strategyName: 'EarnVesperStrategyDAILINK',
+      strategyName: 'EarnVesperStrategyDAI_LINK',
     },
     config: { ...config },
     setup: { ...setup },
   },
 
-  EarnVesperStrategyLINKDAI: {
+  EarnVesperStrategyLINK_DAI: {
     contract: 'EarnVesperStrategy',
     type: StrategyTypes.EARN_VESPER,
     constructorArgs: {
@@ -1272,13 +1260,13 @@ const StrategyConfig = {
       receiptToken: Address.Vesper.vaLINK,
       dripToken: Address.DAI,
       vsp: Address.Vesper.VSP,
-      strategyName: 'EarnVesperStrategyLINKDAI',
+      strategyName: 'EarnVesperStrategyLINK_DAI',
     },
     config: { ...config },
     setup: { ...setup },
   },
 
-  EarnVesperStrategyDAISHIB: {
+  EarnVesperStrategyDAI_SHIB: {
     contract: 'EarnVesperStrategy',
     type: StrategyTypes.EARN_VESPER,
     constructorArgs: {
@@ -1286,13 +1274,13 @@ const StrategyConfig = {
       receiptToken: Address.Vesper.vaDAI,
       dripToken: Address.SHIB,
       vsp: Address.Vesper.VSP,
-      strategyName: 'EarnVesperStrategyDAISHIB',
+      strategyName: 'EarnVesperStrategyDAI_SHIB',
     },
     config: { ...config },
     setup: { ...setup },
   },
 
-  EarnVesperStrategyDAIPUNK: {
+  EarnVesperStrategyDAI_PUNK: {
     contract: 'EarnVesperStrategy',
     type: StrategyTypes.EARN_VESPER,
     constructorArgs: {
@@ -1300,13 +1288,13 @@ const StrategyConfig = {
       receiptToken: Address.Vesper.vaDAI,
       dripToken: Address.PUNK,
       vsp: Address.Vesper.VSP,
-      strategyName: 'EarnVesperStrategyDAIPUNK',
+      strategyName: 'EarnVesperStrategyDAI_PUNK',
     },
     config: { ...config },
     setup: { ...setup },
   },
 
-  EarnVesperStrategyUSDCLMR: {
+  EarnVesperStrategyUSDC_LMR: {
     contract: 'EarnVesperStrategy',
     type: StrategyTypes.EARN_VESPER,
     constructorArgs: {
@@ -1314,13 +1302,13 @@ const StrategyConfig = {
       receiptToken: Address.Vesper.vaUSDC,
       dripToken: Address.LMR,
       vsp: Address.Vesper.VSP,
-      strategyName: 'EarnVesperStrategyUSDCLMR',
+      strategyName: 'EarnVesperStrategyUSDC_LMR',
     },
     config: { ...config },
     setup: { ...setup },
   },
 
-  EarnVesperStrategyDAIVSP: {
+  EarnVesperStrategyDAI_VSP: {
     contract: 'EarnVesperStrategyVSPDrip',
     type: StrategyTypes.EARN_VESPER,
     constructorArgs: {
@@ -1328,13 +1316,13 @@ const StrategyConfig = {
       receiptToken: Address.Vesper.vaDAI,
       dripToken: Address.Vesper.VSP,
       vsp: Address.Vesper.VSP,
-      strategyName: 'EarnVesperStrategyDAIVSP',
+      strategyName: 'EarnVesperStrategyDAI_VSP',
     },
     config: { ...config },
     setup: { ...setup },
   },
 
-  EarnVesperStrategyDAIWBTC: {
+  EarnVesperStrategyDAI_WBTC: {
     contract: 'EarnVesperStrategy',
     type: StrategyTypes.EARN_VESPER,
     constructorArgs: {
@@ -1342,13 +1330,13 @@ const StrategyConfig = {
       receiptToken: Address.Vesper.vaDAI,
       dripToken: Address.WBTC,
       vsp: Address.Vesper.VSP,
-      strategyName: 'EarnVesperStrategyDAIWBTC',
+      strategyName: 'EarnVesperStrategyDAI_WBTC',
     },
     config: { ...config },
     setup: { ...setup },
   },
 
-  EarnVesperStrategyDAIWETH: {
+  EarnVesperStrategyDAI_WETH: {
     contract: 'EarnVesperStrategy',
     type: StrategyTypes.EARN_VESPER,
     constructorArgs: {
@@ -1356,13 +1344,13 @@ const StrategyConfig = {
       receiptToken: Address.Vesper.vaDAI,
       dripToken: Address.WETH,
       vsp: Address.Vesper.VSP,
-      strategyName: 'EarnVesperStrategyDAIWETH',
+      strategyName: 'EarnVesperStrategyDAI_WETH',
     },
     config: { ...config },
     setup: { ...setup },
   },
 
-  EarnVesperStrategyETHDAI: {
+  EarnVesperStrategyETH_DAI: {
     contract: 'EarnVesperStrategy',
     type: StrategyTypes.EARN_VESPER,
     constructorArgs: {
@@ -1370,13 +1358,13 @@ const StrategyConfig = {
       receiptToken: Address.Vesper.vaETH,
       dripToken: Address.DAI,
       vsp: Address.Vesper.VSP,
-      strategyName: 'EarnVesperStrategyETHDAI',
+      strategyName: 'EarnVesperStrategyETH_DAI',
     },
     config: { ...config },
     setup: { ...setup },
   },
 
-  EarnVesperStrategyWBTCDAI: {
+  EarnVesperStrategyWBTC_DAI: {
     contract: 'EarnVesperStrategy',
     type: StrategyTypes.EARN_VESPER,
     constructorArgs: {
@@ -1384,7 +1372,7 @@ const StrategyConfig = {
       receiptToken: Address.Vesper.vaWBTC,
       dripToken: Address.DAI,
       vsp: Address.Vesper.VSP,
-      strategyName: 'EarnVesperStrategyWBTCDAI',
+      strategyName: 'EarnVesperStrategyWBTC_DAI',
     },
     config: { ...config },
     setup: { ...setup },
