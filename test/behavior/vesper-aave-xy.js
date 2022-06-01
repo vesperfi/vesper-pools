@@ -2,7 +2,6 @@
 
 const { expect } = require('chai')
 const { ethers } = require('hardhat')
-const { getUsers } = require('../utils/setupHelper')
 const { deposit } = require('../utils/poolOps')
 const { advanceBlock } = require('../utils/time')
 const { BigNumber } = require('ethers')
@@ -39,8 +38,7 @@ function shouldBehaveLikeVesperAaveXYStrategy(strategyIndex) {
   }
   describe('VesperAaveXYStrategy specific tests', function () {
     beforeEach(async function () {
-      const users = await getUsers()
-      ;[governor, user1, user2] = users
+      ;[governor, user1, user2] = this.users
       pool = this.pool
       strategy = this.strategies[strategyIndex].instance
       collateralToken = this.collateralToken
@@ -50,32 +48,32 @@ function shouldBehaveLikeVesperAaveXYStrategy(strategyIndex) {
 
     it('Should borrow collateral at rebalance', async function () {
       await deposit(pool, collateralToken, 10, user1)
-      await strategy.connect(governor.signer).rebalance()
+      await strategy.connect(governor).rebalance()
       await assertCurrentBorrow()
     })
 
     it('Should borrow within defined limits', async function () {
       await deposit(pool, collateralToken, 100, user2)
-      await strategy.connect(governor.signer).rebalance()
-      await strategy.connect(governor.signer).rebalance()
+      await strategy.connect(governor).rebalance()
+      await strategy.connect(governor).rebalance()
       await assertCurrentBorrow()
     })
 
     it('Should adjust borrow to keep it within defined limits', async function () {
       await deposit(pool, collateralToken, 100, user1)
-      await strategy.connect(governor.signer).rebalance()
+      await strategy.connect(governor).rebalance()
       const accountDataBefore = await assertCurrentBorrow()
       await advanceBlock(100)
       // Withdraw will payback borrow
       const withdrawAmount = (await pool.balanceOf(user1.address)).div('3')
-      await pool.connect(user1.signer).withdraw(withdrawAmount)
+      await pool.connect(user1).withdraw(withdrawAmount)
       const accountDataAfter = await assertCurrentBorrow()
       expect(accountDataAfter.totalDebtETH).to.be.lt(accountDataBefore.totalDebtETH, 'Borrowed not is not correct')
     })
 
     it('Borrowed Y amount should reflect in target Vesper Pool', async function () {
       await deposit(pool, collateralToken, 100, user1)
-      await strategy.connect(governor.signer).rebalance()
+      await strategy.connect(governor).rebalance()
       const borrowBalance = await vdToken.balanceOf(strategy.address)
       const vPool = await ethers.getContractAt('IVesperPool', await strategy.vPool())
       const actualVTokens = await vPool.balanceOf(strategy.address)
@@ -92,33 +90,33 @@ function shouldBehaveLikeVesperAaveXYStrategy(strategyIndex) {
 
     it('Should update borrow limit', async function () {
       await deposit(pool, collateralToken, 100, user1)
-      await strategy.connect(governor.signer).rebalance()
+      await strategy.connect(governor).rebalance()
       await advanceBlock(100)
-      await strategy.connect(governor.signer).updateBorrowLimit(5000, 6000)
+      await strategy.connect(governor).updateBorrowLimit(5000, 6000)
       const newMinBorrowLimit = await strategy.minBorrowLimit()
-      await strategy.connect(governor.signer).rebalance()
+      await strategy.connect(governor).rebalance()
       expect(newMinBorrowLimit).to.be.eq(5000, 'Min borrow limit is wrong')
       await assertCurrentBorrow()
-      let tx = strategy.connect(governor.signer).updateBorrowLimit(5000, ethers.constants.MaxUint256)
+      let tx = strategy.connect(governor).updateBorrowLimit(5000, ethers.constants.MaxUint256)
       await expect(tx).to.be.revertedWith('invalid-max-borrow-limit')
 
-      tx = strategy.connect(governor.signer).updateBorrowLimit(5500, 5000)
+      tx = strategy.connect(governor).updateBorrowLimit(5500, 5000)
       await expect(tx).to.be.revertedWith('max-should-be-higher-than-min')
     })
 
     it('Should repay and borrow more based on updated borrow limit', async function () {
       await deposit(pool, collateralToken, 100, user1)
-      await strategy.connect(governor.signer).rebalance()
+      await strategy.connect(governor).rebalance()
       await advanceBlock(100)
-      await strategy.connect(governor.signer).updateBorrowLimit(8000, 9000)
-      await strategy.connect(governor.signer).rebalance()
+      await strategy.connect(governor).updateBorrowLimit(8000, 9000)
+      await strategy.connect(governor).rebalance()
       let accountDataBefore = await assertCurrentBorrow()
-      await strategy.connect(governor.signer).updateBorrowLimit(6000, 7000)
-      await strategy.connect(governor.signer).rebalance()
+      await strategy.connect(governor).updateBorrowLimit(6000, 7000)
+      await strategy.connect(governor).rebalance()
       let accountDataAfter = await assertCurrentBorrow()
       expect(accountDataAfter.totalDebtETH).to.be.lt(accountDataBefore.totalDebtETH, 'Borrowed is not correct')
-      await strategy.connect(governor.signer).updateBorrowLimit(8000, 9000)
-      await strategy.connect(governor.signer).rebalance()
+      await strategy.connect(governor).updateBorrowLimit(8000, 9000)
+      await strategy.connect(governor).rebalance()
       accountDataBefore = accountDataAfter
       accountDataAfter = await assertCurrentBorrow()
       expect(accountDataAfter.totalDebtETH).to.be.gt(accountDataBefore.totalDebtETH, 'Borrowed is not correct')

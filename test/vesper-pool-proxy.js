@@ -3,7 +3,7 @@
 const { expect } = require('chai')
 const { ethers } = require('hardhat')
 const poolOps = require('./utils/poolOps')
-const { deployContract, getUsers, createStrategy } = require('./utils/setupHelper')
+const { deployContract, createStrategy } = require('./utils/setupHelper')
 const { address, poolConfig, strategyConfig } = require('./utils/chains').getChainData()
 
 const VDAI = poolConfig.VDAI
@@ -20,8 +20,7 @@ describe('Vesper Pool: proxy', function () {
   AaveStrategyDAI.config.debtRatio = 9000
 
   beforeEach(async function () {
-    const users = await getUsers()
-    ;[governor, user1, user2, user3, user4] = users
+    ;[governor, user1, user2, user3, user4] = await ethers.getSigners()
     let accountant = await deployContract('PoolAccountant')
     poolImpl = await deployContract(poolName, poolParams)
     // Deploy proxy admin
@@ -61,7 +60,7 @@ describe('Vesper Pool: proxy', function () {
       // Deploy new pool
       const newPool = await deployContract(poolName, poolParams)
       // Upgrade proxy
-      await proxyAdmin.connect(governor.signer).upgrade(proxy.address, newPool.address)
+      await proxyAdmin.connect(governor).upgrade(proxy.address, newPool.address)
       pool = await ethers.getContractAt(poolName, proxy.address)
       expect(pool.address).to.be.eq(oldPool, 'Pool address via proxy should be same')
 
@@ -78,7 +77,7 @@ describe('Vesper Pool: proxy', function () {
       const totalSupply3 = await pool.totalSupply()
       expect(totalSupply3).to.be.gt(totalSupply2, 'Total supply should increase')
       // User 1 withdraw
-      await pool.connect(user1.signer).withdraw(await pool.balanceOf(user1.address))
+      await pool.connect(user1).withdraw(await pool.balanceOf(user1.address))
       const totalSupply4 = await pool.totalSupply()
       expect(await pool.balanceOf(user1.address)).to.be.eq(0, 'user1 vBalance should be zero')
       expect(totalSupply4).to.be.lt(totalSupply3, 'Total supply should decrease at withdraw')
@@ -93,7 +92,7 @@ describe('Vesper Pool: proxy', function () {
         upgrader = await deployContract('VPoolUpgrader', [multiCall])
 
         // Transfer proxy ownership to the upgrader
-        await proxyAdmin.connect(governor.signer).changeProxyAdmin(proxy.address, upgrader.address)
+        await proxyAdmin.connect(governor).changeProxyAdmin(proxy.address, upgrader.address)
       })
 
       it('Should upgrade in proxy via upgrader', async function () {
@@ -102,7 +101,7 @@ describe('Vesper Pool: proxy', function () {
         const newPool = await deployContract(poolName, poolParams)
 
         // Trigger upgrade
-        await upgrader.connect(governor.signer).safeUpgrade(proxy.address, newPool.address)
+        await upgrader.connect(governor).safeUpgrade(proxy.address, newPool.address)
 
         pool = await ethers.getContractAt(poolName, proxy.address)
         expect(pool.address).to.be.eq(oldPool, 'Pool address via proxy should be same')
@@ -113,7 +112,7 @@ describe('Vesper Pool: proxy', function () {
 
       it('Should properly revert wrong upgrades via upgrader', async function () {
         // Trigger upgrade
-        await expect(upgrader.connect(governor.signer).safeUpgrade(proxy.address, multiCall)).to.be.reverted
+        await expect(upgrader.connect(governor).safeUpgrade(proxy.address, multiCall)).to.be.reverted
       })
     })
   })

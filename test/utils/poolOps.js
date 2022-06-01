@@ -28,11 +28,11 @@ async function deposit(pool, token, amount, depositor) {
     const wethBalance = await token.balanceOf(depositor.address)
     const requestedAmount = BigNumber.from(amount).mul(DECIMAL)
     if (requestedAmount.gt(wethBalance)) {
-      await token.connect(depositor.signer).deposit({ value: requestedAmount.sub(wethBalance) })
+      await token.connect(depositor).deposit({ value: requestedAmount.sub(wethBalance) })
     }
     depositAmount = requestedAmount
-    await token.connect(depositor.signer).approve(pool.address, depositAmount)
-    await pool.connect(depositor.signer)['deposit(uint256)'](depositAmount)
+    await token.connect(depositor).approve(pool.address, depositAmount)
+    await pool.connect(depositor)['deposit(uint256)'](depositAmount)
   } else if (token.address === MIM || token.address === DAI || token.address === ALUSD) {
     // Artificially performs the swap from NATIVE_TOKEN to token.address
     // By altering the token balance
@@ -43,12 +43,12 @@ async function deposit(pool, token, amount, depositor) {
     const slippage = BigNumber.from(1000).sub(pool.depositsCount)
     depositAmount = depositAmount.mul(slippage).div(1000)
     await adjustBalance(token.address, depositor.address, depositAmount)
-    await token.connect(depositor.signer).approve(pool.address, depositAmount)
-    await pool.connect(depositor.signer).deposit(depositAmount)
+    await token.connect(depositor).approve(pool.address, depositAmount)
+    await pool.connect(depositor).deposit(depositAmount)
   } else {
     depositAmount = await swapper.swapEthForToken(amount, token.address, depositor)
-    await token.connect(depositor.signer).approve(pool.address, depositAmount)
-    await pool.connect(depositor.signer).deposit(depositAmount)
+    await token.connect(depositor).approve(pool.address, depositAmount)
+    await pool.connect(depositor).deposit(depositAmount)
   }
   return depositAmount
 }
@@ -118,10 +118,9 @@ async function harvestYearn(strategy) {
   const collateralTokenAddress = await strategy.instance.collateralToken()
   const vault = await strategy.instance.receiptToken()
 
-  const signer = (await ethers.getSigners())[10]
-  const user = { signer, address: signer.address }
+  const user = (await ethers.getSigners())[10]
   if (collateralTokenAddress === NATIVE_TOKEN) {
-    const weth = await ethers.getContractAt('TokenLike', collateralTokenAddress, signer)
+    const weth = await ethers.getContractAt('TokenLike', collateralTokenAddress, user)
     const transferAmount = ethers.utils.parseEther('5')
     await weth.deposit({ value: transferAmount })
     await weth.transfer(vault, transferAmount)
@@ -141,11 +140,9 @@ async function harvestVesperMaker(strategy) {
   const vPool = await ethers.getContractAt('IVesperPoolTest', await strategy.instance.receiptToken())
   const collateralTokenAddress = await vPool.token()
 
-  const signer = (await ethers.getSigners())[11]
-  const user = { signer, address: signer.address }
-
+  const user = (await ethers.getSigners())[11]
   if (collateralTokenAddress === NATIVE_TOKEN) {
-    const weth = await ethers.getContractAt('TokenLike', collateralTokenAddress, signer)
+    const weth = await ethers.getContractAt('TokenLike', collateralTokenAddress, user)
     const transferAmount = ethers.utils.parseEther('5')
     await weth.deposit({ value: transferAmount })
     await weth.transfer(vPool.address, transferAmount)
@@ -165,11 +162,9 @@ async function harvestVesperXY(strategy) {
   const vPool = await ethers.getContractAt('IVesperPoolTest', await strategy.instance.vPool())
   const collateralTokenAddress = await vPool.token()
 
-  const signer = (await ethers.getSigners())[11]
-  const user = { signer, address: signer.address }
-
+  const user = (await ethers.getSigners())[11]
   if (collateralTokenAddress === NATIVE_TOKEN) {
-    const weth = await ethers.getContractAt('TokenLike', collateralTokenAddress, signer)
+    const weth = await ethers.getContractAt('TokenLike', collateralTokenAddress, user)
     const transferAmount = ethers.utils.parseEther('5')
     await weth.deposit({ value: transferAmount })
     await weth.transfer(vPool.address, transferAmount)

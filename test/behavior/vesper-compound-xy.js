@@ -2,7 +2,7 @@
 
 const { expect } = require('chai')
 const { ethers } = require('hardhat')
-const { getStrategyToken, getUsers } = require('../utils/setupHelper')
+const { getStrategyToken } = require('../utils/setupHelper')
 const { deposit, rebalanceStrategy } = require('../utils/poolOps')
 const { advanceBlock } = require('../utils/time')
 const { adjustBalance } = require('../utils/balance')
@@ -66,8 +66,7 @@ function shouldBehaveLikeVesperCompoundXYStrategy(strategyIndex) {
   }
   describe('VesperCompoundXYStrategy specific tests', function () {
     beforeEach(async function () {
-      const users = await getUsers()
-      ;[governor, user1, user2] = users
+      ;[governor, user1, user2] = this.users
       pool = this.pool
       strategy = this.strategies[strategyIndex].instance
       collateralToken = this.collateralToken
@@ -86,7 +85,7 @@ function shouldBehaveLikeVesperCompoundXYStrategy(strategyIndex) {
 
     it('Should borrow tokens at rebalance', async function () {
       await deposit(pool, collateralToken, 10, user1)
-      await strategy.connect(governor.signer).rebalance()
+      await strategy.connect(governor).rebalance()
       const cTokenBalance = await supplyCToken.balanceOf(strategy.address)
       const borrow = await strategy.borrowBalance()
       const currentBorrow = await borrowCToken.callStatic.borrowBalanceCurrent(strategy.address)
@@ -97,17 +96,17 @@ function shouldBehaveLikeVesperCompoundXYStrategy(strategyIndex) {
 
     it('Should borrow within defined limits', async function () {
       await deposit(pool, collateralToken, 10, user2)
-      await strategy.connect(governor.signer).rebalance()
+      await strategy.connect(governor).rebalance()
       await advanceBlock(100)
       await supplyCToken.exchangeRateCurrent()
       await borrowCToken.exchangeRateCurrent()
-      await strategy.connect(governor.signer).rebalance()
+      await strategy.connect(governor).rebalance()
       await assertCurrentBorrow()
     })
 
     it('Should adjust borrow to keep it within defined limits', async function () {
       await deposit(pool, collateralToken, 100, user1)
-      await strategy.connect(governor.signer).rebalance()
+      await strategy.connect(governor).rebalance()
       await advanceBlock(100)
 
       await supplyCToken.exchangeRateCurrent()
@@ -115,7 +114,7 @@ function shouldBehaveLikeVesperCompoundXYStrategy(strategyIndex) {
       const borrowBefore = await strategy.borrowBalance()
 
       const withdrawAmount = (await pool.balanceOf(user1.address)).div('2')
-      await pool.connect(user1.signer).withdraw(withdrawAmount)
+      await pool.connect(user1).withdraw(withdrawAmount)
 
       await supplyCToken.exchangeRateCurrent()
       await borrowCToken.exchangeRateCurrent()
@@ -126,11 +125,11 @@ function shouldBehaveLikeVesperCompoundXYStrategy(strategyIndex) {
 
     it('Should repayAll and reset minBorrowLimit via governor', async function () {
       await deposit(pool, collateralToken, 50, user2)
-      await strategy.connect(governor.signer).rebalance()
+      await strategy.connect(governor).rebalance()
       let borrowBalance = await strategy.borrowBalance()
       expect(borrowBalance).to.be.gt(0, 'Borrow token balance should be > 0')
 
-      await strategy.connect(governor.signer).repayAll()
+      await strategy.connect(governor).repayAll()
 
       borrowBalance = await strategy.borrowBalance()
       expect(borrowBalance).to.be.eq(0, 'Borrow token balance should be = 0')
@@ -140,30 +139,30 @@ function shouldBehaveLikeVesperCompoundXYStrategy(strategyIndex) {
 
     it('Should update borrow limit', async function () {
       await deposit(pool, collateralToken, 100, user1)
-      await strategy.connect(governor.signer).rebalance()
+      await strategy.connect(governor).rebalance()
       await advanceBlock(100)
-      await strategy.connect(governor.signer).updateBorrowLimit(5000, 6000)
+      await strategy.connect(governor).updateBorrowLimit(5000, 6000)
       const newMinBorrowLimit = await strategy.minBorrowLimit()
-      await strategy.connect(governor.signer).rebalance()
+      await strategy.connect(governor).rebalance()
       await supplyCToken.exchangeRateCurrent()
       await borrowCToken.exchangeRateCurrent()
       await assertCurrentBorrow()
       expect(newMinBorrowLimit).to.be.eq(5000, 'Min borrow limit is wrong')
 
-      let tx = strategy.connect(governor.signer).updateBorrowLimit(5000, ethers.constants.MaxUint256)
+      let tx = strategy.connect(governor).updateBorrowLimit(5000, ethers.constants.MaxUint256)
       await expect(tx).to.be.revertedWith('invalid-max-borrow-limit')
 
-      tx = strategy.connect(governor.signer).updateBorrowLimit(5500, 5000)
+      tx = strategy.connect(governor).updateBorrowLimit(5500, 5000)
       await expect(tx).to.be.revertedWith('max-should-be-higher-than-min')
     })
 
     it('Should repay borrow if borrow limit set to 0', async function () {
       await deposit(pool, collateralToken, 100, user1)
-      await strategy.connect(governor.signer).rebalance()
+      await strategy.connect(governor).rebalance()
       const borrowBefore = await strategy.borrowBalance()
       expect(borrowBefore).to.be.gt(0, 'Borrow amount should be > 0')
-      await strategy.connect(governor.signer).updateBorrowLimit(0, 0)
-      await strategy.connect(governor.signer).rebalance()
+      await strategy.connect(governor).updateBorrowLimit(0, 0)
+      await strategy.connect(governor).rebalance()
       const borrowAfter = await strategy.borrowBalance()
       expect(borrowAfter).to.be.eq(0, 'Borrow amount should be = 0')
     })
@@ -178,13 +177,13 @@ function shouldBehaveLikeVesperCompoundXYStrategy(strategyIndex) {
 
     it('Underlying vPool should make profits and increase Y balance', async function () {
       await deposit(pool, collateralToken, 10, user1)
-      await strategy.connect(governor.signer).rebalance()
+      await strategy.connect(governor).rebalance()
       const borrowBefore = await strategy.borrowBalance()
       const totalValue = await strategy.totalValue()
       await simulateVesperPoolProfit(this.strategies[strategyIndex])
       expect(await strategy.borrowBalance()).to.be.gt(borrowBefore)
-      await strategy.connect(governor.signer).rebalance()
-      await strategy.connect(governor.signer).rebalance()
+      await strategy.connect(governor).rebalance()
+      await strategy.connect(governor).rebalance()
       expect(await strategy.totalValue()).to.be.gt(totalValue)
     })
 

@@ -16,8 +16,8 @@ function shouldClaimAaveRewards(strategyIndex) {
 
   async function stakeAave(onBehalfOf, caller) {
     const aaveBalance = await swapper.swapEthForToken(100, AAVE_ADDRESS, caller)
-    await aave.connect(caller.signer).approve(STAKED_AAVE_ADDRESS, aaveBalance)
-    await stakedAave.connect(caller.signer).stake(onBehalfOf, aaveBalance)
+    await aave.connect(caller).approve(STAKED_AAVE_ADDRESS, aaveBalance)
+    await stakedAave.connect(caller).stake(onBehalfOf, aaveBalance)
   }
 
   describe('Claim Aave rewards', function () {
@@ -37,9 +37,7 @@ function shouldClaimAaveRewards(strategyIndex) {
 
     describe('Start cooldown', function () {
       it('Should revert when Cooldown started from non keeper user', async function () {
-        await expect(strategy.instance.connect(user2.signer).startCooldown()).to.be.revertedWith(
-          'caller-is-not-a-keeper',
-        )
+        await expect(strategy.instance.connect(user2).startCooldown()).to.be.revertedWith('caller-is-not-a-keeper')
       })
 
       it('Should return false for canStartCooldown', async function () {

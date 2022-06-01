@@ -1,7 +1,6 @@
 'use strict'
 
 const { expect } = require('chai')
-const { getUsers } = require('../utils/setupHelper')
 const { deposit, rebalanceStrategy, timeTravel } = require('../utils/poolOps')
 const { ethers } = require('hardhat')
 const address = require('../../helper/mainnet/address')
@@ -11,7 +10,7 @@ function shouldBehaveLikeRariFuseStrategy(strategyIndex) {
   let strategy, user1, pool, collateralToken
   describe('RariFuseStrategy specific tests', function () {
     beforeEach(async function () {
-      const users = await getUsers()
+      const users = this.users
       ;[user1] = users
       pool = this.pool
       strategy = this.strategies[strategyIndex]

@@ -125,7 +125,7 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
         const pricePerShare = await pool.pricePerShare()
         const expectedCollateral = withdrawAmount.mul(pricePerShare).div(ethers.utils.parseEther('1'))
 
-        await pool.connect(user1.signer).withdraw(withdrawAmount)
+        await pool.connect(user1).withdraw(withdrawAmount)
         const totalDebtOfStrategies = await totalDebtOfAllStrategy(strategies, pool)
         return Promise.all([
           pool.totalDebt(),
@@ -151,7 +151,7 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
         const pricePerShare = await pool.pricePerShare()
         const expectedCollateral = withdrawAmount.mul(pricePerShare).div(ethers.utils.parseEther('1'))
         // Withdraw
-        await pool.connect(user1.signer).withdraw(withdrawAmount)
+        await pool.connect(user1).withdraw(withdrawAmount)
         vPoolBalance = await pool.balanceOf(user1.address)
         const collateralBalance = await collateralToken.balanceOf(user1.address)
         const totalDebt = await pool.totalDebt()
@@ -165,7 +165,7 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
         await rebalance(strategies)
         const collateralBalanceBefore = await collateralToken.balanceOf(user1.address)
         const withdrawAmount = '10000000000000000'
-        await pool.connect(user1.signer).whitelistedWithdraw(withdrawAmount)
+        await pool.connect(user1).whitelistedWithdraw(withdrawAmount)
         const collateralBalance = await collateralToken.balanceOf(user1.address)
         const totalDebt = await pool.totalDebt()
         const totalDebtOfStrategies = await totalDebtOfAllStrategy(strategies, pool)
@@ -177,7 +177,7 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
         await rebalance(strategies)
         const collateralBalanceBefore = await collateralToken.balanceOf(user1.address)
         const withdrawAmount = '10000000000000000'
-        await pool.connect(user1.signer).withdraw(withdrawAmount)
+        await pool.connect(user1).withdraw(withdrawAmount)
         const collateralBalance = await collateralToken.balanceOf(user1.address)
         const totalDebt = await pool.totalDebt()
         const totalDebtOfStrategies = await totalDebtOfAllStrategy(strategies, pool)
@@ -189,7 +189,7 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
         await rebalance(strategies)
         const collateralBalanceBefore = await collateralToken.balanceOf(user1.address)
         const withdrawAmount = (await pool.balanceOf(user1.address)).div(2)
-        await pool.connect(user1.signer).withdraw(withdrawAmount)
+        await pool.connect(user1).withdraw(withdrawAmount)
         const totalDebt = await pool.totalDebt()
         const totalDebtOfStrategies = await totalDebtOfAllStrategy(strategies, pool)
         expect(totalDebtOfStrategies).to.be.equal(totalDebt, `${collateralName} totalDebt of strategies is wrong`)
@@ -212,7 +212,7 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
         const user1Balance = await pool.balanceOf(user1.address)
         // Earn pool leaves dust behind sometimes
         const dust = user1Balance.div(1000000) // 0.0001 % dust
-        await pool.connect(user1.signer).withdraw(user1Balance)
+        await pool.connect(user1).withdraw(user1Balance)
         return Promise.all([pool.balanceOf(user1.address), collateralToken.balanceOf(user1.address)]).then(function ([
           vPoolBalance,
           collateralBalance,
@@ -230,7 +230,7 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
         const balanceBefore = await pool.balanceOf(user4.address)
         expect(balanceBefore).to.be.equal(0, `${collateralName} balance should be 0`)
         await pool
-          .connect(user1.signer)
+          .connect(user1)
           .multiTransfer([user3.address, user4.address], [user1Balance.div(3), user1Balance.div(4)])
         return Promise.all([pool.balanceOf(user3.address), pool.balanceOf(user4.address)]).then(function ([
           balance1,
@@ -243,7 +243,7 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
 
       it('Should have same size for recipients and amounts', async function () {
         await deposit(10, user1)
-        const tx = pool.connect(user1.signer).multiTransfer([user3.address, user4.address], [DECIMAL18])
+        const tx = pool.connect(user1).multiTransfer([user3.address, user4.address], [DECIMAL18])
         await expect(tx).to.be.revertedWith('4')
       })
     })
@@ -324,7 +324,7 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
           await rebalance(strategies)
           // some strategies are loss making so lets make strategy profitable by sending token
           if (collateralToken.address === NATIVE_TOKEN) {
-            const weth = await ethers.getContractAt('TokenLike', collateralToken.address, user1.signer)
+            const weth = await ethers.getContractAt('TokenLike', collateralToken.address, user1)
             const transferAmount = ethers.utils.parseEther('2')
             await weth.deposit({ value: transferAmount })
             await weth.transfer(strategies[0].instance.address, transferAmount)
@@ -354,8 +354,8 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
           // TODO this is temporary, update poolOps.js deposit to always use adjustBalance library
           const depositAmount = ethers.utils.parseUnits('30', collateralDecimal)
           await adjustBalance(collateralToken.address, user1.address, depositAmount)
-          await collateralToken.connect(user1.signer).approve(pool.address, depositAmount)
-          await pool.connect(user1.signer).deposit(depositAmount)
+          await collateralToken.connect(user1).approve(pool.address, depositAmount)
+          await pool.connect(user1).deposit(depositAmount)
         }
         secondsPerYear = await pool.ONE_YEAR()
         universalFee = await pool.universalFee()
@@ -401,7 +401,7 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
           await increase(timeBetweenRebalance)
           const totalDebt = await accountant.totalDebtOf(strategies[0].instance.address)
           if (collateralToken.address === NATIVE_TOKEN) {
-            const weth = await ethers.getContractAt('TokenLike', collateralToken.address, user1.signer)
+            const weth = await ethers.getContractAt('TokenLike', collateralToken.address, user1)
             const transferAmount = ethers.utils.parseEther('2')
             await weth.deposit({ value: transferAmount })
             await weth.transfer(strategies[0].instance.address, transferAmount)
@@ -518,7 +518,7 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
           'Total debt of all strategies is wrong after rebalance',
         )
         const withdrawAmount = await pool.balanceOf(user1.address)
-        await pool.connect(user1.signer).withdraw(withdrawAmount)
+        await pool.connect(user1).withdraw(withdrawAmount)
         // Withdraw decreases value
         totalValue = await pool.totalValue()
         // Value decreases maxTotalDebt
@@ -557,7 +557,7 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
         await rebalance(strategies)
         await timeTravel(60 * 60)
         if (collateralToken.address === NATIVE_TOKEN) {
-          const weth = await ethers.getContractAt('TokenLike', collateralToken.address, user1.signer)
+          const weth = await ethers.getContractAt('TokenLike', collateralToken.address, user1)
           const transferAmount = ethers.utils.parseEther('2')
           await weth.deposit({ value: transferAmount })
           await weth.transfer(strategies[0].instance.address, transferAmount)
@@ -592,7 +592,7 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
         await rebalance(strategies)
         await deposit(100, user1)
         const withdrawAmount = await pool.balanceOf(user2.address)
-        await pool.connect(user2.signer).withdraw(withdrawAmount)
+        await pool.connect(user2).withdraw(withdrawAmount)
         const creditLimit = await pool.availableCreditLimit(strategies[0].instance.address)
         expect(creditLimit).to.be.eq(0, `Credit limit of strategy in ${poolName} is wrong`)
       })
@@ -683,7 +683,7 @@ async function shouldBehaveLikePool(poolName, collateralName, isEarnPool = false
 
           await timeTravel(7 * 24 * 60 * 60)
 
-          const withdrawTx = await (await pool.connect(user1.signer).withdrawAndClaim(withdrawAmount)).wait()
+          const withdrawTx = await (await pool.connect(user1).withdrawAndClaim(withdrawAmount)).wait()
 
           if (dripToken.address === NATIVE_TOKEN) {
             dripTokenBalanceBefore = dripTokenBalanceBefore.sub(withdrawTx.cumulativeGasUsed)

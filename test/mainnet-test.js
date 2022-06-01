@@ -1,5 +1,5 @@
 'use strict'
-const { getUsers, unlock } = require('./utils/setupHelper')
+const { unlock } = require('./utils/setupHelper')
 const { expect } = require('chai')
 const { ethers } = require('hardhat')
 const { BigNumber } = require('ethers')
@@ -18,7 +18,7 @@ function sanityTestOfPool(poolAddress) {
       const instance = await ethers.getContractAt('Strategy', _strategy)
       strategies.push(instance)
     }
-    users = await getUsers()
+    users = await ethers.getSigners()
     const collateralTokenAddress = await pool.token()
     collateralToken = await ethers.getContractAt('TokenLikeTest', collateralTokenAddress)
   })
@@ -33,17 +33,16 @@ function sanityTestOfPool(poolAddress) {
       }
     }
     const keeperList = await ethers.getContractAt('IAddressList', await strategy.keepers())
-    const keeper = { address: (await keeperList.at(0))[0] }
-    keeper.signer = await unlock(keeper.address)
-    await strategy.connect(keeper.signer).rebalance()
+    const keeper = await unlock((await keeperList.at(0))[0])
+    await strategy.connect(keeper).rebalance()
     await deposit(pool, collateralToken, 100, users[0])
     let balance = await pool.balanceOf(users[0].address)
     expect(balance).to.be.gt(0, 'Pool balance of user is wrong')
     const tokenHereBefore = await pool.tokensHere()
-    await strategy.connect(keeper.signer).rebalance()
+    await strategy.connect(keeper).rebalance()
     const tokensHereAfter = await pool.tokensHere()
     expect(tokenHereBefore).to.be.gt(tokensHereAfter, 'Rebalance ')
-    await pool.connect(users[0].signer).withdraw(balance)
+    await pool.connect(users[0]).withdraw(balance)
     balance = await pool.balanceOf(users[0].address)
     expect(balance).to.be.eq(0, 'Pool balance of user is wrong')
   })

@@ -32,7 +32,7 @@ async function swapEthForToken(ethAmount, toToken, caller, receiver) {
   const path = [NATIVE_TOKEN, toToken]
   const token = await ethers.getContractAt('ERC20', toToken)
   await uni
-    .connect(caller.signer || caller._signer)
+    .connect(caller || caller._signer)
     [SwapExactNaveForTokensFunction](1, path, toAddress, block.timestamp + 600, { value: amountIn })
   const tokenBalance = await token.balanceOf(toAddress)
   expect(tokenBalance).to.be.gt('0', 'Token balance is not correct')
@@ -45,8 +45,8 @@ async function swapExactToken(amountIn, path, caller, receiver) {
   const tokenOut = await ethers.getContractAt('ERC20', path[path.length - 1])
   const uni = await ethers.getContractAt(RouterInterface, getRouter())
   const block = await ethers.provider.getBlock()
-  await tokenIn.connect(caller.signer).approve(uni.address, amountIn)
-  await uni.connect(caller.signer).swapExactTokensForTokens(amountIn, 1, path, toAddress, block.timestamp + 60)
+  await tokenIn.connect(caller).approve(uni.address, amountIn)
+  await uni.connect(caller).swapExactTokensForTokens(amountIn, 1, path, toAddress, block.timestamp + 60)
   const amountOut = await tokenOut.balanceOf(toAddress)
   return amountOut
 }

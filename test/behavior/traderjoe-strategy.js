@@ -1,7 +1,7 @@
 'use strict'
 
 const { expect } = require('chai')
-const { getUsers, unlock } = require('../utils/setupHelper')
+const { unlock } = require('../utils/setupHelper')
 const { deposit, rebalanceStrategy } = require('../utils/poolOps')
 const { shouldBehaveLikeCompoundStrategy } = require('../behavior/compound-strategy')
 const { ethers } = require('hardhat')
@@ -15,8 +15,7 @@ function shouldBehaveLikeTraderJoeStrategy(strategyIndex) {
 
   describe('TraderJoeStrategy specific tests', function () {
     beforeEach(async function () {
-      const users = await getUsers()
-      ;[user1] = users
+      ;[user1] = this.users
       pool = this.pool
       strategy = this.strategies[strategyIndex]
       collateralToken = this.collateralToken
