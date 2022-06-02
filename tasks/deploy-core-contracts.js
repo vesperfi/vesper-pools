@@ -23,7 +23,7 @@ function validateObject(object, keys) {
 function validatePoolConfig(poolConfig, targetChain) {
   // Fail fast
   if (!poolConfig) {
-    throw new Error(`Missing pool configuration in /helper/${targetChain}/poolConfig file`)
+    throw new Error(`Missing "${hre.poolName}" configuration in /helper/${targetChain}/poolConfig file`)
   }
   const topLevelKeys = ['contractName', 'poolParams', 'rewards', 'setup']
   // Validate top level properties in config object
@@ -135,7 +135,7 @@ async function updateVersionInfo(reusedContracts, deployedContractInfo = {}) {
 }
 
 /* eslint-disable complexity */
-async function deployPoolContracts(pool, deployParams, release) {
+async function deployCoreContracts(pool, deployParams, release) {
   let deployer = process.env.DEPLOYER
   // If no deployer than use default
   if (!deployer) {
@@ -219,7 +219,7 @@ async function deployPoolContracts(pool, deployParams, release) {
 }
 
 /* eslint-disable no-param-reassign */
-task('deploy-pool', 'Deploy vesper pool')
+task('deploy-core-contracts', 'Deploy Vesper core contracts')
   .addParam('pool', 'Vesper pool name')
   .addOptionalParam('release', 'Vesper release semantic version. It will create release file under /releases directory')
   .addOptionalParam('targetChain', 'Target chain where contracts will be deployed')
@@ -244,7 +244,7 @@ task('deploy-pool', 'Deploy vesper pool')
       targetChain = hreNetwork
     }
     // Set pool config in hre to use later in deploy scripts
-    hre.poolConfig = require(`../helper/${targetChain}/poolConfig`)[pool.toUpperCase()]
+    hre.poolConfig = require(`../helper/${targetChain}/poolConfig`)[pool]
     hre.poolName = pool.toLowerCase()
 
     validatePoolConfig(hre.poolConfig, targetChain)
@@ -262,7 +262,7 @@ task('deploy-pool', 'Deploy vesper pool')
 
     await run('strategy-configuration', { strategyName, targetChain, strategyConfig, multisigNonce, oldStrategyName })
 
-    await deployPoolContracts(pool, deployParams, release)
+    await deployCoreContracts(pool, deployParams, release)
   })
 
-module.exports = { deployPoolContracts }
+module.exports = { deployCoreContracts }

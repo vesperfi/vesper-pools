@@ -22,7 +22,7 @@ const deployFunction = async function (hre) {
   const Address = require(`../helper/${targetChain}/address`)
   // Wait for 2 blocks in network is not localhost
   const waitConfirmations = networkName === 'localhost' ? 0 : 2
-  // This info will be used later in deploy-pool task
+  // This info will be used later in deploy-core-contracts task
   hre.implementations = {}
 
   // Deploy upgrader

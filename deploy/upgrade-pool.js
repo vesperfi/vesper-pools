@@ -139,7 +139,7 @@ const deployFunction = async function (hre) {
   const { getNamedAccounts, poolConfig, targetChain, multisigNonce } = hre
   const { deployer } = await getNamedAccounts()
   const address = require(`../helper/${targetChain}/address`)
-  // This info will be used later in deploy-pool task
+  // This info will be used later in deploy-core-contracts task
   hre.implementations = {}
 
   const txnsToPropose = []
