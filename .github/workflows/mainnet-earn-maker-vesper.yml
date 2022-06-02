@@ -1,0 +1,78 @@
+name: Mainnet Earn Maker Vesper Strategy
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/mainnet-earn-maker-vesper.yml"
+      - ".github/actions/setup-env/action.yml"
+      - "test/utils/setupHelper.js"
+      - "test/behavior/earn-vesper-maker-strategy.js"
+      - "contracts/pool/**/*.sol"
+      - "contracts/pool/*.sol"
+      - "contracts/strategies/Strategy.sol"
+      - "contracts/strategies/Earn.sol"
+      - "contracts/strategies/maker/MakerStrategy.sol"
+      - "contracts/strategies/maker/VesperMakerStrategy.sol"
+      - "contracts/strategies/maker/earn/EarnVesperMakerStrategy.sol"
+      - "test/mainnet/earn/maker/vesper/**"
+
+# Limit concurrency to one workflow per branch and one per pull_request
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: true
+
+jobs:
+  setup-job:
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.NODE_URL }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup env
+        uses: ./.github/actions/setup-env
+
+  veeth-dai-test:
+    needs: [setup-job]
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.NODE_URL }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup env
+        uses: ./.github/actions/setup-env
+
+      - name: Running Earn Maker Vesper strategy for VEETH_DAI pool
+        run: npm test test/mainnet/earn/maker/vesper/veeth-dai.js
+
+  velink-dai-test:
+    needs: [setup-job]
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.NODE_URL }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup env
+        uses: ./.github/actions/setup-env
+
+      - name: Running Earn Maker Vesper strategy for VELINK_DAI pool
+        run: npm test test/mainnet/earn/maker/vesper/velink-dai.js
+
+  vewbtc-dai-test:
+    needs: [setup-job]
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.NODE_URL }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup env
+        uses: ./.github/actions/setup-env
+
+      - name: Running Earn Maker Vesper strategy for VEWBTC_DAI pool
+        run: npm test test/mainnet/earn/maker/vesper/vewbtc-dai.js

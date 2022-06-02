@@ -1,11 +1,23 @@
 'use strict'
 // Prepare gnosis transaction initiation refer: https://docs.gnosis-safe.io/tutorials/tutorial_tx_service_initiate_sign
-const ethers = require('ethers')
+const { ethers } = require('hardhat')
+const { OperationType } = require('ethers-multisend')
 const Wallet = ethers.Wallet
 const axios = require('axios')
 const { utils } = ethers
 const gnosisAbi = require('./abis/gnosisAbi.json')
 const { encodeMulti } = require('ethers-multisend')
+
+const prepareTxn = async function (contractName, address, method, methodArgs) {
+  const contract = await ethers.getContractAt(contractName, address)
+  const encodedTxn = await contract.populateTransaction[method](...methodArgs)
+  return {
+    operation: OperationType.Call,
+    to: address,
+    value: 0,
+    data: encodedTxn.data,
+  }
+}
 
 const getBaseUrl = function (targetChain) {
   return `https://safe-transaction.${targetChain}.gnosis.io`
@@ -20,8 +32,18 @@ const isDeployerADelegate = async function (safe, deployer, targetChain) {
   return delegates.includes(deployer)
 }
 
-const getMultisigNonce = async function (safe, targetChain) {
-  return (await axios.get(`${getBaseUrl(targetChain)}/api/v1/safes/${safe}`)).data
+const getNextNonce = async function (safe, targetChain) {
+  const nonce = (await axios.get(`${getBaseUrl(targetChain)}/api/v1/safes/${safe}`)).data.nonce
+  const url = `${getBaseUrl(
+    targetChain,
+  )}/api/v1/safes/${safe}/multisig-transactions/?executed=false&nonce__gte=${nonce}`
+  const pendingTxs = (await axios.get(url)).data.results
+  if (pendingTxs && pendingTxs.length > 0) {
+    const nonces = pendingTxs.map(tx => tx.nonce)
+    const lastNonce = Math.max(...nonces)
+    return lastNonce + 1
+  }
+  return nonce
 }
 
 function getProvider() {
@@ -117,24 +139,24 @@ const submitGnosisTxn = async function (txnData) {
 async function proposeTxn(targetChain, deployer, multisigNonce = 0, transaction) {
   const Address = require(`../helper/${targetChain}/address`)
   const safe = Address.MultiSig.safe
-
-  const nonce = multisigNonce === 0 ? (await getMultisigNonce(safe, targetChain)).nonce : multisigNonce
+  const nonce = multisigNonce === 0 ? await getNextNonce(safe, targetChain) : multisigNonce
   const txnParams = { baseTxn: transaction, safe, nonce, sender: deployer, targetChain }
   await submitGnosisTxn(txnParams)
 }
 
-async function proposeMultiTxn(targetChain, deployer, multisigNonce = 0, transactions) {
+// eslint-disable-next-line max-params
+async function proposeMultiTxn(targetChain, deployer, multisigNonce = 0, transactions, multiCallAddress) {
   const Address = require(`../helper/${targetChain}/address`)
   const safe = Address.MultiSig.safe
 
-  const txn = encodeMulti(transactions)
+  const txn = encodeMulti(transactions, multiCallAddress)
   const baseTxn = {
     operation: txn.operation,
     to: txn.to,
     value: 0,
     data: txn.data || '0x',
   }
-  const nonce = multisigNonce === 0 ? (await getMultisigNonce(safe, targetChain)).nonce : multisigNonce
+  const nonce = multisigNonce === 0 ? await getNextNonce(safe, targetChain) : multisigNonce
   const txnParams = { baseTxn, safe, nonce, sender: deployer, targetChain }
   await submitGnosisTxn(txnParams)
 }
@@ -142,7 +164,8 @@ async function proposeMultiTxn(targetChain, deployer, multisigNonce = 0, transac
 module.exports = {
   isDelegateOrOwner,
   submitGnosisTxn,
-  getMultisigNonce,
+  getNextNonce,
   proposeTxn,
   proposeMultiTxn,
+  prepareTxn,
 }

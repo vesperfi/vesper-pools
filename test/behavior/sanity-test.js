@@ -64,7 +64,7 @@ async function shouldDoSanityTest(poolName, collateralName) {
         const tsBefore = await pool.totalSupply()
         await deposit(20, user1)
         const withdrawAmount = await pool.balanceOf(user1.address)
-        await pool.connect(user1.signer).withdraw(withdrawAmount)
+        await pool.connect(user1).withdraw(withdrawAmount)
         const fee = await pool.withdrawFee()
         const feeToCollect = withdrawAmount.mul(fee).div(MAX_BPS)
         return Promise.all([pool.totalSupply(), pool.balanceOf(user1.address)]).then(function ([
@@ -80,7 +80,7 @@ async function shouldDoSanityTest(poolName, collateralName) {
         await deposit(20, user1)
         let vPoolBalance = await pool.balanceOf(user1.address)
         const withdrawAmount = vPoolBalance.sub(convertTo18(100))
-        await pool.connect(user1.signer).withdraw(withdrawAmount)
+        await pool.connect(user1).withdraw(withdrawAmount)
         vPoolBalance = (await pool.balanceOf(user1.address)).toString()
         const totalDebt = await pool.totalDebt()
         const totalDebtOfStrategies = await totalDebtOfAllStrategy(strategies, pool)

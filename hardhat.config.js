@@ -7,11 +7,12 @@ require('hardhat-log-remover')
 require('hardhat-gas-reporter')
 require('dotenv').config()
 require('./tasks/create-release')
-require('./tasks/deploy-pool')
+require('./tasks/deploy-core-contracts')
 require('./tasks/strategy-configuration')
 require('./tasks/deploy-upgrader')
 require('./tasks/deploy-buyback')
 require('./tasks/upgrade-pool')
+require('./tasks/hardhat-hook')
 const junk = 'test test test test test test test test test test test junk'
 
 if (process.env.RUN_CONTRACT_SIZER === 'true') {
@@ -27,7 +28,6 @@ module.exports = {
       accounts: { mnemonic: process.env.MNEMONIC || junk },
     },
     hardhat: {
-      chainId: 1,
       initialBaseFeePerGas: 0,
       forking: {
         url: process.env.NODE_URL,

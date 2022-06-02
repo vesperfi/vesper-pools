@@ -1,0 +1,121 @@
+name: Avalanche TraderJoe Strategy
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/avalanche-traderjoe.yml"
+      - ".github/actions/setup-env/action.yml"
+      - "test/utils/setupHelper.js"
+      - "test/behavior/traderjoe-strategy.js"
+      - "contracts/pool/**/*.sol"
+      - "contracts/pool/*.sol"
+      - "contracts/strategies/Strategy.sol"
+      - "contracts/strategies/compound/avalanche/CompoundLikeStrategy.sol"
+      - "contracts/strategies/compound/CompoundStrategy.sol"
+      - "test/avalanche/traderjoe/**"
+
+# Limit concurrency to one workflow per branch and one per pull_request
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: true
+
+jobs:
+  setup-job:
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.AVALANCHE_NODE_URL }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup env
+        uses: ./.github/actions/setup-env
+
+  vaavax-test:
+    needs: [setup-job]
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.AVALANCHE_NODE_URL }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup env
+        uses: ./.github/actions/setup-env
+
+      - name: Running TraderJoe strategy for VAAVAX pool
+        run: npm test test/avalanche/traderjoe/vaavax.js
+
+  vadaie-test:
+    needs: [setup-job]
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.AVALANCHE_NODE_URL }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup env
+        uses: ./.github/actions/setup-env
+
+      - name: Running TraderJoe strategy for VADAIe pool
+        run: npm test test/avalanche/traderjoe/vadaie.js
+
+  vausdc-test:
+    needs: [setup-job]
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.AVALANCHE_NODE_URL }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup env
+        uses: ./.github/actions/setup-env
+
+      - name: Running TraderJoe strategy for VAUSDC pool
+        run: npm test test/avalanche/traderjoe/vausdc.js
+
+  vausdce-test:
+    needs: [setup-job]
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.AVALANCHE_NODE_URL }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup env
+        uses: ./.github/actions/setup-env
+
+      - name: Running TraderJoe strategy for VAUSDCe pool
+        run: npm test test/avalanche/traderjoe/vausdce.js
+
+  vawbtce-test:
+    needs: [setup-job]
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.AVALANCHE_NODE_URL }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup env
+        uses: ./.github/actions/setup-env
+
+      - name: Running TraderJoe strategy for VAWBTCe pool
+        run: npm test test/avalanche/traderjoe/vawbtce.js
+
+  vawethe-test:
+    needs: [setup-job]
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.AVALANCHE_NODE_URL }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup env
+        uses: ./.github/actions/setup-env
+
+      - name: Running TraderJoe strategy for VAWETHe pool
+        run: npm test test/avalanche/traderjoe/vawethe.js

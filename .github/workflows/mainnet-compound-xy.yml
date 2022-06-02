@@ -1,0 +1,93 @@
+name: Mainnet Compound XY Strategy
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/mainnet-compound-xy.yml"
+      - ".github/actions/setup-env/action.yml"
+      - "test/utils/setupHelper.js"
+      - "test/behavior/compound-xy.js"
+      - "test/behavior/vesper-compound-xy.js"
+      - "contracts/pool/**/*.sol"
+      - "contracts/pool/*.sol"
+      - "contracts/strategies/Strategy.sol"
+      - "contracts/strategies/compound/CompoundXYCore.sol"
+      - "contracts/strategies/compound/CompoundXYStrategy*"
+      - "contracts/strategies/compound/VesperCompound*"
+      - "test/mainnet/compound-xy/**/*.js"
+
+# Limit concurrency to one workflow per branch and one per pull_request
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: true
+
+jobs:
+  setup-job:
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.NODE_URL }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup env
+        uses: ./.github/actions/setup-env
+
+  vaeth-test:
+    needs: [setup-job]
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.NODE_URL }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup env
+        uses: ./.github/actions/setup-env
+
+      - name: Running Compound XY strategy for VAETH pool
+        run: npm test test/mainnet/compound-xy/vaeth.js
+
+  vawbtc-test:
+    needs: [setup-job]
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.NODE_URL }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup env
+        uses: ./.github/actions/setup-env
+
+      - name: Running Compound XY strategy for VAWBTC pool
+        run: npm test test/mainnet/compound-xy/vawbtc.js
+
+  vaeth-vesper-test:
+    needs: [setup-job]
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.NODE_URL }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup env
+        uses: ./.github/actions/setup-env
+
+      - name: Running Compound Vesper XY strategy for VAETH pool
+        run: npm test test/mainnet/compound-xy/vesper/vaeth.js
+
+  vawbtc-vesper-test:
+    needs: [setup-job]
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.NODE_URL }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup env
+        uses: ./.github/actions/setup-env
+
+      - name: Running Compound Vesper XY strategy for VAWBTC pool
+        run: npm test test/mainnet/compound-xy/vesper/vawbtc.js

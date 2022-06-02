@@ -1,0 +1,48 @@
+name: Setup Environment
+description: Setup node environment for actions
+
+runs:
+  using: composite
+  steps:
+    # actions/checkout@v3 is not allowed inside composite.
+    # Check workaround if interested, https://github.com/actions/runner/issues/1300#issuecomment-990373768
+
+    - name: Use Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version-file: ".nvmrc"
+
+    - name: Prepare env variables
+      run: cat "${GITHUB_WORKSPACE}/.github/env.properties" >> $GITHUB_ENV
+      shell: bash
+
+    - name: Restore npm dependencies from cache
+      id: npm-cache
+      uses: actions/cache@v3
+      with:
+        path: "**/node_modules"
+        key: ${{ hashFiles('**/package-lock.json') }}
+
+    - name: Install dependencies if needed
+      if: steps.npm-cache.outputs.cache-hit != 'true'
+      run: npm install
+      shell: bash
+
+    - name: Compute hash of contracts directory
+      id: compute-hash
+      run: echo "::set-output name=hash::$(find ./contracts -type f -print0 | xargs -0 sha256sum | sha256sum | awk '{print $1}')"
+      shell: bash
+
+    - name: Restore compiled contracts from cache
+      id: artifacts-cache
+      uses: actions/cache@v3
+      with:
+        path: |
+          **/artifacts
+          **/cache
+        key: ${{ steps.compute-hash.outputs.hash }}
+
+    - name: Run hardhat compile if needed
+      if: steps.artifacts-cache.outputs.cache-hit != 'true'
+      run: npm run compile
+      shell: bash

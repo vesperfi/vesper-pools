@@ -1,46 +1,64 @@
 'use strict'
-
 const fs = require('fs')
 const _ = require('lodash')
 const compareVersions = require('compare-versions')
+const ADMIN_SLOT = '0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103'
+const IMPLEMENTATION_SLOT = '0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc'
 
-function getPoolData(data) {
+async function getProxyAdminAddress(proxyAddress) {
+  const proxyAdminStorage = (await ethers.provider.getStorageAt(proxyAddress, ADMIN_SLOT)).toString()
+  return ethers.utils.getAddress(`0x${proxyAdminStorage.slice(26)}`)
+}
+
+async function getImplAddress(proxyAddress) {
+  const implStorage = (await ethers.provider.getStorageAt(proxyAddress, IMPLEMENTATION_SLOT)).toString()
+  return ethers.utils.getAddress(`0x${implStorage.slice(26)}`)
+}
+
+async function getPoolAccountAddress(poolProxyAddress) {
+  const poolProxyContract = await ethers.getContractAt('VPool', poolProxyAddress)
+  const poolAccountant = await poolProxyContract.poolAccountant()
+  return ethers.utils.getAddress(poolAccountant)
+}
+
+async function getPoolData(data) {
   const root = {}
   if (data.VPool) {
     root.pool = {
-      proxyAdmin: data.DefaultProxyAdmin,
+      proxyAdmin: await getProxyAdminAddress(data.VPool),
       proxy: data.VPool,
-      implementation: data.VPool_Implementation,
+      implementation: await getImplAddress(data.VPool),
     }
   } else if (data.VETH) {
     root.pool = {
-      proxyAdmin: data.DefaultProxyAdmin,
+      proxyAdmin: await getProxyAdminAddress(data.VETH),
       proxy: data.VETH,
-      implementation: data.VETH_Implementation,
+      implementation: await getImplAddress(data.VETH),
     }
   }
   if (data.PoolAccountant) {
-    // Accountant is part of pool
+    // Accountant is part of pool (Get it from chain)
+    const poolAccountant = await getPoolAccountAddress(data.VETH || data.VPool)
     root.pool.poolAccountant = {
-      proxyAdmin: data.DefaultProxyAdmin,
-      proxy: data.PoolAccountant,
-      implementation: data.PoolAccountant_Implementation,
+      proxyAdmin: await getProxyAdminAddress(poolAccountant),
+      proxy: poolAccountant,
+      implementation: await getImplAddress(poolAccountant),
     }
   }
 
   if (data.PoolRewards) {
     root.poolRewards = {
-      proxyAdmin: data.DefaultProxyAdmin,
+      proxyAdmin: await getProxyAdminAddress(data.PoolRewards),
       proxy: data.PoolRewards,
-      implementation: data.PoolRewards_Implementation,
+      implementation: await getImplAddress(data.PoolRewards),
     }
   }
 
   if (data.VesperEarnDrip) {
     root.poolRewards = {
-      proxyAdmin: data.DefaultProxyAdmin,
+      proxyAdmin: await getProxyAdminAddress(data.VesperEarnDrip),
       proxy: data.VesperEarnDrip,
-      implementation: data.VesperEarnDrip_Implementation,
+      implementation: await getImplAddress(data.VesperEarnDrip),
     }
   }
 
@@ -138,7 +156,7 @@ task('create-release', 'Create release file from deploy data')
       releaseData.networks[network] = {}
     }
     // Update pool data with latest deployment
-    releaseData.networks[network][pool] = getPoolData(deployData)
+    releaseData.networks[network][pool] = await getPoolData(deployData)
     // Write release data into file
     fs.writeFileSync(releaseFile, JSON.stringify(releaseData, null, 2))
     console.log(`${pool.toUpperCase()} - ${network} release ${release} is created successfully!`)

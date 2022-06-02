@@ -1,6 +1,6 @@
 'use strict'
 
-const { deployPoolContracts } = require('./deploy-pool')
+const { deployCoreContracts } = require('./deploy-core-contracts')
 
 /* eslint-disable no-param-reassign */
 task('upgrade-pool', 'Upgrading vPool and poolAccountant')
@@ -23,8 +23,8 @@ task('upgrade-pool', 'Upgrading vPool and poolAccountant')
     }
 
     // Set pool config in hre to use later in deploy scripts
-    hre.poolConfig = require(`../helper/${targetChain}/poolConfig`)[pool.toUpperCase()]
-    await deployPoolContracts(pool, deployParams, release)
+    hre.poolConfig = require(`../helper/${targetChain}/poolConfig`)[pool]
+    await deployCoreContracts(pool, deployParams, release)
   })
 
 module.exports = {}

@@ -2,7 +2,7 @@
 
 const { expect } = require('chai')
 const swapper = require('../utils/tokenSwapper')
-const { getUsers } = require('../utils/setupHelper')
+const { getStrategyToken } = require('../utils/setupHelper')
 const { deposit } = require('../utils/poolOps')
 const { adjustBalance } = require('../utils/balance')
 const { advanceBlock } = require('../utils/time')
@@ -24,13 +24,12 @@ function shouldBehaveLikeCompoundStrategy(strategyIndex) {
 
   describe('CompoundStrategy specific tests', function () {
     beforeEach(async function () {
-      const users = await getUsers()
-      ;[user1, user2] = users
+      ;[user1, user2] = this.users
       pool = this.pool
       strategy = this.strategies[strategyIndex].instance
       collateralToken = this.collateralToken
       collateralDecimal = await this.collateralToken.decimals()
-      token = this.strategies[strategyIndex].token
+      token = await getStrategyToken(this.strategies[strategyIndex])
       comp = await ethers.getContractAt('ERC20', await strategy.rewardToken())
       comptroller = await ethers.getContractAt('Comptroller', await strategy.COMPTROLLER())
     })
@@ -60,7 +59,7 @@ function shouldBehaveLikeCompoundStrategy(strategyIndex) {
         await advanceBlock(100)
         const withdrawAmount = await pool.balanceOf(user1.address)
         // compAccrued is updated only when user do some activity. withdraw to trigger compAccrue update
-        await pool.connect(user1.signer).withdraw(withdrawAmount)
+        await pool.connect(user1).withdraw(withdrawAmount)
         const compAccruedBefore = await comptroller.compAccrued(strategy.address)
         await strategy.rebalance()
         const compAccruedAfter = await comptroller.compAccrued(strategy.address)
@@ -104,7 +103,7 @@ function shouldBehaveLikeCompoundStrategy(strategyIndex) {
         await hre.network.provider.send('hardhat_setBalance', [cToken.address, liquidityAmountInCompound.toHexString()])
         expect(await cToken.getCash()).to.be.equals(liquidityAmountInCompound)
 
-        await pool.connect(user1.signer).withdraw(withdrawAmount)
+        await pool.connect(user1).withdraw(withdrawAmount)
         const wethBalanceAfterWithdraw = await collateralToken.balanceOf(user1.address)
         expect(wethBalanceAfterWithdraw.sub(wethBalanceBeforeWithdraw)).to.be.equal(
           bufferInPool.add(liquidityAmountInCompound),
@@ -123,9 +122,9 @@ function shouldBehaveLikeCompoundStrategy(strategyIndex) {
       ) {
         const cToken = await ethers.getContractAt('CToken', token.address)
         const depositAmount = await swapper.swapEthForToken(10, collateralToken.address, user1)
-        await collateralToken.connect(user1.signer).approve(pool.address, depositAmount)
+        await collateralToken.connect(user1).approve(pool.address, depositAmount)
         // deposit half of swapped amount in pool.
-        await pool.connect(user1.signer).deposit(depositAmount.div(2))
+        await pool.connect(user1).deposit(depositAmount.div(2))
 
         const tokenBalanceBeforeWithdraw = await collateralToken.balanceOf(user1.address)
         const withdrawAmount = await pool.balanceOf(user1.address)
@@ -137,7 +136,7 @@ function shouldBehaveLikeCompoundStrategy(strategyIndex) {
         adjustBalance(collateralToken.address, cToken.address, liquidityAmountInCompound)
         expect(await cToken.getCash()).to.be.equals(liquidityAmountInCompound)
 
-        await pool.connect(user1.signer).withdraw(withdrawAmount)
+        await pool.connect(user1).withdraw(withdrawAmount)
         const tokenBalanceAfterWithdraw = await collateralToken.balanceOf(user1.address)
 
         expect(tokenBalanceAfterWithdraw.sub(tokenBalanceBeforeWithdraw)).to.be.equal(

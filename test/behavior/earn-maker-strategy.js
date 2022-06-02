@@ -1,16 +1,17 @@
 'use strict'
 
-const { deposit, executeIfExist, timeTravel, rebalanceStrategy } = require('../utils/poolOps')
+const { deposit, timeTravel, rebalanceStrategy } = require('../utils/poolOps')
 const { expect } = require('chai')
 const { ethers } = require('hardhat')
-const { getUsers } = require('../utils/setupHelper')
+const { executeIfExist, getStrategyToken } = require('../utils/setupHelper')
 const { shouldValidateMakerCommonBehavior } = require('./maker-common')
 async function shouldBehaveLikeEarnMakerStrategy(strategyIndex) {
   let pool, strategy
   let collateralToken, cm
   let user1, user2
   async function updateRate() {
-    await executeIfExist(strategy.instance.token.exchangeRateCurrent)
+    const token = await getStrategyToken(strategy)
+    await executeIfExist(token.exchangeRateCurrent)
     // Update rate using Jug drip
     const jugLike = await ethers.getContractAt('JugLike', '0x19c0976f590D67707E62397C87829d896Dc0f1F1')
     const vaultType = await strategy.instance.collateralType()
@@ -19,7 +20,7 @@ async function shouldBehaveLikeEarnMakerStrategy(strategyIndex) {
   shouldValidateMakerCommonBehavior(strategyIndex)
   describe(`Earn MakerStrategy specific tests for strategy[${strategyIndex}]`, function () {
     beforeEach(async function () {
-      ;[user1, , user2] = await getUsers()
+      ;[user1, , user2] = this.users
       pool = this.pool
       strategy = this.strategies[strategyIndex]
       collateralToken = this.collateralToken

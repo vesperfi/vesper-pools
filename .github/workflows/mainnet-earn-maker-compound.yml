@@ -1,0 +1,48 @@
+name: Mainnet Earn Maker Compound Strategy
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/mainnet-earn-maker-compound.yml"
+      - ".github/actions/setup-env/action.yml"
+      - "test/utils/setupHelper.js"
+      - "test/behavior/earn-maker-strategy.js"
+      - "contracts/pool/**/*.sol"
+      - "contracts/pool/*.sol"
+      - "contracts/strategies/Strategy.sol"
+      - "contracts/strategies/Earn.sol"
+      - "contracts/strategies/maker/MakerStrategy.sol"
+      - "contracts/strategies/maker/CompoundMakerStrategy.sol"
+      - "contracts/strategies/maker/earn/EarnCompoundMakerStrategy.sol"
+      - "test/mainnet/earn/maker/compound/**"
+
+# Limit concurrency to one workflow per branch and one per pull_request
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: true
+
+jobs:
+  setup-job:
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.NODE_URL }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup env
+        uses: ./.github/actions/setup-env
+
+  veeth-dai-test:
+    needs: [setup-job]
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.NODE_URL }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup env
+        uses: ./.github/actions/setup-env
+
+      - name: Running Earn Maker Compound strategy for VEETH_DAI pool
+        run: npm test test/mainnet/earn/maker/compound/veeth-dai.js

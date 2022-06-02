@@ -22,11 +22,11 @@ const deployFunction = async function (hre) {
   const Address = require(`../helper/${targetChain}/address`)
   // Wait for 2 blocks in network is not localhost
   const waitConfirmations = networkName === 'localhost' ? 0 : 2
-  // This info will be used later in deploy-pool task
+  // This info will be used later in deploy-core-contracts task
   hre.implementations = {}
 
   // Deploy upgrader
-  await deploy(PoolAccountantUpgrader, { from: deployer, log: true, args: [Address.MULTICALL], waitConfirmations })
+  await deploy(PoolAccountantUpgrader, { from: deployer, log: true, args: [Address.MultiCall], waitConfirmations })
 
   // Deploy PoolAccountant. This call will deploy ProxyAdmin, proxy and PoolAccountant
   const accountantProxy = await deploy(PoolAccountant, {
@@ -45,14 +45,14 @@ const deployFunction = async function (hre) {
   await sleep(networkName, 5000)
 
   // Deploy upgrader
-  await deploy(VPoolUpgrader, { from: deployer, log: true, args: [Address.MULTICALL], waitConfirmations })
+  await deploy(VPoolUpgrader, { from: deployer, log: true, args: [Address.MultiCall], waitConfirmations })
 
   // Deploy Pool. This call will use ProxyAdmin. It will deploy proxy and Pool and also initialize pool
   const poolProxy = await deploy(poolConfig.contractName, {
     from: deployer,
     log: true,
     skipIfAlreadyDeployed: true,
-    args: poolConfig.poolParams, // Constructor args
+    args: ['Vesper pool', 'vPool', Address.ZERO], // hardcoded impl constructor argument
     // proxy deployment
     proxy: {
       proxyContract: 'OpenZeppelinTransparentProxy',
@@ -96,7 +96,7 @@ const deployFunction = async function (hre) {
   await sleep(networkName, 5000)
 
   // Deploy upgrader
-  await deploy(PoolRewardsUpgrader, { from: deployer, log: true, args: [Address.MULTICALL], waitConfirmations })
+  await deploy(PoolRewardsUpgrader, { from: deployer, log: true, args: [Address.MultiCall], waitConfirmations })
   const rewardsProxy = await deploy(rewards.contract, {
     from: deployer,
     log: true,

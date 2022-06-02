@@ -80,6 +80,10 @@ contract EarnVesperMakerStrategy is VesperMakerStrategy, Earn {
         }
     }
 
+    function _realizeLoss(uint256) internal view virtual override(Strategy, MakerStrategy) returns (uint256) {
+        return 0;
+    }
+
     /**
      * @dev ClaimRewards and calculate profit. Forward profit, after fee, to EarnDrip.
      * @return profit in collateral token

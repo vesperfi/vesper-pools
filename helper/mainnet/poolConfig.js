@@ -24,6 +24,12 @@ const PoolConfig = {
     setup: { ...setup },
     rewards: { ...rewards },
   },
+  VETH: {
+    contractName: 'VETH',
+    poolParams: ['vETH Pool', 'vETH', Address.WETH],
+    setup: { ...setup },
+    rewards: { ...rewards },
+  },
   VAETH: {
     contractName: 'VETH',
     poolParams: ['vaETH Pool', 'vaETH', Address.WETH],
@@ -114,6 +120,12 @@ const PoolConfig = {
     setup: { ...setup },
     rewards: { ...rewards },
   },
+  VAUNI: {
+    contractName: 'VPool',
+    poolParams: ['vaUNI Pool', 'vaUNI', Address.UNI],
+    setup: { ...setup },
+    rewards: { ...rewards },
+  },
   VUSDC: {
     contractName: 'VPool',
     poolParams: ['vUSDC Pool', 'vUSDC', Address.USDC],
@@ -126,9 +138,9 @@ const PoolConfig = {
     setup: { ...setup },
     rewards: { ...rewards },
   },
-  VUSDT: {
+  VAUSDT: {
     contractName: 'VPool',
-    poolParams: ['vUSDT Pool', 'vUSDT', Address.USDT],
+    poolParams: ['vaUSDT Pool', 'vaUSDT', Address.USDT],
     setup: { ...setup },
     rewards: { ...rewards },
   },

@@ -2,7 +2,6 @@
 
 const { expect } = require('chai')
 const swapper = require('../utils/tokenSwapper')
-const { getUsers } = require('../utils/setupHelper')
 const { deposit } = require('../utils/poolOps')
 const { advanceBlock } = require('../utils/time')
 const { ethers } = require('hardhat')
@@ -16,8 +15,7 @@ function shouldBehaveLikeCrvStrategy(strategyIndex) {
   let strategy, user1, user2, pool, collateralToken, crv
   describe('CurveStrategy specific tests', function () {
     beforeEach(async function () {
-      const users = await getUsers()
-      ;[user1, user2] = users
+      ;[user1, user2] = this.users
       pool = this.pool
       strategy = this.strategies[strategyIndex].instance
       collateralToken = this.collateralToken

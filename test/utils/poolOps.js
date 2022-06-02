@@ -10,14 +10,8 @@ const DECIMAL = BigNumber.from('1000000000000000000')
 const { parseEther } = require('@ethersproject/units')
 const { adjustBalance } = require('./balance')
 const { getChain } = require('../utils/chains')
-const { unlock } = require('./setupHelper')
+const { unlock, getIfExist } = require('./setupHelper')
 const { NATIVE_TOKEN, DAI, MIM, ALUSD, Vesper } = require(`../../helper/${getChain()}/address`)
-
-async function executeIfExist(fn) {
-  if (typeof fn === 'function') {
-    await fn()
-  }
-}
 
 /**
  *  Swap given ETH for given token type and deposit tokens into Vesper pool
@@ -34,11 +28,11 @@ async function deposit(pool, token, amount, depositor) {
     const wethBalance = await token.balanceOf(depositor.address)
     const requestedAmount = BigNumber.from(amount).mul(DECIMAL)
     if (requestedAmount.gt(wethBalance)) {
-      await token.connect(depositor.signer).deposit({ value: requestedAmount.sub(wethBalance) })
+      await token.connect(depositor).deposit({ value: requestedAmount.sub(wethBalance) })
     }
     depositAmount = requestedAmount
-    await token.connect(depositor.signer).approve(pool.address, depositAmount)
-    await pool.connect(depositor.signer)['deposit(uint256)'](depositAmount)
+    await token.connect(depositor).approve(pool.address, depositAmount)
+    await pool.connect(depositor)['deposit(uint256)'](depositAmount)
   } else if (token.address === MIM || token.address === DAI || token.address === ALUSD) {
     // Artificially performs the swap from NATIVE_TOKEN to token.address
     // By altering the token balance
@@ -49,12 +43,12 @@ async function deposit(pool, token, amount, depositor) {
     const slippage = BigNumber.from(1000).sub(pool.depositsCount)
     depositAmount = depositAmount.mul(slippage).div(1000)
     await adjustBalance(token.address, depositor.address, depositAmount)
-    await token.connect(depositor.signer).approve(pool.address, depositAmount)
-    await pool.connect(depositor.signer).deposit(depositAmount)
+    await token.connect(depositor).approve(pool.address, depositAmount)
+    await pool.connect(depositor).deposit(depositAmount)
   } else {
     depositAmount = await swapper.swapEthForToken(amount, token.address, depositor)
-    await token.connect(depositor.signer).approve(pool.address, depositAmount)
-    await pool.connect(depositor.signer).deposit(depositAmount)
+    await token.connect(depositor).approve(pool.address, depositAmount)
+    await pool.connect(depositor).deposit(depositAmount)
   }
   return depositAmount
 }
@@ -87,12 +81,18 @@ async function timeTravel(
 }
 
 async function bringAboveWater(strategy, amount) {
-  if (strategy.instance.isUnderwater !== undefined && (await strategy.instance.isUnderwater())) {
+  if (await getIfExist(strategy.instance.isUnderwater)) {
     // deposit some amount in aave/compound to bring it above water.
     if (strategy.contract.includes('AaveMaker')) {
       await depositTokenToAave(amount, DAI, strategy.instance.address)
     } else if (strategy.contract.includes('CompoundMaker')) {
       await depositTokenToCompound(amount, DAI, strategy.instance.address)
+    } else {
+      // Update vaDAI balance in VesperMakerStrategy
+      const token = await ethers.getContractAt('IERC20', Vesper.vaDAI)
+      const balance = await token.balanceOf(strategy.instance.address)
+      const increaseBalanceBy = ethers.utils.parseEther('1000')
+      await adjustBalance(token.address, strategy.instance.address, balance.add(increaseBalanceBy))
     }
     const lowWater = await strategy.instance.isUnderwater()
     // if still low water do a resurface
@@ -118,15 +118,14 @@ async function harvestYearn(strategy) {
   const collateralTokenAddress = await strategy.instance.collateralToken()
   const vault = await strategy.instance.receiptToken()
 
-  const signer = await ethers.provider.getSigner(strategy.signer)
-
+  const user = (await ethers.getSigners())[10]
   if (collateralTokenAddress === NATIVE_TOKEN) {
-    const weth = await ethers.getContractAt('TokenLike', collateralTokenAddress, signer)
+    const weth = await ethers.getContractAt('TokenLike', collateralTokenAddress, user)
     const transferAmount = ethers.utils.parseEther('5')
     await weth.deposit({ value: transferAmount })
     await weth.transfer(vault, transferAmount)
   } else {
-    await swapper.swapEthForToken(5, collateralTokenAddress, { signer }, vault)
+    await swapper.swapEthForToken(5, collateralTokenAddress, user, vault)
   }
 }
 
@@ -138,18 +137,17 @@ async function harvestYearn(strategy) {
  * @param {object} strategy - strategy object
  */
 async function harvestVesperMaker(strategy) {
-  const vPool = await ethers.getContractAt('IVesperPool', await strategy.instance.receiptToken())
+  const vPool = await ethers.getContractAt('IVesperPoolTest', await strategy.instance.receiptToken())
   const collateralTokenAddress = await vPool.token()
 
-  const signer = await ethers.provider.getSigner(strategy.signer)
-
+  const user = (await ethers.getSigners())[11]
   if (collateralTokenAddress === NATIVE_TOKEN) {
-    const weth = await ethers.getContractAt('TokenLike', collateralTokenAddress, signer)
+    const weth = await ethers.getContractAt('TokenLike', collateralTokenAddress, user)
     const transferAmount = ethers.utils.parseEther('5')
     await weth.deposit({ value: transferAmount })
     await weth.transfer(vPool.address, transferAmount)
   } else {
-    await swapper.swapEthForToken(5, collateralTokenAddress, { signer }, vPool.address)
+    await swapper.swapEthForToken(5, collateralTokenAddress, user, vPool.address)
   }
 }
 
@@ -161,18 +159,17 @@ async function harvestVesperMaker(strategy) {
  * @param {object} strategy - strategy object
  */
 async function harvestVesperXY(strategy) {
-  const vPool = await ethers.getContractAt('IVesperPool', await strategy.instance.vPool())
+  const vPool = await ethers.getContractAt('IVesperPoolTest', await strategy.instance.vPool())
   const collateralTokenAddress = await vPool.token()
 
-  const signer = await ethers.provider.getSigner(strategy.signer)
-
+  const user = (await ethers.getSigners())[11]
   if (collateralTokenAddress === NATIVE_TOKEN) {
-    const weth = await ethers.getContractAt('TokenLike', collateralTokenAddress, signer)
+    const weth = await ethers.getContractAt('TokenLike', collateralTokenAddress, user)
     const transferAmount = ethers.utils.parseEther('5')
     await weth.deposit({ value: transferAmount })
     await weth.transfer(vPool.address, transferAmount)
   } else {
-    await swapper.swapEthForToken(5, collateralTokenAddress, { signer }, vPool.address)
+    await swapper.swapEthForToken(5, collateralTokenAddress, user, vPool.address)
   }
 }
 
@@ -195,15 +192,19 @@ async function harvestVesper(strategy) {
   return harvestYearn(strategy)
 }
 
-async function makeStrategyProfitable(strategy, collateralToken, user) {
-  // some strategies are loss making so lets make strategy profitable by sending token
-  if (collateralToken.address === NATIVE_TOKEN) {
-    const weth = await ethers.getContractAt('TokenLike', collateralToken.address, user.signer)
-    const transferAmount = ethers.utils.parseEther('2')
-    await weth.deposit({ value: transferAmount })
-    await weth.transfer(strategy.address, transferAmount)
-  } else {
-    await swapper.swapEthForToken(2, collateralToken.address, user, strategy.address)
+async function makeStrategyProfitable(strategy, token, token2 = {}) {
+  const balance = await token.balanceOf(strategy.address)
+  const increaseBalanceBy = ethers.utils.parseUnits('20', await token.decimals())
+  try {
+    // Do not fail if adjust balance fails on first token.
+    await adjustBalance(token.address, strategy.address, balance.add(increaseBalanceBy))
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.error('Error while making strategy profitable', e)
+  }
+  // Adjust balance of token 2 if provided
+  if (token2.address) {
+    await adjustBalance(token2.address, strategy.address, balance.add(increaseBalanceBy))
   }
 }
 
@@ -213,7 +214,6 @@ async function makeStrategyProfitable(strategy, collateralToken, user) {
  * @param {object} strategy - strategy object
  */
 async function rebalanceStrategy(strategy) {
-  await executeIfExist(strategy.token.exchangeRateCurrent)
   let tx
   try {
     if (strategy.type.includes('Maker')) {
@@ -238,7 +238,7 @@ async function rebalanceStrategy(strategy) {
       strategy.type.includes('earnRariFuse') ||
       strategy.type.includes('trader')
     ) {
-      const cToken = await ethers.getContractAt('CToken', strategy.token.address)
+      const cToken = await ethers.getContractAt('CToken', await strategy.instance.token())
       await cToken.accrueInterest()
     }
     tx = await strategy.instance.rebalance()
@@ -249,7 +249,6 @@ async function rebalanceStrategy(strategy) {
     await bringAboveWater(strategy, 50)
     tx = await strategy.instance.rebalance()
   }
-  await executeIfExist(strategy.token.exchangeRateCurrent)
   return tx
 }
 
@@ -305,7 +304,6 @@ module.exports = {
   rebalanceStrategy,
   rebalanceUnderlying,
   totalDebtOfAllStrategy,
-  executeIfExist,
   timeTravel,
   makeStrategyProfitable,
 }

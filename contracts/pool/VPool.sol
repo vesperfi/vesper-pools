@@ -20,7 +20,7 @@ contract VPool is Initializable, PoolERC20Permit, Governable, Pausable, Reentran
     using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.AddressSet;
 
-    string public constant VERSION = "5.0.0";
+    string public constant VERSION = "5.0.1";
 
     uint256 public constant MAX_BPS = 10_000;
     // For simplicity we are assuming 365 days as 1 year
@@ -112,6 +112,17 @@ contract VPool is Initializable, PoolERC20Permit, Governable, Pausable, Reentran
         IERC20Permit(address(token)).permit(_msgSender(), address(this), _amount, _deadline, _v, _r, _s);
         _updateRewards(_msgSender());
         _deposit(_amount);
+    }
+
+    /**
+     * @notice Withdraw collateral based on given shares and the current share price.
+     * Burn remaining shares and return collateral. Claim rewards if there is any
+     * @dev Deprecated method. Keeping this method here for backward compatibility.
+     * @param _shares Pool shares. It will be in 18 decimals.
+     */
+    function whitelistedWithdraw(uint256 _shares) external nonReentrant whenNotShutdown {
+        _claimRewards(_msgSender());
+        _withdraw(_shares);
     }
 
     /**
@@ -499,10 +510,10 @@ contract VPool is Initializable, PoolERC20Permit, Governable, Pausable, Reentran
      * @notice OnlyGovernor:: Helper function for V5 upgrade
      */
     function setup() external onlyGovernor {
-        require(universalFee == 0, Errors.ALREADY_INITIALIZED);
         universalFee = 200; // 2%
         maxProfitAsFee = 5_000; // 50%
         minDepositLimit = 1;
+        IPoolAccountant(poolAccountant).setup();
     }
 
     /**

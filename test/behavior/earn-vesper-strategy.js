@@ -3,7 +3,7 @@
 const { deposit, timeTravel, rebalanceStrategy } = require('../utils/poolOps')
 const { expect } = require('chai')
 const { ethers } = require('hardhat')
-const { getUsers, getEvent } = require('../utils/setupHelper')
+const { getEvent } = require('../utils/setupHelper')
 const { getChain } = require('../utils/chains')
 const Address = require(`../../helper/${getChain()}/address`)
 const { adjustBalance } = require('../utils/balance')
@@ -37,8 +37,7 @@ async function shouldBehaveLikeEarnVesperStrategy(strategyIndex) {
   shouldBehaveLikeUnderlyingVesperPoolStrategy(strategyIndex)
   describe(`Earn Vesper specific tests for strategy[${strategyIndex}]`, function () {
     beforeEach(async function () {
-      ;[user1, user2] = await getUsers()
-      ;[governor] = await ethers.getSigners()
+      ;[governor, user1, user2] = this.users
       pool = this.pool
       accountant = this.accountant
       strategy = this.strategies[strategyIndex]
@@ -93,9 +92,11 @@ async function shouldBehaveLikeEarnVesperStrategy(strategyIndex) {
         expect(pricePerShareBefore).to.be.eq(pricePerShareAfter, "Price per share of of EarnPool shouldn't increase")
         const withdrawAmount = await pool.balanceOf(user2.address)
 
-        if (collateralToken.address === Address.WETH)
-          await pool.connect(user2.signer).withdrawETHAndClaim(withdrawAmount)
-        else await pool.connect(user2.signer).withdrawAndClaim(withdrawAmount)
+        if (collateralToken.address === Address.WETH) {
+          await pool.connect(user2).withdrawETHAndClaim(withdrawAmount)
+        } else {
+          await pool.connect(user2).withdrawAndClaim(withdrawAmount)
+        }
 
         const earnedDrip =
           dripToken.address === Address.WETH

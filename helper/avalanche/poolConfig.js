@@ -6,27 +6,27 @@ const setup = { universalFee: 200 }
 const rewards = { contract: 'PoolRewards', tokens: [Address.Vesper.VSP] }
 
 const PoolConfig = {
-  VADAI: {
+  VADAIe: {
     contractName: 'VPool',
-    poolParams: ['vaDAI Pool', 'vaDAI', Address.DAI],
+    poolParams: ['vaDAIe Pool', 'vaDAIe', Address.DAIe],
     setup: { ...setup }, // Shallow copy
     rewards: { ...rewards },
   },
-  VDAI: {
+  VDAIe: {
     contractName: 'VPool',
-    poolParams: ['vaDAI Pool', 'vaDAI', Address.DAI],
+    poolParams: ['vaDAIe Pool', 'vaDAIe', Address.DAIe],
     setup: { ...setup }, // Shallow copy
     rewards: { ...rewards },
   },
-  VAWETH: {
+  VAWETHe: {
     contractName: 'VPool',
-    poolParams: ['vaWETH Pool', 'vaWETH', Address.WETH],
+    poolParams: ['vaWETHe Pool', 'vaWETHe', Address.WETHe],
     setup: { ...setup }, // Shallow copy
     rewards: { ...rewards },
   },
-  VAWBTC: {
+  VAWBTCe: {
     contractName: 'VPool',
-    poolParams: ['vaWBTC Pool', 'vaWBTC', Address.WBTC],
+    poolParams: ['vaWBTCe Pool', 'vaWBTCe', Address.WBTCe],
     setup: { ...setup }, // Shallow copy
     rewards: { ...rewards },
   },
@@ -36,27 +36,21 @@ const PoolConfig = {
     setup: { ...setup }, // Shallow copy
     rewards: { ...rewards },
   },
-  VAUSDC: {
+  VAUSDCe: {
     contractName: 'VPool',
-    poolParams: ['vaUSDC Pool', 'vaUSDC', Address.USDC_e],
+    poolParams: ['vaUSDCe Pool', 'vaUSDCe', Address.USDCe],
     setup: { ...setup }, // Shallow copy
     rewards: { ...rewards },
   },
-  VAUSDCN: {
+  VAUSDC: {
     contractName: 'VPool',
-    poolParams: ['vaUSDC Native Pool', 'vaUSDC.n', Address.USDC],
+    poolParams: ['vaUSDC Pool', 'vaUSDC', Address.USDC],
     setup: { ...setup }, // Shallow copy
     rewards: { ...rewards },
   },
   VAQI: {
     contractName: 'VPool',
     poolParams: ['vaQI Pool', 'vaQI', Address.Benqi.QI],
-    setup: { ...setup }, // Shallow copy
-    rewards: { ...rewards },
-  },
-  VUSDC: {
-    contractName: 'VPool',
-    poolParams: ['vUSDC Pool', 'vUSDC', Address.USDC_e],
     setup: { ...setup }, // Shallow copy
     rewards: { ...rewards },
   },

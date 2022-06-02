@@ -19,14 +19,21 @@ contract AaveXYStrategy is Strategy, AaveCore {
     string public constant VERSION = "4.0.0";
 
     uint256 internal constant MAX_BPS = 10_000; //100%
-    uint256 public minBorrowRatio = 5_000; // 50%
-    uint256 public maxBorrowRatio = 6_000; // 60%
+    uint256 public minBorrowLimit = 7_000; // 70% of actual collateral factor of protocol
+    uint256 public maxBorrowLimit = 8_500; // 85% of actual collateral factor of protocol
 
     IUniswapV3Oracle internal constant ORACLE = IUniswapV3Oracle(0x0F1f5A87f99f0918e6C81F16E59F3518698221Ff);
     uint32 internal constant TWAP_PERIOD = 3600;
     address public rewardToken;
     address public borrowToken;
     AToken public vdToken; // Variable Debt Token
+
+    event UpdatedBorrowLimit(
+        uint256 previousMinBorrowLimit,
+        uint256 newMinBorrowLimit,
+        uint256 previousMaxBorrowLimit,
+        uint256 newMaxBorrowLimit
+    );
 
     constructor(
         address _pool,
@@ -41,21 +48,6 @@ contract AaveXYStrategy is Strategy, AaveCore {
         (, , address _vdToken) = aaveProtocolDataProvider.getReserveTokensAddresses(_borrowToken);
         vdToken = AToken(_vdToken);
         borrowToken = _borrowToken;
-    }
-
-    /**
-     * @notice Current borrow ratio, calculated as current borrow divide by max allowed borrow
-     * Return value is based on basis points, i.e. 7500 = 75% ratio
-     */
-    function currentBorrowRatio() external view returns (uint256) {
-        (uint256 _supply, uint256 _borrow) = getPosition();
-        return _borrow == 0 ? 0 : (_borrow * MAX_BPS) / _supply;
-    }
-
-    /// @notice Return supply and borrow position. Position may return few block old value
-    function getPosition() public view returns (uint256 _supply, uint256 _borrow) {
-        _supply = _convertCollateralToBorrow(aToken.balanceOf(address(this)));
-        _borrow = vdToken.balanceOf(address(this));
     }
 
     /**
@@ -143,54 +135,67 @@ contract AaveXYStrategy is Strategy, AaveCore {
     }
 
     /**
-     * @notice Calculate borrow position based on borrow ratio, current supply, borrow, amount
-     * being deposited or withdrawn.
-     * @param _amount Collateral amount
-     * @param _isDeposit Flag indicating whether we are depositing _amount or withdrawing
-     * @return _position Amount of borrow that need to be adjusted
-     * @return _shouldRepay Flag indicating whether _position is borrow amount or repay amount
+     * @notice Calculate borrow and repay amount based on current collateral and new deposit/withdraw amount.
+     * @param _depositAmount deposit amount
+     * @param _withdrawAmount withdraw amount
+     * @return _borrowAmount borrow more amount
+     * @return _repayAmount repay amount to keep ltv within limit
      */
-    function _calculateDesiredPosition(uint256 _amount, bool _isDeposit)
+    function _calculateBorrowPosition(uint256 _depositAmount, uint256 _withdrawAmount)
         internal
         view
-        returns (uint256 _position, bool _shouldRepay)
+        returns (uint256 _borrowAmount, uint256 _repayAmount)
     {
-        uint256 _supply = aToken.balanceOf(address(this));
-        uint256 _totalBorrow = vdToken.balanceOf(address(this));
-
+        require(_depositAmount == 0 || _withdrawAmount == 0, "all-input-gt-zero");
+        uint256 _borrowed = vdToken.balanceOf(address(this));
+        // If maximum borrow limit set to 0 then repay borrow
+        if (maxBorrowLimit == 0) {
+            return (0, _borrowed);
+        }
+        uint256 _collateral = aToken.balanceOf(address(this));
         // In case of withdraw, _amount can be greater than _supply
-        uint256 _newSupply = _isDeposit ? _supply + _amount : _supply > _amount ? _supply - _amount : 0;
-
-        // If minimum borrow limit set to 0 then repay borrow
-        if (minBorrowRatio == 0 || _newSupply == 0) {
-            return (_totalBorrow, true);
+        uint256 _hypotheticalCollateral =
+            _depositAmount > 0 ? _collateral + _depositAmount : _collateral > _withdrawAmount
+                ? _collateral - _withdrawAmount
+                : 0;
+        if (_hypotheticalCollateral == 0) {
+            return (0, _borrowed);
         }
+        AaveOracle _aaveOracle = AaveOracle(aaveAddressesProvider_.getPriceOracle());
+        // Oracle prices are in 18 decimal
+        uint256 _borrowTokenPrice = _aaveOracle.getAssetPrice(borrowToken);
+        uint256 _collateralTokenPrice = _aaveOracle.getAssetPrice(address(collateralToken));
+        if (_borrowTokenPrice == 0 || _collateralTokenPrice == 0) {
+            // Oracle problem. Lets payback all
+            return (0, _borrowed);
+        }
+        // _collateralFactor in 4 decimal. 10_000 = 100%
+        (, uint256 _collateralFactor, , , , , , , , ) =
+            aaveProtocolDataProvider.getReserveConfigurationData(address(collateralToken));
 
-        _newSupply = _convertCollateralToBorrow(_newSupply);
+        // Collateral in base currency based on oracle price and cf;
+        uint256 _actualCollateralForBorrow =
+            (_hypotheticalCollateral * _collateralFactor * _collateralTokenPrice) /
+                (MAX_BPS * (10**IERC20Metadata(address(collateralToken)).decimals()));
+        // Calculate max borrow possible in borrow token number
+        uint256 _maxBorrowPossible =
+            (_actualCollateralForBorrow * (10**IERC20Metadata(address(borrowToken)).decimals())) / _borrowTokenPrice;
+        if (_maxBorrowPossible == 0) {
+            return (0, _borrowed);
+        }
+        // Safe buffer to avoid liquidation due to price variations.
+        uint256 _borrowUpperBound = (_maxBorrowPossible * maxBorrowLimit) / MAX_BPS;
 
-        // (supply * borrowRatio)/(BPS)
-        uint256 _borrowUpperBound = (_newSupply * maxBorrowRatio) / MAX_BPS;
-        uint256 _borrowLowerBound = (_newSupply * minBorrowRatio) / MAX_BPS;
+        // Borrow up to _borrowLowerBound and keep buffer of _borrowUpperBound - _borrowLowerBound for price variation
+        uint256 _borrowLowerBound = (_maxBorrowPossible * minBorrowLimit) / MAX_BPS;
 
-        // If our current borrow is greater than max borrow allowed, then we will have to repay
-        // some to achieve safe position else borrow more.
-        if (_totalBorrow > _borrowUpperBound) {
-            _shouldRepay = true;
+        // If current borrow is greater than max borrow, then repay to achieve safe position.
+        if (_borrowed > _borrowUpperBound) {
             // If borrow > upperBound then it is greater than lowerBound too.
-            _position = _totalBorrow - _borrowLowerBound;
-        } else if (_totalBorrow < _borrowLowerBound) {
-            _shouldRepay = false;
-            // We can borrow more.
-            _position = _borrowLowerBound - _totalBorrow;
+            _repayAmount = _borrowed - _borrowLowerBound;
+        } else if (_borrowLowerBound > _borrowed) {
+            _borrowAmount = _borrowLowerBound - _borrowed;
         }
-    }
-
-    function _convertCollateralToBorrow(uint256 _collateralAmount) internal view returns (uint256 _borrowAmount) {
-        (, _borrowAmount, ) = swapManager.bestOutputFixedInput(
-            address(collateralToken),
-            borrowToken,
-            _collateralAmount
-        );
     }
 
     /// @notice Claim Aave and VSP rewards and convert to _toToken.
@@ -225,12 +230,8 @@ contract AaveXYStrategy is Strategy, AaveCore {
 
         uint256 _investedBorrowBalance = _getInvestedBorrowBalance();
 
-        if (_investedBorrowBalance > (_borrow + 1e18)) {
-            // Swaps excess profit from the underlying vPool
-            // For more collateral
-            // Keeps 1e18 of Y invested as buffer to deal with dust
-            // During last withdraw
-            _rebalanceBorrow(_investedBorrowBalance - (_borrow + 1e18));
+        if (_investedBorrowBalance > _borrow) {
+            _rebalanceBorrow(_investedBorrowBalance - _borrow);
         } else {
             _swapToBorrowToken(_borrow - _investedBorrowBalance);
         }
@@ -289,11 +290,11 @@ contract AaveXYStrategy is Strategy, AaveCore {
     function _reinvest() internal virtual override {
         uint256 _collateralBalance = collateralToken.balanceOf(address(this));
 
-        (uint256 _borrowAmount, bool _shouldRepay) = _calculateDesiredPosition(_collateralBalance, true);
+        (uint256 _borrowAmount, uint256 _repayAmount) = _calculateBorrowPosition(_collateralBalance, 0);
 
-        if (_shouldRepay) {
+        if (_repayAmount > 0) {
             // Repay _borrowAmount to maintain safe position
-            _repayY(_borrowAmount);
+            _repayY(_repayAmount);
             _mint(collateralToken.balanceOf(address(this)));
         } else {
             // Happy path, mint more borrow more
@@ -358,9 +359,9 @@ contract AaveXYStrategy is Strategy, AaveCore {
 
     /// @dev Withdraw collateral here. Do not transfer to pool
     function _withdrawHere(uint256 _amount) internal returns (uint256) {
-        (uint256 _position, bool _shouldRepay) = _calculateDesiredPosition(_amount, false);
-        if (_shouldRepay) {
-            _repayY(_position);
+        (, uint256 _repayAmount) = _calculateBorrowPosition(0, _amount);
+        if (_repayAmount > 0) {
+            _repayY(_repayAmount);
         }
         uint256 _collateralBefore = collateralToken.balanceOf(address(this));
 
@@ -370,17 +371,20 @@ contract AaveXYStrategy is Strategy, AaveCore {
     }
 
     /**
-     * @notice Update upper, lower borrow  and slippage.
-     * @dev It is possible to set 0 as _minBorrowRatio to not borrow anything
-     * @param _minBorrowRatio Minimum % we want to borrow
-     * @param _maxBorrowRatio Maximum % we want to borrow
+     * @notice Update upper and lower borrow limit. Usually maxBorrowLimit < 100% of actual collateral factor of protocol.
+     * @dev It is possible to set _maxBorrowLimit and _minBorrowLimit as 0 to not borrow anything
+     * @param _minBorrowLimit It is % of actual collateral factor of protocol
+     * @param _maxBorrowLimit It is % of actual collateral factor of protocol
      */
-    function updateBorrowRatio(uint256 _minBorrowRatio, uint256 _maxBorrowRatio) external onlyGovernor {
-        (, uint256 _collateralFactor, , , , , , , , ) =
-            aaveProtocolDataProvider.getReserveConfigurationData(address(collateralToken));
-        require(_maxBorrowRatio < _collateralFactor, "invalid-max-borrow-limit");
-        require(_maxBorrowRatio > _minBorrowRatio, "max-should-be-higher-than-min");
-        minBorrowRatio = _minBorrowRatio;
-        maxBorrowRatio = _maxBorrowRatio;
+    function updateBorrowLimit(uint256 _minBorrowLimit, uint256 _maxBorrowLimit) external onlyGovernor {
+        require(_maxBorrowLimit < MAX_BPS, "invalid-max-borrow-limit");
+        // set _maxBorrowLimit and _minBorrowLimit to disable borrow;
+        require(
+            (_maxBorrowLimit == 0 && _minBorrowLimit == 0) || _maxBorrowLimit > _minBorrowLimit,
+            "max-should-be-higher-than-min"
+        );
+        emit UpdatedBorrowLimit(minBorrowLimit, _minBorrowLimit, maxBorrowLimit, _maxBorrowLimit);
+        minBorrowLimit = _minBorrowLimit;
+        maxBorrowLimit = _maxBorrowLimit;
     }
 }

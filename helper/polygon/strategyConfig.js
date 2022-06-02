@@ -12,78 +12,78 @@ const setup = {
 
 // TODO update setup to remove strategy type, once done remove type from heres too
 const StrategyConfig = {
-  AaveStrategyPolygonDAI: {
-    contract: 'AaveStrategyPolygon',
+  AaveStrategyDAI: {
+    contract: 'AaveStrategy',
     type: StrategyTypes.AAVE,
     constructorArgs: {
       swapManager,
       receiptToken: Address.Aave.amDAI,
-      strategyName: 'AaveStrategyPolygonDAI',
+      strategyName: 'AaveStrategyDAI',
     },
     config: { ...config }, // Shallow copy
     setup: { ...setup },
   },
 
-  AaveStrategyPolygonUSDC: {
-    contract: 'AaveStrategyPolygon',
+  AaveStrategyUSDC: {
+    contract: 'AaveStrategy',
     type: StrategyTypes.AAVE,
     constructorArgs: {
       swapManager,
       receiptToken: Address.Aave.amUSDC,
-      strategyName: 'AaveStrategyPolygonUSDC',
+      strategyName: 'AaveStrategyUSDC',
     },
     config: { ...config },
     setup: { ...setup },
   },
 
-  AaveStrategyPolygonUSDT: {
-    contract: 'AaveStrategyPolygon',
+  AaveStrategyUSDT: {
+    contract: 'AaveStrategy',
     type: StrategyTypes.AAVE,
     constructorArgs: {
       swapManager,
       receiptToken: Address.Aave.amUSDT,
-      strategyName: 'AaveStrategyPolygonUSDT',
+      strategyName: 'AaveStrategyUSDT',
     },
     config: { ...config },
     setup: { ...setup },
   },
 
-  AaveStrategyPolygonWBTC: {
-    contract: 'AaveStrategyPolygon',
+  AaveStrategyWBTC: {
+    contract: 'AaveStrategy',
     type: StrategyTypes.AAVE,
     constructorArgs: {
       swapManager,
       receiptToken: Address.Aave.amWBTC,
-      strategyName: 'AaveStrategyPolygonWBTC',
+      strategyName: 'AaveStrategyWBTC',
     },
     config: { ...config },
     setup: { ...setup },
   },
 
-  AaveStrategyPolygonWETH: {
-    contract: 'AaveStrategyPolygon',
+  AaveStrategyWETH: {
+    contract: 'AaveStrategy',
     type: StrategyTypes.AAVE,
     constructorArgs: {
       swapManager,
       receiptToken: Address.Aave.amWETH,
-      strategyName: 'AaveStrategyPolygonWETH',
+      strategyName: 'AaveStrategyWETH',
     },
     config: { ...config },
     setup: { ...setup },
   },
 
-  AaveStrategyPolygonWMATIC: {
-    contract: 'AaveStrategyPolygon',
+  AaveStrategyWMATIC: {
+    contract: 'AaveStrategy',
     type: StrategyTypes.AAVE,
     constructorArgs: {
       swapManager,
       receiptToken: Address.Aave.amWMATIC,
-      strategyName: 'AaveStrategyPolygonWMATIC',
+      strategyName: 'AaveStrategyWMATIC',
     },
     config: { ...config },
     setup: { ...setup },
   },
-  EarnVesperStrategyDAIWETH: {
+  EarnVesperStrategyDAI_WETH: {
     contract: 'EarnVesperStrategy',
     type: StrategyTypes.EARN_VESPER,
     constructorArgs: {
@@ -91,12 +91,12 @@ const StrategyConfig = {
       receiptToken: Address.Vesper.vDAI,
       dripToken: Address.WETH,
       vsp: Address.Vesper.VSP,
-      strategyName: 'EarnVesperStrategyDAIWETH',
+      strategyName: 'EarnVesperStrategyDAI_WETH',
     },
     config: { ...config },
     setup: { ...setup },
   },
-  EarnVesperStrategyDAIWBTC: {
+  EarnVesperStrategyDAI_WBTC: {
     contract: 'EarnVesperStrategy',
     type: StrategyTypes.EARN_VESPER,
     constructorArgs: {
@@ -104,7 +104,7 @@ const StrategyConfig = {
       receiptToken: Address.Vesper.vDAI,
       dripToken: Address.WBTC,
       vsp: Address.Vesper.VSP,
-      strategyName: 'EarnVesperStrategyDAIWBTC',
+      strategyName: 'EarnVesperStrategyDAI_WBTC',
     },
     config: { ...config },
     setup: { ...setup },

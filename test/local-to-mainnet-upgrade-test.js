@@ -1,5 +1,5 @@
 'use strict'
-const { getUsers, unlock, deployContract } = require('./utils/setupHelper')
+const { unlock, deployContract } = require('./utils/setupHelper')
 const { adjustBalance } = require('./utils/balance')
 const { ethers } = require('hardhat')
 const { VADAI } = require('../helper/mainnet/poolConfig')
@@ -38,8 +38,7 @@ describe('Local to mainnet upgrade tests', function () {
   ]
 
   beforeEach(async function () {
-    const users = await getUsers()
-    ;[, user1] = users
+    ;[, user1] = await ethers.getSigners()
     proxyAdmin = await ethers.getContractAt('ProxyAdmin', proxyAdminAddress)
     poolImplementation = await deployContract(VADAI.contractName, VADAI.poolParams)
     accountantImplementation = await deployContract('PoolAccountant')
@@ -75,8 +74,8 @@ describe('Local to mainnet upgrade tests', function () {
     // Deposit 30 DAI
     const depositAmount = ethers.utils.parseUnits('30', collateralDecimal)
     await adjustBalance(collateralToken.address, user1.address, depositAmount)
-    await collateralToken.connect(user1.signer).approve(poolProxy.address, depositAmount)
-    await poolProxy.connect(user1.signer).deposit(depositAmount)
+    await collateralToken.connect(user1).approve(poolProxy.address, depositAmount)
+    await poolProxy.connect(user1).deposit(depositAmount)
     const vPoolBalance = await poolProxy.balanceOf(user1.address)
     expect(vPoolBalance, 'VPool balance of user should be > 0').to.gt('0')
 
@@ -91,7 +90,7 @@ describe('Local to mainnet upgrade tests', function () {
     const vPoolFC2 = await poolProxy.balanceOf(feeCollector)
     expect(vPoolFC2, 'VPool balance of feeCollector should be >=').to.gte(vPoolFC)
 
-    await poolProxy.connect(user1.signer).withdraw(vPoolBalance)
+    await poolProxy.connect(user1).withdraw(vPoolBalance)
     const vPoolBalance2 = await poolProxy.balanceOf(user1.address)
     expect(vPoolBalance2, 'VPool balance of user should be zero').to.eq('0')
     expect(await collateralToken.balanceOf(user1.address), 'Collateral balance of user is wrong').to.gte(depositAmount)
