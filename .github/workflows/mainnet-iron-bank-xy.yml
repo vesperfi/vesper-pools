@@ -1,0 +1,63 @@
+name: Mainnet Iron Bank XY Strategy
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/mainnet-iron-bank-xy.yml"
+      - ".github/actions/setup-env/action.yml"
+      - "test/utils/setupHelper.js"
+      - "test/behavior/compound-xy.js"
+      - "test/behavior/vesper-compound-xy.js"
+      - "contracts/pool/**/*.sol"
+      - "contracts/pool/*.sol"
+      - "contracts/strategies/Strategy.sol"
+      - "contracts/strategies/compound/IronBankXYStrategy.sol"
+      - "contracts/strategies/compound/CompoundXYCore.sol"
+      - "contracts/strategies/compound/VesperIronBankXYStrategy.sol"
+      - "test/mainnet/iron-bank-xy/**/*.js"
+
+# Limit concurrency to one workflow per branch and one per pull_request
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: true
+
+jobs:
+  setup-job:
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.NODE_URL }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup env
+        uses: ./.github/actions/setup-env
+
+  vaeth-vesper-test:
+    needs: [setup-job]
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.NODE_URL }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup env
+        uses: ./.github/actions/setup-env
+
+      - name: Running Iron Bank Vesper XY strategy for VAETH pool
+        run: npm test test/mainnet/iron-bank-xy/vesper/vaeth.js
+
+  vaeth-test:
+    needs: [setup-job]
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.NODE_URL }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup env
+        uses: ./.github/actions/setup-env
+
+      - name: Running Iron Bank XY strategy for VAETH pool
+        run: npm test test/mainnet/iron-bank-xy/vaeth.js

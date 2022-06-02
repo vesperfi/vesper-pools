@@ -581,6 +581,20 @@ const StrategyConfig = {
     setup: { ...setup },
   },
 
+  IronBankXYStrategyDPI_DAI: {
+    contract: 'IronBankXYStrategy',
+    type: StrategyTypes.COMPOUND_XY,
+    constructorArgs: {
+      swapManager,
+      comptroller: Address.IronBank.Unitroller,
+      receiptToken: Address.IronBank.iDPI,
+      borrowCToken: Address.IronBank.iDAI,
+      strategyName: 'IronBankXYStrategyDPI_DAI',
+    },
+    config: { ...config },
+    setup: { ...setup },
+  },
+
   VesperIronBankXYStrategyETH_DAI: {
     contract: 'VesperIronBankXYStrategy',
     type: StrategyTypes.VESPER_COMPOUND_XY,
