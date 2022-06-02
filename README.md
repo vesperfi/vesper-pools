@@ -7,8 +7,8 @@ Please read and get familiar with [Vesper](https://docs.vesper.finance/). This r
 1. Install
 
    ```sh
-   git clone --recursive https://github.com/vesperfi/vesper-pools-v3.git
-   cd vesper-pools-v3
+   git clone https://github.com/vesperfi/vesper-pools.git
+   cd vesper-pools
    nvm use
    npm install
    ```
