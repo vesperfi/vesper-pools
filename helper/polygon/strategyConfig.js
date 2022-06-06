@@ -1,112 +1,110 @@
 'use strict'
 
-const { ethers } = require('hardhat')
 const Address = require('./address')
 const StrategyTypes = require('../../test/utils/strategyTypes')
 
-const swapManager = Address.SWAP_MANAGER
-const interestFee = '2000' // 20%
-const config = { interestFee, debtRatio: 0, debtRate: ethers.utils.parseEther('1000000').toString() }
+const swapManager = Address.Vesper.SWAP_MANAGER
+const config = { debtRatio: 0, externalDepositFee: 0 }
 const setup = {
-  feeCollector: Address.FEE_COLLECTOR,
-  keepers: [Address.KEEPER],
+  feeCollector: Address.Vesper.FEE_COLLECTOR,
+  keepers: [Address.Vesper.KEEPER],
 }
 
 // TODO update setup to remove strategy type, once done remove type from heres too
 const StrategyConfig = {
-  AaveStrategyPolygonDAI: {
-    contract: 'AaveStrategyPolygon',
+  AaveStrategyDAI: {
+    contract: 'AaveStrategy',
     type: StrategyTypes.AAVE,
     constructorArgs: {
       swapManager,
       receiptToken: Address.Aave.amDAI,
-      strategyName: 'AaveStrategyPolygonDAI',
+      strategyName: 'AaveStrategyDAI',
     },
     config: { ...config }, // Shallow copy
     setup: { ...setup },
   },
 
-  AaveStrategyPolygonUSDC: {
-    contract: 'AaveStrategyPolygon',
+  AaveStrategyUSDC: {
+    contract: 'AaveStrategy',
     type: StrategyTypes.AAVE,
     constructorArgs: {
       swapManager,
       receiptToken: Address.Aave.amUSDC,
-      strategyName: 'AaveStrategyPolygonUSDC',
+      strategyName: 'AaveStrategyUSDC',
     },
-    config: { interestFee, debtRatio: 0, debtRate: ethers.utils.parseUnits('1000000', 6) },
+    config: { ...config },
     setup: { ...setup },
   },
 
-  AaveStrategyPolygonUSDT: {
-    contract: 'AaveStrategyPolygon',
+  AaveStrategyUSDT: {
+    contract: 'AaveStrategy',
     type: StrategyTypes.AAVE,
     constructorArgs: {
       swapManager,
       receiptToken: Address.Aave.amUSDT,
-      strategyName: 'AaveStrategyPolygonUSDT',
+      strategyName: 'AaveStrategyUSDT',
     },
-    config: { interestFee, debtRatio: 0, debtRate: ethers.utils.parseUnits('1000000', 6) },
+    config: { ...config },
     setup: { ...setup },
   },
 
-  AaveStrategyPolygonWBTC: {
-    contract: 'AaveStrategyPolygon',
+  AaveStrategyWBTC: {
+    contract: 'AaveStrategy',
     type: StrategyTypes.AAVE,
     constructorArgs: {
       swapManager,
       receiptToken: Address.Aave.amWBTC,
-      strategyName: 'AaveStrategyPolygonWBTC',
+      strategyName: 'AaveStrategyWBTC',
     },
-    config: { interestFee, debtRatio: 0, debtRate: ethers.utils.parseUnits('1000000', 8) },
+    config: { ...config },
     setup: { ...setup },
   },
 
-  AaveStrategyPolygonWETH: {
-    contract: 'AaveStrategyPolygon',
+  AaveStrategyWETH: {
+    contract: 'AaveStrategy',
     type: StrategyTypes.AAVE,
     constructorArgs: {
       swapManager,
       receiptToken: Address.Aave.amWETH,
-      strategyName: 'AaveStrategyPolygonWETH',
+      strategyName: 'AaveStrategyWETH',
     },
     config: { ...config },
     setup: { ...setup },
   },
 
-  AaveStrategyPolygonWMATIC: {
-    contract: 'AaveStrategyPolygon',
+  AaveStrategyWMATIC: {
+    contract: 'AaveStrategy',
     type: StrategyTypes.AAVE,
     constructorArgs: {
       swapManager,
       receiptToken: Address.Aave.amWMATIC,
-      strategyName: 'AaveStrategyPolygonWMATIC',
+      strategyName: 'AaveStrategyWMATIC',
     },
     config: { ...config },
     setup: { ...setup },
   },
-  EarnVesperStrategyDAIWETH: {
+  EarnVesperStrategyDAI_WETH: {
     contract: 'EarnVesperStrategy',
     type: StrategyTypes.EARN_VESPER,
     constructorArgs: {
       swapManager,
-      receiptToken: Address.VDAI,
+      receiptToken: Address.Vesper.vDAI,
       dripToken: Address.WETH,
-      vsp: Address.VSP,
-      strategyName: 'EarnVesperStrategyDAIWETH',
+      vsp: Address.Vesper.VSP,
+      strategyName: 'EarnVesperStrategyDAI_WETH',
     },
     config: { ...config },
     setup: { ...setup },
   },
-  EarnVesperStrategyDAIWBTC: {
+  EarnVesperStrategyDAI_WBTC: {
     contract: 'EarnVesperStrategy',
     type: StrategyTypes.EARN_VESPER,
     constructorArgs: {
       swapManager,
-      receiptToken: Address.VDAI,
+      receiptToken: Address.Vesper.vDAI,
       dripToken: Address.WBTC,
-      vsp: Address.VSP,
-      strategyName: 'EarnVesperStrategyDAIWBTC',
+      vsp: Address.Vesper.VSP,
+      strategyName: 'EarnVesperStrategyDAI_WBTC',
     },
     config: { ...config },
     setup: { ...setup },

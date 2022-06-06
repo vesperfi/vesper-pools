@@ -4,12 +4,13 @@ const hre = require('hardhat')
 const ethers = hre.ethers
 const { expect } = require('chai')
 const { constants } = require('@openzeppelin/test-helpers')
-const { getUsers, getEvent } = require('../utils/setupHelper')
+const { getEvent } = require('../utils/setupHelper')
 const { shouldBehaveLikeAaveStrategy } = require('../behavior/aave-strategy')
 const { shouldBehaveLikeCompoundStrategy } = require('../behavior/compound-strategy')
 const { shouldBehaveLikeTraderJoeStrategy } = require('../behavior/traderjoe-strategy')
 const { shouldBehaveLikeCompoundXYStrategy } = require('../behavior/compound-xy')
 const { shouldBehaveLikeCompoundLeverageStrategy } = require('../behavior/compound-leverage')
+const { shouldBehaveLikeAaveLeverageStrategy } = require('../behavior/aave-leverage')
 const { shouldBehaveLikeMakerStrategy } = require('../behavior/maker-strategy')
 const { shouldBehaveLikeCrvStrategy } = require('../behavior/crv-strategy')
 const { shouldBehaveLikeEarnMakerStrategy } = require('../behavior/earn-maker-strategy')
@@ -17,6 +18,8 @@ const { shouldBehaveLikeEarnVesperMakerStrategy } = require('../behavior/earn-ve
 const { shouldBehaveLikeRariFuseStrategy } = require('./rari-fuse-strategy')
 const { shouldBehaveLikeEarnVesperStrategy } = require('../behavior/earn-vesper-strategy')
 const { shouldBehaveLikeVesperCompoundXYStrategy } = require('./vesper-compound-xy')
+const { shouldBehaveLikeVesperAaveXYStrategy } = require('./vesper-aave-xy')
+
 const swapper = require('../utils/tokenSwapper')
 const { deposit, rebalanceStrategy } = require('../utils/poolOps')
 const { advanceBlock } = require('../utils/time')
@@ -33,6 +36,8 @@ function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
     [StrategyType.COMPOUND_MAKER]: shouldBehaveLikeMakerStrategy,
     [StrategyType.COMPOUND_XY]: shouldBehaveLikeCompoundXYStrategy,
     [StrategyType.COMPOUND_LEVERAGE]: shouldBehaveLikeCompoundLeverageStrategy,
+    [StrategyType.AAVE_LEVERAGE]: shouldBehaveLikeAaveLeverageStrategy,
+    [StrategyType.VESPER_AAVE_XY]: shouldBehaveLikeVesperAaveXYStrategy,
     [StrategyType.CURVE]: shouldBehaveLikeCrvStrategy,
     [StrategyType.CONVEX]: shouldBehaveLikeCrvStrategy,
     [StrategyType.EARN_MAKER]: shouldBehaveLikeEarnMakerStrategy,
@@ -46,15 +51,20 @@ function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
   const shouldBehaveLikeSpecificStrategy = behaviors[type]
 
   describe(`${strategyName} Strategy common behavior tests`, function () {
+    let snapshotId
     beforeEach(async function () {
-      const users = await getUsers()
-      ;[owner, user1, user2, user3, user4, user5] = users
+      snapshotId = await ethers.provider.send('evm_snapshot', [])
+      ;[owner, user1, user2, user3, user4, user5] = this.users
       strategy = this.strategies[strategyIndex].instance
       pool = this.pool
       accountant = this.accountant
       collateralToken = this.collateralToken
       feeCollector = this.strategies[strategyIndex].feeCollector
     })
+    afterEach(async function () {
+      await ethers.provider.send('evm_revert', [snapshotId])
+    })
+
     describe('Swap token', function () {
       it('Should sweep erc20 token', async function () {
         const token = await ethers.getContractAt('ERC20', ANY_ERC20)
@@ -92,9 +102,7 @@ function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
       })
 
       it('Should revert if non-gov user add a keeper', async function () {
-        await expect(strategy.connect(user2.signer).addKeeper(user3.address)).to.be.revertedWith(
-          'caller-is-not-the-governor',
-        )
+        await expect(strategy.connect(user2).addKeeper(user3.address)).to.be.revertedWith('caller-is-not-the-governor')
       })
 
       it('Should remove a new keeper', async function () {
@@ -109,7 +117,7 @@ function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
       })
 
       it('Should revert if non-gov user remove a keeper', async function () {
-        await expect(strategy.connect(user2.signer).removeKeeper(user3.address)).to.be.revertedWith(
+        await expect(strategy.connect(user2).removeKeeper(user3.address)).to.be.revertedWith(
           'caller-is-not-the-governor',
         )
       })
@@ -154,7 +162,7 @@ function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
 
     describe('Rebalance', function () {
       it('Should revert if rebalance called from non keeper', async function () {
-        await expect(strategy.connect(user4.signer).rebalance()).to.be.revertedWith('caller-is-not-a-keeper')
+        await expect(strategy.connect(user4).rebalance()).to.be.revertedWith('caller-is-not-a-keeper')
       })
 
       // FIXME: Some platform may have deposit fee or slippage loss . This test need to fix.
@@ -209,7 +217,7 @@ function shouldBehaveLikeStrategy(strategyIndex, type, strategyName) {
 
     describe('Approve token', function () {
       it('Should revert if called from non keeper', async function () {
-        await expect(strategy.connect(user4.signer).approveToken()).to.be.revertedWith('caller-is-not-a-keeper')
+        await expect(strategy.connect(user4).approveToken()).to.be.revertedWith('caller-is-not-a-keeper')
       })
 
       it('Should call approve tokens', async function () {

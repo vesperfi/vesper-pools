@@ -1,13 +1,15 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.3;
+pragma solidity 0.8.9;
 import "./ICompound.sol";
 
 interface ComptrollerMultiReward {
     function claimReward(uint8 rewardType, address holder) external;
 
     function rewardDistributor() external view returns (address);
+}
 
+interface TraderJoeComptroller {
     function markets(address market)
         external
         view

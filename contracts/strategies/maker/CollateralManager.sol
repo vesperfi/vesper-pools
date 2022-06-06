@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.3;
+pragma solidity 0.8.9;
 
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "../../Governed.sol";
+import "../../dependencies/openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "../../dependencies/openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "../../Governable.sol";
 import "../../interfaces//maker/IMakerDAO.sol";
 import "../../interfaces/vesper/ICollateralManager.sol";
 
@@ -34,7 +34,7 @@ contract DSMath {
     }
 }
 
-contract CollateralManager is ICollateralManager, DSMath, ReentrancyGuard, Governed {
+contract CollateralManager is ICollateralManager, DSMath, ReentrancyGuard, Governable {
     using SafeERC20 for IERC20;
 
     // Vault number to collateral type

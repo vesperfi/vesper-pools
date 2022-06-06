@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 /* solhint-disable */
-pragma solidity 0.8.3;
+pragma solidity 0.8.9;
 
 // Not a complete interface, but should have what we need
 interface IStableSwap {

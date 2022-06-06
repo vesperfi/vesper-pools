@@ -7,8 +7,8 @@ Please read and get familiar with [Vesper](https://docs.vesper.finance/). This r
 1. Install
 
    ```sh
-   git clone --recursive https://github.com/vesperfi/vesper-pools-v3.git
-   cd vesper-pools-v3
+   git clone https://github.com/vesperfi/vesper-pools.git
+   cd vesper-pools
    nvm use
    npm install
    ```
@@ -47,11 +47,11 @@ npm run coverage -- --testfiles "<<filename>>"
 ```
 ## Deploy
 
-Deployment will be done via custom `hardhat task deploy-pool` which behind the scene uses deploy scripts created using `hardhat-deploy`
+Deployment will be done via custom `hardhat task deploy-core-contracts` which behind the scene uses deploy scripts created using `hardhat-deploy`
 ### Usage
 * Help
    ```bash
-   npx hardhat help deploy-pool
+   npx hardhat help deploy-core-contracts
    ```
 
 * Deploy Vesper pool
@@ -102,16 +102,17 @@ Deployment will be done via custom `hardhat task deploy-pool` which behind the s
       setup: { ...setup },
     },
    ```
-  2. Run below command to deploy `AaveStrategyDAI` for `VDAI` pool
+  2. Run below command to deploy `AaveStrategyDAI` for `VDAI` pool. `multisig-nonce` parameter is optional parameters to propose multisig transaction
   ```bash
-  npm run deploy -- --pool VDAI --network localhost --release 3.0.15 --deploy-params '{"tags": "deploy-strategy"}' --strategy-name AaveStrategyDAI
+  npm run deploy -- --pool VDAI --network localhost --release 3.0.15 --deploy-params '{"tags": "deploy-strategy"}' --strategy-name AaveStrategyDAI --multisig-nonce 0
   ```
 
 * Migrate strategy
   ```bash
   npm run deploy -- --pool VDAI --network localhost --release 3.0.15 --deploy-params '{"tags": "migrate-strategy"}' --strategy-name AaveStrategyDAI
   ```
-
+  Use `old-strategy-name` optional parameter if strategy name is changed.
+  
 * Pass any `hardhat-deploy` supported param within `deploy-params` object
   ```bash
    npm run deploy -- --pool VDAI --network localhost --release 3.0.15 --deploy-params '{"tags": "deploy-vPool", "gasprice": "25000000000"}'
@@ -128,8 +129,3 @@ Deployment will be done via custom `hardhat task deploy-pool` which behind the s
   npm run deploy-upgrader -- --name PoolRewardsUpgrader --network localhost --target-chain polygon
  ```
 
- * Deploy `vfr` pool
- VFR Pool pair require Coverage, Stable pool and VFRBuffer contract. Refer `VFRDAI` config section in `poolConfig.js` file.
- ```bash
-  npm run deploy -- --pool VFRDAI --network localhost --target-chain mainnet --release 3.0.15 --deploy-params '{"tags": "deploy-vfr", "gasprice": "25000000000"}'
- ```

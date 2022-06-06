@@ -62,8 +62,8 @@
   "vaDPI-v3.0.4_3.0.5": 1637276759,
   "AlphaLendStrategyDPI-v3.0.21": 1637281781,
   "vaALUSD-v3.0.4_3.0.5": 1637342618,
-  "vaDPI-poolRewards-v3.0.4": 1637357635
-  "AaveStrategyFEI-v3.0.21": 1637630836
+  "vaDPI-poolRewards-v3.0.4": 1637357635,
+  "AaveStrategyFEI-v3.0.21": 1637630836,
   "veDAI-WBTC-vaDAI-1": 1638392387,
   "veDAI-ETH-vaDAI-1": 1638452768,
   "vaUSDC-v3.0.21_3.0.5": 1638478075,
@@ -99,5 +99,8 @@
   "VesperMakerStrategyWBTC-v4.0.0": 1644277328,
   "CompoundLeverageStrategyWBTC-v4.0.1": 1644616094,
   "CompoundLeverageStrategyETH-v4.0.0": 1645712249,
-  "InverseCompoundLeverageStrategyETH-v4.0.0": 1645712542
+  "InverseCompoundLeverageStrategyETH-v4.0.0": 1645712542,
+  "vaAPE-v5.0.0_5.0.0": 1648500592,
+  "RariFuseStrategyAPE#127-v4.0.0": 1648501558,
+  "veUSDC-LMR-v5.0.1_5.0.0": 1653420727
 }

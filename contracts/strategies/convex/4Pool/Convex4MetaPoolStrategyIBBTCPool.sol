@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.3;
+pragma solidity 0.8.9;
 
 import "./Convex4MetaPoolStrategy.sol";
 
@@ -22,6 +22,6 @@ contract Convex4MetaPoolStrategyIBBTCPool is Convex4MetaPoolStrategy {
     ) Convex4MetaPoolStrategy(_pool, _swapManager, METAPOOL, GAUGE, _collateralIdx, CONVEX_POOL_ID, _name) {
         oracleRouterIdx = 1;
         // Curve sBTC DepositZap Contract
-        DEPOSIT_ZAP = 0x7AbDBAf29929e7F8621B757D2a7c04d78d633834;
+        depositZap = 0x7AbDBAf29929e7F8621B757D2a7c04d78d633834;
     }
 }

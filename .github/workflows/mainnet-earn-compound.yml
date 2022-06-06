@@ -1,0 +1,61 @@
+name: Mainnet Earn Compound Strategy
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/mainnet-earn-compound.yml"
+      - ".github/actions/setup-env/action.yml"
+      - "test/utils/setupHelper.js"
+      - "contracts/pool/**/*.sol"
+      - "contracts/pool/*.sol"
+      - "contracts/strategies/Strategy.sol"
+      - "contracts/strategies/Earn.sol"
+      - "contracts/strategies/compound/CompoundStrategy.sol"
+      - "contracts/strategies/compound/earn/**"
+      - "test/mainnet/earn/compound/**"
+
+# Limit concurrency to one workflow per branch and one per pull_request
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: true
+
+jobs:
+  setup-job:
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.NODE_URL }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup env
+        uses: ./.github/actions/setup-env
+
+  veeth-dai-test:
+    needs: [setup-job]
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.NODE_URL }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup env
+        uses: ./.github/actions/setup-env
+
+      - name: Running Earn Compound strategy for VEETH_DAI pool
+        run: npm test test/mainnet/earn/compound/veeth-dai.js
+
+  vewbtc-dai-test:
+    needs: [setup-job]
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.NODE_URL }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup env
+        uses: ./.github/actions/setup-env
+
+      - name: Running Earn Compound strategy for VEWBTC_DAI pool
+        run: npm test test/mainnet/earn/compound/vewbtc-dai.js

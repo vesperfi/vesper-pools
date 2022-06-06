@@ -1,10 +1,26 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.3;
+pragma solidity 0.8.9;
 
 /* solhint-disable func-name-mixedcase */
+// Partial interface of IUniswapV2Router02
+interface IUniswapV2Router02 {
+    function swapExactTokensForTokens(
+        uint256 amountIn,
+        uint256 amountOutMin,
+        address[] calldata path,
+        address to,
+        uint256 deadline
+    ) external returns (uint256[] memory amounts);
 
-import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
+    function swapTokensForExactTokens(
+        uint256 amountOut,
+        uint256 amountInMax,
+        address[] calldata path,
+        address to,
+        uint256 deadline
+    ) external returns (uint256[] memory amounts);
+}
 
 interface ISwapManager {
     event OracleCreated(address indexed _sender, address indexed _newOracle, uint256 _period);

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.3;
+pragma solidity 0.8.9;
 
 /** In order to keep code/files short, all libraries and interfaces are trimmed as per Vesper need */
 

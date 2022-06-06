@@ -1,0 +1,120 @@
+name: Mainnet Alpha Strategy
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/mainnet-alpha.yml"
+      - ".github/actions/setup-env/action.yml"
+      - "test/utils/setupHelper.js"
+      - "contracts/pool/**/*.sol"
+      - "contracts/pool/*.sol"
+      - "contracts/strategies/Strategy.sol"
+      - "contracts/strategies/alpha/AlphaLendStrategy.sol"
+      - "contracts/strategies/alpha/AlphaLendStrategyETH.sol"
+      - "test/mainnet/alpha/**"
+
+# Limit concurrency to one workflow per branch and one per pull_request
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: true
+
+jobs:
+  setup-job:
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.NODE_URL }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup env
+        uses: ./.github/actions/setup-env
+
+  vadai-test:
+    needs: [setup-job]
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.NODE_URL }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup env
+        uses: ./.github/actions/setup-env
+
+      - name: Running Alpha strategy for VADAI pool
+        run: npm test test/mainnet/alpha/vadai.js
+
+  vadpi-test:
+    needs: [setup-job]
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.NODE_URL }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup env
+        uses: ./.github/actions/setup-env
+
+      - name: Running Alpha strategy for VADPI pool
+        run: npm test test/mainnet/alpha/vadpi.js
+
+  vaeth-test:
+    needs: [setup-job]
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.NODE_URL }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup env
+        uses: ./.github/actions/setup-env
+
+      - name: Running Alpha strategy for VAETH pool
+        run: npm test test/mainnet/alpha/vaeth.js
+
+  valink-test:
+    needs: [setup-job]
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.NODE_URL }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup env
+        uses: ./.github/actions/setup-env
+
+      - name: Running Alpha strategy for VALINK pool
+        run: npm test test/mainnet/alpha/valink.js
+
+  vausdc-test:
+    needs: [setup-job]
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.NODE_URL }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup env
+        uses: ./.github/actions/setup-env
+
+      - name: Running Alpha strategy for VAUSDC pool
+        run: npm test test/mainnet/alpha/vausdc.js
+
+  vusdt-test:
+    needs: [setup-job]
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.NODE_URL }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup env
+        uses: ./.github/actions/setup-env
+
+      - name: Running Alpha strategy for VUSDT pool
+        run: npm test test/mainnet/alpha/vusdt.js

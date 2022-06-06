@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.3;
+pragma solidity 0.8.9;
 
 interface IPoolAccountant {
     function decreaseDebt(address _strategy, uint256 _decreaseBy) external;
@@ -12,13 +12,7 @@ interface IPoolAccountant {
         uint256 _profit,
         uint256 _loss,
         uint256 _payback
-    )
-        external
-        returns (
-            uint256 _actualPayback,
-            uint256 _creditLine,
-            uint256 _interestFee
-        );
+    ) external returns (uint256 _actualPayback, uint256 _creditLine);
 
     function reportLoss(address _strategy, uint256 _loss) external;
 
@@ -35,8 +29,8 @@ interface IPoolAccountant {
         view
         returns (
             bool _active,
-            uint256 _interestFee,
-            uint256 _debtRate,
+            uint256 _interestFee, // Obsolete
+            uint256 _debtRate, // Obsolete
             uint256 _lastRebalance,
             uint256 _totalDebt,
             uint256 _totalLoss,
@@ -52,4 +46,7 @@ interface IPoolAccountant {
     function totalDebtOf(address _strategy) external view returns (uint256);
 
     function totalDebtRatio() external view returns (uint256);
+
+    // V5 upgrade function
+    function setup() external;
 }

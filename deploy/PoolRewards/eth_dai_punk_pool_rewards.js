@@ -5,7 +5,7 @@ const deployFunction = async function ({ getNamedAccounts, deployments }) {
   const { deployer } = await getNamedAccounts()
   const veDAIPUNK = '0xeBcF77CCE55ed6091F82aEE3c5539841E4D75F49'
   const Address = require('../../helper/mainnet/address')
-  const rewardTokens = [Address.PUNK, Address.VSP]
+  const rewardTokens = [Address.PUNK, Address.Vesper.VSP]
   // Deploy pool rewards
   await deploy('VesperEarnDrip', {
     from: deployer,

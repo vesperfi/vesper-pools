@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.3;
+pragma solidity 0.8.9;
 
 import "./EarnAlphaLendStrategy.sol";
 import "../../../interfaces/token/IToken.sol";
@@ -28,14 +28,13 @@ contract EarnAlphaLendStrategyETH is EarnAlphaLendStrategy {
         safeBox.claim(amount, proof);
         uint256 _uBalance = address(this).balance;
         TokenLike(WETH).deposit{value: _uBalance}();
-        _convertCollateralToDrip(_uBalance);
-        _forwardEarning();
+        _handleProfit(_uBalance);
     }
 
     /// @notice Deposit collateral in Alpha
     function _reinvest() internal override {
         uint256 _collateralBalance = collateralToken.balanceOf(address(this));
-        if (_collateralBalance != 0) {
+        if (_collateralBalance > 0) {
             TokenLike(WETH).withdraw(_collateralBalance);
             safeBox.deposit{value: _collateralBalance}();
         }

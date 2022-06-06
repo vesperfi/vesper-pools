@@ -1,0 +1,47 @@
+name: Mainnet Aave Leverage Strategy
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/mainnet-aave-leverage.yml"
+      - ".github/actions/setup-env/action.yml"
+      - "test/utils/setupHelper.js"
+      - "test/behavior/aave-leverage.js"
+      - "contracts/pool/**/*.sol"
+      - "contracts/pool/*.sol"
+      - "contracts/strategies/Strategy.sol"
+      - "contracts/strategies/aave/AaveLeverageStrategy.sol"
+      - "contracts/strategies/aave/AaveCore.sol"
+      - "contracts/FlashLoanHelper.sol"
+      - "test/mainnet/aave-leverage/**"
+
+# Limit concurrency to one workflow per branch and one per pull_request
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: true
+
+jobs:
+  setup-job:
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.NODE_URL }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup env
+        uses: ./.github/actions/setup-env
+
+  vadai-test:
+    needs: [setup-job]
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.NODE_URL }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup env
+        uses: ./.github/actions/setup-env
+
+      - name: Running Aave leverage strategy for VADAI pool
+        run: npm test test/mainnet/aave-leverage/vadai.js

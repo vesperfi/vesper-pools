@@ -1,0 +1,62 @@
+name: Avalanche TraderJoe XY Strategy
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/avalanche-traderjoe-xy.yml"
+      - ".github/actions/setup-env/action.yml"
+      - "test/utils/setupHelper.js"
+      - "test/behavior/vesper-compound-xy.js"
+      - "contracts/pool/**/*.sol"
+      - "contracts/pool/*.sol"
+      - "contracts/strategies/Strategy.sol"
+      - "contracts/strategies/compound/CompoundXYCore.sol"
+      - "contracts/strategies/compound/avalanche/TraderJoeXYStrategy.sol"
+      - "contracts/strategies/compound/avalanche/VesperTraderJoeXYStrategy.sol"
+      - "test/avalanche/traderjoe-xy/**"
+
+# Limit concurrency to one workflow per branch and one per pull_request
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: true
+
+jobs:
+  setup-job:
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.AVALANCHE_NODE_URL }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup env
+        uses: ./.github/actions/setup-env
+
+  vaavax-vesper-test:
+    needs: [setup-job]
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.AVALANCHE_NODE_URL }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup env
+        uses: ./.github/actions/setup-env
+
+      - name: Running TraderJoe Vesper XY strategy for VAAVAX pool
+        run: npm test test/avalanche/traderjoe-xy/vesper/vaavax.js
+
+  vawbtce-vesper-test:
+    needs: [setup-job]
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.AVALANCHE_NODE_URL }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup env
+        uses: ./.github/actions/setup-env
+
+      - name: Running TraderJoe Vesper XY strategy for VAWBTCe pool
+        run: npm test test/avalanche/traderjoe-xy/vesper/vawbtce.js

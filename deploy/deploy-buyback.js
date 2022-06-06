@@ -14,9 +14,9 @@ const deployFunction = async function ({ getNamedAccounts, deployments, targetCh
     args: [
       '0xdf826ff6518e609E4cEE86299d40611C148099d5',
       Address.NATIVE_TOKEN,
-      Address.vVSP,
-      Address.ADDRESS_LIST_FACTORY,
-      Address.SWAP_MANAGER,
+      Address.Vesper.vVSP,
+      Address.Vesper.ADDRESS_LIST_FACTORY,
+      Address.Vesper.SWAP_MANAGER,
     ],
   })
 }

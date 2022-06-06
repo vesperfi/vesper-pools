@@ -1,0 +1,47 @@
+name: Avalanche Aave Leverage Strategy
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/avalanche-aave-leverage.yml"
+      - ".github/actions/setup-env/action.yml"
+      - "test/utils/setupHelper.js"
+      - "test/behavior/aave-leverage.js"
+      - "contracts/pool/**/*.sol"
+      - "contracts/pool/*.sol"
+      - "contracts/strategies/Strategy.sol"
+      - "contracts/strategies/aave/avalanche/AaveLeverageStrategy.sol"
+      - "contracts/strategies/aave/avalanche/AaveCore.sol"
+      - "contracts/FlashLoanHelper.sol"
+      - "test/avalanche/aave-leverage/**"
+
+# Limit concurrency to one workflow per branch and one per pull_request
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: true
+
+jobs:
+  setup-job:
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.AVALANCHE_NODE_URL }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup env
+        uses: ./.github/actions/setup-env
+
+  vaavax-test:
+    needs: [setup-job]
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.AVALANCHE_NODE_URL }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup env
+        uses: ./.github/actions/setup-env
+
+      - name: Running Aave Leverage strategy for VAAVAX pool
+        run: npm test test/avalanche/aave-leverage/vaavax.js

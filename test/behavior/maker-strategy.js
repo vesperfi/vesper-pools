@@ -1,9 +1,9 @@
 'use strict'
 
-const { deposit, executeIfExist, timeTravel, rebalanceStrategy } = require('../utils/poolOps')
+const { deposit, timeTravel, rebalanceStrategy } = require('../utils/poolOps')
 const { expect } = require('chai')
 const { ethers } = require('hardhat')
-const { getUsers, getEvent } = require('../utils/setupHelper')
+const { executeIfExist, getEvent, getStrategyToken } = require('../utils/setupHelper')
 const { shouldValidateMakerCommonBehavior } = require('./maker-common')
 
 function shouldBehaveLikeMakerStrategy(strategyIndex) {
@@ -12,7 +12,7 @@ function shouldBehaveLikeMakerStrategy(strategyIndex) {
   let user1, user2
 
   async function updateRate() {
-    await executeIfExist(strategy.instance.token.exchangeRateCurrent)
+    await executeIfExist(token.exchangeRateCurrent)
     // Update rate using Jug drip
     const jugLike = await ethers.getContractAt('JugLike', '0x19c0976f590D67707E62397C87829d896Dc0f1F1')
     const vaultType = await strategy.instance.collateralType()
@@ -21,12 +21,12 @@ function shouldBehaveLikeMakerStrategy(strategyIndex) {
   shouldValidateMakerCommonBehavior(strategyIndex)
   describe(`MakerStrategy specific tests for strategy[${strategyIndex}]`, function () {
     beforeEach(async function () {
-      ;[, user1, user2] = await getUsers()
+      ;[, user1, user2] = this.users
       pool = this.pool
       accountant = this.accountant
       strategy = this.strategies[strategyIndex]
       collateralToken = this.collateralToken
-      token = this.strategies[strategyIndex].token
+      token = await getStrategyToken(strategy)
       cm = strategy.instance.collateralManager
     })
 
@@ -44,25 +44,6 @@ function shouldBehaveLikeMakerStrategy(strategyIndex) {
         await rebalanceStrategy(strategy)
         const tokensHereAfter = await pool.tokensHere()
         expect(tokensHereAfter).to.be.gt(tokensHere, 'Collateral token in pool should increase')
-      })
-
-      describe('Interest fee calculation via Jug Drip', function () {
-        it('Should earn interest fee', async function () {
-          const feeCollector = await strategy.instance.feeCollector()
-          const feeBalanceBefore = await pool.balanceOf(feeCollector)
-          const totalSupplyBefore = await pool.totalSupply()
-          await deposit(pool, collateralToken, 50, user2)
-
-          await rebalanceStrategy(strategy)
-          await timeTravel()
-          await updateRate()
-
-          const feeBalanceAfter = await pool.balanceOf(feeCollector)
-          expect(feeBalanceAfter).to.be.gt(feeBalanceBefore, 'Fee should increase')
-
-          const totalSupplyAfter = await pool.totalSupply()
-          expect(totalSupplyAfter).to.be.gt(totalSupplyBefore, 'Total supply should increase')
-        })
       })
 
       it('Should increase dai balance on rebalance', async function () {

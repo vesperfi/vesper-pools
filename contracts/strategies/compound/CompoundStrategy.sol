@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.3;
+pragma solidity 0.8.9;
 
 import "../Strategy.sol";
 import "../../interfaces/compound/ICompound.sol";
@@ -127,7 +127,11 @@ contract CompoundStrategy is Strategy {
         _claimRewardsAndConvertTo(address(collateralToken));
         uint256 _collateralBalance = _convertToCollateral(cToken.balanceOf(address(this)));
         if (_collateralBalance > _totalDebt) {
-            _withdrawHere(_collateralBalance - _totalDebt);
+            uint256 _amountToWithdraw = _collateralBalance - _totalDebt;
+            uint256 _expectedCToken = (_amountToWithdraw * 1e18) / cToken.exchangeRateStored();
+            if (_expectedCToken > 0) {
+                _withdrawHere(_amountToWithdraw);
+            }
         }
         return collateralToken.balanceOf(address(this));
     }
@@ -136,7 +140,7 @@ contract CompoundStrategy is Strategy {
      * @notice Calculate realized loss.
      * @return _loss Realized loss in collateral token
      */
-    function _realizeLoss(uint256 _totalDebt) internal view override returns (uint256 _loss) {
+    function _realizeLoss(uint256 _totalDebt) internal view virtual override returns (uint256 _loss) {
         uint256 _collateralBalance = _convertToCollateral(cToken.balanceOf(address(this)));
         if (_collateralBalance < _totalDebt) {
             _loss = _totalDebt - _collateralBalance;

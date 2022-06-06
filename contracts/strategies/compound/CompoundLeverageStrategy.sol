@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GNU LGPLv3
 // Heavily inspired from CompoundLeverage strategy of Yearn. https://etherscan.io/address/0x4031afd3B0F71Bace9181E554A9E680Ee4AbE7dF#code
 
-pragma solidity 0.8.3;
+pragma solidity 0.8.9;
 
 import "../Strategy.sol";
 import "../../interfaces/compound/ICompound.sol";
@@ -20,6 +20,7 @@ contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
     uint256 internal constant MAX_BPS = 10_000; //100%
     uint256 public minBorrowRatio = 5_000; // 50%
     uint256 public maxBorrowRatio = 6_000; // 60%
+    uint256 internal constant COLLATERAL_FACTOR_LIMIT = 9_500; // 95%
     CToken internal cToken;
     IUniswapV3Oracle internal constant ORACLE = IUniswapV3Oracle(0x0F1f5A87f99f0918e6C81F16E59F3518698221Ff);
     uint32 internal constant TWAP_PERIOD = 3600;
@@ -86,7 +87,7 @@ contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
     function _getCollateralFactor() internal view virtual returns (uint256 _collateralFactor) {
         (, _collateralFactor, ) = comptroller.markets(address(cToken));
         // Take 95% of collateralFactor to avoid any rounding issue.
-        _collateralFactor = (_collateralFactor * 95) / 100;
+        _collateralFactor = (_collateralFactor * COLLATERAL_FACTOR_LIMIT) / MAX_BPS;
     }
 
     /**
@@ -215,7 +216,7 @@ contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
      */
     function _calculateTotalValue(uint256 _rewardAccrued) internal view returns (uint256 _totalValue) {
         uint256 _compAsCollateral;
-        if (_rewardAccrued != 0) {
+        if (_rewardAccrued > 0) {
             (, _compAsCollateral, ) = swapManager.bestOutputFixedInput(
                 rewardToken,
                 address(collateralToken),
@@ -234,10 +235,10 @@ contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
     }
 
     /// @notice Claim rewardToken and convert rewardToken into collateral token.
-    function _claimRewardsAndConvertTo(address _toToken) internal override {
+    function _claimRewardsAndConvertTo(address _toToken) internal virtual override {
         _claimRewards();
         uint256 _rewardAmount = IERC20(rewardToken).balanceOf(address(this));
-        if (_rewardAmount != 0) {
+        if (_rewardAmount > 0) {
             _safeSwap(rewardToken, _toToken, _rewardAmount);
         }
     }
@@ -256,7 +257,7 @@ contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
         )
     {
         uint256 _excessDebt = IVesperPool(pool).excessDebt(address(this));
-        (, , , , uint256 _totalDebt, , , uint256 _debtRatio) = IVesperPool(pool).strategy(address(this));
+        (, , , , uint256 _totalDebt, , , uint256 _debtRatio, ) = IVesperPool(pool).strategy(address(this));
 
         // Claim rewardToken and convert to collateral token
         _claimRewardsAndConvertTo(address(collateralToken));
@@ -286,7 +287,7 @@ contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
 
         uint256 _paybackToWithdraw = _excessDebt - _payback;
         uint256 _totalAmountToWithdraw = _paybackToWithdraw + _profitToWithdraw;
-        if (_totalAmountToWithdraw != 0) {
+        if (_totalAmountToWithdraw > 0) {
             uint256 _withdrawn = _withdrawHere(_totalAmountToWithdraw);
             // Any amount withdrawn over _profitToWithdraw is payback for pool
             if (_withdrawn > _profitToWithdraw) {
@@ -297,7 +298,7 @@ contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
         // Handle scenario if debtRatio is zero and some supply left.
         // Remaining tokens, after payback withdrawal, are profit
         (_supply, _borrow) = getPosition();
-        if (_debtRatio == 0 && _supply != 0 && _borrow == 0) {
+        if (_debtRatio == 0 && _supply > 0 && _borrow == 0) {
             // This will redeem all cTokens this strategy has
             _redeemUnderlying(MAX_UINT_VALUE);
             _profit += _supply;
@@ -341,7 +342,7 @@ contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
     ) internal returns (uint256 _deleveragedAmount) {
         uint256 _theoreticalSupply;
 
-        if (_collateralFactor != 0) {
+        if (_collateralFactor > 0) {
             // Calculate minimum supply required to support _borrow
             _theoreticalSupply = (_borrow * 1e18) / _collateralFactor;
         }
@@ -419,12 +420,12 @@ contract CompoundLeverageStrategy is Strategy, FlashLoanHelper {
             }
 
             // There may be scenario where we are not able to deleverage enough
-            if (_position != 0) {
+            if (_position > 0) {
                 // Calculate redeemable at current borrow and supply.
                 (uint256 _supply, uint256 _borrow) = getPosition();
 
                 uint256 _supplyToSupportBorrow;
-                if (maxBorrowRatio != 0) {
+                if (maxBorrowRatio > 0) {
                     _supplyToSupportBorrow = (_borrow * MAX_BPS) / maxBorrowRatio;
                 }
                 // Current supply minus supply required to support _borrow at _maxBorrowRatio

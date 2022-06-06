@@ -1,12 +1,10 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.3;
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+pragma solidity 0.8.9;
+import "../dependencies/openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
-interface TokenLikeTest is IERC20 {
+interface TokenLikeTest is IERC20Metadata {
     function deposit() external payable;
 
     function withdraw(uint256) external;
-
-    function decimals() external view returns (uint256);
 }

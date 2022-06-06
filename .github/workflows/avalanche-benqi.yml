@@ -1,0 +1,137 @@
+name: Avalanche Benqi Strategy
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/avalanche-benqi.yml"
+      - ".github/actions/setup-env/action.yml"
+      - "test/utils/setupHelper.js"
+      - "test/behavior/compound.js"
+      - "contracts/pool/**/*.sol"
+      - "contracts/pool/*.sol"
+      - "contracts/strategies/Strategy.sol"
+      - "contracts/strategies/compound/avalanche/CompoundLikeStrategy.sol"
+      - "contracts/strategies/compound/avalanche/BenqiStrategyAVAX.sol"
+      - "contracts/strategies/compound/CompoundStrategy.sol"
+      - "test/avalanche/benqi/**"
+
+# Limit concurrency to one workflow per branch and one per pull_request
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: true
+
+jobs:
+  setup-job:
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.AVALANCHE_NODE_URL }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup env
+        uses: ./.github/actions/setup-env
+
+  vaavax-test:
+    needs: [setup-job]
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.AVALANCHE_NODE_URL }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup env
+        uses: ./.github/actions/setup-env
+
+      - name: Running Benqi strategy for VAAVAX pool
+        run: npm test test/avalanche/benqi/vaavax.js
+
+  vadaie-test:
+    needs: [setup-job]
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.AVALANCHE_NODE_URL }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup env
+        uses: ./.github/actions/setup-env
+
+      - name: Running Benqi strategy for VADAIe pool
+        run: npm test test/avalanche/benqi/vadaie.js
+
+  vaqi-test:
+    needs: [setup-job]
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.AVALANCHE_NODE_URL }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup env
+        uses: ./.github/actions/setup-env
+
+      - name: Running Benqi strategy for VAQI pool
+        run: npm test test/avalanche/benqi/vaqi.js
+
+  vausdc-test:
+    needs: [setup-job]
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.AVALANCHE_NODE_URL }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup env
+        uses: ./.github/actions/setup-env
+
+      - name: Running Benqi strategy for VAUSDC pool
+        run: npm test test/avalanche/benqi/vausdc.js
+
+  vausdce-test:
+    needs: [setup-job]
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.AVALANCHE_NODE_URL }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup env
+        uses: ./.github/actions/setup-env
+
+      - name: Running Benqi strategy for VAUSDCe pool
+        run: npm test test/avalanche/benqi/vausdce.js
+
+  vawbtce-test:
+    needs: [setup-job]
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.AVALANCHE_NODE_URL }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup env
+        uses: ./.github/actions/setup-env
+
+      - name: Running Benqi strategy for VAWBTCe pool
+        run: npm test test/avalanche/benqi/vawbtce.js
+
+  vawethe-test:
+    needs: [setup-job]
+    runs-on: ubuntu-latest
+    env:
+      NODE_URL: ${{ secrets.AVALANCHE_NODE_URL }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup env
+        uses: ./.github/actions/setup-env
+
+      - name: Running Benqi strategy for VAWETHe pool
+        run: npm test test/avalanche/benqi/vawethe.js

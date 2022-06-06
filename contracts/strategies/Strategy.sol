@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.3;
+pragma solidity 0.8.9;
 
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/utils/Context.sol";
+import "../dependencies/openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "../dependencies/openzeppelin/contracts/utils/Context.sol";
 import "../dependencies/openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "../interfaces/bloq/ISwapManager.sol";
 import "../interfaces/vesper/IStrategy.sol";
@@ -49,7 +49,7 @@ abstract contract Strategy is IStrategy, Context {
         require(_keepers.add(_msgSender()), "add-keeper-failed");
     }
 
-    modifier onlyGovernor {
+    modifier onlyGovernor() {
         require(_msgSender() == IVesperPool(pool).governor(), "caller-is-not-the-governor");
         _;
     }
@@ -254,6 +254,7 @@ abstract contract Strategy is IStrategy, Context {
     ) internal returns (uint256, bool) {
         for (uint256 i = 0; i < swapManager.N_DEX(); i++) {
             (bool _success, bytes memory _returnData) =
+                // solhint-disable-next-line avoid-low-level-calls
                 address(swapManager).call(
                     abi.encodePacked(swapManager.consult.selector, abi.encode(_from, _to, _amt, oraclePeriod, i))
                 );
@@ -292,6 +293,9 @@ abstract contract Strategy is IStrategy, Context {
         uint256 _amountIn,
         uint256 _minAmountOut
     ) internal {
+        if (_from == _to) {
+            return;
+        }
         (address[] memory path, uint256 amountOut, uint256 rIdx) =
             swapManager.bestOutputFixedInput(_from, _to, _amountIn);
         if (_minAmountOut == 0) _minAmountOut = 1;

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GNU LGPLv3
 
-pragma solidity 0.8.3;
+pragma solidity 0.8.9;
 
 import "../Strategy.sol";
 import "./RariCore.sol";

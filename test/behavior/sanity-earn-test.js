@@ -10,8 +10,9 @@ const { BigNumber: BN } = require('ethers')
 
 const DECIMAL18 = BN.from('1000000000000000000')
 const MAX_BPS = BN.from('10000')
-const gov = {}
+let gov
 const hre = require('hardhat')
+const { unlock } = require('../utils/setupHelper')
 const ethers = hre.ethers
 async function shouldDoSanityEarnTest(poolName, collateralName) {
   let pool, strategies, collateralToken, collateralDecimal
@@ -31,20 +32,14 @@ async function shouldDoSanityEarnTest(poolName, collateralName) {
       ;[, user1] = this.users
       // This setup helps in not typing 'this' all the time
       pool = this.pool
-      gov.address = await pool.governor()
-      await hre.network.provider.request({
-        method: 'hardhat_impersonateAccount',
-        params: [gov.address.toString()],
-      })
+      const governor = await pool.governor()
+
       strategies = this.strategies
       collateralToken = this.collateralToken
       // Decimal will be used for amount conversion
       collateralDecimal = await this.collateralToken.decimals()
-      await hre.network.provider.request({
-        method: 'hardhat_impersonateAccount',
-        params: [gov.address],
-      })
-      gov.signer = await ethers.provider.getSigner(gov.address)
+
+      gov = await unlock(governor)
     })
 
     describe(`Deposit ${collateralName} into the ${poolName} pool`, function () {
@@ -66,7 +61,7 @@ async function shouldDoSanityEarnTest(poolName, collateralName) {
         const tsBefore = await pool.totalSupply()
         await deposit(20, user1)
         const withdrawAmount = await pool.balanceOf(user1.address)
-        await pool.connect(user1.signer).withdraw(withdrawAmount)
+        await pool.connect(user1).withdraw(withdrawAmount)
         const fee = await pool.withdrawFee()
         const feeToCollect = withdrawAmount.mul(fee).div(MAX_BPS)
         return Promise.all([pool.totalSupply(), pool.balanceOf(user1.address)]).then(function ([
@@ -82,7 +77,7 @@ async function shouldDoSanityEarnTest(poolName, collateralName) {
         await deposit(20, user1)
         let vPoolBalance = await pool.balanceOf(user1.address)
         const withdrawAmount = vPoolBalance.sub(convertTo18(100))
-        await pool.connect(user1.signer).withdraw(withdrawAmount)
+        await pool.connect(user1).withdraw(withdrawAmount)
         vPoolBalance = (await pool.balanceOf(user1.address)).toString()
         const totalDebt = await pool.totalDebt()
         const totalDebtOfStrategies = await totalDebtOfAllStrategy(strategies, pool)
@@ -95,7 +90,7 @@ async function shouldDoSanityEarnTest(poolName, collateralName) {
       it(`Should earn pool rewards ${collateralName}`, async function () {
         await deposit(20, user1)
         for (const strategy of strategies) {
-          await strategy.instance.connect(gov.signer).rebalance()
+          await strategy.instance.connect(gov).rebalance()
         }
         await deposit(10, user1)
         const rewardContract = await pool.poolRewards()
@@ -103,7 +98,7 @@ async function shouldDoSanityEarnTest(poolName, collateralName) {
         const claimableBefore = await poolRewards.claimable(user1.address)
         await time.increase(3 * 24 * 60 * 60)
         for (const strategy of strategies) {
-          await strategy.instance.connect(gov.signer).rebalance()
+          await strategy.instance.connect(gov).rebalance()
         }
         await time.increase(3 * 24 * 60 * 60)
         const claimableAfter = await poolRewards.claimable(user1.address)

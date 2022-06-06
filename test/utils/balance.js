@@ -3,9 +3,10 @@
 const hre = require('hardhat')
 const Address = require('../../helper/mainnet/address')
 const AvalancheAddress = require('../../helper/avalanche/address')
+const PolygonAddress = require('../../helper/polygon/address')
 const ethers = hre.ethers
 const { BigNumber } = require('ethers')
-const { hexlify, solidityKeccak256, zeroPad, getAddress } = ethers.utils
+const { hexlify, solidityKeccak256, zeroPad, getAddress, hexStripZeros } = ethers.utils
 
 // Slot number mapping for a token. Prepared using utility https://github.com/kendricktan/slot20
 const slots = {
@@ -17,9 +18,41 @@ const slots = {
   [Address.UNI]: 4,
   [Address.MIM]: 0,
   [Address.ALUSD]: 1,
-  '0x5d3a536E4D6DbD6114cc1Ead35777bAB948E3643': 14, // cDAI
-  '0xc00e94Cb662C3520282E6f5717214004A7f26888': 1, // COMP
-  [AvalancheAddress.DAI]: 0,
+  [Address.LINK]: 1,
+  [Address.APE]: 0,
+  [Address.MUSD]: 51,
+  [Address.DPI]: 0,
+  [Address.Vesper.VSP]: 0,
+  [Address.Compound.cDAI]: 14,
+  [Address.Compound.COMP]: 1,
+  [Address.FEI]: 0,
+  [Address.FRAX]: 0,
+  [Address.APE]: 0,
+  [Address.MUSD]: 51,
+  [Address.Aave.stkAAVE]: 0,
+  [Address.LMR]: 0,
+  [Address.SHIB]: 0,
+  [Address.Vesper.vaDAI]: 0,
+  [Address.Vesper.vaFEI]: 0,
+  [Address.Vesper.vaFRAX]: 0,
+
+  // Avalanche addresses
+  [AvalancheAddress.DAIe]: 0,
+  [AvalancheAddress.USDC]: 9,
+  [AvalancheAddress.USDCe]: 0,
+  [AvalancheAddress.WBTCe]: 0,
+  [AvalancheAddress.WETHe]: 0,
+  [AvalancheAddress.NATIVE_TOKEN]: 3, // WAVAX
+  [AvalancheAddress.Benqi.QI]: 1,
+  [AvalancheAddress.Vesper.VSP]: 2,
+
+  // Polygon addresses
+  [PolygonAddress.DAI]: 0,
+  [PolygonAddress.USDC]: 0,
+  [PolygonAddress.USDT]: 0,
+  [PolygonAddress.WBTC]: 0,
+  [PolygonAddress.WETH]: 0,
+  [PolygonAddress.NATIVE_TOKEN]: 3, // WMATIC
 }
 
 /**
@@ -48,7 +81,8 @@ async function adjustBalance(token, targetAddress, balance) {
   }
 
   // reason: https://github.com/nomiclabs/hardhat/issues/1585 comments
-  const index = hexlify(solidityKeccak256(['uint256', 'uint256'], [targetAddress, slot])).replace('0x0', '0x')
+  // Create solidity has for index, convert it into hex string and remove all the leading zeros
+  const index = hexStripZeros(hexlify(solidityKeccak256(['uint256', 'uint256'], [targetAddress, slot])))
 
   if (!BigNumber.isBigNumber(balance)) {
     // eslint-disable-next-line no-param-reassign

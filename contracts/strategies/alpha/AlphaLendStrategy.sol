@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.3;
+pragma solidity 0.8.9;
 
 import "../Strategy.sol";
 import "../../interfaces/alpha/ISafeBox.sol";
@@ -13,7 +13,9 @@ contract AlphaLendStrategy is Strategy {
     string public NAME;
     string public constant VERSION = "4.0.0";
 
-    address internal ALPHA = 0xa1faa113cbE53436Df28FF0aEe54275c13B40975;
+    /// @dev This is mainnet ALPHA address, child strategy should overwrite it for chain specific address
+    // solhint-disable var-name-mixedcase
+    address internal alpha = 0xa1faa113cbE53436Df28FF0aEe54275c13B40975;
     ISafeBox internal safeBox;
     uint256 internal immutable ibDecimals;
 
@@ -34,7 +36,7 @@ contract AlphaLendStrategy is Strategy {
     }
 
     function _setupOracles() internal virtual override {
-        swapManager.createOrUpdateOracle(ALPHA, WETH, oraclePeriod, oracleRouterIdx);
+        swapManager.createOrUpdateOracle(alpha, WETH, oraclePeriod, oracleRouterIdx);
         if (address(collateralToken) != WETH) {
             swapManager.createOrUpdateOracle(WETH, address(collateralToken), oraclePeriod, oracleRouterIdx);
         }
@@ -54,15 +56,15 @@ contract AlphaLendStrategy is Strategy {
      * @dev Report total value in collateral token
      */
     function totalValue() public view virtual override returns (uint256 _totalValue) {
-        uint256 _alphaAmount = IERC20(ALPHA).balanceOf(address(this));
+        uint256 _alphaAmount = IERC20(alpha).balanceOf(address(this));
         if (_alphaAmount != 0) {
-            (, _totalValue, ) = swapManager.bestOutputFixedInput(ALPHA, address(collateralToken), _alphaAmount);
+            (, _totalValue, ) = swapManager.bestOutputFixedInput(alpha, address(collateralToken), _alphaAmount);
         }
         _totalValue += _convertToCollateral(safeBox.balanceOf(address(this)));
     }
 
     function isReservedToken(address _token) public view virtual override returns (bool) {
-        return _token == receiptToken || _token == ALPHA;
+        return _token == receiptToken || _token == alpha;
     }
 
     /// @notice Approve all required tokens
@@ -70,22 +72,22 @@ contract AlphaLendStrategy is Strategy {
         collateralToken.safeApprove(pool, _amount);
         collateralToken.safeApprove(address(safeBox), _amount);
         for (uint256 i = 0; i < swapManager.N_DEX(); i++) {
-            IERC20(ALPHA).safeApprove(address(swapManager.ROUTERS(i)), _amount);
+            IERC20(alpha).safeApprove(address(swapManager.ROUTERS(i)), _amount);
         }
     }
 
     /// @notice Claim ALPHA and convert ALPHA into collateral token.
     function _claimRewardsAndConvertTo(address _toToken) internal virtual override {
-        uint256 _alphaAmount = IERC20(ALPHA).balanceOf(address(this));
+        uint256 _alphaAmount = IERC20(alpha).balanceOf(address(this));
         if (_alphaAmount != 0) {
             uint256 minAmtOut =
                 (swapSlippage != 10000)
                     ? _calcAmtOutAfterSlippage(
-                        _getOracleRate(_simpleOraclePath(ALPHA, _toToken), _alphaAmount),
+                        _getOracleRate(_simpleOraclePath(alpha, _toToken), _alphaAmount),
                         swapSlippage
                     )
                     : 1;
-            _safeSwap(ALPHA, _toToken, _alphaAmount, minAmtOut);
+            _safeSwap(alpha, _toToken, _alphaAmount, minAmtOut);
         }
     }
 
@@ -142,7 +144,7 @@ contract AlphaLendStrategy is Strategy {
         return collateralToken.balanceOf(address(this));
     }
 
-    function _realizeLoss(uint256 _totalDebt) internal view override returns (uint256 _loss) {
+    function _realizeLoss(uint256 _totalDebt) internal view virtual override returns (uint256 _loss) {
         uint256 _collateralBalance = _convertToCollateral(safeBox.balanceOf(address(this)));
         if (_collateralBalance < _totalDebt) {
             _loss = _totalDebt - _collateralBalance;

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.3;
+pragma solidity 0.8.9;
 
 import "./AlphaLendStrategy.sol";
 
@@ -13,6 +13,6 @@ contract AlphaLendAvalancheStrategy is AlphaLendStrategy {
         string memory _name
     ) AlphaLendStrategy(_pool, _swapManager, _receiptToken, _name) {
         WETH = 0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7; // WAVAX
-        ALPHA = 0x2147EFFF675e4A4eE1C2f918d181cDBd7a8E208f; // Alpha on Avalanche
+        alpha = 0x2147EFFF675e4A4eE1C2f918d181cDBd7a8E208f; // Alpha on Avalanche
     }
 }

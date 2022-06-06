@@ -2,45 +2,17 @@
 'use strict'
 
 const { ethers } = require('hardhat')
-const { isDelegateOrOwner, getMultiSigNonce, submitGnosisTxn } = require('./gnosis-txn')
+const { isDelegateOrOwner, proposeMultiTxn, prepareTxn } = require('./gnosis-txn')
 const CollateralManager = 'CollateralManager'
-let multiSigNonce = 0
+const PoolAccountant = 'PoolAccountant'
 
 function sleep(ms) {
   console.log(`waiting for ${ms} ms`)
   return new Promise(resolve => setTimeout(resolve, ms))
 }
 
-async function sendGnosisSafeTxn(encodedData, safe, deployer, nonce) {
-  const txnParams = {
-    data: encodedData.data,
-    to: encodedData.to,
-    safe,
-    nonce,
-    sender: deployer,
-  }
-  await submitGnosisTxn(txnParams)
-}
-
-async function executeOrProposeTx(contractName, contractAddress, alias, params) {
-  await sleep(5000)
-  if (params.governor === params.deployer) {
-    params.methodArgs
-      ? await params.execute(alias, { from: params.deployer, log: true }, params.methodName, ...params.methodArgs)
-      : await params.execute(alias, { from: params.deployer, log: true }, params.methodName)
-  } else if (params.isDelegateOrOwner) {
-    const contract = await ethers.getContractAt(contractName, contractAddress)
-    multiSigNonce = multiSigNonce === 0 ? (await getMultiSigNonce(params.safe)).nonce : multiSigNonce + 1
-    const data = params.methodArgs
-      ? await contract.populateTransaction[params.methodName](...params.methodArgs)
-      : await contract.populateTransaction[params.methodName]()
-    await sendGnosisSafeTxn(data, params.safe, params.deployer, multiSigNonce)
-  } else {
-    console.log(`Pool governor is not deployer, skipping ${params.methodName} operation`)
-  }
-}
-
-const deployFunction = async function ({ getNamedAccounts, deployments, poolConfig, strategyConfig, targetChain }) {
+const deployFunction = async function (hre) {
+  const { getNamedAccounts, deployments, poolConfig, strategyConfig, targetChain, multisigNonce = 0 } = hre
   if (!strategyConfig) {
     throw new Error('Strategy configuration object is not created.')
   }
@@ -48,37 +20,25 @@ const deployFunction = async function ({ getNamedAccounts, deployments, poolConf
 
   const { deploy, execute, read } = deployments
   const { deployer } = await getNamedAccounts()
-  const params = {
-    safe: Address.MultiSig.safe,
-    deployer,
-    execute,
-  }
 
-  const poolDeploymentName = poolConfig.deploymentName ? poolConfig.deploymentName : poolConfig.contractName
-  const poolProxy = await deployments.get(poolDeploymentName)
+  const networkName = hre.network.name
+  // Wait for 2 blocks in network is not localhost
+  const waitConfirmations = networkName === 'localhost' ? 0 : 2
+
+  const poolProxy = await deployments.get(poolConfig.contractName)
   const strategyAlias = strategyConfig.alias
 
   const constructorArgs = [poolProxy.address, ...Object.values(strategyConfig.constructorArgs)]
 
-  // TODO move it to strategy-configuration?, so far read() is blocker in moving it
   if (strategyAlias.includes('Maker')) {
     // Maker strategy of any type, EarnXXXMaker, XXXMaker
     // TODO move this to constructorArgs?
-    let cm = Address.COLLATERAL_MANAGER
+    let cm = Address.Vesper.COLLATERAL_MANAGER
     if (!cm) {
       // Deploy collateral manager
       await sleep(5000)
-      cm = (await deploy(CollateralManager, { from: deployer, log: true, waitConfirmations: 2 })).address
+      cm = (await deploy(CollateralManager, { from: deployer, log: true, waitConfirmations })).address
     }
-    // Fail fast: By reading any property we make sure deployment object exist for CollateralManager
-    try {
-      await read(CollateralManager, {}, 'treasury')
-    } catch (e) {
-      throw new Error(`Missing Collateral Manager deployment object. 
-      If you are deploying in localhost, please copy CollateralManager.json 
-      from /deployments/${targetChain}/global to /deployments/localhost/global`)
-    }
-
     // Insert cm at index 1 in constructorArgs
     constructorArgs.splice(1, 0, cm)
   }
@@ -90,7 +50,7 @@ const deployFunction = async function ({ getNamedAccounts, deployments, poolConf
     from: deployer,
     log: true,
     args: constructorArgs,
-    waitConfirmations: 2,
+    waitConfirmations,
   })
   const setup = strategyConfig.setup
 
@@ -111,66 +71,79 @@ const deployFunction = async function ({ getNamedAccounts, deployments, poolConf
 
   const strategyVersion = await read(strategyAlias, {}, 'VERSION')
   deployFunction.id = `${strategyAlias}-v${strategyVersion}`
-  params.governor = await read(poolDeploymentName, {}, 'governor')
-  params.isDelegateOrOwner =
-    Address.MultiSig.safe === params.governor && (await isDelegateOrOwner(Address.MultiSig.safe, deployer))
 
-  // update fee collector
-  params.methodName = 'updateFeeCollector'
-  params.methodArgs = [setup.feeCollector]
-  await executeOrProposeTx(strategyConfig.contract, deployed.address, strategyConfig.alias, params)
+  const governor = await read(poolConfig.contractName, {}, 'governor')
+  const shouldProposeTx =
+    Address.MultiSig.safe === governor && (await isDelegateOrOwner(Address.MultiSig.safe, deployer, targetChain))
+  if (deployer !== governor && !shouldProposeTx) {
+    console.log('Deployer is not governor and delegate of governor. Rest of configuration must be handled manually')
+    return
+  }
+  const strategyOps = {
+    alias: strategyAlias,
+    contractName: strategyConfig.contract,
+    contractAddress: deployed.address,
+  }
+  const operations = [
+    {
+      ...strategyOps,
+      params: ['updateFeeCollector', [setup.feeCollector]],
+    },
+  ]
 
-  // addKeeper
   for (const keeper of setup.keepers) {
     const _keepers = await read(strategyAlias, {}, 'keepers')
-    if (_keepers.includes(keeper)) {
-      console.log('Keeper %s already added, skipping addKeeper', keeper)
-    } else {
-      params.methodName = 'addKeeper'
-      params.methodArgs = [keeper]
-      await executeOrProposeTx(strategyConfig.contract, deployed.address, strategyConfig.alias, params)
+    if (!_keepers.includes(ethers.utils.getAddress(keeper))) {
+      const params = ['addKeeper', [keeper]]
+      operations.push({ ...strategyOps, params })
     }
   }
 
-  // Execute Maker related configuration transactions
   if (strategyAlias.includes('Maker')) {
-    // Check whether gemJoin already added(or old version) in CM or not
     const collateralType = await (await ethers.getContractAt('GemJoinLike', setup.maker.gemJoin)).ilk()
     const gemJoinInCM = await read(CollateralManager, {}, 'mcdGemJoin', collateralType)
     if (gemJoinInCM !== setup.maker.gemJoin) {
-      params.methodName = 'addGemJoin'
-      params.methodArgs = [setup.maker.gemJoin]
-      await executeOrProposeTx(CollateralManager, Address.COLLATERAL_MANAGER, CollateralManager, params)
+      operations.push({
+        alias: CollateralManager,
+        contractName: CollateralManager,
+        contractAddress: Address.Vesper.COLLATERAL_MANAGER,
+        params: ['addGemJoin', [setup.maker.gemJoin]],
+      })
     }
-
-    params.methodName = 'createVault'
-    params.methodArgs = ''
-    await executeOrProposeTx(strategyConfig.contract, deployed.address, strategyConfig.alias, params)
-
-    params.methodName = 'updateBalancingFactor'
-    params.methodArgs = [setup.maker.highWater, setup.maker.lowWater]
-    await executeOrProposeTx(strategyConfig.contract, deployed.address, strategyConfig.alias, params)
+    operations.push({
+      ...strategyOps,
+      params: ['createVault', []],
+    })
+    operations.push({
+      ...strategyOps,
+      params: ['updateBalancingFactor', [setup.maker.highWater, setup.maker.lowWater]],
+    })
   }
 
-  let PoolAccountant = 'PoolAccountant'
-  if (strategyAlias.includes('Coverage')) {
-    PoolAccountant = 'PoolAccountantCoverage'
-  } else if (strategyAlias.includes('Stable')) {
-    PoolAccountant = 'PoolAccountantStable'
-  }
   const config = strategyConfig.config
   const poolAccountantAddress = (await deployments.get(PoolAccountant)).address
-  params.methodName = 'addStrategy'
-  params.methodArgs = [
-    deployed.address,
-    config.interestFee,
-    config.debtRatio,
-    config.debtRate,
-    config.externalDepositFee,
-  ]
-  await executeOrProposeTx(PoolAccountant, poolAccountantAddress, PoolAccountant, params)
 
-  return true
+  operations.push({
+    alias: PoolAccountant,
+    contractName: PoolAccountant,
+    contractAddress: poolAccountantAddress,
+    params: ['addStrategy', [deployed.address, config.debtRatio, config.externalDepositFee]],
+  })
+
+  const bundleTxs = []
+  for (const operation of operations) {
+    if (shouldProposeTx) {
+      console.log(`preparing multisig tx for ${operation.params[0]}`)
+      bundleTxs.push(await prepareTxn(operation.contractName, operation.contractAddress, ...operation.params))
+    } else {
+      await sleep(5000)
+      await execute(operation.alias, { from: deployer, log: true }, operation.params[0], ...operation.params[1])
+    }
+  }
+  if (bundleTxs.length > 0) {
+    console.log('Sending multisig tx')
+    await proposeMultiTxn(targetChain, deployer, multisigNonce, bundleTxs, Address.MultiSend)
+  }
 }
 module.exports = deployFunction
 module.exports.tags = ['deploy-strategy']

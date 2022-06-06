@@ -2,11 +2,11 @@
 
 const { expect } = require('chai')
 const { ethers } = require('hardhat')
-const { getUsers, deployContract, createStrategy } = require('./utils/setupHelper')
+const { deployContract, createStrategy } = require('./utils/setupHelper')
 const { address, poolConfig, strategyConfig } = require('./utils/chains').getChainData()
 const VDAI = poolConfig.VDAI
 const AaveStrategyDAI = strategyConfig.AaveStrategyDAI
-const MULTICALL = address.MULTICALL
+const multiCall = address.MultiCall
 describe('Pool accountant proxy', function () {
   let pool, strategy, poolAccountant, poolAccountantImpl
   let governor, user1
@@ -15,8 +15,7 @@ describe('Pool accountant proxy', function () {
   AaveStrategyDAI.config.debtRatio = 9000
 
   beforeEach(async function () {
-    const users = await getUsers()
-    ;[governor, user1] = users
+    ;[governor, user1] = await ethers.getSigners()
 
     pool = await deployContract(VDAI.contractName, VDAI.poolParams)
 
@@ -37,7 +36,7 @@ describe('Pool accountant proxy', function () {
     AaveStrategyDAI.feeCollector = user1.address
     strategy = await createStrategy(AaveStrategyDAI, pool.address)
 
-    await poolAccountant.connect(governor.signer).addStrategy(strategy.address, 1000, 1000, 1000, 0)
+    await poolAccountant.connect(governor).addStrategy(strategy.address, ...Object.values(AaveStrategyDAI.config))
   })
 
   describe('Update proxy implementation', function () {
@@ -54,7 +53,7 @@ describe('Pool accountant proxy', function () {
       const strategiesBefore = await poolAccountant.getStrategies()
 
       // Upgrade proxy to point to new implementation
-      await proxyAdmin.connect(governor.signer).upgrade(proxy.address, poolAccountantImpl.address)
+      await proxyAdmin.connect(governor).upgrade(proxy.address, poolAccountantImpl.address)
       poolAccountant = await ethers.getContractAt('PoolAccountant', proxy.address)
 
       expect(poolAccountant.address === proxyAddress, 'Pool accountant proxy address should be same').to.be.true
@@ -70,15 +69,15 @@ describe('Pool accountant proxy', function () {
 
       beforeEach(async function () {
         // Deploy upgrader
-        upgrader = await deployContract('PoolAccountantUpgrader', [MULTICALL])
+        upgrader = await deployContract('PoolAccountantUpgrader', [multiCall])
 
         // Transfer proxy ownership to the upgrader
-        await proxyAdmin.connect(governor.signer).changeProxyAdmin(proxy.address, upgrader.address)
+        await proxyAdmin.connect(governor).changeProxyAdmin(proxy.address, upgrader.address)
       })
 
       it('Should upgrade in proxy via upgrader', async function () {
         // Trigger upgrade
-        await upgrader.connect(governor.signer).safeUpgrade(proxy.address, poolAccountantImpl.address)
+        await upgrader.connect(governor).safeUpgrade(proxy.address, poolAccountantImpl.address)
 
         poolAccountant = await ethers.getContractAt('PoolAccountant', proxy.address)
         expect(poolAccountant.address === proxyAddress, 'Pool accountant proxy address should be same').to.be.true
@@ -86,7 +85,7 @@ describe('Pool accountant proxy', function () {
 
       it('Should properly revert wrong upgrades via upgrader', async function () {
         // Trigger upgrade
-        await expect(upgrader.connect(governor.signer).safeUpgrade(proxy.address, MULTICALL)).to.be.reverted
+        await expect(upgrader.connect(governor).safeUpgrade(proxy.address, multiCall)).to.be.reverted
       })
     })
   })

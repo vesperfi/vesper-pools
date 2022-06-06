@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.3;
+pragma solidity 0.8.9;
 
 import "../CompoundStrategy.sol";
 import "../../Earn.sol";
@@ -27,30 +27,6 @@ contract EarnCompoundStrategy is CompoundStrategy, Earn {
         _totalValue = CompoundStrategy.totalValueCurrent();
     }
 
-    function _setupOracles() internal override(Strategy, CompoundStrategy) {
-        CompoundStrategy._setupOracles();
-    }
-
-    function _claimRewardsAndConvertTo(address _toToken) internal override(Strategy, CompoundStrategy) {
-        CompoundStrategy._claimRewardsAndConvertTo(_toToken);
-    }
-
-    function _realizeProfit(uint256 _totalDebt)
-        internal
-        virtual
-        override(Strategy, CompoundStrategy)
-        returns (uint256)
-    {
-        _claimRewardsAndConvertTo(address(dripToken));
-        uint256 _collateralBalance = _convertToCollateral(cToken.balanceOf(address(this)));
-        if (_collateralBalance > _totalDebt) {
-            _withdrawHere(_collateralBalance - _totalDebt);
-        }
-        _convertCollateralToDrip();
-        _forwardEarning();
-        return 0;
-    }
-
     /// @notice Approve all required tokens
     function _approveToken(uint256 _amount) internal virtual override(Strategy, CompoundStrategy) {
         collateralToken.safeApprove(pool, _amount);
@@ -60,5 +36,33 @@ contract EarnCompoundStrategy is CompoundStrategy, Earn {
 
             collateralToken.safeApprove(address(swapManager.ROUTERS(i)), _amount);
         }
+    }
+
+    function _claimRewardsAndConvertTo(address _toToken) internal override(Strategy, CompoundStrategy) {
+        CompoundStrategy._claimRewardsAndConvertTo(_toToken);
+    }
+
+    function _realizeLoss(uint256) internal view virtual override(Strategy, CompoundStrategy) returns (uint256) {
+        return 0;
+    }
+
+    function _realizeProfit(uint256 _totalDebt)
+        internal
+        virtual
+        override(Strategy, CompoundStrategy)
+        returns (uint256)
+    {
+        _claimRewardsAndConvertTo(address(collateralToken));
+        uint256 _collateralBalance = _convertToCollateral(cToken.balanceOf(address(this)));
+        if (_collateralBalance > _totalDebt) {
+            _withdrawHere(_collateralBalance - _totalDebt);
+        }
+        // Any collateral here is profit
+        _handleProfit(collateralToken.balanceOf(address(this)));
+        return 0;
+    }
+
+    function _setupOracles() internal override(Strategy, CompoundStrategy) {
+        CompoundStrategy._setupOracles();
     }
 }

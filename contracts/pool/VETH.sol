@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.3;
+pragma solidity 0.8.9;
 
 import "./VPool.sol";
 import "../interfaces/token/IToken.sol";
@@ -55,16 +55,16 @@ contract VETH is VPool {
      */
     function deposit() public payable whenNotPaused nonReentrant {
         _updateRewards(_msgSender());
-        _deposit();
+        _depositETH();
     }
 
     /// @dev Deposit ETH and claim rewards if any
     function depositAndClaim() external payable whenNotPaused nonReentrant {
         _claimRewards(_msgSender());
-        _deposit();
+        _depositETH();
     }
 
-    function _deposit() internal {
+    function _depositETH() internal {
         uint256 _shares = calculateMintage(msg.value);
         // Wraps ETH in WETH
         TokenLike(address(token)).deposit{value: msg.value}();

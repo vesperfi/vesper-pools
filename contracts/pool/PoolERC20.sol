@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.3;
+pragma solidity 0.8.9;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import "@openzeppelin/contracts/utils/Context.sol";
+import "../dependencies/openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "../dependencies/openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import "../dependencies/openzeppelin/contracts/utils/Context.sol";
 
 // solhint-disable reason-string, no-empty-blocks
 ///@title Pool ERC20 to use with proxy. Inspired by OpenZeppelin ERC20
@@ -22,6 +22,15 @@ abstract contract PoolERC20 is Context, IERC20, IERC20Metadata {
      * @dev Sets the values for {name} and {symbol}.
      */
     constructor(string memory name_, string memory symbol_) {
+        _name = name_;
+        _symbol = symbol_;
+    }
+
+    /**
+     * @dev Sets the values for {name} and {symbol} for proxy
+     */
+    // solhint-disable-next-line func-name-mixedcase
+    function __ERC20_init(string memory name_, string memory symbol_) internal {
         _name = name_;
         _symbol = symbol_;
     }
@@ -117,45 +126,6 @@ abstract contract PoolERC20 is Context, IERC20, IERC20Metadata {
         uint256 currentAllowance = _allowances[sender][_msgSender()];
         require(currentAllowance >= amount, "ERC20: transfer amount exceeds allowance");
         _approve(sender, _msgSender(), currentAllowance - amount);
-
-        return true;
-    }
-
-    /**
-     * @dev Atomically increases the allowance granted to `spender` by the caller.
-     *
-     * This is an alternative to {approve} that can be used as a mitigation for
-     * problems described in {IERC20-approve}.
-     *
-     * Emits an {Approval} event indicating the updated allowance.
-     *
-     * Requirements:
-     *
-     * - `spender` cannot be the zero address.
-     */
-    function increaseAllowance(address spender, uint256 addedValue) public virtual returns (bool) {
-        _approve(_msgSender(), spender, _allowances[_msgSender()][spender] + addedValue);
-        return true;
-    }
-
-    /**
-     * @dev Atomically decreases the allowance granted to `spender` by the caller.
-     *
-     * This is an alternative to {approve} that can be used as a mitigation for
-     * problems described in {IERC20-approve}.
-     *
-     * Emits an {Approval} event indicating the updated allowance.
-     *
-     * Requirements:
-     *
-     * - `spender` cannot be the zero address.
-     * - `spender` must have allowance for the caller of at least
-     * `subtractedValue`.
-     */
-    function decreaseAllowance(address spender, uint256 subtractedValue) public virtual returns (bool) {
-        uint256 currentAllowance = _allowances[_msgSender()][spender];
-        require(currentAllowance >= subtractedValue, "ERC20: decreased allowance below zero");
-        _approve(_msgSender(), spender, currentAllowance - subtractedValue);
 
         return true;
     }
@@ -280,12 +250,4 @@ abstract contract PoolERC20 is Context, IERC20, IERC20Metadata {
         address to,
         uint256 amount
     ) internal virtual {}
-
-    function _setName(string memory name_) internal {
-        _name = name_;
-    }
-
-    function _setSymbol(string memory symbol_) internal {
-        _symbol = symbol_;
-    }
 }

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.3;
+pragma solidity 0.8.9;
 import "../Strategy.sol";
 import "../../interfaces/yearn/IYToken.sol";
 
@@ -74,7 +74,7 @@ contract YearnStrategy is Strategy {
      * @notice Calculate realized loss.
      * @return _loss Realized loss in collateral token
      */
-    function _realizeLoss(uint256 _totalDebt) internal view override returns (uint256 _loss) {
+    function _realizeLoss(uint256 _totalDebt) internal view virtual override returns (uint256 _loss) {
         uint256 _collateralBalance = _getCollateralBalance();
 
         if (_collateralBalance < _totalDebt) {
